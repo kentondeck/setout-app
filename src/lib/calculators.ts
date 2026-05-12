@@ -18,7 +18,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'framing',
-    label: 'Framing',
+    label: 'Wall Framing',
     subtitle: 'Studs, plates, nogs',
     number: '02',
     svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16',

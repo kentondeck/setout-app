@@ -15,6 +15,7 @@ interface Inputs {
   wallLength: string;
   wallHeight: string;
   studSpacing: string;
+  customSpacing: string;
   nogginRows: string;
 }
 
@@ -22,6 +23,7 @@ const DEFAULTS: Inputs = {
   wallLength: '',
   wallHeight: '2.4',
   studSpacing: '450',
+  customSpacing: '',
   nogginRows: '1',
 };
 
@@ -31,6 +33,7 @@ export function FramingCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [includeNoggins, setIncludeNoggins] = useState(true);
+  const [doubleStuds, setDoubleStuds] = useState(false);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
@@ -43,7 +46,9 @@ export function FramingCalc() {
   function handleCalculate() {
     const wallLength = parseFloat(inputs.wallLength);
     const wallHeight = parseFloat(inputs.wallHeight);
-    const studSpacing = parseFloat(inputs.studSpacing);
+    const studSpacing = inputs.studSpacing === 'custom'
+      ? parseFloat(inputs.customSpacing)
+      : parseFloat(inputs.studSpacing);
     const nogginRows = parseInt(inputs.nogginRows);
 
     if (!wallLength || wallLength <= 0) {
@@ -57,7 +62,7 @@ export function FramingCalc() {
 
     setError('');
 
-    const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1 });
+    const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -67,7 +72,7 @@ export function FramingCalc() {
       calculatorId: 'framing',
       timestamp: Date.now(),
       jobName: jobName || undefined,
-      inputs: { wallLength, wallHeight, studSpacing, nogginRows, includeNoggins: includeNoggins ? 1 : 0 },
+      inputs: { wallLength, wallHeight, studSpacing, nogginRows, includeNoggins: includeNoggins ? 1 : 0, doubleStuds: doubleStuds ? 1 : 0 },
       outputs: calc.outputs,
     });
 
@@ -107,7 +112,7 @@ export function FramingCalc() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
-        title="Framing"
+        title="Wall Framing"
         right={
           <VoiceInputButton
             prompt="Say: wall length, wall height, stud spacing"
@@ -150,7 +155,7 @@ export function FramingCalc() {
               STUD SPACING
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              {(['450', '600'] as const).map(sp => (
+              {(['450', '600', 'custom'] as const).map(sp => (
                 <button
                   key={sp}
                   onClick={() => setInputs(prev => ({ ...prev, studSpacing: sp }))}
@@ -167,10 +172,53 @@ export function FramingCalc() {
                     cursor: 'pointer',
                   }}
                 >
-                  {sp}mm
+                  {sp === 'custom' ? 'Custom' : `${sp}mm`}
                 </button>
               ))}
             </div>
+            {inputs.studSpacing === 'custom' && (
+              <div style={{ marginTop: 10 }}>
+                <NumberInput
+                  label=""
+                  value={inputs.customSpacing}
+                  onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))}
+                  unit="mm"
+                  placeholder="e.g. 300"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Double studs toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Double studs</span>
+            <button
+              onClick={() => setDoubleStuds(v => !v)}
+              style={{
+                width: 44,
+                height: 26,
+                borderRadius: 13,
+                border: 'none',
+                background: doubleStuds ? 'var(--color-orange)' : '#ccc',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 3,
+                  left: doubleStuds ? 21 : 3,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </button>
           </div>
 
           {/* Noggins toggle */}

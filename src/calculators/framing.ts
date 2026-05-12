@@ -3,9 +3,10 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 export interface FramingInputs {
   wallLength: number;   // metres
   wallHeight: number;   // metres
-  studSpacing: number;  // mm (450 or 600)
+  studSpacing: number;  // mm
   includeNoggins: boolean;
   nogginRows: number;   // number of noggin rows (typically 1–2)
+  doubleStuds: boolean;
 }
 
 export interface FramingOutputs extends Record<string, number> {
@@ -22,18 +23,18 @@ export interface FramingResult {
 }
 
 export function calculateFraming(inputs: FramingInputs): FramingResult {
-  const { wallLength, wallHeight, studSpacing, includeNoggins, nogginRows } = inputs;
+  const { wallLength, wallHeight, studSpacing, includeNoggins, nogginRows, doubleStuds } = inputs;
 
   // Studs: one at each end + intermediate studs spaced at studSpacing
-  const studCount = Math.floor((wallLength * 1000) / studSpacing) + 1;
+  const baseStudCount = Math.floor((wallLength * 1000) / studSpacing) + 1;
+  const studCount = doubleStuds ? baseStudCount * 2 : baseStudCount;
 
   // Double top plate + single bottom plate
   const topPlateLineal = parseFloat((wallLength * 2).toFixed(2));
   const bottomPlateLineal = parseFloat(wallLength.toFixed(2));
 
-  // Noggins run between studs, each noggin = stud spacing - stud width (approx 90mm)
-  // Number of noggins = (studCount - 1) gaps × nogginRows
-  const nogginCount = includeNoggins ? (studCount - 1) * nogginRows : 0;
+  // Noggins run between stud positions (gaps don't change with double studs)
+  const nogginCount = includeNoggins ? (baseStudCount - 1) * nogginRows : 0;
 
   // Studs lineal metres + plates + noggins
   const studsLineal = parseFloat((studCount * wallHeight).toFixed(2));
@@ -46,10 +47,17 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
 
   const steps: WorkingStep[] = [
     {
-      label: 'Stud count',
+      label: 'Stud positions',
       formula: 'floor( wall length (mm) ÷ stud spacing ) + 1',
-      result: `floor( ${wallLength * 1000} ÷ ${studSpacing} ) + 1 = ${studCount} studs`,
+      result: `floor( ${wallLength * 1000} ÷ ${studSpacing} ) + 1 = ${baseStudCount} positions`,
     },
+    ...(doubleStuds
+      ? [{
+          label: 'Double studs',
+          formula: 'stud positions × 2',
+          result: `${baseStudCount} × 2 = ${studCount} studs`,
+        }]
+      : []),
     {
       label: 'Top plate',
       formula: 'wall length × 2 (double top plate)',
@@ -64,8 +72,8 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
       ? [
           {
             label: 'Nog count',
-            formula: '(stud count − 1) × nog rows',
-            result: `(${studCount} − 1) × ${nogginRows} = ${nogginCount} nogs`,
+            formula: '(stud positions − 1) × nog rows',
+            result: `(${baseStudCount} − 1) × ${nogginRows} = ${nogginCount} nogs`,
           },
           {
             label: 'Nogs lineal metres',

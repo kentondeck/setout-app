@@ -7,6 +7,7 @@ export interface FramingInputs {
   includeNoggins: boolean;
   nogginRows: number;   // number of noggin rows (typically 1–2)
   doubleStuds: boolean;
+  doubleTopPlate: boolean;
 }
 
 export interface FramingOutputs extends Record<string, number> {
@@ -23,14 +24,13 @@ export interface FramingResult {
 }
 
 export function calculateFraming(inputs: FramingInputs): FramingResult {
-  const { wallLength, wallHeight, studSpacing, includeNoggins, nogginRows, doubleStuds } = inputs;
+  const { wallLength, wallHeight, studSpacing, includeNoggins, nogginRows, doubleStuds, doubleTopPlate } = inputs;
 
   // Studs: one at each end + intermediate studs spaced at studSpacing
   const baseStudCount = Math.floor((wallLength * 1000) / studSpacing) + 1;
   const studCount = doubleStuds ? baseStudCount * 2 : baseStudCount;
 
-  // Double top plate + single bottom plate
-  const topPlateLineal = parseFloat((wallLength * 2).toFixed(2));
+  const topPlateLineal = parseFloat((wallLength * (doubleTopPlate ? 2 : 1)).toFixed(2));
   const bottomPlateLineal = parseFloat(wallLength.toFixed(2));
 
   // Noggins run between stud positions (gaps don't change with double studs)
@@ -60,8 +60,8 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
       : []),
     {
       label: 'Top plate',
-      formula: 'wall length × 2 (double top plate)',
-      result: `${wallLength}m × 2 = ${topPlateLineal}lm`,
+      formula: `wall length × ${doubleTopPlate ? '2 (double top plate)' : '1 (single top plate)'}`,
+      result: `${wallLength}m × ${doubleTopPlate ? 2 : 1} = ${topPlateLineal}lm`,
     },
     {
       label: 'Bottom plate',

@@ -34,6 +34,7 @@ export function FramingCalc() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [includeNoggins, setIncludeNoggins] = useState(true);
   const [doubleStuds, setDoubleStuds] = useState(false);
+  const [doubleTopPlate, setDoubleTopPlate] = useState(true);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
@@ -62,7 +63,7 @@ export function FramingCalc() {
 
     setError('');
 
-    const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds });
+    const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds, doubleTopPlate });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -187,6 +188,38 @@ export function FramingCalc() {
                 />
               </div>
             )}
+          </div>
+
+          {/* Double top plate toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Double top plate</span>
+            <button
+              onClick={() => setDoubleTopPlate(v => !v)}
+              style={{
+                width: 44,
+                height: 26,
+                borderRadius: 13,
+                border: 'none',
+                background: doubleTopPlate ? 'var(--color-orange)' : '#ccc',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 3,
+                  left: doubleTopPlate ? 21 : 3,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </button>
           </div>
 
           {/* Double studs toggle */}

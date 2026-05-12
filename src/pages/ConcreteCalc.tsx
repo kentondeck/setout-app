@@ -15,12 +15,12 @@ type Tab = 'slab' | 'postholes';
 type HoleType = 'round' | 'square';
 
 interface SlabFields { length: string; width: string; thickness: string; }
-interface PostFields { diameter: string; sideWidth: string; depth: string; numHoles: string; }
+interface PostFields { diameter: string; sideWidth: string; depth: string; numHoles: string; postSize: string; }
 
 const WASTAGE_OPTIONS = [0.05, 0.10, 0.15, 0.20];
 
 const SLAB_DEFAULTS: SlabFields = { length: '', width: '', thickness: '' };
-const POST_DEFAULTS: PostFields = { diameter: '300', sideWidth: '300', depth: '600', numHoles: '1' };
+const POST_DEFAULTS: PostFields = { diameter: '300', sideWidth: '300', depth: '600', numHoles: '1', postSize: '' };
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
@@ -35,6 +35,8 @@ export function ConcreteCalc() {
 
   const [holeType, setHoleType] = useState<HoleType>('round');
   const [postFields, setPostFields] = useState<PostFields>(POST_DEFAULTS);
+  const [postDeductEnabled, setPostDeductEnabled] = useState(false);
+  const [postDeductShape, setPostDeductShape] = useState<'round' | 'square'>('round');
   const [postResult, setPostResult] = useState<{ outputs: PostHoleOutputs; steps: WorkingStep[] } | null>(null);
   const [lastPostId, setLastPostId] = useState('');
 
@@ -95,7 +97,11 @@ export function ConcreteCalc() {
         if (!sideWidth || sideWidth <= 0) { setError('Enter a side width to calculate.'); return; }
       }
 
-      const calc = calculatePostHoles({ holeType, diameter, sideWidth, depth, numHoles, wastage });
+      const postSize = postDeductEnabled ? parseFloat(postFields.postSize) || undefined : undefined;
+      const calc = calculatePostHoles({
+        holeType, diameter, sideWidth, depth, numHoles, wastage,
+        ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize }),
+      });
       setPostResult(calc);
       const id = crypto.randomUUID();
       setLastPostId(id);
@@ -140,16 +146,20 @@ export function ConcreteCalc() {
   const postTotalVol = postResult ? postResult.outputs.totalVolume : 0;
   const postVolPerHole = postResult && postN > 0 ? postTotalVol / postN : 0;
 
+  const postDeductM3 = postResult ? postResult.outputs.postVolumePerHole : 0;
+
   const postWorkingSteps: WorkingStep[] = postResult ? (holeType === 'round' ? [
     { label: 'Hole shape', explanation: 'Round hole with diameter and depth', result: `${postD} mm × ${postDep} mm` },
     { label: 'Radius', explanation: 'Half the diameter', calculation: `${postD} ÷ 2`, result: `${postD / 2} mm` },
-    { label: 'Volume per hole', explanation: 'Pi times the radius squared, times the depth, all converted to metres', calculation: `π × ${(postD / 2 / 1000).toFixed(3)}² × ${postDep / 1000}`, result: `${postVolPerHole.toFixed(3)} m³ per hole` },
-    { label: 'Total volume', explanation: 'Multiply by the number of holes', calculation: `${postVolPerHole.toFixed(3)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
+    { label: 'Gross volume per hole', explanation: 'Pi times the radius squared, times the depth, all converted to metres', calculation: `π × ${(postD / 2 / 1000).toFixed(3)}² × ${postDep / 1000}`, result: `${(postVolPerHole + postDeductM3).toFixed(4)} m³ per hole` },
+    ...(postDeductM3 > 0 ? [{ label: 'Deduct post', explanation: 'Subtract the post volume from each hole', calculation: `${(postVolPerHole + postDeductM3).toFixed(4)} − ${postDeductM3.toFixed(4)}`, result: `${postVolPerHole.toFixed(4)} m³ net per hole` }] as WorkingStep[] : []),
+    { label: 'Total volume', explanation: 'Multiply net volume by the number of holes', calculation: `${postVolPerHole.toFixed(4)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
     ...(postResult.outputs.useBagMix ? [{ label: 'Bags needed', explanation: 'Each 20kg bag yields about 0.009 m³ of mixed concrete', calculation: `${postTotalVol.toFixed(3)} ÷ 0.009`, result: `${postResult.outputs.bagCount} bags` }] : [{ label: 'Order ready-mix', explanation: 'Volume is over 0.2 m³ — order ready-mix concrete instead of bags', result: `${postResult.outputs.orderVolume} m³` }]) as WorkingStep[],
   ] : [
     { label: 'Hole shape', explanation: 'Square hole with side width and depth', result: `${postSW} mm × ${postDep} mm` },
-    { label: 'Volume per hole', explanation: 'Side length squared, times the depth, all converted to metres', calculation: `${postSW / 1000}² × ${postDep / 1000}`, result: `${postVolPerHole.toFixed(3)} m³ per hole` },
-    { label: 'Total volume', explanation: 'Multiply by the number of holes', calculation: `${postVolPerHole.toFixed(3)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
+    { label: 'Gross volume per hole', explanation: 'Side length squared, times the depth, all converted to metres', calculation: `${postSW / 1000}² × ${postDep / 1000}`, result: `${(postVolPerHole + postDeductM3).toFixed(4)} m³ per hole` },
+    ...(postDeductM3 > 0 ? [{ label: 'Deduct post', explanation: 'Subtract the post volume from each hole', calculation: `${(postVolPerHole + postDeductM3).toFixed(4)} − ${postDeductM3.toFixed(4)}`, result: `${postVolPerHole.toFixed(4)} m³ net per hole` }] as WorkingStep[] : []),
+    { label: 'Total volume', explanation: 'Multiply net volume by the number of holes', calculation: `${postVolPerHole.toFixed(4)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
     ...(postResult.outputs.useBagMix ? [{ label: 'Bags needed', explanation: 'Each 20kg bag yields about 0.009 m³ of mixed concrete', calculation: `${postTotalVol.toFixed(3)} ÷ 0.009`, result: `${postResult.outputs.bagCount} bags` }] : [{ label: 'Order ready-mix', explanation: 'Volume is over 0.2 m³ — order ready-mix concrete instead of bags', result: `${postResult.outputs.orderVolume} m³` }]) as WorkingStep[],
   ]) : [];
 
@@ -287,6 +297,60 @@ export function ConcreteCalc() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>
+
+              {/* Post deduction */}
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>SUBTRACT POST</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(['off', 'on'] as const).map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setPostDeductEnabled(v === 'on')}
+                      style={{
+                        flex: 1, padding: '10px 0', borderRadius: 10,
+                        border: '0.5px solid var(--color-border)',
+                        background: (postDeductEnabled ? 'on' : 'off') === v ? 'var(--color-orange)' : 'var(--color-bg)',
+                        color: (postDeductEnabled ? 'on' : 'off') === v ? '#fff' : 'var(--color-text)',
+                        fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                      }}
+                    >
+                      {v === 'off' ? 'No post' : 'Deduct post'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {postDeductEnabled && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>POST SHAPE</p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {(['round', 'square'] as const).map(ps => (
+                        <button
+                          key={ps}
+                          onClick={() => setPostDeductShape(ps)}
+                          style={{
+                            flex: 1, padding: '10px 0', borderRadius: 10,
+                            border: '0.5px solid var(--color-border)',
+                            background: postDeductShape === ps ? 'var(--color-orange)' : 'var(--color-bg)',
+                            color: postDeductShape === ps ? '#fff' : 'var(--color-text)',
+                            fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                          }}
+                        >
+                          {ps === 'round' ? 'Round' : 'Square'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <NumberInput
+                    label={postDeductShape === 'round' ? 'Post diameter' : 'Post side width'}
+                    value={postFields.postSize}
+                    onChange={setPost('postSize')}
+                    unit="mm"
+                    placeholder={postDeductShape === 'round' ? 'e.g. 100' : 'e.g. 90'}
+                  />
+                </div>
+              )}
             </>
           )}
 
@@ -382,9 +446,10 @@ export function ConcreteCalc() {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Per hole" value={postResult.outputs.volumePerHole} unit="L" accent />
-                <ResultCard label="Total" value={postResult.outputs.totalLitres} unit="L" />
+                <ResultCard label="Per hole" value={postResult.outputs.volumePerHole} unit="m³" accent />
+                <ResultCard label="Total" value={postResult.outputs.totalVolume} unit="m³" />
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Total volume" value={postResult.outputs.totalVolume} unit="m³" />
                 <ResultCard label="Order (incl. wastage)" value={postResult.outputs.orderVolume} unit="m³" />

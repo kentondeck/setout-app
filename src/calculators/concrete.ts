@@ -8,12 +8,12 @@ export interface SlabOutputs extends Record<string, number> {
 }
 
 export interface PostHoleOutputs extends Record<string, number> {
-  volumePerHole: number;  // litres, whole number
-  totalVolume: number;    // m³ to 3 dp
-  totalLitres: number;    // whole litres
-  orderVolume: number;    // m³ with wastage, rounded up to nearest 0.1
-  bagCount: number;       // 20 kg bags (0 if ready-mix)
-  useBagMix: number;      // 1 = bag mix, 0 = ready-mix
+  volumePerHole: number;     // m³ — net per hole after post deduction
+  postVolumePerHole: number; // m³ — post volume deducted per hole (0 if not deducting)
+  totalVolume: number;       // m³ net total
+  orderVolume: number;       // m³ with wastage, rounded up to nearest 0.1
+  bagCount: number;          // 20 kg bags (0 if ready-mix)
+  useBagMix: number;         // 1 = bag mix, 0 = ready-mix
 }
 
 export interface SlabInputs {
@@ -30,6 +30,8 @@ export interface PostHoleInputs {
   depth: number;      // mm
   numHoles: number;
   wastage: number;    // fraction e.g. 0.10
+  postShape?: 'round' | 'square';  // optional post deduction
+  postSize?: number;               // mm — diameter (round) or side (square)
 }
 
 // Round up to nearest 0.1 m³ without floating-point drift
@@ -73,27 +75,45 @@ export function calculateSlab(inputs: SlabInputs): { outputs: SlabOutputs; steps
 }
 
 export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleOutputs; steps: WorkingStep[] } {
-  const { holeType, diameter, sideWidth, depth, numHoles, wastage } = inputs;
+  const { holeType, diameter, sideWidth, depth, numHoles, wastage, postShape, postSize } = inputs;
 
-  let volumePerHoleM3: number;
+  let grossVolumePerHoleM3: number;
   let shapeFormula: string;
   let shapeResult: string;
 
   if (holeType === 'round' && diameter !== undefined) {
     const r = diameter / 2;
-    volumePerHoleM3 = (Math.PI * r * r * depth) / 1_000_000_000;
+    grossVolumePerHoleM3 = (Math.PI * r * r * depth) / 1_000_000_000;
     shapeFormula = 'π × radius² × depth ÷ 1,000,000,000';
     shapeResult = `π × (${r}mm)² × ${depth}mm ÷ 1,000,000,000`;
   } else {
     const s = sideWidth ?? 0;
-    volumePerHoleM3 = (s * s * depth) / 1_000_000_000;
+    grossVolumePerHoleM3 = (s * s * depth) / 1_000_000_000;
     shapeFormula = 'side² × depth ÷ 1,000,000,000';
     shapeResult = `${s}mm × ${s}mm × ${depth}mm ÷ 1,000,000,000`;
   }
 
-  const volumePerHole = Math.round(volumePerHoleM3 * 1000);
-  const totalVolumeM3 = volumePerHoleM3 * numHoles;
-  const totalLitres = Math.round(totalVolumeM3 * 1000);
+  // Post deduction
+  let postVolumeM3 = 0;
+  let postFormula = '';
+  let postResult = '';
+  if (postShape && postSize && postSize > 0) {
+    if (postShape === 'round') {
+      const pr = postSize / 2;
+      postVolumeM3 = (Math.PI * pr * pr * depth) / 1_000_000_000;
+      postFormula = 'π × (post radius)² × depth ÷ 1,000,000,000';
+      postResult = `π × (${pr}mm)² × ${depth}mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+    } else {
+      postVolumeM3 = (postSize * postSize * depth) / 1_000_000_000;
+      postFormula = 'post side² × depth ÷ 1,000,000,000';
+      postResult = `${postSize}mm × ${postSize}mm × ${depth}mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+    }
+  }
+
+  const netVolumePerHoleM3 = Math.max(0, grossVolumePerHoleM3 - postVolumeM3);
+  const postVolumePerHole = parseFloat(postVolumeM3.toFixed(4));
+  const volumePerHole = parseFloat(netVolumePerHoleM3.toFixed(4));
+  const totalVolumeM3 = netVolumePerHoleM3 * numHoles;
   const totalVolume = parseFloat(totalVolumeM3.toFixed(3));
   const withWastage = totalVolumeM3 * (1 + wastage);
   const orderVolume = parseFloat(ceilToTenth(withWastage).toFixed(1));
@@ -102,14 +122,19 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
 
   const steps: WorkingStep[] = [
     {
-      label: 'Volume per hole',
+      label: 'Hole volume',
       formula: shapeFormula,
-      result: `${shapeResult} = ${volumePerHole} L`,
+      result: `${shapeResult} = ${parseFloat(grossVolumePerHoleM3.toFixed(4))} m³ per hole`,
     },
+    ...(postVolumeM3 > 0 ? [{
+      label: 'Deduct post volume',
+      formula: postFormula,
+      result: `${postResult} → net ${volumePerHole} m³ per hole`,
+    }] : []),
     {
-      label: `Total volume (${numHoles} hole${numHoles !== 1 ? 's' : ''})`,
-      formula: `Volume per hole × ${numHoles}`,
-      result: `${volumePerHole} L × ${numHoles} = ${totalLitres} L (${totalVolume} m³)`,
+      label: `Total net volume (${numHoles} hole${numHoles !== 1 ? 's' : ''})`,
+      formula: `Net per hole × ${numHoles}`,
+      result: `${volumePerHole} m³ × ${numHoles} = ${totalVolume} m³`,
     },
     {
       label: `Add ${Math.round(wastage * 100)}% wastage`,
@@ -130,7 +155,7 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
   ];
 
   return {
-    outputs: { volumePerHole, totalVolume, totalLitres, orderVolume, bagCount, useBagMix },
+    outputs: { volumePerHole, postVolumePerHole, totalVolume, orderVolume, bagCount, useBagMix },
     steps,
   };
 }

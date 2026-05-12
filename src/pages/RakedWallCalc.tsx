@@ -50,9 +50,9 @@ export function RakedWallCalc() {
     ? parseFloat(inputs.customSpacing) || 450
     : parseFloat(inputs.studSpacing);
 
-  // Preview derived high height when in pitch mode
+  // Preview derived high height when in pitch mode (wall length now in mm)
   const derivedHighHeight = mode === 'pitch' && inputs.wallLength && inputs.lowHeight && inputs.pitch
-    ? Math.round(parseFloat(inputs.lowHeight) + Math.tan(parseFloat(inputs.pitch) * Math.PI / 180) * parseFloat(inputs.wallLength) * 1000)
+    ? Math.round(parseFloat(inputs.lowHeight) + Math.tan(parseFloat(inputs.pitch) * Math.PI / 180) * parseFloat(inputs.wallLength))
     : null;
 
   function handleCalculate() {
@@ -70,7 +70,7 @@ export function RakedWallCalc() {
     } else {
       const pitch = parseFloat(inputs.pitch);
       if (!pitch || pitch <= 0 || pitch >= 90) { setError('Enter a valid roof pitch (0–90°).'); return; }
-      highHeight = Math.round(lowHeight + Math.tan(pitch * Math.PI / 180) * wallLength * 1000);
+      highHeight = Math.round(lowHeight + Math.tan(pitch * Math.PI / 180) * wallLength);
     }
 
     setError('');
@@ -145,7 +145,7 @@ export function RakedWallCalc() {
           </div>
 
           {/* Wall length */}
-          <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} unit="m" placeholder="e.g. 4.0" />
+          <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} unit="mm" placeholder="e.g. 4000" />
 
           {/* Heights */}
           <div style={{ display: 'flex', gap: 12 }}>
@@ -208,7 +208,7 @@ export function RakedWallCalc() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Studs" value={result.outputs.studCount} accent />
-                <ResultCard label="Total lineal m" value={result.outputs.totalStudLineal} unit="lm" />
+                <ResultCard label="Total lineal m" value={result.outputs.totalLinealMetres} unit="lm" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Rake plate" value={result.outputs.rakePlateLength} unit="mm" />

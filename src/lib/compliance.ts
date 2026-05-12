@@ -1,0 +1,46 @@
+export type Region = 'AU' | 'NZ';
+
+export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
+  decking: {
+    AU: 'Joist and bearer spacings based on AS 1684 — Residential Timber Framing. Verify against your timber species and span tables.',
+    NZ: 'Joist and bearer spacings based on NZS 3604 — Timber-framed buildings. Verify against your timber species and span tables.',
+  },
+  framing: {
+    AU: 'Stud spacings based on AS 1684 — Residential Timber Framing. Verify against your timber species and local council requirements.',
+    NZ: 'Stud spacings based on NZS 3604 — Timber-framed buildings. Verify against your timber species and local authority requirements.',
+  },
+  stairs: {
+    AU: 'Riser and tread limits per NCC (National Construction Code) and AS 1657. Verify against your specific application — residential, public access, or external.',
+    NZ: 'Riser and tread limits per NZBC (NZ Building Code) Clause D1. Verify against your specific application — residential, public access, or external.',
+  },
+  roof: {
+    AU: 'Assumes a symmetrical gable roof. Verify rafter sizing against AS 1684 span tables for your timber species and wind/snow region.',
+    NZ: 'Assumes a symmetrical gable roof. Verify rafter sizing against NZS 3604 span tables for your timber species and wind/snow zone.',
+  },
+  balusters: {
+    AU: '125mm max gap per NCC / AS 1657. Some councils and body corporates require tighter gaps for pool fencing or commercial use.',
+    NZ: '100mm max gap per NZBC Clause F4. Pool fencing and commercial applications may have additional requirements.',
+  },
+  concrete: {
+    AU: 'Mix design and placement per AS 3600 and AS 1379. For structural elements (footings, slabs on grade), verify with an engineer. Minimum 20 MPa for residential footings.',
+    NZ: 'Mix design and placement per NZS 3109. For structural elements verify with an engineer. Minimum 17.5 MPa for non-structural residential use.',
+  },
+};
+
+export interface StairLimits {
+  riserMin: number;
+  riserMax: number;
+  treadMin: number;
+  treadMax: number;
+  standard: string;
+}
+
+export const STAIR_LIMITS: Record<Region, StairLimits> = {
+  AU: { riserMin: 115, riserMax: 225, treadMin: 240, treadMax: 355, standard: 'NCC / AS 1657' },
+  NZ: { riserMin: 150, riserMax: 220, treadMin: 220, treadMax: 355, standard: 'NZBC D1' },
+};
+
+export const BALUSTER_MAX_GAP: Record<Region, number> = {
+  AU: 125,
+  NZ: 100,
+};

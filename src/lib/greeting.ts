@@ -6,7 +6,7 @@ export function getGreeting(name: string): { greeting: string; sub: string } {
   if (hour < 12) greeting = `Morning ${first}`;
   else if (hour < 17) greeting = `Afternoon ${first}`;
   else if (hour < 22) greeting = `Evening ${first}`;
-  else greeting = `Late one tonight ${first}`;
+  else greeting = `Late one tonight`;
 
   return { greeting, sub: 'What are we building?' };
 }

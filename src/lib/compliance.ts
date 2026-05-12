@@ -25,6 +25,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Mix design and placement per AS 3600 and AS 1379. For structural elements (footings, slabs on grade), verify with an engineer. Minimum 20 MPa for residential footings.',
     NZ: 'Mix design and placement per NZS 3109. For structural elements verify with an engineer. Minimum 17.5 MPa for non-structural residential use.',
   },
+  raked: {
+    AU: 'Raked wall framing per AS 1684. Verify stud sizes and spacing against span tables for your timber species, wall height, and wind classification.',
+    NZ: 'Raked wall framing per NZS 3604. Verify stud sizes against span tables for your timber species, wall height, and wind zone.',
+  },
 };
 
 export interface StairLimits {

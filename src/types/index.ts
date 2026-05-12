@@ -5,7 +5,8 @@ export type CalculatorId =
   | 'roof'
   | 'cutlist'
   | 'baluster'
-  | 'concrete';
+  | 'concrete'
+  | 'raked';
 
 export type Region = 'AU' | 'NZ';
 

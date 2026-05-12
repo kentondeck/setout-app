@@ -58,4 +58,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '07',
     svgPath: 'M3 7h18v13H3zM3 11h18M3 15h18',
   },
+  {
+    id: 'raked',
+    label: 'Raked Wall',
+    subtitle: 'Varying stud heights',
+    number: '08',
+    svgPath: 'M4 18V6M9 18V9M14 18V12M19 18V15M4 6l15 9',
+  },
 ];

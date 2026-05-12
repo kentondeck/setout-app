@@ -74,6 +74,36 @@ export function FramingCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  // Build new-format working steps from actual calculator outputs
+  const wallLengthMm = result ? Math.round(parseFloat(inputs.wallLength) * 1000) : 0;
+  const studSpacingMm = result ? parseFloat(inputs.studSpacing) : 0;
+  const studsBefore = result ? result.outputs.studCount - 1 : 0;
+
+  const framingSteps: WorkingStep[] = result ? [
+    {
+      label: 'Wall length',
+      explanation: "The full length of the wall you're framing",
+      result: `${wallLengthMm} mm`,
+    },
+    {
+      label: 'Stud spacing',
+      explanation: 'How far apart each stud goes, centre to centre',
+      result: `${studSpacingMm} mm apart`,
+    },
+    {
+      label: 'Studs in the span',
+      explanation: 'Divide the wall length by the stud spacing',
+      calculation: `${wallLengthMm} ÷ ${studSpacingMm} = ${(wallLengthMm / studSpacingMm).toFixed(1)}`,
+      result: `Round up to ${studsBefore} studs`,
+    },
+    {
+      label: 'Add the end stud',
+      explanation: "One extra stud at the end of the wall so you have something to fix the sheet to",
+      calculation: `${studsBefore} + 1`,
+      result: `${result.outputs.studCount} studs`,
+    },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -226,12 +256,13 @@ export function FramingCalc() {
               )}
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="Getting your framing quantities right before you start means one trip to the yard. Stud count drives everything — get that wrong and your plates and nogs are off too. The double top plate is often forgotten until you're at the counter."
-              />
-            )}
+            <ApprenticeWorking
+              steps={framingSteps}
+              finalAnswer={`${result.outputs.studCount} studs`}
+              finalLabel="Total studs needed"
+              visible={settings.apprenticeMode}
+              id="framing"
+            />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

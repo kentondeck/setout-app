@@ -79,6 +79,20 @@ export function DeckingCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  const deckLengthMm = result ? Math.round(parseFloat(inputs.deckLength) * 1000) : 0;
+  const deckWidthMm = result ? Math.round(parseFloat(inputs.deckWidth) * 1000) : 0;
+  const bw = result ? parseFloat(inputs.boardWidth) : 0;
+  const bg = result ? parseFloat(inputs.boardGap) : 0;
+  const js = result ? parseFloat(inputs.joistSpacing) : 0;
+  const coverage = bw + bg;
+
+  const deckingSteps: WorkingStep[] = result ? [
+    { label: 'Deck length', explanation: 'The length your boards will run along', result: `${deckLengthMm} mm` },
+    { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${bw} + ${bg}`, result: `${coverage} mm per board` },
+    { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${deckLengthMm} ÷ ${coverage} = ${(deckLengthMm / coverage).toFixed(1)}`, result: `Round up to ${result.outputs.boardCount} boards` },
+    { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${deckWidthMm} ÷ ${js} = ${(deckWidthMm / js).toFixed(1)}, then + 1`, result: `${result.outputs.joistCount} joists` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -177,13 +191,13 @@ export function DeckingCalc() {
               </div>
             </div>
 
-            {/* Apprentice mode */}
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="Getting your material quantities right before you order saves money and site trips. Overordering boards is the most common waste on a deck job — a 10% buffer on lineal metres is plenty once you've got an accurate board count."
-              />
-            )}
+            <ApprenticeWorking
+              steps={deckingSteps}
+              finalAnswer={`${result.outputs.boardCount} boards`}
+              finalLabel="Total decking boards needed"
+              visible={settings.apprenticeMode}
+              id="decking"
+            />
 
             {/* Job name + compliance note */}
             <JobNameInput

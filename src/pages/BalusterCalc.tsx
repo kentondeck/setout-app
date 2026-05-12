@@ -73,6 +73,19 @@ export function BalusterCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  const balLen = result ? parseFloat(inputs.totalLength) : 0;
+  const balWidth = result ? parseFloat(inputs.balusterWidth) : 0;
+  const balMax = result ? parseFloat(inputs.maxGap) : 0;
+  const balCount = result ? result.outputs.balusters : 0;
+  const balGap = result ? result.outputs.actualGap : 0;
+
+  const balusterSteps: WorkingStep[] = result ? [
+    { label: 'Length between posts', explanation: 'The distance from inside of one post to the inside of the next', result: `${balLen} mm` },
+    { label: 'Max gap allowed', explanation: 'Australian Standard says no gap can be bigger than 125mm', result: `${balMax} mm` },
+    { label: 'Minimum balusters needed', explanation: 'Work out the smallest number of balusters that keeps the gap under the limit', calculation: `Trial: ${balCount} balusters with ${balGap.toFixed(1)} mm gaps`, result: `${balCount} balusters` },
+    { label: 'Actual gap', explanation: 'Subtract the balusters from the total length and divide by the number of gaps', calculation: `(${balLen} - (${balCount} × ${balWidth})) ÷ ${balCount + 1}`, result: `${balGap.toFixed(0)} mm between each` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -158,12 +171,13 @@ export function BalusterCalc() {
               balusterCount={result.outputs.balusters}
             />
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="The 125mm rule exists so a 100mm sphere can't pass through — that's the child-safety basis. You want the actual gap to be as close to the limit as possible without going over, which maximises the open look while staying compliant. This calc gives you the exact count to achieve that."
-              />
-            )}
+            <ApprenticeWorking
+              steps={balusterSteps}
+              finalAnswer={`${result.outputs.balusters} balusters`}
+              finalLabel="Balusters needed"
+              visible={settings.apprenticeMode}
+              id="balusters"
+            />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

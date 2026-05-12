@@ -119,6 +119,40 @@ export function ConcreteCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  // Slab working steps
+  const slabL = slabResult ? parseFloat(slabFields.length) : 0;
+  const slabW = slabResult ? parseFloat(slabFields.width) : 0;
+  const slabT = slabResult ? parseFloat(slabFields.thickness) : 0;
+  const slabVol = slabResult ? slabResult.outputs.exactVolume : 0;
+
+  const slabWorkingSteps: WorkingStep[] = slabResult ? [
+    { label: 'Slab dimensions', explanation: 'Length, width and thickness in millimetres', result: `${slabL} × ${slabW} × ${slabT} mm` },
+    { label: 'Convert to metres', explanation: 'Divide each measurement by 1000 to get metres', calculation: `${slabL / 1000} × ${slabW / 1000} × ${slabT / 1000}`, result: `${slabL / 1000} m × ${slabW / 1000} m × ${slabT / 1000} m` },
+    { label: 'Volume', explanation: 'Multiply the three dimensions together', calculation: `${slabL / 1000} × ${slabW / 1000} × ${slabT / 1000}`, result: `${slabVol.toFixed(2)} m³` },
+    { label: 'Add wastage', explanation: `Add ${Math.round(wastage * 100)}% so you don't run short on the pour`, calculation: `${slabVol.toFixed(2)} × ${(1 + wastage).toFixed(2)}`, result: `${slabResult.outputs.orderVolume} m³ to order` },
+  ] : [];
+
+  // Post hole working steps
+  const postD = postResult && holeType === 'round' ? parseFloat(postFields.diameter) : 0;
+  const postSW = postResult && holeType === 'square' ? parseFloat(postFields.sideWidth) : 0;
+  const postDep = postResult ? parseFloat(postFields.depth) : 0;
+  const postN = postResult ? parseInt(postFields.numHoles) : 0;
+  const postTotalVol = postResult ? postResult.outputs.totalVolume : 0;
+  const postVolPerHole = postResult && postN > 0 ? postTotalVol / postN : 0;
+
+  const postWorkingSteps: WorkingStep[] = postResult ? (holeType === 'round' ? [
+    { label: 'Hole shape', explanation: 'Round hole with diameter and depth', result: `${postD} mm × ${postDep} mm` },
+    { label: 'Radius', explanation: 'Half the diameter', calculation: `${postD} ÷ 2`, result: `${postD / 2} mm` },
+    { label: 'Volume per hole', explanation: 'Pi times the radius squared, times the depth, all converted to metres', calculation: `π × ${(postD / 2 / 1000).toFixed(3)}² × ${postDep / 1000}`, result: `${postVolPerHole.toFixed(3)} m³ per hole` },
+    { label: 'Total volume', explanation: 'Multiply by the number of holes', calculation: `${postVolPerHole.toFixed(3)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
+    ...(postResult.outputs.useBagMix ? [{ label: 'Bags needed', explanation: 'Each 20kg bag yields about 0.009 m³ of mixed concrete', calculation: `${postTotalVol.toFixed(3)} ÷ 0.009`, result: `${postResult.outputs.bagCount} bags` }] : [{ label: 'Order ready-mix', explanation: 'Volume is over 0.2 m³ — order ready-mix concrete instead of bags', result: `${postResult.outputs.orderVolume} m³` }]) as WorkingStep[],
+  ] : [
+    { label: 'Hole shape', explanation: 'Square hole with side width and depth', result: `${postSW} mm × ${postDep} mm` },
+    { label: 'Volume per hole', explanation: 'Side length squared, times the depth, all converted to metres', calculation: `${postSW / 1000}² × ${postDep / 1000}`, result: `${postVolPerHole.toFixed(3)} m³ per hole` },
+    { label: 'Total volume', explanation: 'Multiply by the number of holes', calculation: `${postVolPerHole.toFixed(3)} × ${postN}`, result: `${postTotalVol.toFixed(3)} m³` },
+    ...(postResult.outputs.useBagMix ? [{ label: 'Bags needed', explanation: 'Each 20kg bag yields about 0.009 m³ of mixed concrete', calculation: `${postTotalVol.toFixed(3)} ÷ 0.009`, result: `${postResult.outputs.bagCount} bags` }] : [{ label: 'Order ready-mix', explanation: 'Volume is over 0.2 m³ — order ready-mix concrete instead of bags', result: `${postResult.outputs.orderVolume} m³` }]) as WorkingStep[],
+  ]) : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -323,12 +357,13 @@ export function ConcreteCalc() {
               </div>
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={slabResult.steps}
-                why="Always add wastage before ordering — concrete can't be topped up mid-pour if you run short. Round up to the nearest 0.1 m³ and tell the plant that number, not your exact figure."
-              />
-            )}
+            <ApprenticeWorking
+              steps={slabWorkingSteps}
+              finalAnswer={`${slabResult.outputs.orderVolume} m³`}
+              finalLabel="Concrete to order"
+              visible={settings.apprenticeMode}
+              id="concrete-slab"
+            />
 
             <JobNameInput
               value={jobName}
@@ -380,12 +415,13 @@ export function ConcreteCalc() {
               )}
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={postResult.steps}
-                why="Post holes under 0.2 m³ are cheapest to mix on site — bags are faster to get and the quantities are small. Over that, the labour of mixing adds up and a ready-mix truck becomes the better call."
-              />
-            )}
+            <ApprenticeWorking
+              steps={postWorkingSteps}
+              finalAnswer={postResult.outputs.useBagMix ? `${postResult.outputs.bagCount} bags` : `${postResult.outputs.orderVolume} m³`}
+              finalLabel={postResult.outputs.useBagMix ? '20kg bags needed' : 'Ready-mix to order'}
+              visible={settings.apprenticeMode}
+              id="concrete-postholes"
+            />
 
             <JobNameInput
               value={jobName}

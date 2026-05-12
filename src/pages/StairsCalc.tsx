@@ -75,6 +75,16 @@ export function StairsCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  const stairRise = result ? parseFloat(inputs.totalRise) : 0;
+  const stairPrefRiser = result ? parseFloat(inputs.preferredRiser) : 0;
+
+  const stairsSteps: WorkingStep[] = result ? [
+    { label: 'Total rise', explanation: 'The full height from floor to floor', result: `${stairRise} mm` },
+    { label: 'Risers needed', explanation: 'Divide the rise by your preferred riser height', calculation: `${stairRise} ÷ ${stairPrefRiser} = ${(stairRise / stairPrefRiser).toFixed(1)}`, result: `Round to ${result.outputs.riserCount} risers` },
+    { label: 'Actual riser height', explanation: 'Divide the total rise by the number of risers for the real value', calculation: `${stairRise} ÷ ${result.outputs.riserCount}`, result: `${result.outputs.riserHeight} mm each` },
+    { label: 'Treads', explanation: 'Always one less tread than risers', calculation: `${result.outputs.riserCount} - 1`, result: `${result.outputs.treadCount} treads` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -192,12 +202,13 @@ export function StairsCalc() {
               </div>
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="The riser-to-tread relationship determines whether stairs feel natural to walk. Too steep and people grip the rail; too shallow and they shuffle. NCC sets the limits — your job is to land in the middle of the range, not just inside it."
-              />
-            )}
+            <ApprenticeWorking
+              steps={stairsSteps}
+              finalAnswer={`${result.outputs.riserCount} risers, ${result.outputs.treadCount} treads`}
+              finalLabel="Stair layout"
+              visible={settings.apprenticeMode}
+              id="stairs"
+            />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

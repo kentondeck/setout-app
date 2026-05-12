@@ -70,6 +70,18 @@ export function RoofCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  const roofPitch = result ? parseFloat(inputs.pitchDegrees) : 0;
+  const roofRunMm = result ? Math.round(result.outputs.run * 1000) : 0;
+  const roofRidgeMm = result ? Math.round(result.outputs.ridgeHeight * 1000) : 0;
+  const roofRafterMm = result ? Math.round(result.outputs.totalRafterLength * 1000) : 0;
+
+  const roofSteps: WorkingStep[] = result ? [
+    { label: 'Run', explanation: 'The horizontal distance from the wall to the ridge', result: `${roofRunMm} mm` },
+    { label: 'Pitch', explanation: 'The angle of the roof from horizontal', result: `${roofPitch}°` },
+    { label: 'Ridge height', explanation: 'The run times the tangent of the pitch angle gives you the rise', calculation: `${roofRunMm} × tan(${roofPitch}°) = ${roofRidgeMm}`, result: `${roofRidgeMm} mm rise` },
+    { label: 'Rafter length', explanation: 'The run divided by the cosine of the pitch gives the rafter length', calculation: `${roofRunMm} ÷ cos(${roofPitch}°) = ${roofRafterMm}`, result: `${roofRafterMm} mm rafter` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -155,12 +167,13 @@ export function RoofCalc() {
               </div>
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="All rafter work flows from two numbers: the run (half your building width) and the pitch. Once you have the rafter length and the two cut angles, you can mark and cut every rafter on the job identically. The plumb cut goes at the ridge; the seat cut (bird's mouth) sits on the wall plate."
-              />
-            )}
+            <ApprenticeWorking
+              steps={roofSteps}
+              finalAnswer={`${roofRafterMm}mm`}
+              finalLabel="Common rafter length"
+              visible={settings.apprenticeMode}
+              id="roof"
+            />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

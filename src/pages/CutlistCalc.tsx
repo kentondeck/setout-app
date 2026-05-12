@@ -92,6 +92,20 @@ export function CutlistCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
+  const cutStockMm = result ? parseFloat(stockLength) : 0;
+  const cutCalcString = result
+    ? rows.filter(r => parseFloat(r.length) > 0 && parseInt(r.qty) > 0)
+        .map(r => `${r.qty} × ${Math.round(parseFloat(r.length))}`)
+        .join(' + ')
+    : '';
+
+  const cutlistSteps: WorkingStep[] = result ? [
+    { label: 'Stock length', explanation: 'The length of timber you can buy at the yard', result: `${cutStockMm} mm` },
+    { label: 'Total cuts needed', explanation: 'Add up the lengths of every piece you need to cut', calculation: cutCalcString, result: `${result.outputs.totalCutLength} mm of cuts` },
+    { label: 'Stock lengths to buy', explanation: 'Divide the total cut length by your stock length, then round up', calculation: `${result.outputs.totalCutLength} ÷ ${cutStockMm} = ${(result.outputs.totalCutLength / cutStockMm).toFixed(2)}`, result: `${result.outputs.stockCount} lengths` },
+    { label: 'Offcut waste', explanation: 'The leftover after all your cuts are made', calculation: `(${result.outputs.stockCount} × ${cutStockMm}) - ${result.outputs.totalCutLength}`, result: `${result.outputs.totalWaste} mm waste` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -290,12 +304,13 @@ export function CutlistCalc() {
               ))}
             </div>
 
-            {settings.apprenticeMode && (
-              <ApprenticeWorking
-                steps={result.steps}
-                why="Cutting the longest pieces first (first-fit decreasing) is the standard way to minimise waste — short offcuts can fill gaps that long pieces can't. A 3mm kerf is deducted per cut because that's what the blade removes. Even a 5% waste improvement across a big framing job is meaningful money."
-              />
-            )}
+            <ApprenticeWorking
+              steps={cutlistSteps}
+              finalAnswer={`${result.outputs.stockCount} lengths`}
+              finalLabel="Stock lengths to order"
+              visible={settings.apprenticeMode}
+              id="cutlist"
+            />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

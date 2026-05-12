@@ -15,12 +15,18 @@ interface Inputs {
   buildingWidth: string;
   pitchDegrees: string;
   overhang: string;
+  rafterDepth: string;
+  plateWidth: string;
+  ridgeThickness: string;
 }
 
 const DEFAULTS: Inputs = {
   buildingWidth: '',
   pitchDegrees: '22.5',
   overhang: '0.6',
+  rafterDepth: '',
+  plateWidth: '',
+  ridgeThickness: '',
 };
 
 export function RoofCalc() {
@@ -41,6 +47,9 @@ export function RoofCalc() {
     const buildingWidth = parseFloat(inputs.buildingWidth);
     const pitchDegrees = parseFloat(inputs.pitchDegrees);
     const overhang = parseFloat(inputs.overhang);
+    const rafterDepth = parseFloat(inputs.rafterDepth) || undefined;
+    const plateWidth = parseFloat(inputs.plateWidth) || undefined;
+    const ridgeThickness = parseFloat(inputs.ridgeThickness) || undefined;
 
     if (!buildingWidth || buildingWidth <= 0) {
       setError('Enter a building width to calculate.');
@@ -53,7 +62,11 @@ export function RoofCalc() {
 
     setError('');
 
-    const calc = calculateRoof({ buildingWidth, pitchDegrees, overhang: isNaN(overhang) ? 0 : overhang });
+    const calc = calculateRoof({
+      buildingWidth, pitchDegrees,
+      overhang: isNaN(overhang) ? 0 : overhang,
+      rafterDepth, plateWidth, ridgeThickness,
+    });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -63,7 +76,13 @@ export function RoofCalc() {
       calculatorId: 'roof',
       timestamp: Date.now(),
       jobName: jobName || undefined,
-      inputs: { buildingWidth, pitchDegrees, overhang: isNaN(overhang) ? 0 : overhang },
+      inputs: {
+        buildingWidth, pitchDegrees,
+        overhang: isNaN(overhang) ? 0 : overhang,
+        ...(rafterDepth !== undefined && { rafterDepth }),
+        ...(plateWidth !== undefined && { plateWidth }),
+        ...(ridgeThickness !== undefined && { ridgeThickness }),
+      },
       outputs: calc.outputs,
     });
 
@@ -128,6 +147,37 @@ export function RoofCalc() {
           </div>
         </div>
 
+        {/* Optional rafter cuts inputs */}
+        <div
+          style={{
+            background: 'var(--color-card)',
+            border: '0.5px solid var(--color-border)',
+            borderRadius: 'var(--radius-card)',
+            padding: '18px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}
+        >
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
+            RAFTER CUTS <span style={{ fontWeight: 400 }}>— optional</span>
+          </p>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} unit="mm" placeholder="e.g. 140" hint="timber size" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} unit="mm" placeholder="e.g. 90" hint="birdsmouth seat" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} unit="mm" placeholder="e.g. 35" hint="for shortening" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }} />
+          </div>
+        </div>
+
         {error && (
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
@@ -166,6 +216,77 @@ export function RoofCalc() {
                 <ResultCard label="Seat cut" value={result.outputs.seatCutAngle} unit="°" />
               </div>
             </div>
+
+            {/* Rafter cut details — only when optional inputs were provided */}
+            {(result.outputs.birdsmouthPlumbDepth > 0 || result.outputs.ridgeShortening > 0) && (
+              <div
+                style={{
+                  background: 'var(--color-card)',
+                  border: '0.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-card)',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12,
+                }}
+              >
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>RAFTER CUTS</p>
+                {result.outputs.birdsmouthPlumbDepth > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Birdsmouth</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <ResultCard label="Seat width" value={parseFloat(inputs.plateWidth)} unit="mm" />
+                      <ResultCard label="Plumb depth" value={result.outputs.birdsmouthPlumbDepth} unit="mm" />
+                    </div>
+                    {result.outputs.remainingDepth > 0 && (
+                      <div
+                        style={{
+                          background: result.outputs.remainingDepth < result.outputs.birdsmouthPlumbDepth * 0.5
+                            ? '#fff7ed'
+                            : 'var(--color-bg)',
+                          border: `0.5px solid ${result.outputs.remainingDepth < result.outputs.birdsmouthPlumbDepth * 0.5 ? '#fbbf24' : 'var(--color-border)'}`,
+                          borderRadius: 8,
+                          padding: '7px 12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>Remaining depth</span>
+                        <span style={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: result.outputs.remainingDepth < result.outputs.birdsmouthPlumbDepth * 0.5 ? '#92400e' : 'var(--color-text)' }}>
+                          {result.outputs.remainingDepth}mm
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {result.outputs.ridgeShortening > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>Ridge</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <ResultCard label="Line length" value={Math.round(result.outputs.rafterLength * 1000)} unit="mm" />
+                      <ResultCard label="Shorten by" value={result.outputs.ridgeShortening} unit="mm" />
+                    </div>
+                    <div
+                      style={{
+                        background: 'var(--color-bg)',
+                        border: '0.5px solid var(--color-border)',
+                        borderRadius: 8,
+                        padding: '7px 12px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>Net rafter (seat → ridge face)</span>
+                      <span style={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: 'var(--color-text)' }}>
+                        {result.outputs.netRafterLengthMm}mm
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <ApprenticeWorking
               steps={roofSteps}

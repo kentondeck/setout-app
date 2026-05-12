@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../App';
+import { CoastalNote } from '../components/CoastalNote';
 
 interface Inputs {
   wallLength: string;
@@ -491,6 +492,8 @@ export function FramingCalc() {
             </div>
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+
+            <CoastalNote />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.framing[settings.region]}

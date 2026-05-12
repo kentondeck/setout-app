@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../App';
+import { CoastalNote } from '../components/CoastalNote';
 
 interface Inputs {
   deckLength: string;
@@ -334,6 +335,8 @@ export function DeckingCalc() {
               onChange={setJobName}
               onSave={name => updateEntry(lastEntryId, { jobName: name })}
             />
+
+            <CoastalNote />
 
             <p
               style={{

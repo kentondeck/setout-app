@@ -145,7 +145,7 @@ export function FramingCalc() {
 
           {/* Noggins toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Include noggins</span>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Include nogs</span>
             <button
               onClick={() => setIncludeNoggins(v => !v)}
               style={{
@@ -178,7 +178,7 @@ export function FramingCalc() {
           {includeNoggins && (
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <NumberInput label="Noggin rows" value={inputs.nogginRows} onChange={set('nogginRows')} unit="" placeholder="1" hint="rows per stud bay" />
+                <NumberInput label="Nog rows" value={inputs.nogginRows} onChange={set('nogginRows')} unit="" placeholder="1" hint="rows per stud bay" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }} />
             </div>
@@ -222,14 +222,14 @@ export function FramingCalc() {
                 <ResultCard label="Bottom plate" value={result.outputs.bottomPlateLineal} unit="lm" />
               </div>
               {includeNoggins && (
-                <ResultCard label="Noggins" value={result.outputs.nogginCount} />
+                <ResultCard label="Nogs" value={result.outputs.nogginCount} />
               )}
             </div>
 
             {settings.apprenticeMode && (
               <ApprenticeWorking
                 steps={result.steps}
-                why="Getting your framing quantities right before you start means one trip to the yard. Stud count drives everything — get that wrong and your plates and noggins are off too. The double top plate is often forgotten until you're at the counter."
+                why="Getting your framing quantities right before you start means one trip to the yard. Stud count drives everything — get that wrong and your plates and nogs are off too. The double top plate is often forgotten until you're at the counter."
               />
             )}
 

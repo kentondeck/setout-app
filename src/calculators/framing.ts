@@ -63,20 +63,20 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
     ...(includeNoggins
       ? [
           {
-            label: 'Noggin count',
-            formula: '(stud count − 1) × noggin rows',
-            result: `(${studCount} − 1) × ${nogginRows} = ${nogginCount} noggins`,
+            label: 'Nog count',
+            formula: '(stud count − 1) × nog rows',
+            result: `(${studCount} − 1) × ${nogginRows} = ${nogginCount} nogs`,
           },
           {
-            label: 'Noggins lineal metres',
-            formula: 'noggin count × (stud spacing − 90mm stud width)',
+            label: 'Nogs lineal metres',
+            formula: 'nog count × (stud spacing − 90mm stud width)',
             result: `${nogginCount} × ${((studSpacing - 90) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
           },
         ]
       : []),
     {
       label: 'Total lineal metres',
-      formula: 'studs + top plates + bottom plate' + (includeNoggins ? ' + noggins' : ''),
+      formula: 'studs + top plates + bottom plate' + (includeNoggins ? ' + nogs' : ''),
       result: `${studsLineal} + ${topPlateLineal} + ${bottomPlateLineal}${includeNoggins ? ` + ${nogginsLineal}` : ''} = ${totalLinealMetres}lm`,
     },
   ];

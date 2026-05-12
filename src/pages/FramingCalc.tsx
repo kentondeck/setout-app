@@ -6,6 +6,7 @@ import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
 import { calculateFraming } from '../calculators/framing';
 import type { FramingOutputs } from '../calculators/framing';
+import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
@@ -35,6 +36,8 @@ export function FramingCalc() {
   const [includeNoggins, setIncludeNoggins] = useState(true);
   const [doubleStuds, setDoubleStuds] = useState(false);
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);
+  const [plateStock, setPlateStock] = useState(4800);
+  const [nogginStock, setNogginStock] = useState(2400);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
@@ -80,9 +83,24 @@ export function FramingCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
-  // Build new-format working steps from actual calculator outputs
+  // Derived values for material & cut list
   const wallLengthMm = result ? Math.round(parseFloat(inputs.wallLength) * 1000) : 0;
-  const studSpacingMm = result ? parseFloat(inputs.studSpacing) : 0;
+  const wallHeightMm = result ? Math.round(parseFloat(inputs.wallHeight) * 1000) : 0;
+  const resolvedSpacingMm = inputs.studSpacing === 'custom'
+    ? (parseFloat(inputs.customSpacing) || 450)
+    : parseFloat(inputs.studSpacing);
+  const nogginLengthMm = Math.round(resolvedSpacingMm - 90);
+  const plateRuns = (doubleTopPlate ? 2 : 1) + 1;
+  const piecesPerRun = wallLengthMm > 0 ? Math.ceil(wallLengthMm / plateStock) : 0;
+  const totalPlateStocks = piecesPerRun * plateRuns;
+  const plateWasteMm = piecesPerRun * plateStock - wallLengthMm;
+  const nogginCount = result?.outputs.nogginCount ?? 0;
+  const nogginCutlist = result && includeNoggins && nogginCount > 0 && nogginLengthMm > 0 && nogginLengthMm <= nogginStock
+    ? calculateCutlist({ stockLength: nogginStock, cuts: [{ length: nogginLengthMm, qty: nogginCount }] })
+    : null;
+
+  // Build new-format working steps from actual calculator outputs
+  const studSpacingMm = inputs.studSpacing === 'custom' ? (parseFloat(inputs.customSpacing) || 450) : parseFloat(inputs.studSpacing);
   const studsBefore = result ? result.outputs.studCount - 1 : 0;
 
   const framingSteps: WorkingStep[] = result ? [
@@ -344,6 +362,133 @@ export function FramingCalc() {
               visible={settings.apprenticeMode}
               id="framing"
             />
+
+            {/* Material & Cut List */}
+            <div style={{
+              background: 'var(--color-card)',
+              border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              padding: '18px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
+              {[
+                { label: 'Studs', qty: result.outputs.studCount, mm: wallHeightMm },
+                { label: `Top plate (${doubleTopPlate ? '2 runs' : '1 run'})`, qty: doubleTopPlate ? 2 : 1, mm: wallLengthMm },
+                { label: 'Bottom plate', qty: 1, mm: wallLengthMm },
+                ...(includeNoggins && nogginCount > 0 ? [{ label: 'Noggins', qty: nogginCount, mm: nogginLengthMm }] : []),
+              ].map(row => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
+                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    {row.qty} × {row.mm}mm
+                  </span>
+                </div>
+              ))}
+
+              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — PLATES</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[4200, 4800, 6000].map(len => (
+                  <button
+                    key={len}
+                    onClick={() => setPlateStock(len)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 0',
+                      borderRadius: 10,
+                      border: '0.5px solid var(--color-border)',
+                      background: plateStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                      color: plateStock === len ? '#fff' : 'var(--color-text)',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      fontFamily: 'inherit',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {(len / 1000).toFixed(1)}m
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                  {totalPlateStocks} × {(plateStock / 1000).toFixed(1)}m lengths
+                </span>
+                {piecesPerRun > 1 && (
+                  <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{piecesPerRun} per run, joined</span>
+                )}
+              </div>
+              {plateWasteMm > 0 && (
+                <span style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: -8 }}>
+                  {plateWasteMm}mm off-cut per run
+                </span>
+              )}
+
+              {includeNoggins && nogginCount > 0 && (
+                <>
+                  <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGGINS</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[2400, 4800].map(len => (
+                      <button
+                        key={len}
+                        onClick={() => setNogginStock(len)}
+                        style={{
+                          flex: 1,
+                          padding: '8px 0',
+                          borderRadius: 10,
+                          border: '0.5px solid var(--color-border)',
+                          background: nogginStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                          color: nogginStock === len ? '#fff' : 'var(--color-text)',
+                          fontSize: 13,
+                          fontWeight: 500,
+                          fontFamily: 'inherit',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {(len / 1000).toFixed(1)}m
+                      </button>
+                    ))}
+                  </div>
+                  {nogginCutlist ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                          {nogginCutlist.outputs.stockCount} × {(nogginStock / 1000).toFixed(1)}m lengths
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                          {nogginCutlist.outputs.wastePercent}% waste
+                        </span>
+                      </div>
+                      {nogginCutlist.plan.map((stick, i) => (
+                        <div key={i} style={{
+                          background: 'var(--color-bg)',
+                          borderRadius: 8,
+                          padding: '8px 12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}>
+                          <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
+                            Length {i + 1} — {stick.cuts.reduce((s, c) => s + c.qty, 0)} × {nogginLengthMm}mm
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                            {stick.waste}mm off-cut
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                      Noggin length ({nogginLengthMm}mm) exceeds selected stock
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
 

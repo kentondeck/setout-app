@@ -15,12 +15,14 @@ interface Inputs {
   totalRise: string;
   totalRun: string;
   preferredRiser: string;
+  preferredGoing: string;
 }
 
 const DEFAULTS: Inputs = {
   totalRise: '',
   totalRun: '',
   preferredRiser: '175',
+  preferredGoing: '',
 };
 
 export function StairsCalc() {
@@ -41,13 +43,14 @@ export function StairsCalc() {
     const totalRise = parseFloat(inputs.totalRise);
     const totalRun = parseFloat(inputs.totalRun);
     const preferredRiser = parseFloat(inputs.preferredRiser);
+    const preferredGoing = inputs.preferredGoing ? parseFloat(inputs.preferredGoing) : undefined;
 
     if (!totalRise || totalRise <= 0) {
       setError('Enter a total rise to calculate.');
       return;
     }
-    if (!totalRun || totalRun <= 0) {
-      setError('Enter a total run to calculate.');
+    if ((!totalRun || totalRun <= 0) && !preferredGoing) {
+      setError('Enter a total run, or set a preferred going to calculate the run.');
       return;
     }
     if (!preferredRiser || preferredRiser <= 0) {
@@ -58,7 +61,13 @@ export function StairsCalc() {
     setError('');
 
     const limits = STAIR_LIMITS[settings.region];
-    const calc = calculateStairs({ totalRise, totalRun, preferredRiser, limits });
+    const calc = calculateStairs({
+      totalRise,
+      ...(totalRun && totalRun > 0 ? { totalRun } : {}),
+      preferredRiser,
+      preferredGoing,
+      limits,
+    });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -68,7 +77,7 @@ export function StairsCalc() {
       calculatorId: 'stairs',
       timestamp: Date.now(),
       jobName: jobName || undefined,
-      inputs: { totalRise, totalRun, preferredRiser },
+      inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}) },
       outputs: calc.outputs,
     });
 
@@ -120,14 +129,16 @@ export function StairsCalc() {
               <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} unit="mm" placeholder="e.g. 2700" hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} unit="mm" placeholder="e.g. 3500" hint="horizontal space" />
+              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} unit="mm" placeholder="optional" hint="leave blank to calculate" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} unit="mm" placeholder="175" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} unit="mm" placeholder="optional" hint={`${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
+            </div>
           </div>
         </div>
 
@@ -158,19 +169,31 @@ export function StairsCalc() {
 
         {result && (
           <>
+            {/* Derived run callout */}
+            {result.warnings.runDerived && (
+              <div style={{
+                background: 'var(--color-card)',
+                border: '0.5px solid var(--color-border)',
+                borderRadius: 10,
+                padding: '12px 14px',
+              }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                  Total run calculated from preferred going — <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{result.outputs.treadCount} × {inputs.preferredGoing}mm = {result.outputs.treadCount * parseFloat(inputs.preferredGoing)}mm</span>
+                </p>
+              </div>
+            )}
+
             {/* Compliance warnings */}
             {(result.warnings.riserOutOfRange || result.warnings.treadOutOfRange) && (
-              <div
-                style={{
-                  background: '#fff8e1',
-                  border: '0.5px solid #f59e0b',
-                  borderRadius: 10,
-                  padding: '12px 14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                }}
-              >
+              <div style={{
+                background: '#fff8e1',
+                border: '0.5px solid #f59e0b',
+                borderRadius: 10,
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#92400e' }}>
                   Compliance check — {STAIR_LIMITS[settings.region].standard}
                 </p>
@@ -180,9 +203,16 @@ export function StairsCalc() {
                   </p>
                 )}
                 {result.warnings.treadOutOfRange && (
-                  <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>
-                    Tread {result.outputs.treadDepth}mm is outside the allowed range ({STAIR_LIMITS[settings.region].treadMin}–{STAIR_LIMITS[settings.region].treadMax}mm)
-                  </p>
+                  <>
+                    <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>
+                      Going {result.outputs.treadDepth}mm is outside the allowed range ({STAIR_LIMITS[settings.region].treadMin}–{STAIR_LIMITS[settings.region].treadMax}mm)
+                    </p>
+                    {result.warnings.suggestedMinRun !== undefined && (
+                      <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>
+                        For a compliant going, push total run to {result.warnings.suggestedMinRun}–{result.warnings.suggestedMaxRun}mm
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}

@@ -12,11 +12,12 @@ export interface CladdingInputs {
 export interface CladdingOutputs extends Record<string, number> {
   courseCount: number;
   faceCover: number;       // mm — actual even face cover per course
+  topBoardRip: number;     // mm — rip width to keep on the top board (= faceCover)
   totalLm: number;         // lm — boards only
   stockCount: number;      // boards needed at given stock length
   wastePercent: number;    // %
   firstMark: number;       // mm — first rod mark from datum
-  lastMark: number;        // mm — top of last course
+  lastMark: number;        // mm — bottom of last course
 }
 
 export interface CladdingResult {
@@ -44,6 +45,8 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
 
   const firstMark = rodMarks[0];
   const lastMark = Math.round(startOffset + (courseCount - 1) * faceCover);
+  // Top board is always ripped — its top edge would overshoot wall height by (boardWidth - faceCover)
+  const topBoardRip = Math.round(faceCover);
 
   // Lineal metres of boards: one board-width per course for the full wall width
   const totalLm = parseFloat(((wallWidth / 1000) * courseCount).toFixed(2));
@@ -85,6 +88,11 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
       result: `${firstMark}mm, ${Math.round(startOffset + faceCover)}mm … ${lastMark}mm`,
     },
     {
+      label: 'Top board rip',
+      formula: 'top board has no board above to lap — rip down to face cover width',
+      result: `rip top board to ${topBoardRip}mm (cut off ${boardWidth - topBoardRip}mm)`,
+    },
+    {
       label: 'Boards required',
       formula: 'courses × ceil( wall width ÷ board length )',
       result: `${courseCount} × ${boardsPerCourse} = ${stockCount} boards at ${boardLength}mm`,
@@ -92,7 +100,7 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   ];
 
   return {
-    outputs: { courseCount, faceCover, totalLm, stockCount, wastePercent, firstMark, lastMark },
+    outputs: { courseCount, faceCover, topBoardRip, totalLm, stockCount, wastePercent, firstMark, lastMark },
     rodMarks,
     steps,
   };

@@ -174,14 +174,14 @@ export function CladdingCalc() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Total lineal m" value={result.outputs.totalLm} unit="lm" />
-                <ResultCard label="First mark" value={result.outputs.firstMark} unit="mm" />
+                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} unit="mm" />
               </div>
             </div>
 
             {/* Story rod */}
             <div style={{ ...cardStyle, gap: 12 }}>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
-                STORY ROD — {result.outputs.faceCover}mm centres
+                STORY ROD — {result.outputs.faceCover}mm centres · top board ripped to {result.outputs.topBoardRip}mm
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {result.rodMarks.map((mark, i) => (

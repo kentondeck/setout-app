@@ -6,6 +6,7 @@ import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
 import { calculateDecking } from '../calculators/decking';
 import type { DeckingOutputs } from '../calculators/decking';
+import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
@@ -35,6 +36,8 @@ export function DeckingCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: DeckingOutputs; steps: WorkingStep[] } | null>(null);
+  const [joistStock, setJoistStock] = useState(4800);
+  const [bearerStock, setBearerStock] = useState(4800);
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
@@ -86,11 +89,21 @@ export function DeckingCalc() {
   const js = result ? parseFloat(inputs.joistSpacing) : 0;
   const coverage = bw + bg;
 
+  // joists span the width, bearers span the length
+  const joistLengthMm = deckWidthMm;
+  const bearerLengthMm = deckLengthMm;
+  const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock
+    ? calculateCutlist({ stockLength: joistStock, cuts: [{ length: joistLengthMm, qty: result.outputs.joistCount }] })
+    : null;
+  const bearerCutlist = result && bearerLengthMm > 0 && bearerLengthMm <= bearerStock
+    ? calculateCutlist({ stockLength: bearerStock, cuts: [{ length: bearerLengthMm, qty: result.outputs.bearerCount }] })
+    : null;
+
   const deckingSteps: WorkingStep[] = result ? [
     { label: 'Deck length', explanation: 'The length your boards will run along', result: `${deckLengthMm} mm` },
     { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${bw} + ${bg}`, result: `${coverage} mm per board` },
-    { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${deckLengthMm} ÷ ${coverage} = ${(deckLengthMm / coverage).toFixed(1)}`, result: `Round up to ${result.outputs.boardCount} boards` },
-    { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${deckWidthMm} ÷ ${js} = ${(deckWidthMm / js).toFixed(1)}, then + 1`, result: `${result.outputs.joistCount} joists` },
+    { label: 'Boards needed', explanation: 'Divide the deck width by how much each board covers', calculation: `${deckWidthMm} ÷ ${coverage} = ${(deckWidthMm / coverage).toFixed(1)}`, result: `Round up to ${result.outputs.boardCount} boards` },
+    { label: 'Joists needed', explanation: 'Divide the deck length by the joist spacing, then add one for the end', calculation: `${deckLengthMm} ÷ ${js} = ${(deckLengthMm / js).toFixed(1)}, then + 1`, result: `${result.outputs.joistCount} joists` },
   ] : [];
 
   return (
@@ -198,6 +211,122 @@ export function DeckingCalc() {
               visible={settings.apprenticeMode}
               id="decking"
             />
+
+            {/* Material & Cut List */}
+            <div style={{
+              background: 'var(--color-card)',
+              border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              padding: '18px 16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+            }}>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
+              {[
+                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckLengthMm },
+                { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
+                { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
+                { label: 'Fixings', qty: result.outputs.fixingsCount, mm: null },
+              ].map(row => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
+                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                    {row.mm !== null ? `${row.qty} × ${row.mm}mm` : `${row.qty} screws`}
+                  </span>
+                </div>
+              ))}
+
+              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+
+              {/* Joists cut list */}
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[3000, 4800, 6000].map(len => (
+                  <button key={len} onClick={() => setJoistStock(len)} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 10,
+                    border: '0.5px solid var(--color-border)',
+                    background: joistStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                    color: joistStock === len ? '#fff' : 'var(--color-text)',
+                    fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                  }}>
+                    {(len / 1000).toFixed(1)}m
+                  </button>
+                ))}
+              </div>
+              {joistCutlist ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                      {joistCutlist.outputs.stockCount} × {(joistStock / 1000).toFixed(1)}m lengths
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                      {joistCutlist.outputs.wastePercent}% waste
+                    </span>
+                  </div>
+                  {joistCutlist.plan.map((stick, i) => (
+                    <div key={i} style={{
+                      background: 'var(--color-bg)', borderRadius: 8, padding: '8px 12px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
+                        Length {i + 1} — {stick.cuts.reduce((s, c) => s + c.qty, 0)} × {joistLengthMm}mm
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{stick.waste}mm off-cut</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                  Joist length ({joistLengthMm}mm) exceeds selected stock — increase stock size or join on bearer
+                </p>
+              )}
+
+              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+
+              {/* Bearers cut list */}
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — BEARERS</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[3600, 4800, 6000].map(len => (
+                  <button key={len} onClick={() => setBearerStock(len)} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 10,
+                    border: '0.5px solid var(--color-border)',
+                    background: bearerStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                    color: bearerStock === len ? '#fff' : 'var(--color-text)',
+                    fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                  }}>
+                    {(len / 1000).toFixed(1)}m
+                  </button>
+                ))}
+              </div>
+              {bearerCutlist ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                      {bearerCutlist.outputs.stockCount} × {(bearerStock / 1000).toFixed(1)}m lengths
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                      {bearerCutlist.outputs.wastePercent}% waste
+                    </span>
+                  </div>
+                  {bearerCutlist.plan.map((stick, i) => (
+                    <div key={i} style={{
+                      background: 'var(--color-bg)', borderRadius: 8, padding: '8px 12px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    }}>
+                      <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
+                        Length {i + 1} — {stick.cuts.reduce((s, c) => s + c.qty, 0)} × {bearerLengthMm}mm
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{stick.waste}mm off-cut</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                  Bearer length ({bearerLengthMm}mm) exceeds selected stock — increase stock size or join over post
+                </p>
+              )}
+            </div>
 
             {/* Job name + compliance note */}
             <JobNameInput

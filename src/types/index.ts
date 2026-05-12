@@ -6,7 +6,8 @@ export type CalculatorId =
   | 'cutlist'
   | 'baluster'
   | 'concrete'
-  | 'raked';
+  | 'raked'
+  | 'cladding';
 
 export type Region = 'AU' | 'NZ';
 

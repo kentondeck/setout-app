@@ -65,4 +65,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '08',
     svgPath: 'M4 18V6M9 18V9M14 18V12M19 18V15M4 6l15 9',
   },
+  {
+    id: 'cladding',
+    label: 'Cladding',
+    subtitle: 'Story rod, boards',
+    number: '09',
+    svgPath: 'M3 5h18M3 9h18M3 13h18M3 17h18M3 5v16M21 5v16',
+  },
 ];

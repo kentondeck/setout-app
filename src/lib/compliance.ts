@@ -29,6 +29,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Raked wall framing per AS 1684. Verify stud sizes and spacing against span tables for your timber species, wall height, and wind classification.',
     NZ: 'Raked wall framing per NZS 3604. Verify stud sizes against span tables for your timber species, wall height, and wind zone.',
   },
+  cladding: {
+    AU: 'Cladding installation per AS 1684 and manufacturer specifications. Lap and fixing requirements vary by product and exposure zone — verify against your cladding product data sheet.',
+    NZ: 'Cladding installation per NZS 3604 and manufacturer specifications. Lap and fixing requirements vary by product and wind/moisture zone — verify against your cladding product data sheet.',
+  },
 };
 
 export interface StairLimits {

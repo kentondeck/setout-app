@@ -16,6 +16,7 @@ import { CutlistCalc } from './pages/CutlistCalc';
 import { BalusterCalc } from './pages/BalusterCalc';
 import { ConcreteCalc } from './pages/ConcreteCalc';
 import { RakedWallCalc } from './pages/RakedWallCalc';
+import { CladdingCalc } from './pages/CladdingCalc';
 
 interface SettingsCtx {
   settings: Settings;
@@ -59,6 +60,7 @@ function AppShell() {
           <Route path="/calc/baluster" element={<BalusterCalc />} />
           <Route path="/calc/concrete" element={<ConcreteCalc />} />
           <Route path="/calc/raked" element={<RakedWallCalc />} />
+          <Route path="/calc/cladding" element={<CladdingCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

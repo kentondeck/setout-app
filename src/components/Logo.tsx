@@ -8,7 +8,7 @@ export function Logo() {
         lineHeight: 1,
       }}
     >
-      <span style={{ color: 'var(--color-text)' }}>Set</span>
+      <span style={{ color: 'var(--color-text)' }}>set</span>
       <span style={{ color: 'var(--color-orange)' }}>out</span>
     </span>
   );

@@ -7,7 +7,8 @@ export type CalculatorId =
   | 'baluster'
   | 'concrete'
   | 'raked'
-  | 'cladding';
+  | 'cladding'
+  | 'setout';
 
 export type Region = 'AU' | 'NZ';
 

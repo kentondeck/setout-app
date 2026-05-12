@@ -33,6 +33,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Cladding installation per AS 1684 and manufacturer specifications. Lap and fixing requirements vary by product and exposure zone — verify against your cladding product data sheet.',
     NZ: 'Cladding installation per NZS 3604 and manufacturer specifications. Lap and fixing requirements vary by product and wind/moisture zone — verify against your cladding product data sheet.',
   },
+  setout: {
+    AU: 'General squareness tolerance for residential construction is ±3mm in 3m. Verify with your engineer or project specification for structural elements.',
+    NZ: 'General squareness tolerance for residential construction is ±3mm in 3m. Verify with your engineer or project specification for structural elements.',
+  },
 };
 
 export interface StairLimits {

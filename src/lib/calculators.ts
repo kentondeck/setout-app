@@ -72,4 +72,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '09',
     svgPath: 'M3 5h18M3 9h18M3 13h18M3 17h18M3 5v16M21 5v16',
   },
+  {
+    id: 'setout',
+    label: 'Set Out',
+    subtitle: 'Square corners',
+    number: '10',
+    svgPath: 'M4 20V4M4 20h16M4 4l16 16',
+  },
 ];

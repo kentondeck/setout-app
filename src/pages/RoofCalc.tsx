@@ -172,7 +172,7 @@ export function RoofCalc() {
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} unit="mm" placeholder="e.g. 35" hint="for shortening" />
+              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} unit="mm" placeholder="e.g. 50" hint="for shortening" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

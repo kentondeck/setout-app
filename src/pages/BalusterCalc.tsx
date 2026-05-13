@@ -126,7 +126,7 @@ export function BalusterCalc() {
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Max gap" value={inputs.maxGap} onChange={set('maxGap')} unit="mm" placeholder={String(BALUSTER_MAX_GAP[settings.region])} hint={settings.region === 'NZ' ? '100mm NZBC F4' : '125mm NCC'} />
+              <NumberInput label="Max gap" value={inputs.maxGap} onChange={set('maxGap')} unit="mm" placeholder={String(BALUSTER_MAX_GAP[settings.region])} hint={settings.region === 'NZ' ? '100mm NZS 3604' : '125mm AS 1657'} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

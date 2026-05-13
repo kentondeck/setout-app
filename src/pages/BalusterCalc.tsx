@@ -116,19 +116,14 @@ export function BalusterCalc() {
             gap: 16,
           }}
         >
+          <NumberInput label="Span length" value={inputs.totalLength} onChange={set('totalLength')} units={['mm', 'm']} placeholder="e.g. 3600" hint="post to post" />
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Span length" value={inputs.totalLength} onChange={set('totalLength')} unit="mm" placeholder="e.g. 3600" hint="post to post" />
+              <NumberInput label="Baluster width" value={inputs.balusterWidth} onChange={set('balusterWidth')} units={['mm', 'm']} placeholder="42" hint="timber size" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Baluster width" value={inputs.balusterWidth} onChange={set('balusterWidth')} unit="mm" placeholder="42" />
+              <NumberInput label="Max gap" value={inputs.maxGap} onChange={set('maxGap')} units={['mm', 'm']} placeholder={String(BALUSTER_MAX_GAP[settings.region])} hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1657'} />
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Max gap" value={inputs.maxGap} onChange={set('maxGap')} unit="mm" placeholder={String(BALUSTER_MAX_GAP[settings.region])} hint={settings.region === 'NZ' ? '100mm NZS 3604' : '125mm AS 1657'} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }} />
           </div>
         </div>
 

@@ -162,10 +162,10 @@ export function FramingCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} unit="m" placeholder="e.g. 6.0" />
+              <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['m', 'mm']} placeholder="e.g. 6.0" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} unit="m" placeholder="2.4" />
+              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['m', 'mm']} placeholder="2.4" />
             </div>
           </div>
 
@@ -202,7 +202,7 @@ export function FramingCalc() {
                   label=""
                   value={inputs.customSpacing}
                   onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))}
-                  unit="mm"
+                  units={['mm', 'm']}
                   placeholder="e.g. 300"
                 />
               </div>

@@ -324,7 +324,7 @@ export function DeckingCalc() {
                     {joistCutlist.outputs.stockCount} × {(joistStock / 1000).toFixed(1)}m lengths
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                    {joistCutlist.plan[0]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
+                    {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
                   </span>
                 </div>
               ) : (

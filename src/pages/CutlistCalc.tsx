@@ -179,7 +179,7 @@ export function CutlistCalc() {
                   value={row.length}
                   onChange={v => updateRow(row.id, 'length', v)}
                   units={['mm', 'm']}
-                  placeholder="e.g. 1200"
+                  placeholder="1200"
                 />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

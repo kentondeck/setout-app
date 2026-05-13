@@ -167,7 +167,7 @@ export function Settings() {
               >
                 <span>{r === 'AU' ? '🇦🇺' : '🇳🇿'}</span>
                 <span>{r === 'AU' ? 'Australia' : 'New Zealand'}</span>
-                <span style={{ fontSize: 11, opacity: 0.7 }}>{r === 'AU' ? 'NCC / AS 1684' : 'NZBC / NZS 3604'}</span>
+                <span style={{ fontSize: 11, opacity: 0.7 }}>{r === 'AU' ? 'AS 1684' : 'NZS 3604'}</span>
               </button>
             );
           })}

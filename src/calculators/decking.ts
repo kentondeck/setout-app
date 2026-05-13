@@ -17,9 +17,16 @@ export interface DeckingOutputs extends Record<string, number> {
   fixingsCount: number;
 }
 
+export interface GapSuggestion {
+  boardCount: number;
+  gap: number; // mm, to 1dp
+}
+
 export interface DeckingResult {
   outputs: DeckingOutputs;
   steps: WorkingStep[];
+  lastBoardWidth: number; // mm — actual width of the last board (< boardWidth means a rip is needed)
+  gapSuggestions: GapSuggestion[]; // empty when last board is full width
 }
 
 export function calculateDecking(inputs: DeckingInputs): DeckingResult {
@@ -36,7 +43,7 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const joistCount = Math.floor((deckLength * 1000) / joistSpacing) + 1;
 
   // Bearers span the deck length, spaced across the width
-  const bearerCount = Math.floor((deckWidth * 1000) / bearerSpacing) + 1;
+  const bearerCount = Math.ceil((deckWidth * 1000) / bearerSpacing) + 1;
 
   // Two fixings per board per joist is standard practice
   const fixingsCount = boardCount * joistCount * 2;
@@ -59,8 +66,8 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     },
     {
       label: 'Bearer count',
-      formula: 'floor( deck width (mm) ÷ bearer spacing ) + 1',
-      result: `floor( ${deckWidth * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
+      formula: 'ceil( deck width (mm) ÷ bearer spacing ) + 1',
+      result: `ceil( ${deckWidth * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
     },
     {
       label: 'Fixings',
@@ -69,8 +76,26 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     },
   ];
 
+  // Actual width of the last board — less than boardWidth means a rip is needed
+  const lastBoardWidth = Math.round(deckWidth * 1000 - (boardCount - 1) * effectiveBoardWidth);
+
+  // For each nearby board count, find what gap gives exactly full boards
+  const gapSuggestions: GapSuggestion[] = [];
+  if (lastBoardWidth < boardWidth) {
+    const nMin = Math.floor((deckWidth * 1000) / (boardWidth + 6));
+    const nMax = Math.ceil((deckWidth * 1000) / (boardWidth + 3));
+    for (let n = Math.max(2, nMin); n <= nMax; n++) {
+      const g = (deckWidth * 1000 - n * boardWidth) / (n - 1);
+      if (g >= 3 && g <= 6) {
+        gapSuggestions.push({ boardCount: n, gap: parseFloat(g.toFixed(1)) });
+      }
+    }
+  }
+
   return {
     outputs: { boardCount, totalLinealMetres, joistCount, bearerCount, fixingsCount },
     steps,
+    lastBoardWidth,
+    gapSuggestions,
   };
 }

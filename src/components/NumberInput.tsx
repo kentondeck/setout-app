@@ -43,7 +43,7 @@ export function NumberInput({ label, value, onChange, unit, placeholder, hint }:
           onChange={e => onChange(e.target.value)}
           style={{
             flex: 1,
-            padding: '13px 14px',
+            padding: '13px 16px',
             border: 'none',
             background: 'transparent',
             fontSize: 16,

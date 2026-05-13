@@ -141,10 +141,10 @@ export function DeckingCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} unit="m" placeholder="e.g. 4.2" />
+              <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} unit="m" placeholder="4.2" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} unit="m" placeholder="e.g. 3.0" />
+              <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} unit="m" placeholder="3.0" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>

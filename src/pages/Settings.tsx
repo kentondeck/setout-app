@@ -59,7 +59,7 @@ export function Settings() {
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             type="text"
-            placeholder="e.g. Dave"
+            placeholder="Dave"
             value={nameInput}
             onChange={e => { setNameInput(e.target.value); setNameSaved(false); }}
             onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); }}

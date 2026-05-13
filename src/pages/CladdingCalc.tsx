@@ -110,17 +110,17 @@ export function CladdingCalc() {
           {/* Wall dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} unit="mm" placeholder="e.g. 2700" />
+              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} unit="mm" placeholder="2700" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} unit="mm" placeholder="e.g. 5400" />
+              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} unit="mm" placeholder="5400" />
             </div>
           </div>
 
           {/* Board dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} unit="mm" placeholder="e.g. 180" />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} unit="mm" placeholder="180" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
@@ -128,7 +128,7 @@ export function CladdingCalc() {
                 value={inputs.lap}
                 onChange={set('lap')}
                 unit="mm"
-                placeholder="e.g. 30"
+                placeholder="30"
                 hint={inputs.boardWidth && inputs.lap ? `face ${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm` : undefined}
               />
             </div>
@@ -137,7 +137,7 @@ export function CladdingCalc() {
           {/* Stock length & start offset */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} unit="mm" placeholder="e.g. 4200" />
+              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} unit="mm" placeholder="4200" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} unit="mm" placeholder="0" hint="from datum to first course" />

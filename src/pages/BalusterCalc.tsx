@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
@@ -31,6 +31,22 @@ export function BalusterCalc() {
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [diagramProps, setDiagramProps] = useState<{
+    totalLength: number;
+    balusterWidth: number;
+    balusterCount: number;
+    gap: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!result) { setDiagramProps(null); return; }
+    const tl = parseFloat(inputs.totalLength);
+    const bw = parseFloat(inputs.balusterWidth);
+    const timer = setTimeout(() => {
+      setDiagramProps({ totalLength: tl, balusterWidth: bw, balusterCount: result.outputs.balusters, gap: result.outputs.actualGap });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [result, inputs.totalLength, inputs.balusterWidth]);
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -164,12 +180,14 @@ export function BalusterCalc() {
               <ResultCard label="Actual gap" value={result.outputs.actualGap} unit="mm" />
             </div>
 
-            <BalusterDiagram
-              totalLength={parseFloat(inputs.totalLength)}
-              balusterWidth={parseFloat(inputs.balusterWidth)}
-              gap={result.outputs.actualGap}
-              balusterCount={result.outputs.balusters}
-            />
+            {diagramProps && (
+              <BalusterDiagram
+                totalLength={diagramProps.totalLength}
+                balusterWidth={diagramProps.balusterWidth}
+                gap={diagramProps.gap}
+                balusterCount={diagramProps.balusterCount}
+              />
+            )}
 
             <ApprenticeWorking
               steps={balusterSteps}

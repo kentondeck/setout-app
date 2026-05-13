@@ -1,184 +1,233 @@
 import { memo } from 'react';
 
-interface Props {
+export type BalusterDiagramProps = {
   totalLength: number;
   balusterWidth: number;
-  gap: number;
   balusterCount: number;
-}
+  gap: number;
+};
 
-// SVG layout
-const W = 320;
-const POST_W = 18;
-const X0 = POST_W;
-const X1 = W - POST_W;
-const SPAN = X1 - X0; // 284px
-
-const ARROW_Y = 14;
-const RAIL_T = 27;
-const RAIL_H = 7;
-const BODY_T = RAIL_T + RAIL_H; // 34
-const BODY_B = BODY_T + 54;     // 88
-const RAIL_B = BODY_B;
-const GAP_Y = RAIL_B + RAIL_H + 13; // 108
-const SVG_H = GAP_Y + 28;           // 136
-
-const C_DARK = '#0a0a0a';
-const C_BAL = '#999999';
-const C_DIM = '#FF5A1F';
-const C_BG = '#f5f5f3';
-const C_IND = '#e0e0de';
+// ── Design tokens (locked Setout diagram brand) ───────────────────────────────
+const ORANGE = '#FF5A1F';
+const BLACK = '#0a0a0a';
+const MUTED = '#999';
+const STRUCT_FILL = '#e8e8e6';
 const FONT = 'Inter, -apple-system, sans-serif';
+const MONO = "'JetBrains Mono','Courier New',monospace";
 
-const MAX_DRAW = 18;
-const MIN_B_PX = 2;
-const SHOW_SIDE = 5;
+// ── Structure geometry (px — illustrative, not proportional) ──────────────────
+const POST_W = 14;
+const L_POST = 88;                        // left edge of left post
+const R_POST = 278;                       // left edge of right post
+const SPAN_START = L_POST + POST_W;       // 102 — right face of left post
+const SPAN_END = R_POST;                  // 278 — left face of right post
+const SPAN_PX = SPAN_END - SPAN_START;    // 176
+const RAIL_W = R_POST + POST_W - L_POST;  // 204 — full outer width
 
-interface DimArrowProps {
-  x1: number; y: number; x2: number;
-  label: string; below?: boolean;
+const TOP_RAIL_Y = 52;
+const TOP_RAIL_H = 10;
+const BOT_RAIL_Y = 190;
+const BOT_RAIL_H = 10;
+const BAL_TOP = TOP_RAIL_Y + TOP_RAIL_H;  // 62
+const BAL_BOTTOM = BOT_RAIL_Y;            // 190
+const BAL_H = BAL_BOTTOM - BAL_TOP;       // 128
+const GROUND_Y = 216;
+const GL = 68;   // ground line left x
+const GR = 312;  // ground line right x
+const HATCH_DEPTH = 22;
+
+// ── Baluster cap ──────────────────────────────────────────────────────────────
+const MAX_VIS = 10;
+
+// ── Ground hatch lines ────────────────────────────────────────────────────────
+function hatchLines(x1: number, x2: number, y: number, depth: number) {
+  const angle = 35 * Math.PI / 180;
+  const step = 8 / Math.sin(angle);       // spacing between parallel lines
+  const run = depth / Math.tan(angle);    // horizontal run for full depth
+  const els: React.ReactElement[] = [];
+  for (let s = -run; s <= (x2 - x1) + step; s += step) {
+    els.push(
+      <line
+        key={s.toFixed(1)}
+        x1={x1 + s} y1={y + depth}
+        x2={x1 + s + run} y2={y}
+        stroke={BLACK} strokeWidth={0.5}
+      />
+    );
+  }
+  return els;
 }
 
-function DimArrow({ x1, y, x2, label, below = false }: DimArrowProps) {
-  const dist = x2 - x1;
-  const isNarrow = dist < 45;
-  const midX = (x1 + x2) / 2;
-  const labelX = isNarrow ? x2 + 4 : midX;
-  const anchor = isNarrow ? 'start' : 'middle';
-  const labelY = below ? y + 14 : y - 5;
-  const AW = 5; const AH = 3;
-
+// ── Stacked dimension label (caption / big number / "mm") ─────────────────────
+function DimLabel({
+  caption, value, cx, cy, anchor = 'middle',
+}: { caption: string; value: number; cx: number; cy: number; anchor?: 'middle' | 'start' | 'end' }) {
   return (
     <g>
-      <line x1={x1} y1={y} x2={x2} y2={y} stroke={C_DIM} strokeWidth="1" />
-      <line x1={x1} y1={y - 4} x2={x1} y2={y + 4} stroke={C_DIM} strokeWidth="1" />
-      <line x1={x2} y1={y - 4} x2={x2} y2={y + 4} stroke={C_DIM} strokeWidth="1" />
-      {dist >= 16 && (
-        <>
-          <polygon points={`${x1},${y} ${x1 + AW},${y - AH} ${x1 + AW},${y + AH}`} fill={C_DIM} />
-          <polygon points={`${x2},${y} ${x2 - AW},${y - AH} ${x2 - AW},${y + AH}`} fill={C_DIM} />
-        </>
-      )}
-      <text x={labelX} y={labelY} textAnchor={anchor} fontSize="10" fontWeight="500" fontFamily={FONT} fill={C_DIM}>
-        {label}
+      <text x={cx} y={cy} textAnchor={anchor} fontSize={18} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.3">
+        {caption}
+      </text>
+      <text x={cx} y={cy + 26} textAnchor={anchor} fontSize={22} fontWeight={600} fontFamily={FONT} fill={ORANGE}>
+        {value}
+      </text>
+      <text x={cx} y={cy + 44} textAnchor={anchor} fontSize={14} fontFamily={MONO} fill={ORANGE} opacity={0.72}>
+        mm
       </text>
     </g>
   );
 }
 
-type BalEl = { kind: 'bal'; x: number };
-type IndEl = { kind: 'ind'; x: number; w: number; count: number };
-type El = BalEl | IndEl;
+// ── Dimension arrow (horizontal, with flat ticks) ─────────────────────────────
+function HorizDim({
+  x1, x2, y, markerId,
+}: { x1: number; x2: number; y: number; markerId: string }) {
+  const startId = `${markerId}S`;
+  const endId = `${markerId}E`;
+  return (
+    <g>
+      <line
+        x1={x1} y1={y} x2={x2} y2={y}
+        stroke={ORANGE} strokeWidth={1}
+        markerStart={`url(#${startId})`} markerEnd={`url(#${endId})`}
+      />
+      {/* flat perpendicular ticks */}
+      <line x1={x1} y1={y - 6} x2={x1} y2={y + 6} stroke={ORANGE} strokeWidth={1.5} />
+      <line x1={x2} y1={y - 6} x2={x2} y2={y + 6} stroke={ORANGE} strokeWidth={1.5} />
+    </g>
+  );
+}
 
 export const BalusterDiagram = memo(function BalusterDiagram({
-  totalLength, balusterWidth, gap, balusterCount,
-}: Props) {
-  const isValid = totalLength > 0 && balusterWidth > 0 && gap > 0 && balusterCount > 0;
+  totalLength, balusterWidth, balusterCount, gap,
+}: BalusterDiagramProps) {
+  const isValid =
+    totalLength > 0 && isFinite(totalLength) &&
+    balusterWidth > 0 && isFinite(balusterWidth) &&
+    balusterCount > 0 && isFinite(balusterCount) &&
+    gap > 0 && isFinite(gap);
+
+  const wrap = (svg: React.ReactNode) => (
+    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 20 }}>
+      <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 500, color: BLACK }}>Layout preview</p>
+      {svg}
+      <p style={{ margin: '8px 0 0', fontSize: 11, color: MUTED, textAlign: 'center' }}>
+        Approximate. Check measurements before cutting.
+      </p>
+    </div>
+  );
 
   if (!isValid) {
-    return (
-      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 16 }}>
-        <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-          Layout preview
-        </p>
-        <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 12, color: '#ccc' }}>Enter values to see layout</span>
-        </div>
-      </div>
+    return wrap(
+      <svg viewBox="0 0 380 320" width="100%" role="img" style={{ display: 'block' }}>
+        <title>Baluster spacing layout</title>
+        <desc>Enter values to see layout</desc>
+        <rect x={50} y={90} width={280} height={130} rx={8} fill="#f5f5f3" />
+        <text x={190} y={155} textAnchor="middle" dominantBaseline="middle"
+          fontSize={13} fontFamily={FONT} fill={MUTED}>
+          Enter values to see layout
+        </text>
+      </svg>
     );
   }
 
-  const scale = SPAN / totalLength;
-  const b = balusterWidth * scale;
-  const g = gap * scale;
+  // ── Baluster visual layout ─────────────────────────────────────────────────
+  const visibleCount = Math.min(balusterCount, MAX_VIS);
+  const truncated = balusterCount > MAX_VIS;
+  const vbw = Math.max(6, Math.min(12, SPAN_PX / (visibleCount * 2.5)));
+  const vg = Math.max(0, (SPAN_PX - visibleCount * vbw) / (visibleCount + 1));
 
-  const truncated = balusterCount > MAX_DRAW || b < MIN_B_PX;
-  const effectiveSide = Math.min(SHOW_SIDE, Math.floor(balusterCount / 2));
-
-  const els: El[] = [];
-
-  if (!truncated) {
-    for (let j = 0; j < balusterCount; j++) {
-      els.push({ kind: 'bal', x: X0 + g + j * (b + g) });
-    }
-  } else {
-    for (let j = 0; j < effectiveSide; j++) {
-      els.push({ kind: 'bal', x: X0 + g + j * (b + g) });
-    }
-    const lastJ = balusterCount - effectiveSide;
-    const indX = X0 + g + effectiveSide * (b + g);
-    const lastX = X0 + g + lastJ * (b + g);
-    const hiddenCount = balusterCount - 2 * effectiveSide;
-    if (hiddenCount > 0 && lastX > indX + 1) {
-      els.push({ kind: 'ind', x: indX, w: lastX - indX, count: hiddenCount });
-    }
-    for (let j = lastJ; j < balusterCount; j++) {
-      els.push({ kind: 'bal', x: X0 + g + j * (b + g) });
-    }
+  const positions: number[] = [];
+  for (let i = 0; i < visibleCount; i++) {
+    positions.push(SPAN_START + vg + i * (vbw + vg));
   }
 
-  const drawB = Math.max(b, MIN_B_PX);
-  const firstBal = els.find((e): e is BalEl => e.kind === 'bal');
-  const gapArrowEnd = firstBal?.x ?? X0 + g;
+  // Gap dim: post right face → first baluster left edge
+  const GAP_X1 = SPAN_START;   // 102
+  const GAP_X2 = positions[0]; // first baluster left edge
+  const GAP_Y = 128;
 
-  return (
-    <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: 16, padding: 16 }}>
-      <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-        Layout preview
-      </p>
-      <svg
-        viewBox={`0 0 ${W} ${SVG_H}`}
-        width="100%"
-        style={{ display: 'block' }}
-        aria-label={`Baluster layout: ${balusterCount} balusters at ${gap}mm gap across ${totalLength}mm`}
-      >
-        {/* Total length arrow */}
-        <DimArrow x1={X0} y={ARROW_Y} x2={X1} label={`Total: ${totalLength}mm`} />
+  // Total span dim: inner faces of both posts, below ground
+  const TOT_Y = 244;
 
-        {/* Top rail */}
-        <rect x={0} y={RAIL_T} width={W} height={RAIL_H} fill={C_DARK} />
+  return wrap(
+    <svg
+      viewBox="0 0 380 320"
+      width="100%"
+      role="img"
+      aria-label={`Baluster layout: ${balusterCount} balusters, ${Math.round(gap)}mm gap, ${totalLength}mm total span`}
+      style={{ display: 'block' }}
+    >
+      <title>Baluster spacing layout</title>
+      <desc>{`${balusterCount} balusters at ${Math.round(gap)}mm gap over ${totalLength}mm total span`}</desc>
 
-        {/* Span background */}
-        <rect x={X0} y={BODY_T} width={SPAN} height={BODY_B - BODY_T} fill={C_BG} />
+      <defs>
+        <clipPath id="balHatchClip">
+          <rect x={GL} y={GROUND_Y} width={GR - GL} height={HATCH_DEPTH} />
+        </clipPath>
+        {/* Arrow markers — named to avoid collisions with other SVG diagrams on the page */}
+        <marker id="bdS" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M8 1L2 5L8 9" fill="none" stroke="context-stroke" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </marker>
+        <marker id="bdE" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </marker>
+      </defs>
 
-        {/* Elements */}
-        {els.map((el, i) => {
-          if (el.kind === 'ind') {
-            return (
-              <g key={i}>
-                <rect x={el.x} y={BODY_T} width={el.w} height={BODY_B - BODY_T} fill={C_IND} />
-                <text
-                  x={el.x + el.w / 2} y={(BODY_T + BODY_B) / 2 + 4}
-                  textAnchor="middle" fontSize="10" fontWeight="500" fontFamily={FONT} fill="#999"
-                >
-                  +{el.count} more
-                </text>
-              </g>
-            );
-          }
-          return (
-            <rect
-              key={i}
-              x={el.x} y={BODY_T + 2}
-              width={drawB} height={BODY_B - BODY_T - 4}
-              fill={C_BAL} stroke={C_DARK} strokeWidth="0.5"
-            />
-          );
-        })}
+      {/* ── Structure ─────────────────────────────────────────────────────── */}
 
-        {/* Posts (over span bg) */}
-        <rect x={0} y={BODY_T} width={POST_W} height={BODY_B - BODY_T} fill={C_DARK} />
-        <rect x={X1} y={BODY_T} width={POST_W} height={BODY_B - BODY_T} fill={C_DARK} />
+      {/* Balusters — drawn first so rails and posts sit on top */}
+      {positions.map((x, i) => (
+        <rect key={i}
+          x={x} y={BAL_TOP} width={vbw} height={BAL_H}
+          fill={STRUCT_FILL} stroke={BLACK} strokeWidth={1.5} rx={0.5}
+        />
+      ))}
 
-        {/* Bottom rail */}
-        <rect x={0} y={RAIL_B} width={W} height={RAIL_H} fill={C_DARK} />
+      {/* Top rail */}
+      <rect x={L_POST} y={TOP_RAIL_Y} width={RAIL_W} height={TOP_RAIL_H}
+        fill={STRUCT_FILL} stroke={BLACK} strokeWidth={3} />
 
-        {/* Gap arrow */}
-        <DimArrow x1={X0} y={GAP_Y} x2={gapArrowEnd} label={`${gap}mm`} below={true} />
-      </svg>
-      <p style={{ margin: '8px 0 0', fontSize: 10, color: 'var(--color-muted)', textAlign: 'center' }}>
-        Approximate — check measurements before cutting
-      </p>
-    </div>
+      {/* Bottom rail */}
+      <rect x={L_POST} y={BOT_RAIL_Y} width={RAIL_W} height={BOT_RAIL_H}
+        fill={STRUCT_FILL} stroke={BLACK} strokeWidth={3} />
+
+      {/* Posts — drawn last so they paint over rail ends cleanly */}
+      <rect x={L_POST} y={TOP_RAIL_Y} width={POST_W} height={GROUND_Y - TOP_RAIL_Y}
+        fill={STRUCT_FILL} stroke={BLACK} strokeWidth={3} />
+      <rect x={R_POST} y={TOP_RAIL_Y} width={POST_W} height={GROUND_Y - TOP_RAIL_Y}
+        fill={STRUCT_FILL} stroke={BLACK} strokeWidth={3} />
+
+      {/* Ground line */}
+      <line x1={GL} y1={GROUND_Y} x2={GR} y2={GROUND_Y} stroke={BLACK} strokeWidth={3} />
+
+      {/* Ground hatching */}
+      <g clipPath="url(#balHatchClip)">
+        {hatchLines(GL, GR, GROUND_Y, HATCH_DEPTH)}
+      </g>
+
+      {/* ── Dimension: Gap (left margin) ──────────────────────────────────── */}
+
+      {/* Dashed leader from label edge to start of gap arrow */}
+      <line x1={70} y1={GAP_Y} x2={GAP_X1} y2={GAP_Y}
+        stroke={ORANGE} strokeWidth={0.5} strokeDasharray="3,3" />
+
+      <HorizDim x1={GAP_X1} x2={GAP_X2} y={GAP_Y} markerId="bd" />
+
+      {/* Gap label — left margin, vertically centred on the arrow */}
+      <DimLabel caption="Gap" value={Math.round(gap)} cx={38} cy={110} />
+
+      {/* ── Dimension: Total span (below) ─────────────────────────────────── */}
+
+      {/* Vertical witness lines from ground down to arrow */}
+      <line x1={SPAN_START} y1={GROUND_Y} x2={SPAN_START} y2={TOT_Y}
+        stroke={ORANGE} strokeWidth={1} />
+      <line x1={SPAN_END} y1={GROUND_Y} x2={SPAN_END} y2={TOT_Y}
+        stroke={ORANGE} strokeWidth={1} />
+
+      <HorizDim x1={SPAN_START} x2={SPAN_END} y={TOT_Y} markerId="bd" />
+
+      {/* Total span label — centred below the arrow */}
+      <DimLabel caption="Total span" value={totalLength} cx={190} cy={260} />
+    </svg>
   );
 });

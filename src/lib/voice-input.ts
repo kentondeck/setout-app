@@ -161,7 +161,7 @@ export function isVoiceSupported(): boolean {
   );
 }
 
-const DENIED_KEY = 'sitehand_voice_denied';
+const DENIED_KEY = 'setout_voice_denied';
 
 export function getVoiceDenied(): boolean {
   try { return localStorage.getItem(DENIED_KEY) === '1'; } catch { return false; }

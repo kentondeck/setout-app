@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stair Diagram Preview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f5f5f3;
+    font-family: Inter, system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px;
+    gap: 24px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 13px; font-weight: 500; color: #999; letter-spacing: 0.05em; }
+  .card {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.08);
+    border-radius: 16px;
+    padding: 16px;
+    width: 100%;
+    max-width: 420px;
+  }
+  .card p { font-size: 12px; color: #999; font-weight: 500; letter-spacing: 0.04em; margin-bottom: 10px; }
+  svg { display: block; width: 100%; }
+  .controls { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 10px; }
+  label { font-size: 13px; color: #555; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  input[type=range] { flex: 1; }
+</style>
+</head>
+<body>
+
+<h1>STAIR DIAGRAM — PREVIEW</h1>
+
+<div class="card">
+  <p>STAIR DIAGRAM</p>
+  <svg id="diagram"></svg>
+</div>
+
+<div class="controls">
+  <label>Risers: <span id="riserVal">16</span>
+    <input type="range" id="riserCount" min="3" max="20" value="16">
+  </label>
+  <label>Rise (mm): <span id="riseVal">175</span>
+    <input type="range" id="riserHeight" min="100" max="220" value="175">
+  </label>
+  <label>Going (mm): <span id="goingVal">280</span>
+    <input type="range" id="treadDepth" min="200" max="380" value="280">
+  </label>
+</div>
+
+<script>
+const ORANGE = '#FF5A1F';
+const INK    = '#0A0A0A';
+const FILL   = '#ECECE8';
+const FONT   = 'Inter, system-ui, sans-serif';
+const MONO   = "'Courier New', monospace";
+
+// Layout — original values (stringer is now inside the diagram, not in a margin)
+const VB_W    = 900;
+const VB_H    = 790;
+const FOOT_X  = 185;
+const FLOOR_Y = 575;
+const MAX_W   = 385;
+const MAX_H   = 325;
+
+function fmt(n) { return Math.round(n).toLocaleString(); }
+
+function svgEl(tag, attrs, text) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+function render() {
+  const riserCount  = +document.getElementById('riserCount').value;
+  const riserHeight = +document.getElementById('riserHeight').value;
+  const treadDepth  = +document.getElementById('treadDepth').value;
+  const treadCount  = riserCount - 1;
+  const totalRise   = riserCount * riserHeight;
+  const totalRun    = treadCount * treadDepth;
+  const stringerLength = Math.round(Math.sqrt(totalRise**2 + totalRun**2));
+
+  document.getElementById('riserVal').textContent  = riserCount;
+  document.getElementById('riseVal').textContent   = riserHeight;
+  document.getElementById('goingVal').textContent  = treadDepth;
+
+  const scale   = Math.min(MAX_W / totalRun, MAX_H / totalRise);
+  const risePx  = riserHeight * scale;
+  const goingPx = treadDepth  * scale;
+  const drawnW  = totalRun    * scale;
+  const drawnH  = totalRise   * scale;
+  const topX    = FOOT_X + drawnW;
+  const topY    = FLOOR_Y - drawnH;
+
+  const stringerPx = Math.sqrt(drawnW**2 + drawnH**2);
+  const angle      = Math.atan2(drawnH, drawnW) * (180 / Math.PI);
+
+  // Profile path
+  let profileD = `M${FOOT_X} ${FLOOR_Y}`;
+  for (let i = 0; i < riserCount; i++) {
+    profileD += ` V${(FLOOR_Y - (i+1)*risePx).toFixed(1)} H${(FOOT_X + (i+1)*goingPx).toFixed(1)}`;
+  }
+  const bodyD = profileD + ` V${FLOOR_Y} Z`;
+
+  // ── Annotation positions ──────────────────────────────────────────────────
+
+  // RISE — left of first riser
+  const RISE_X   = FOOT_X - 46;
+  const riseMidY = FLOOR_Y - risePx / 2;
+
+  // GOING — second-from-top tread (matches reference design)
+  const goingTread  = Math.max(0, riserCount - 2);
+  const goingX1     = FOOT_X + goingTread * goingPx;
+  const goingX2     = goingX1 + goingPx;
+  const goingMidX   = (goingX1 + goingX2) / 2;
+  const goingTreadY = FLOOR_Y - (goingTread + 1) * risePx;
+  const goingArrY   = goingTreadY - 20;
+  const ahW         = Math.min(11, goingPx * 0.28);
+
+  // HEIGHT — right side
+  const HEIGHT_X   = topX + 56;
+  const heightMidY = FLOOR_Y - drawnH / 2;
+
+  // BASE — below floor
+  const BASE_Y   = FLOOR_Y + 62;
+  const baseMidX = FOOT_X + drawnW / 2;
+
+  // STRINGER — upper-left open space (matches reference proportions exactly)
+  // Reference: label at FOOT_X + drawnW*0.155, FLOOR_Y - drawnH*0.75
+  // Leader from (stLabelX + drawnW*0.136, stLabelY+12) → (stMidX-8, stMidY-2)
+  const stMidX    = FOOT_X + drawnW / 2;
+  const stMidY    = FLOOR_Y - drawnH / 2;
+  const stLabelX  = FOOT_X + drawnW * 0.155;
+  const stLabelY  = FLOOR_Y - drawnH * 0.75;
+  const stLeadX1  = stLabelX + drawnW * 0.136;
+  const stLeadY1  = stLabelY + 12;
+  const stLeadX2  = stMidX - 8;
+  const stLeadY2  = stMidY - 2;
+
+  // Build SVG
+  const svg = document.getElementById('diagram');
+  svg.setAttribute('viewBox', `0 0 ${VB_W} ${VB_H}`);
+  svg.innerHTML = '';
+
+  const add = (tag, attrs, text) => svg.appendChild(svgEl(tag, attrs, text));
+  const line = (x1,y1,x2,y2,s=INK,w=2.5) =>
+    add('line', {x1,y1,x2,y2,stroke:s,'stroke-width':w,'stroke-linecap':'round'});
+  const orangeLine = (x1,y1,x2,y2) =>
+    add('line', {x1,y1,x2,y2,stroke:ORANGE,'stroke-width':1.5,'stroke-linecap':'round'});
+  const dimLine = (x1,y1,x2,y2) =>
+    add('line', {x1,y1,x2,y2,stroke:ORANGE,'stroke-width':1,opacity:0.38});
+  const tri = (pts) => add('polygon', {points:pts, fill:ORANGE});
+  const txt = (x,y,anchor,size,weight,content) =>
+    add('text', {x,y,'text-anchor':anchor,'font-family':FONT,'font-size':size,'font-weight':weight,fill:ORANGE,'letter-spacing':'-0.3'}, content);
+  const mono = (x,y,anchor,content) =>
+    add('text', {x,y,'text-anchor':anchor,'font-family':MONO,'font-size':14,fill:ORANGE,opacity:0.72}, content);
+
+  // Body fill
+  add('path', {d: bodyD, fill: FILL});
+
+  // Floor
+  line(26, FLOOR_Y, topX + 56, FLOOR_Y);
+  for (let x = 36; x < topX + 56; x += 34)
+    add('line', {x1:x,y1:FLOOR_Y,x2:x+12,y2:FLOOR_Y+12,stroke:INK,'stroke-width':0.7,opacity:0.32});
+
+  // Landing
+  line(topX, topY, topX + 138, topY);
+  line(topX, topY, topX, topY + 16);
+  line(topX, topY+16, topX+138, topY+16);
+  for (let x = topX+16; x < topX+142; x += 34)
+    add('line', {x1:x,y1:topY-14,x2:x+14,y2:topY,stroke:INK,'stroke-width':0.7,opacity:0.32});
+
+  // Stair profile
+  add('path', {d: profileD, fill:'none', stroke:INK, 'stroke-width':2.5, 'stroke-linejoin':'round','stroke-linecap':'round'});
+
+  // Stringer diagonal line with end ticks
+  const g = svgEl('g', {transform:`translate(${FOOT_X},${FLOOR_Y}) rotate(${-angle})`});
+  const addG = (tag,a,t) => g.appendChild(svgEl(tag,a,t));
+  addG('line', {x1:0,y1:0,x2:stringerPx,y2:0,stroke:ORANGE,'stroke-width':1.5,'stroke-linecap':'round'});
+  addG('line', {x1:0,y1:-9,x2:0,y2:9,stroke:ORANGE,'stroke-width':1.5,'stroke-linecap':'round'});
+  addG('line', {x1:stringerPx,y1:-9,x2:stringerPx,y2:9,stroke:ORANGE,'stroke-width':1.5,'stroke-linecap':'round'});
+  svg.appendChild(g);
+
+  // ── STRINGER — upper-left open space with diagonal dashed leader ──
+  txt(stLabelX, stLabelY - 6,  'middle', 18, 500, 'Stringer length');
+  txt(stLabelX, stLabelY + 21, 'middle', 22, 600, fmt(stringerLength));
+  mono(stLabelX, stLabelY + 40, 'middle', 'mm');
+  add('line', {x1:stLeadX1,y1:stLeadY1,x2:stLeadX2,y2:stLeadY2,
+    stroke:ORANGE,'stroke-width':1,'stroke-dasharray':'3 4',opacity:0.7});
+  add('circle', {cx:stMidX,cy:stMidY,r:3,fill:ORANGE});
+
+  // ── RISE ──
+  dimLine(FOOT_X, FLOOR_Y-risePx, RISE_X+8, FLOOR_Y-risePx);
+  dimLine(FOOT_X, FLOOR_Y,        RISE_X+8, FLOOR_Y);
+  orangeLine(RISE_X, FLOOR_Y-risePx+10, RISE_X, FLOOR_Y-10);
+  tri(`${RISE_X},${FLOOR_Y-risePx} ${RISE_X-5},${FLOOR_Y-risePx+12} ${RISE_X+5},${FLOOR_Y-risePx+12}`);
+  tri(`${RISE_X},${FLOOR_Y} ${RISE_X-5},${FLOOR_Y-12} ${RISE_X+5},${FLOOR_Y-12}`);
+  txt(RISE_X-10, riseMidY-14, 'end', 18, 500, 'Rise');
+  txt(RISE_X-10, riseMidY+12, 'end', 22, 600, fmt(riserHeight));
+  mono(RISE_X-10, riseMidY+30, 'end', 'mm');
+
+  // ── GOING ──
+  dimLine(goingX1, goingTreadY, goingX1, goingArrY-6);
+  dimLine(goingX2, goingTreadY, goingX2, goingArrY-6);
+  orangeLine(goingX1+ahW, goingArrY, goingX2-ahW, goingArrY);
+  tri(`${goingX1},${goingArrY} ${goingX1+ahW},${goingArrY-5} ${goingX1+ahW},${goingArrY+5}`);
+  tri(`${goingX2},${goingArrY} ${goingX2-ahW},${goingArrY-5} ${goingX2-ahW},${goingArrY+5}`);
+  txt(goingMidX, goingArrY-54, 'middle', 18, 500, 'Going');
+  txt(goingMidX, goingArrY-28, 'middle', 22, 600, fmt(treadDepth));
+  mono(goingMidX, goingArrY-10, 'middle', 'mm');
+
+  // ── HEIGHT ──
+  dimLine(topX,      topY,    HEIGHT_X-8, topY);
+  dimLine(topX+56,   FLOOR_Y, HEIGHT_X-8, FLOOR_Y);
+  orangeLine(HEIGHT_X, topY+10, HEIGHT_X, FLOOR_Y-10);
+  tri(`${HEIGHT_X},${topY}    ${HEIGHT_X-5},${topY+12}    ${HEIGHT_X+5},${topY+12}`);
+  tri(`${HEIGHT_X},${FLOOR_Y} ${HEIGHT_X-5},${FLOOR_Y-12} ${HEIGHT_X+5},${FLOOR_Y-12}`);
+  txt(HEIGHT_X+14, heightMidY-14, 'start', 18, 500, 'Height');
+  txt(HEIGHT_X+14, heightMidY+12, 'start', 22, 600, fmt(totalRise));
+  mono(HEIGHT_X+14, heightMidY+30, 'start', 'mm');
+
+  // ── BASE LENGTH ──
+  dimLine(FOOT_X, FLOOR_Y, FOOT_X, BASE_Y-8);
+  dimLine(topX,   FLOOR_Y, topX,   BASE_Y-8);
+  orangeLine(FOOT_X+10, BASE_Y, topX-10, BASE_Y);
+  tri(`${FOOT_X},${BASE_Y} ${FOOT_X+14},${BASE_Y-5} ${FOOT_X+14},${BASE_Y+5}`);
+  tri(`${topX},${BASE_Y} ${topX-14},${BASE_Y-5} ${topX-14},${BASE_Y+5}`);
+  txt(baseMidX, BASE_Y+26, 'middle', 18, 500, 'Base length');
+  txt(baseMidX, BASE_Y+52, 'middle', 22, 600, fmt(totalRun));
+  mono(baseMidX, BASE_Y+70, 'middle', 'mm');
+}
+
+['riserCount','riserHeight','treadDepth'].forEach(id =>
+  document.getElementById(id).addEventListener('input', render)
+);
+render();
+</script>
+</body>
+</html>

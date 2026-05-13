@@ -10,7 +10,7 @@ interface NumberInputProps {
 export function NumberInput({ label, value, onChange, unit, placeholder, hint }: NumberInputProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <label
           style={{
             fontSize: 13,

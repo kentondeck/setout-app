@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { Settings } from '../types';
 
-const KEY = 'sitehand_settings';
+const KEY = 'setout_settings';
 
 const defaults: Settings = {
   unit: 'metric',

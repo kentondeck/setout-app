@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { HistoryEntry } from '../types';
 
-const KEY = 'sitehand_history';
+const KEY = 'setout_history';
 
 function load(): HistoryEntry[] {
   try {

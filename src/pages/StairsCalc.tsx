@@ -5,11 +5,12 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
 import { calculateStairs } from '../calculators/stairs';
-import type { StairsOutputs } from '../calculators/stairs';
+import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES, STAIR_LIMITS } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../App';
+import { StairDiagram } from '../components/StairDiagram';
 
 interface Inputs {
   totalRise: string;
@@ -30,7 +31,7 @@ export function StairsCalc() {
   const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
-  const [result, setResult] = useState<{ outputs: StairsOutputs; steps: WorkingStep[]; warnings: { riserOutOfRange: boolean; treadOutOfRange: boolean } } | null>(null);
+  const [result, setResult] = useState<{ outputs: StairsOutputs; steps: WorkingStep[]; warnings: StairsWarnings } | null>(null);
   const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
@@ -124,7 +125,7 @@ export function StairsCalc() {
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} unit="mm" placeholder="e.g. 2700" hint="floor to floor" />
             </div>
@@ -132,7 +133,7 @@ export function StairsCalc() {
               <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} unit="mm" placeholder="optional" hint="leave blank to calculate" />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} unit="mm" placeholder="175" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
@@ -231,6 +232,20 @@ export function StairsCalc() {
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
               </div>
             </div>
+
+            <StairDiagram
+              riserCount={result.outputs.riserCount}
+              riserHeight={result.outputs.riserHeight}
+              treadCount={result.outputs.treadCount}
+              treadDepth={result.outputs.treadDepth}
+              stringerLength={result.outputs.stringerLength}
+              totalRise={parseFloat(inputs.totalRise)}
+              totalRun={
+                inputs.totalRun && parseFloat(inputs.totalRun) > 0
+                  ? parseFloat(inputs.totalRun)
+                  : result.outputs.treadCount * result.outputs.treadDepth
+              }
+            />
 
             <ApprenticeWorking
               steps={stairsSteps}

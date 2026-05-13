@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../App';
+import { DeckBlueprint } from '../components/DeckBlueprint';
 
 interface Inputs {
   deckLength: string;
@@ -137,7 +138,7 @@ export function DeckingCalc() {
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} unit="m" placeholder="e.g. 4.2" />
             </div>
@@ -145,7 +146,7 @@ export function DeckingCalc() {
               <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} unit="m" placeholder="e.g. 3.0" />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} unit="mm" placeholder="90" />
             </div>
@@ -153,7 +154,7 @@ export function DeckingCalc() {
               <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} unit="mm" placeholder="5" hint="default 5mm" />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} unit="mm" placeholder="450" hint="AS 1684" />
             </div>
@@ -347,6 +348,16 @@ export function DeckingCalc() {
             </p>
           </>
         )}
+
+        {/* ── BLUEPRINT PREVIEW (sample values) — remove once approved ── */}
+        <DeckBlueprint
+          deckLengthM={4.2}
+          deckWidthM={3.0}
+          boardWidthMm={90}
+          boardGapMm={5}
+          boardCount={32}
+          joistCount={10}
+        />
       </div>
     </div>
   );

@@ -225,7 +225,7 @@ export function Settings() {
 
       <div style={{ marginTop: 'auto', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-          Sitehand v0.1.0 — built for builders
+          Setout v0.1.0 — built for builders
         </p>
       </div>
     </div>

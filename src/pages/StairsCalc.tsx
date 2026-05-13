@@ -127,18 +127,18 @@ export function StairsCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} unit="mm" placeholder="2700" hint="floor to floor" />
+              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholder="2700" hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} unit="mm" placeholder="optional" hint="leave blank to calculate" />
+              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholder="optional" hint="leave blank to calculate" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} unit="mm" placeholder="175" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
+              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholder="175" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} unit="mm" placeholder="optional" hint={`${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
+              <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholder="optional" hint={`${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
             </div>
           </div>
         </div>
@@ -224,11 +224,11 @@ export function StairsCalc() {
                 <ResultCard label="Treads" value={result.outputs.treadCount} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Riser height" value={result.outputs.riserHeight} unit="mm" />
-                <ResultCard label="Tread depth" value={result.outputs.treadDepth} unit="mm" />
+                <ResultCard label="Riser height" value={result.outputs.riserHeight} units={['mm', 'm']} />
+                <ResultCard label="Tread depth" value={result.outputs.treadDepth} units={['mm', 'm']} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
+                <ResultCard label="Stringer" value={result.outputs.stringerLength} units={['mm', 'm']} />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
               </div>
             </div>

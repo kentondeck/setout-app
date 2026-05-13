@@ -110,24 +110,24 @@ export function CladdingCalc() {
           {/* Wall dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} unit="mm" placeholder="2700" />
+              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['mm', 'm']} placeholder="2700" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} unit="mm" placeholder="5400" />
+              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} units={['mm', 'm']} placeholder="5400" />
             </div>
           </div>
 
           {/* Board dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} unit="mm" placeholder="180" />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="180" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
                 label="Lap"
                 value={inputs.lap}
                 onChange={set('lap')}
-                unit="mm"
+                units={['mm', 'm']}
                 placeholder="30"
                 hint={inputs.boardWidth && inputs.lap ? `face ${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm` : undefined}
               />
@@ -137,10 +137,10 @@ export function CladdingCalc() {
           {/* Stock length & start offset */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} unit="mm" placeholder="4200" />
+              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="4200" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} unit="mm" placeholder="0" hint="from datum to first course" />
+              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholder="0" hint="from datum to first course" />
             </div>
           </div>
         </div>
@@ -167,7 +167,7 @@ export function CladdingCalc() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Courses" value={result.outputs.courseCount} accent />
-                <ResultCard label="Face cover" value={result.outputs.faceCover} unit="mm" />
+                <ResultCard label="Face cover" value={result.outputs.faceCover} units={['mm', 'm']} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Boards" value={result.outputs.stockCount} unit={`@ ${inputs.boardLength}mm`} />
@@ -175,7 +175,7 @@ export function CladdingCalc() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Total lineal m" value={result.outputs.totalLm} unit="lm" />
-                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} unit="mm" />
+                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} units={['mm', 'm']} />
               </div>
             </div>
 

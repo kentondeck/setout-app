@@ -105,7 +105,7 @@ export function SetoutCalc() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
-        title="Set Out"
+        title="Square Check"
         right={
           <VoiceInputButton
             prompt="Say: side A, side B"
@@ -137,10 +137,10 @@ export function SetoutCalc() {
           {/* Sides */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Side A" value={inputs.sideA} onChange={set('sideA')} unit="mm" placeholder="3000" />
+              <NumberInput label="Side A" value={inputs.sideA} onChange={set('sideA')} units={['mm', 'm']} placeholder="3000" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Side B" value={inputs.sideB} onChange={set('sideB')} unit="mm" placeholder="4000" />
+              <NumberInput label="Side B" value={inputs.sideB} onChange={set('sideB')} units={['mm', 'm']} placeholder="4000" />
             </div>
           </div>
 
@@ -150,7 +150,7 @@ export function SetoutCalc() {
               label="Measured diagonal"
               value={inputs.measured}
               onChange={set('measured')}
-              unit="mm"
+              units={['mm', 'm']}
               placeholder="5012"
               hint={previewDiagonal ? `required ${previewDiagonal}mm` : undefined}
             />
@@ -177,9 +177,9 @@ export function SetoutCalc() {
           <>
             {/* Diagonal result */}
             <div style={{ display: 'grid', gridTemplateColumns: mode === 'check' ? '1fr 1fr' : '1fr', gap: 10 }}>
-              <ResultCard label="Diagonal" value={result.outputs.diagonal} unit="mm" accent />
+              <ResultCard label="Diagonal" value={result.outputs.diagonal} units={['mm', 'm']} accent />
               {mode === 'check' && (
-                <ResultCard label="Measured" value={parseFloat(inputs.measured)} unit="mm" />
+                <ResultCard label="Measured" value={parseFloat(inputs.measured)} units={['mm', 'm']} />
               )}
             </div>
 

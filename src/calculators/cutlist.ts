@@ -6,9 +6,10 @@ export interface CutItem {
 }
 
 export interface CutlistInputs {
-  stockLength: number;   // mm (e.g. 5400)
+  stockLength: number;    // mm nominal (e.g. 6000) — used for display and cost
   cuts: CutItem[];
   pricePerMetre?: number; // optional AUD per lineal metre
+  millAllowance?: number; // mm of overrun above nominal (e.g. 15 — timber ordered at 6m often arrives at 6015mm)
 }
 
 export interface CutlistPlan {
@@ -33,7 +34,8 @@ export interface CutlistResult {
 
 // First-fit decreasing bin packing
 export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
-  const { stockLength, cuts, pricePerMetre = 0 } = inputs;
+  const { stockLength, cuts, pricePerMetre = 0, millAllowance = 0 } = inputs;
+  const effectiveLength = stockLength + millAllowance;
   const KERF = 3; // 3mm saw kerf per cut
 
   // Expand cuts into flat list sorted descending
@@ -51,7 +53,7 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
     let placed = false;
     for (const bin of bins) {
       const used = bin.reduce((s, l) => s + l + KERF, 0);
-      if (used + cut + KERF <= stockLength) {
+      if (used + cut + KERF <= effectiveLength) {
         bin.push(cut);
         placed = true;
         break;
@@ -67,14 +69,14 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
     return {
       stockIndex: i + 1,
       cuts: bin.map(l => ({ length: l, qty: 1 })),
-      waste: stockLength - used,
+      waste: effectiveLength - used,
     };
   });
 
   const stockCount = bins.length;
   const totalCutLength = allCuts.reduce((s, l) => s + l, 0);
   const totalWaste = plan.reduce((s, p) => s + p.waste, 0);
-  const totalStock = stockCount * stockLength;
+  const totalStock = stockCount * effectiveLength;
   const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
   const totalCost =
     pricePerMetre > 0

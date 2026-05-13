@@ -76,7 +76,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'setout',
-    label: 'Set Out',
+    label: 'Square Check',
     subtitle: 'Square corners',
     number: '10',
     svgPath: 'M4 20V4M4 20h16M4 4l16 16',

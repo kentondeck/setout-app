@@ -4,7 +4,7 @@ export function Logo() {
       style={{
         fontWeight: 500,
         letterSpacing: '-0.8px',
-        fontSize: '24px',
+        fontSize: '34px',
         lineHeight: 1,
       }}
     >

@@ -133,7 +133,7 @@ export function RoofCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} unit="m" placeholder="e.g. 8.0" hint="full span" />
+              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} unit="m" placeholder="e.g. 9.0" hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="22.5" hint="degrees" />

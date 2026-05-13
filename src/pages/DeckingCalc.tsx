@@ -111,11 +111,12 @@ export function DeckingCalc() {
   // joists span the width, bearers span the length
   const joistLengthMm = deckWidthMm;
   const bearerLengthMm = deckLengthMm;
-  const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock
-    ? calculateCutlist({ stockLength: joistStock, cuts: [{ length: joistLengthMm, qty: result.outputs.joistCount }] })
+  const MILL_ALLOWANCE = 10;
+  const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock + MILL_ALLOWANCE
+    ? calculateCutlist({ stockLength: joistStock, cuts: [{ length: joistLengthMm, qty: result.outputs.joistCount }], millAllowance: MILL_ALLOWANCE })
     : null;
-  const bearerCutlist = result && bearerLengthMm > 0 && bearerLengthMm <= bearerStock
-    ? calculateCutlist({ stockLength: bearerStock, cuts: [{ length: bearerLengthMm, qty: result.outputs.bearerCount }] })
+  const bearerCutlist = result && bearerLengthMm > 0 && bearerLengthMm <= bearerStock + MILL_ALLOWANCE
+    ? calculateCutlist({ stockLength: bearerStock, cuts: [{ length: bearerLengthMm, qty: result.outputs.bearerCount }], millAllowance: MILL_ALLOWANCE })
     : null;
 
   const deckingSteps: WorkingStep[] = result ? [

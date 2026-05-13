@@ -127,7 +127,7 @@ export function StairsCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} unit="mm" placeholder="e.g. 2700" hint="floor to floor" />
+              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} unit="mm" placeholder="2700" hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} unit="mm" placeholder="optional" hint="leave blank to calculate" />

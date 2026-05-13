@@ -133,7 +133,7 @@ export function RoofCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} unit="m" placeholder="e.g. 8.0" hint="full span" />
+              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} unit="m" placeholder="8.0" hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="22.5" hint="degrees" />
@@ -164,15 +164,15 @@ export function RoofCalc() {
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} unit="mm" placeholder="e.g. 140" hint="timber size" />
+              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} unit="mm" placeholder="140" hint="timber size" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} unit="mm" placeholder="e.g. 90" hint="birdsmouth seat" />
+              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} unit="mm" placeholder="90" hint="birdsmouth seat" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} unit="mm" placeholder="e.g. 50" hint="for shortening" />
+              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} unit="mm" placeholder="50" hint="for shortening" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

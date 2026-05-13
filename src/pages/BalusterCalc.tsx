@@ -134,7 +134,7 @@ export function BalusterCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Span length" value={inputs.totalLength} onChange={set('totalLength')} unit="mm" placeholder="e.g. 3600" hint="post to post" />
+              <NumberInput label="Span length" value={inputs.totalLength} onChange={set('totalLength')} unit="mm" placeholder="3600" hint="post to post" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Baluster width" value={inputs.balusterWidth} onChange={set('balusterWidth')} unit="mm" placeholder="42" />

@@ -9,7 +9,7 @@ import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 
 interface Inputs {

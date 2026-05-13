@@ -9,7 +9,7 @@ import type { RoofOutputs } from '../calculators/roof';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 
 interface Inputs {
   buildingWidth: string;

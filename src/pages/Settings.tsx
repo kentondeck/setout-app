@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { SettingsContext } from '../App';
+import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {

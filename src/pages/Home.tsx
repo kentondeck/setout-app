@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 import { TopBar } from '../components/TopBar';
 import { CalculatorTile } from '../components/CalculatorTile';
 import { ContinueCard } from '../components/ContinueCard';

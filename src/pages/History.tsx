@@ -1,5 +1,5 @@
 import { useState, useContext } from 'react';
-import { HistoryContext } from '../App';
+import { HistoryContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import type { HistoryEntry } from '../types';
 

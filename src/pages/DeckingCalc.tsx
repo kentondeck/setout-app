@@ -10,7 +10,7 @@ import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckBlueprint } from '../components/DeckBlueprint';
 import { CoastalNote } from '../components/CoastalNote';
 

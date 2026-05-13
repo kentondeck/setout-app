@@ -9,7 +9,7 @@ import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 
 type InputMode = 'heights' | 'pitch';
 

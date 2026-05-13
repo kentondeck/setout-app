@@ -6,7 +6,7 @@ import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
 import type { SlabOutputs, PostHoleOutputs } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';

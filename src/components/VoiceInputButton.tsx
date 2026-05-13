@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { useVoiceInput } from '../hooks/useVoiceInput';
-import { SettingsContext } from '../App';
+import { SettingsContext } from '../contexts';
 
 interface VoiceInputButtonProps {
   /** Short prompt shown in the modal — e.g. "Say: length, width, board width" */

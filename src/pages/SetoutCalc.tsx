@@ -9,7 +9,7 @@ import type { SetoutOutputs } from '../calculators/setout';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { SettingsContext, HistoryContext } from '../App';
+import { SettingsContext, HistoryContext } from '../contexts';
 
 type InputMode = 'find' | 'check';
 

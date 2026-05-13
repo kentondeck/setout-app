@@ -1,30 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { detectCoastalZone } from '../lib/coastalZone';
 import type { CoastalZone } from '../lib/coastalZone';
 
 const STORAGE_KEY = 'setout_coastal_zone';
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 
 interface Stored {
   zone: CoastalZone;
   timestamp: number;
 }
 
+function readCachedZone(): CoastalZone | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as Stored;
+    return Date.now() - stored.timestamp < CACHE_TTL ? stored.zone : null;
+  } catch {
+    return null; // ignore corrupt cache
+  }
+}
+
 export function CoastalNote() {
-  const [zone, setZone] = useState<CoastalZone | null>(null);
+  const [zone, setZone] = useState<CoastalZone | null>(readCachedZone);
   const [loading, setLoading] = useState(false);
   const [denied, setDenied] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const stored = JSON.parse(raw) as Stored;
-      // Cache valid for 7 days — location doesn't change much
-      if (Date.now() - stored.timestamp < 7 * 24 * 60 * 60 * 1000) {
-        setZone(stored.zone);
-      }
-    } catch {}
-  }, []);
 
   function detect() {
     if (!navigator.geolocation) return;

@@ -1,8 +1,7 @@
-import { createContext } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 import { useHistory } from './lib/useHistory';
-import type { Settings, HistoryEntry } from './types';
+import { SettingsContext, HistoryContext } from './contexts';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
@@ -19,31 +18,6 @@ import { RakedWallCalc } from './pages/RakedWallCalc';
 import { CladdingCalc } from './pages/CladdingCalc';
 import { SetoutCalc } from './pages/SetoutCalc';
 
-interface SettingsCtx {
-  settings: Settings;
-  updateSettings: (patch: Partial<Settings>) => void;
-}
-
-interface HistoryCtx {
-  history: HistoryEntry[];
-  addEntry: (entry: HistoryEntry) => void;
-  updateEntry: (id: string, patch: Partial<HistoryEntry>) => void;
-  deleteEntry: (id: string) => void;
-  clearAll: () => void;
-}
-
-export const SettingsContext = createContext<SettingsCtx>({
-  settings: { unit: 'metric', apprenticeMode: false, userName: '', voiceInput: true, region: 'AU' },
-  updateSettings: () => {},
-});
-
-export const HistoryContext = createContext<HistoryCtx>({
-  history: [],
-  addEntry: () => {},
-  updateEntry: () => {},
-  deleteEntry: () => {},
-  clearAll: () => {},
-});
 
 function AppShell() {
   return (

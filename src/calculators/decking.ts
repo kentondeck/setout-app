@@ -36,7 +36,7 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const joistCount = Math.floor((deckLength * 1000) / joistSpacing) + 1;
 
   // Bearers span the deck length, spaced across the width
-  const bearerCount = Math.floor((deckWidth * 1000) / bearerSpacing) + 1;
+  const bearerCount = Math.ceil((deckWidth * 1000) / bearerSpacing) + 1;
 
   // Two fixings per board per joist is standard practice
   const fixingsCount = boardCount * joistCount * 2;
@@ -59,8 +59,8 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     },
     {
       label: 'Bearer count',
-      formula: 'floor( deck width (mm) ÷ bearer spacing ) + 1',
-      result: `floor( ${deckWidth * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
+      formula: 'ceil( deck width (mm) ÷ bearer spacing ) + 1',
+      result: `ceil( ${deckWidth * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
     },
     {
       label: 'Fixings',

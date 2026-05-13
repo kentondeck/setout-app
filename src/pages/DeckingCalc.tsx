@@ -337,6 +337,15 @@ export function DeckingCalc() {
               onSave={name => updateEntry(lastEntryId, { jobName: name })}
             />
 
+            <DeckBlueprint
+              deckLengthM={parseFloat(inputs.deckLength)}
+              deckWidthM={parseFloat(inputs.deckWidth)}
+              boardWidthMm={parseFloat(inputs.boardWidth)}
+              boardGapMm={parseFloat(inputs.boardGap)}
+              boardCount={result.outputs.boardCount}
+              joistCount={result.outputs.joistCount}
+            />
+
             <CoastalNote />
 
             <p
@@ -351,16 +360,6 @@ export function DeckingCalc() {
             </p>
           </>
         )}
-
-        {/* ── BLUEPRINT PREVIEW (sample values) — remove once approved ── */}
-        <DeckBlueprint
-          deckLengthM={4.2}
-          deckWidthM={3.0}
-          boardWidthMm={90}
-          boardGapMm={5}
-          boardCount={32}
-          joistCount={10}
-        />
       </div>
     </div>
   );

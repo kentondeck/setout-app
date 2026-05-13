@@ -20,6 +20,7 @@ interface Inputs {
   pitch: string;
   studSpacing: string;
   customSpacing: string;
+  timberThickness: string;
 }
 
 const DEFAULTS: Inputs = {
@@ -29,6 +30,7 @@ const DEFAULTS: Inputs = {
   pitch: '',
   studSpacing: '450',
   customSpacing: '',
+  timberThickness: '45',
 };
 
 export function RakedWallCalc() {
@@ -75,7 +77,8 @@ export function RakedWallCalc() {
 
     setError('');
 
-    const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing });
+    const timberThickness = parseFloat(inputs.timberThickness) || 45;
+    const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -85,7 +88,7 @@ export function RakedWallCalc() {
       calculatorId: 'raked',
       timestamp: Date.now(),
       jobName: jobName || undefined,
-      inputs: { wallLength, lowHeight, highHeight, studSpacing },
+      inputs: { wallLength, lowHeight, highHeight, studSpacing, timberThickness },
       outputs: calc.outputs,
     });
 
@@ -150,11 +153,11 @@ export function RakedWallCalc() {
           {/* Heights */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Low end height" value={inputs.lowHeight} onChange={set('lowHeight')} unit="mm" placeholder="e.g. 2400" />
+              <NumberInput label="Low end height" value={inputs.lowHeight} onChange={set('lowHeight')} unit="mm" placeholder="e.g. 2400" hint="floor to top of rake plate" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               {mode === 'heights' ? (
-                <NumberInput label="High end height" value={inputs.highHeight} onChange={set('highHeight')} unit="mm" placeholder="e.g. 3200" />
+                <NumberInput label="High end height" value={inputs.highHeight} onChange={set('highHeight')} unit="mm" placeholder="e.g. 3200" hint="floor to top of rake plate" />
               ) : (
                 <NumberInput
                   label="Roof pitch"
@@ -181,6 +184,23 @@ export function RakedWallCalc() {
             {inputs.studSpacing === 'custom' && (
               <div style={{ marginTop: 10 }}>
                 <NumberInput label="" value={inputs.customSpacing} onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))} unit="mm" placeholder="e.g. 300" />
+              </div>
+            )}
+          </div>
+
+          {/* Timber thickness */}
+          <div>
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>TIMBER THICKNESS</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['35', '45', '70', '90', 'custom'] as const).map(t => (
+                <button key={t} onClick={() => setInputs(prev => ({ ...prev, timberThickness: t === 'custom' ? '' : t }))} style={toggleStyle(t === 'custom' ? !['35','45','70','90'].includes(inputs.timberThickness) : inputs.timberThickness === t)}>
+                  {t === 'custom' ? 'Custom' : `${t}mm`}
+                </button>
+              ))}
+            </div>
+            {!['35', '45', '70', '90'].includes(inputs.timberThickness) && (
+              <div style={{ marginTop: 10 }}>
+                <NumberInput label="" value={inputs.timberThickness} onChange={v => setInputs(prev => ({ ...prev, timberThickness: v }))} unit="mm" placeholder="e.g. 42" />
               </div>
             )}
           </div>
@@ -222,9 +242,14 @@ export function RakedWallCalc() {
 
             {/* Stud cut list */}
             <div style={{ ...cardStyle, gap: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
-                STUD HEIGHTS — cut each top at {result.outputs.pitchAngle}°
-              </p>
+              <div>
+                <p style={{ margin: '0 0 2px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
+                  STUD LENGTHS — short side of top cut
+                </p>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
+                  Cut top at {result.outputs.pitchAngle}° · add {result.outputs.studCutExtra}mm on high side · deducted {parseFloat(inputs.timberThickness) || 45}mm bottom plate + {result.outputs.rakePlateVertical}mm rake plate
+                </p>
+              </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {result.studHeights.map((h, i) => (
                   <div key={i} style={{

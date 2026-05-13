@@ -1,21 +1,24 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
 export interface RakedWallInputs {
-  wallLength: number;   // mm — horizontal length of wall
-  lowHeight: number;    // mm — height at short end
-  highHeight: number;   // mm — height at tall end (derived from pitch if needed)
-  studSpacing: number;  // mm
+  wallLength: number;       // mm — horizontal length of wall
+  lowHeight: number;        // mm — total wall height at short end (floor to top of rake plate)
+  highHeight: number;       // mm — total wall height at tall end
+  studSpacing: number;      // mm
+  timberThickness: number;  // mm — plate/stud thickness (e.g. 45 for 45×90 framing)
 }
 
 export interface RakedWallOutputs extends Record<string, number> {
   studCount: number;
-  lowStudHeight: number;    // mm
-  highStudHeight: number;   // mm (last stud position, may differ from highHeight)
-  rakePlateLength: number;  // mm
-  bottomPlateLineal: number; // lm
-  totalStudLineal: number;  // lm — studs only
-  totalLinealMetres: number; // lm — studs + rake plate + bottom plate
-  pitchAngle: number;       // degrees
+  lowStudHeight: number;      // mm — stud length at short end (after plate deductions)
+  highStudHeight: number;     // mm — stud length at tall end (after plate deductions)
+  rakePlateLength: number;    // mm
+  bottomPlateLineal: number;  // lm
+  totalStudLineal: number;    // lm — studs only
+  totalLinealMetres: number;  // lm — studs + rake plate + bottom plate
+  pitchAngle: number;         // degrees
+  rakePlateVertical: number;  // mm — plumb height of the tilted rake plate at any stud
+  studCutExtra: number;       // mm to add on the high side of each stud top cut
 }
 
 export interface RakedWallResult {
@@ -25,26 +28,35 @@ export interface RakedWallResult {
 }
 
 export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
-  const { wallLength, lowHeight, highHeight, studSpacing } = inputs;
+  const { wallLength, lowHeight, highHeight, studSpacing, timberThickness } = inputs;
 
-  // wallLength is now in mm — no conversion needed
   const rise = highHeight - lowHeight;
+  const pitchRad = Math.atan2(rise, wallLength);
+  const pitchAngle = parseFloat(((pitchRad * 180) / Math.PI).toFixed(1));
+
+  // Rake plate sits at an angle — its plumb (vertical) height at any stud is t/cos(θ)
+  const rakePlateVertical = Math.round(timberThickness / Math.cos(pitchRad));
+
+  // Total deduction from each stud: bottom plate (flat) + rake plate (angled)
+  const studDeduction = timberThickness + rakePlateVertical;
+
+  // Extra mm on the high side of each stud top cut: t × tan(θ)
+  const studCutExtra = Math.round(timberThickness * Math.tan(pitchRad));
 
   const studCount = Math.floor(wallLength / studSpacing) + 1;
 
-  // Interpolate each stud height along the rake line
+  // Stud lengths: interpolate total height at each position, then deduct both plates
   const studHeights: number[] = [];
   for (let i = 0; i < studCount; i++) {
     const position = i * studSpacing;
-    studHeights.push(Math.round(lowHeight + (rise * position) / wallLength));
+    const totalHeight = Math.round(lowHeight + (rise * position) / wallLength);
+    studHeights.push(totalHeight - studDeduction);
   }
 
   const lowStudHeight = studHeights[0];
   const highStudHeight = studHeights[studCount - 1];
 
-  // Rake plate = hypotenuse of the full wall
   const rakePlateLength = Math.round(Math.sqrt(wallLength ** 2 + rise ** 2));
-
   const bottomPlateLineal = parseFloat((wallLength / 1000).toFixed(2));
 
   const totalStudLineal = parseFloat(
@@ -53,10 +65,6 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
 
   const totalLinealMetres = parseFloat(
     (totalStudLineal + rakePlateLength / 1000 + bottomPlateLineal).toFixed(2)
-  );
-
-  const pitchAngle = parseFloat(
-    ((Math.atan2(rise, wallLength) * 180) / Math.PI).toFixed(1)
   );
 
   const steps: WorkingStep[] = [
@@ -71,14 +79,24 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
       result: `arctan( ${rise} ÷ ${wallLength} ) = ${pitchAngle}°`,
     },
     {
+      label: 'Plate deductions',
+      formula: 'bottom plate (flat) + rake plate (t ÷ cos θ)',
+      result: `${timberThickness}mm + ${timberThickness}mm ÷ cos(${pitchAngle}°) = ${timberThickness}mm + ${rakePlateVertical}mm = ${studDeduction}mm total`,
+    },
+    {
       label: 'Stud count',
       formula: 'floor( wall length ÷ stud spacing ) + 1',
       result: `floor( ${wallLength} ÷ ${studSpacing} ) + 1 = ${studCount} studs`,
     },
     {
-      label: 'Stud heights',
-      formula: 'low height + ( rise × position ÷ wall length )',
-      result: `${lowStudHeight}mm → ${highStudHeight}mm, each cut to ${pitchAngle}° at top`,
+      label: 'Stud lengths',
+      formula: 'total height at position − plate deductions',
+      result: `${lowStudHeight}mm → ${highStudHeight}mm (short side of top cut)`,
+    },
+    {
+      label: 'Top cut detail',
+      formula: 'cut at pitch angle; high side = short side + t × tan( θ )',
+      result: `Cut at ${pitchAngle}° — add ${studCutExtra}mm on high side`,
     },
     {
       label: 'Rake plate length',
@@ -88,7 +106,7 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   ];
 
   return {
-    outputs: { studCount, lowStudHeight, highStudHeight, rakePlateLength, bottomPlateLineal, totalStudLineal, totalLinealMetres, pitchAngle },
+    outputs: { studCount, lowStudHeight, highStudHeight, rakePlateLength, bottomPlateLineal, totalStudLineal, totalLinealMetres, pitchAngle, rakePlateVertical, studCutExtra },
     studHeights,
     steps,
   };

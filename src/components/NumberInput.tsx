@@ -21,9 +21,9 @@ export function NumberInput({ label, value, onChange, unit, placeholder, hint }:
         >
           {label}
         </label>
-        {hint && (
-          <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{hint}</span>
-        )}
+        <span style={{ fontSize: 11, color: 'var(--color-muted)', visibility: hint ? 'visible' : 'hidden' }}>
+          {hint || ' '}
+        </span>
       </div>
       <div
         style={{

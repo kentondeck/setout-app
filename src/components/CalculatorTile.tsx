@@ -51,6 +51,9 @@ export function CalculatorTile({ calc, highlighted }: CalculatorTileProps) {
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d={calc.svgPath} stroke={iconStroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            {calc.svgPathAccent && (
+              <path d={calc.svgPathAccent} stroke="var(--color-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            )}
           </svg>
         </div>
         <span style={{ fontSize: 11, fontWeight: 500, color: numColor, letterSpacing: '0.5px' }}>

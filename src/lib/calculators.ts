@@ -6,6 +6,7 @@ export interface CalcMeta {
   subtitle: string;
   number: string;
   svgPath: string;
+  svgPathAccent?: string;
 }
 
 export const CALCULATORS: CalcMeta[] = [
@@ -14,7 +15,8 @@ export const CALCULATORS: CalcMeta[] = [
     label: 'Decking',
     subtitle: 'Boards, joists, bearers',
     number: '01',
-    svgPath: 'M3 6h18M3 12h18M3 18h18',
+    svgPath: '',
+    svgPathAccent: 'M7 5L17 5M6 8L18 8M5 11L19 11M4 14L20 14M3 17L21 17M2 20L22 20',
   },
   {
     id: 'framing',

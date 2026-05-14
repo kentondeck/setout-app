@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 import { useHistory } from './lib/useHistory';
 import { SettingsContext, HistoryContext } from './contexts';
@@ -54,9 +54,9 @@ export function App() {
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
       <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
-        <BrowserRouter>
+        <HashRouter>
           <AppShell />
-        </BrowserRouter>
+        </HashRouter>
       </HistoryContext.Provider>
     </SettingsContext.Provider>
   );

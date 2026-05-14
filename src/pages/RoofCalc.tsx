@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateRoof } from '../calculators/roof';
 import type { RoofOutputs } from '../calculators/roof';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 
@@ -105,17 +104,6 @@ export function RoofCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Roof pitch"
-        right={
-          <VoiceInputButton
-            prompt="Say: building width, pitch in degrees, overhang"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { buildingWidth: String(values[0]) }),
-              ...(values[1] !== undefined && { pitchDegrees: String(values[1]) }),
-              ...(values[2] !== undefined && { overhang: String(values[2]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

@@ -7,7 +7,6 @@ const defaults: Settings = {
   unit: 'metric',
   apprenticeMode: false,
   userName: '',
-  voiceInput: true,
   region: 'AU',
   pinnedCalcs: [],
 };

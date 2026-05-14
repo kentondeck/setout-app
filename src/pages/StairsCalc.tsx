@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateStairs } from '../calculators/stairs';
 import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES, STAIR_LIMITS } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { StairDiagram } from '../components/StairDiagram';
@@ -99,17 +98,6 @@ export function StairsCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Stairs"
-        right={
-          <VoiceInputButton
-            prompt="Say: total rise, total run, riser height"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { totalRise: String(values[0]) }),
-              ...(values[1] !== undefined && { totalRun: String(values[1]) }),
-              ...(values[2] !== undefined && { preferredRiser: String(values[2]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

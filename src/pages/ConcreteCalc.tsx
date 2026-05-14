@@ -4,7 +4,6 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
@@ -167,29 +166,6 @@ export function ConcreteCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Concrete volume"
-        right={
-          <VoiceInputButton
-            prompt={tab === 'slab' ? 'Say: length, width, thickness' : 'Say: diameter or width, depth, number of holes'}
-            onValues={values => {
-              if (tab === 'slab') {
-                setSlabFields(prev => ({
-                  ...prev,
-                  ...(values[0] !== undefined && { length: String(values[0]) }),
-                  ...(values[1] !== undefined && { width: String(values[1]) }),
-                  ...(values[2] !== undefined && { thickness: String(values[2]) }),
-                }));
-              } else {
-                setPostFields(prev => ({
-                  ...prev,
-                  ...(values[0] !== undefined && holeType === 'round' && { diameter: String(values[0]) }),
-                  ...(values[0] !== undefined && holeType === 'square' && { sideWidth: String(values[0]) }),
-                  ...(values[1] !== undefined && { depth: String(values[1]) }),
-                  ...(values[2] !== undefined && { numHoles: String(values[2]) }),
-                }));
-              }
-            }}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

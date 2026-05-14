@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateCutlist } from '../calculators/cutlist';
 import type { CutlistOutputs, CutlistPlan } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { SettingsContext, HistoryContext } from '../contexts';
 
 interface CutRow {
@@ -110,27 +109,6 @@ export function CutlistCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Cut list"
-        right={
-          <VoiceInputButton
-            prompt="Say: timber length, then cuts (length, quantity)"
-            onValues={values => {
-              if (values.length === 0) return;
-              // First number → stock length; remaining pairs → cut rows
-              setStockLength(String(values[0]));
-              if (values.length > 1) {
-                const newRows: typeof rows = [];
-                for (let i = 1; i < values.length; i += 2) {
-                  newRows.push({
-                    id: crypto.randomUUID(),
-                    length: String(values[i]),
-                    qty: values[i + 1] !== undefined ? String(Math.round(values[i + 1])) : '1',
-                  });
-                }
-                if (newRows.length > 0) setRows(newRows);
-              }
-            }}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

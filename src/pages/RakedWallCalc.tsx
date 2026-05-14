@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateRakedWall } from '../calculators/raked-wall';
 import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 
@@ -122,17 +121,6 @@ export function RakedWallCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Raked Wall"
-        right={
-          <VoiceInputButton
-            prompt="Say: wall length, low height, high height"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { wallLength: String(values[0]) }),
-              ...(values[1] !== undefined && { lowHeight: String(values[1]) }),
-              ...(values[2] !== undefined && mode === 'heights' ? { highHeight: String(values[2]) } : { pitch: String(values[2]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateBaluster } from '../calculators/baluster';
 import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
@@ -106,17 +105,6 @@ export function BalusterCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Balusters"
-        right={
-          <VoiceInputButton
-            prompt="Say: span length, baluster width, max gap"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { totalLength: String(values[0]) }),
-              ...(values[1] !== undefined && { balusterWidth: String(values[1]) }),
-              ...(values[2] !== undefined && { maxGap: String(values[2]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

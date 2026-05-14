@@ -182,46 +182,6 @@ export function Settings() {
         />
       </div>
 
-      <div>
-        <SectionLabel>Voice input</SectionLabel>
-        <div
-          style={{
-            background: 'var(--color-card)',
-            border: '0.5px solid var(--color-border)',
-            borderRadius: 'var(--radius-card)',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <div>
-            <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>
-              Speak your measurements
-            </p>
-            <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--color-muted)' }}>
-              Tap the mic on any calculator
-            </p>
-          </div>
-          <button
-            onClick={() => updateSettings({ voiceInput: !settings.voiceInput })}
-            style={{
-              width: 44, height: 26, borderRadius: 13, border: 'none',
-              background: settings.voiceInput ? 'var(--color-orange)' : '#ccc',
-              position: 'relative', cursor: 'pointer',
-              transition: 'background 0.2s', flexShrink: 0,
-            }}
-          >
-            <span style={{
-              position: 'absolute', top: 3,
-              left: settings.voiceInput ? 21 : 3,
-              width: 20, height: 20, borderRadius: '50%', background: '#fff',
-              transition: 'left 0.2s',
-            }} />
-          </button>
-        </div>
-      </div>
 
       <div style={{ marginTop: 'auto', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>

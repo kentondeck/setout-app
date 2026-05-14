@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateCladding } from '../calculators/cladding';
 import type { CladdingOutputs } from '../calculators/cladding';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { CoastalNote } from '../components/CoastalNote';
@@ -92,16 +91,6 @@ export function CladdingCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Cladding"
-        right={
-          <VoiceInputButton
-            prompt="Say: wall height, wall width"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { wallHeight: String(values[0]) }),
-              ...(values[1] !== undefined && { wallWidth: String(values[1]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

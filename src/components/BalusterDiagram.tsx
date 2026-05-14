@@ -132,7 +132,7 @@ export const BalusterDiagram = memo(function BalusterDiagram({
 
   // ── Baluster visual layout ─────────────────────────────────────────────────
   const visibleCount = Math.min(balusterCount, MAX_VIS);
-  const truncated = balusterCount > MAX_VIS;
+
   const vbw = Math.max(6, Math.min(12, SPAN_PX / (visibleCount * 2.5)));
   const vg = Math.max(0, (SPAN_PX - visibleCount * vbw) / (visibleCount + 1));
 

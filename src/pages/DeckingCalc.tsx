@@ -157,7 +157,7 @@ export function DeckingCalc() {
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} unit="mm" placeholder="450" hint="AS 1684" />
+              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} unit="mm" placeholder="450" hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} unit="mm" placeholder="1800" />

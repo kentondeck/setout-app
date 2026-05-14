@@ -11,7 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { DeckBlueprint } from '../components/DeckBlueprint';
+import { DeckingDiagram } from '../components/DeckingDiagram';
 import { CoastalNote } from '../components/CoastalNote';
 
 interface Inputs {
@@ -337,13 +337,12 @@ export function DeckingCalc() {
               onSave={name => updateEntry(lastEntryId, { jobName: name })}
             />
 
-            <DeckBlueprint
-              deckLengthM={parseFloat(inputs.deckLength)}
-              deckWidthM={parseFloat(inputs.deckWidth)}
-              boardWidthMm={parseFloat(inputs.boardWidth)}
-              boardGapMm={parseFloat(inputs.boardGap)}
+            <DeckingDiagram
+              deckLength={deckLengthMm}
+              deckWidth={deckWidthMm}
+              boardWidth={bw}
+              boardGap={bg}
               boardCount={result.outputs.boardCount}
-              joistCount={result.outputs.joistCount}
             />
 
             <CoastalNote />

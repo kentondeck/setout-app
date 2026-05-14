@@ -19,7 +19,7 @@ interface PostFields { diameter: string; sideWidth: string; depth: string; numHo
 const WASTAGE_OPTIONS = [0.05, 0.10, 0.15, 0.20];
 
 const SLAB_DEFAULTS: SlabFields = { length: '', width: '', thickness: '' };
-const POST_DEFAULTS: PostFields = { diameter: '300', sideWidth: '300', depth: '600', numHoles: '1', postSize: '' };
+const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numHoles: '', postSize: '' };
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
@@ -258,18 +258,18 @@ export function ConcreteCalc() {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {holeType === 'round' ? (
-                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholder="" />
+                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholder="e.g. 300" />
                   ) : (
-                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholder="" />
+                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholder="e.g. 300" />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholder="" />
+                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholder="e.g. 600" />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="1" hint="default 1" />
+                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="e.g. 1" hint="default 1" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>

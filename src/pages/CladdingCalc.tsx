@@ -22,10 +22,10 @@ interface Inputs {
 const DEFAULTS: Inputs = {
   wallHeight: '',
   wallWidth: '',
-  boardWidth: '180',
-  lap: '30',
-  boardLength: '4200',
-  startOffset: '0',
+  boardWidth: '',
+  lap: '',
+  boardLength: '',
+  startOffset: '',
 };
 
 export function CladdingCalc() {
@@ -108,7 +108,7 @@ export function CladdingCalc() {
           {/* Board dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="e.g. 180" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
@@ -116,7 +116,7 @@ export function CladdingCalc() {
                 value={inputs.lap}
                 onChange={set('lap')}
                 units={['mm', 'm']}
-                placeholder=""
+                placeholder="e.g. 30"
                 hint={inputs.boardWidth && inputs.lap ? `face ${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm` : undefined}
               />
             </div>
@@ -125,10 +125,10 @@ export function CladdingCalc() {
           {/* Stock length & start offset */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="e.g. 4200" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholder="" hint="from datum to first course" />
+              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholder="e.g. 0" hint="from datum to first course" />
             </div>
           </div>
         </div>

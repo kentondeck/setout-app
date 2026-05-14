@@ -24,10 +24,10 @@ interface Inputs {
 const DEFAULTS: Inputs = {
   deckLength: '',
   deckWidth: '',
-  boardWidth: '90',
-  boardGap: '5',
-  joistSpacing: '450',
-  bearerSpacing: '1800',
+  boardWidth: '',
+  boardGap: '',
+  joistSpacing: '',
+  bearerSpacing: '',
 };
 
 export function DeckingCalc() {
@@ -152,18 +152,18 @@ export function DeckingCalc() {
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="e.g. 90" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholder="" hint="default 5mm" />
+              <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholder="e.g. 5" hint="default 5mm" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholder="" hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
+              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholder="e.g. 450" hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholder="e.g. 1800" />
             </div>
           </div>
         </div>

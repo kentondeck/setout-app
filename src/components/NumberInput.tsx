@@ -145,7 +145,7 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
           onChange={e => handleChange(e.target.value)}
           style={{
             flex: 1,
-            padding: '13px 16px',
+            padding: '13px 12px',
             border: 'none',
             background: 'transparent',
             fontSize: 16,

@@ -11,7 +11,6 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckingDiagram } from '../components/DeckingDiagram';
-import { CoastalNote } from '../components/CoastalNote';
 
 interface Inputs {
   deckLength: string;
@@ -127,9 +126,7 @@ export function DeckingCalc() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader
-        title="Decking"
-      />
+      <CalcHeader title="Decking" />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
@@ -208,7 +205,7 @@ export function DeckingCalc() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <ResultCard label="Joists" value={result.outputs.joistCount} />
                 <ResultCard label="Bearers" value={result.outputs.bearerCount} />
-                <ResultCard label="Fixings" value={result.outputs.fixingsCount} />
+                <ResultCard label="Fixings (approx)" value={result.outputs.fixingsCount} />
               </div>
             </div>
 
@@ -279,7 +276,7 @@ export function DeckingCalc() {
                 { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckLengthMm },
                 { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
                 { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
-                { label: 'Fixings', qty: result.outputs.fixingsCount, mm: null },
+                { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
@@ -381,8 +378,6 @@ export function DeckingCalc() {
               boardGap={bg}
               boardCount={result.outputs.boardCount}
             />
-
-            <CoastalNote />
 
             <p
               style={{

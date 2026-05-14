@@ -45,8 +45,14 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   // Bearers span the deck length, spaced across the width
   const bearerCount = Math.ceil((deckWidth * 1000) / bearerSpacing) + 1;
 
-  // Two fixings per board per joist is standard practice
-  const fixingsCount = boardCount * joistCount * 2;
+  // 2 fixings per board-joist intersection, +10% for joins landing on joists (4 screws instead of 2)
+  const fixingsCount = Math.ceil(boardCount * joistCount * 2 * 1.1);
+
+  const fixingsStep: WorkingStep = {
+    label: 'Fixings (approx)',
+    formula: 'board count × joist count × 2 screws per intersection, +10% for board joins',
+    result: `${boardCount} × ${joistCount} × 2 × 1.1 = ${fixingsCount} screws`,
+  };
 
   const steps: WorkingStep[] = [
     {
@@ -69,11 +75,7 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
       formula: 'ceil( deck width (mm) ÷ bearer spacing ) + 1',
       result: `ceil( ${deckWidth * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
     },
-    {
-      label: 'Fixings',
-      formula: 'board count × joist count × 2 screws per intersection',
-      result: `${boardCount} × ${joistCount} × 2 = ${fixingsCount} screws`,
-    },
+    fixingsStep,
   ];
 
   // Actual width of the last board — less than boardWidth means a rip is needed

@@ -149,4 +149,96 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
 
   const allCuts: number[] = [];
   for (const { length, qty } of cuts) {
-    for (let i = 0; i < qty; i++) allCuts.pus
+    for (let i = 0; i < qty; i++) allCuts.push(length);
+  }
+  allCuts.sort((a, b) => b - a);
+
+  let winnerBins: { stockLength: number; cuts: number[] }[] = [];
+  let winnerTotal = Infinity;
+
+  for (const stockLen of lengths) {
+    if (stockLen < allCuts[0] + KERF) continue;
+    const singleBins = bfdSingle(allCuts, stockLen).map(c => ({ stockLength: stockLen, cuts: c }));
+    const total = singleBins.length * stockLen;
+    if (total < winnerTotal) {
+      winnerTotal = total;
+      winnerBins = singleBins;
+    }
+  }
+
+  if (lengths.length > 1) {
+    const mixed = mixedBFD(allCuts, lengths);
+    const mixedTotal = mixed.reduce((s, b) => s + b.stockLength, 0);
+    if (mixedTotal < winnerTotal) {
+      winnerTotal = mixedTotal;
+      winnerBins = mixed;
+    }
+  }
+
+  const plan: CutlistPlan[] = winnerBins.map((bin, i) => {
+    const used = bin.cuts.reduce((s, l) => s + l + KERF, 0);
+    return {
+      stockIndex: i + 1,
+      stockLength: bin.stockLength,
+      cuts: bin.cuts.map(l => ({ length: l, qty: 1 })),
+      waste: bin.stockLength - used,
+    };
+  });
+
+  const countMap = new Map<number, number>();
+  for (const bin of winnerBins) {
+    countMap.set(bin.stockLength, (countMap.get(bin.stockLength) ?? 0) + 1);
+  }
+  const materialList: MaterialItem[] = [...countMap.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([stockLength, count]) => ({ stockLength, count }));
+
+  const totalPieces = winnerBins.length;
+  const totalCutLength = allCuts.reduce((s, l) => s + l, 0);
+  const totalWaste = plan.reduce((s, p) => s + p.waste, 0);
+  const totalStock = winnerTotal;
+  const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
+  const totalCost =
+    pricePerMetre > 0
+      ? parseFloat(winnerBins.reduce((s, b) => s + (b.stockLength / 1000) * pricePerMetre, 0).toFixed(2))
+      : 0;
+
+  const orderSummary = materialList
+    .map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m`)
+    .join(', ');
+
+  const steps: WorkingStep[] = [
+    {
+      label: 'Cut pieces',
+      formula: 'All cuts expanded and sorted longest-first',
+      result: `${allCuts.length} pieces — longest ${allCuts[0]}mm, shortest ${allCuts[allCuts.length - 1]}mm`,
+    },
+    {
+      label: 'Lengths considered',
+      formula: forcedStockLength
+        ? 'Fixed stock length (user specified)'
+        : 'Standard NZ/AU lengths — picks the combination that minimises total timber purchased',
+      result: lengths.map(l => `${(l / 1000).toFixed(1).replace(/\.0$/, '')}m`).join(', '),
+    },
+    {
+      label: 'Optimised order',
+      formula: 'Mixed best-fit decreasing vs single-length best-fit — lowest total stock wins',
+      result: orderSummary,
+    },
+    {
+      label: 'Waste',
+      formula: '( total offcut ÷ total stock ) × 100',
+      result: `${totalWaste}mm from ${totalStock}mm stock = ${wastePercent}% waste`,
+    },
+    ...(pricePerMetre > 0
+      ? [{ label: 'Total cost', formula: 'each piece × its length (m) × price per metre', result: `$${totalCost}` }]
+      : []),
+  ];
+
+  return {
+    outputs: { totalPieces, totalWaste, wastePercent, totalCost, totalCutLength },
+    plan,
+    materialList,
+    steps,
+  };
+}

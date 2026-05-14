@@ -10,6 +10,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { RoofDiagram } from '../components/RoofDiagram';
 
 interface Inputs {
   buildingWidth: string;
@@ -216,6 +217,14 @@ export function RoofCalc() {
                 <ResultCard label="Seat cut" value={result.outputs.seatCutAngle} unit="°" />
               </div>
             </div>
+
+            <RoofDiagram
+              buildingWidthMm={parseFloat(inputs.buildingWidth) * 1000}
+              pitchDegrees={parseFloat(inputs.pitchDegrees)}
+              ridgeHeightMm={result.outputs.ridgeHeight * 1000}
+              rafterLengthMm={Math.round(result.outputs.totalRafterLength * 1000)}
+              overhangMm={isNaN(parseFloat(inputs.overhang)) ? 0 : parseFloat(inputs.overhang) * 1000}
+            />
 
             {/* Rafter cut details — only when optional inputs were provided */}
             {(result.outputs.birdsmouthPlumbDepth > 0 || result.outputs.ridgeShortening > 0) && (

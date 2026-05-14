@@ -146,24 +146,16 @@ export const DeckingDiagram = memo(function DeckingDiagram({
             {/* ── Dim 1: Deck width (left, vertical) ── */}
             <line x1={70} y1={DK_Y} x2={70} y2={DK_BOTTOM}
               stroke={ORANGE} strokeWidth={1} markerStart="url(#ddS)" markerEnd="url(#ddE)" />
-            <line x1={64} y1={DK_Y}      x2={76} y2={DK_Y}      stroke={ORANGE} strokeWidth={1.5} />
-            <line x1={64} y1={DK_BOTTOM} x2={76} y2={DK_BOTTOM} stroke={ORANGE} strokeWidth={1.5} />
-            <line x1={56} y1={wMidY} x2={70} y2={wMidY} stroke={ORANGE} strokeWidth={0.5} strokeDasharray="3,3" />
             <text x={34} y={wMidY - 26} textAnchor="middle" fontSize={18} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.3">Width</text>
             <text x={34} y={wMidY}      textAnchor="middle" fontSize={22} fontWeight={600} fontFamily={FONT} fill={ORANGE}>{Math.round(deckWidth)}</text>
             <text x={34} y={wMidY + 18} textAnchor="middle" fontSize={14} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
 
             {/* ── Dim 2: Board width (right, vertical) ── */}
-            <line x1={DK_RIGHT} y1={bArrY1} x2={320} y2={bArrY1} stroke={ORANGE} strokeWidth={1} />
-            <line x1={DK_RIGHT} y1={bArrY2} x2={320} y2={bArrY2} stroke={ORANGE} strokeWidth={1} />
             <line x1={320} y1={bArrY1} x2={320} y2={bArrY2}
               stroke={ORANGE} strokeWidth={1} markerStart="url(#ddS)" markerEnd="url(#ddE)" />
-            <line x1={314} y1={bArrY1} x2={326} y2={bArrY1} stroke={ORANGE} strokeWidth={1.5} />
-            <line x1={314} y1={bArrY2} x2={326} y2={bArrY2} stroke={ORANGE} strokeWidth={1.5} />
-            <line x1={326} y1={bMidY} x2={336} y2={bMidY} stroke={ORANGE} strokeWidth={0.5} strokeDasharray="3,3" />
-            <text x={358} y={bMidY - 20} textAnchor="middle" fontSize={14} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.3">Board</text>
-            <text x={358} y={bMidY + 4}  textAnchor="middle" fontSize={18} fontWeight={600} fontFamily={FONT} fill={ORANGE}>{Math.round(boardWidth)}</text>
-            <text x={358} y={bMidY + 20} textAnchor="middle" fontSize={12} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
+            <text x={344} y={bMidY - 20} textAnchor="middle" fontSize={14} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.3">Board</text>
+            <text x={344} y={bMidY + 4}  textAnchor="middle" fontSize={18} fontWeight={600} fontFamily={FONT} fill={ORANGE}>{Math.round(boardWidth)}</text>
+            <text x={344} y={bMidY + 20} textAnchor="middle" fontSize={12} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
 
             {/* ── Dim 3: Deck length (bottom, horizontal) ── */}
             <line x1={DK_X}     y1={DK_BOTTOM} x2={DK_X}     y2={256} stroke={ORANGE} strokeWidth={1} />

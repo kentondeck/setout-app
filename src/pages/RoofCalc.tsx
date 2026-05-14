@@ -22,8 +22,8 @@ interface Inputs {
 
 const DEFAULTS: Inputs = {
   buildingWidth: '',
-  pitchDegrees: '22.5',
-  overhang: '0.6',
+  pitchDegrees: '',
+  overhang: '',
   rafterDepth: '',
   plateWidth: '',
   ridgeThickness: '',
@@ -136,12 +136,12 @@ export function RoofCalc() {
               <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} unit="m" placeholder="8.0" hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="22.5" hint="degrees" />
+              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="e.g. 22.5" hint="degrees" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} unit="m" placeholder="0.6" hint="each side" />
+              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} unit="m" placeholder="e.g. 0.6" hint="each side" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

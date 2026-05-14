@@ -7,7 +7,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateBaluster } from '../calculators/baluster';
 import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
@@ -97,27 +96,14 @@ export function BalusterCalc() {
 
   const balusterSteps: WorkingStep[] = result ? [
     { label: 'Length between posts', explanation: 'The distance from inside of one post to the inside of the next', result: `${balLen} mm` },
-    { label: 'Max gap allowed', explanation: 'Australian Standard says no gap can be bigger than 125mm', result: `${balMax} mm` },
+    { label: 'Max gap allowed', explanation: `${settings.region === 'NZ' ? 'NZS 3604' : 'AS 1657'} says no gap can be bigger than ${BALUSTER_MAX_GAP[settings.region]}mm`, result: `${balMax} mm` },
     { label: 'Minimum balusters needed', explanation: 'Work out the smallest number of balusters that keeps the gap under the limit', calculation: `Trial: ${balCount} balusters with ${balGap.toFixed(1)} mm gaps`, result: `${balCount} balusters` },
     { label: 'Actual gap', explanation: 'Subtract the balusters from the total length and divide by the number of gaps', calculation: `(${balLen} - (${balCount} × ${balWidth})) ÷ ${balCount + 1}`, result: `${balGap.toFixed(0)} mm between each` },
   ] : [];
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader
-        title="Balusters"
-        right={
-          <VoiceInputButton
-            prompt="Say: span length, baluster width, max gap"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { totalLength: String(values[0]) }),
-              ...(values[1] !== undefined && { balusterWidth: String(values[1]) }),
-              ...(values[2] !== undefined && { maxGap: String(values[2]) }),
-            }))}
-          />
-        }
-      />
+      <CalcHeader title="Balusters" />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
 
@@ -174,6 +160,22 @@ export function BalusterCalc() {
               <ResultCard label="Balusters" value={result.outputs.balusters} accent />
               <ResultCard label="Actual gap" value={result.outputs.actualGap} unit="mm" />
             </div>
+
+            {parseFloat(inputs.maxGap) > BALUSTER_MAX_GAP[settings.region] && (
+              <div style={{
+                background: '#fff8e1',
+                border: '0.5px solid #f59e0b',
+                borderRadius: 10,
+                padding: '12px 14px',
+              }}>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: '#92400e' }}>
+                  Compliance check — {settings.region === 'NZ' ? 'NZS 3604' : 'AS 1657'}
+                </p>
+                <p style={{ margin: '4px 0 0', fontSize: 12, color: '#92400e' }}>
+                  Max gap of {inputs.maxGap}mm exceeds the {BALUSTER_MAX_GAP[settings.region]}mm code limit
+                </p>
+              </div>
+            )}
 
             {diagramProps && (
               <BalusterDiagram

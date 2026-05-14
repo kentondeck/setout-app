@@ -12,7 +12,6 @@ export function CalculatorTile({ calc, highlighted }: CalculatorTileProps) {
   const bg = highlighted ? 'var(--color-orange)' : 'var(--color-card)';
   const iconBg = highlighted ? '#ffffff' : '#f5f5f3';
   const iconStroke = highlighted ? 'var(--color-orange)' : 'var(--color-text)';
-  const numColor = highlighted ? 'rgba(255,255,255,0.7)' : '#cccccc';
   const labelColor = highlighted ? '#ffffff' : 'var(--color-text)';
   const subtitleColor = highlighted ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)';
 
@@ -56,9 +55,6 @@ export function CalculatorTile({ calc, highlighted }: CalculatorTileProps) {
             )}
           </svg>
         </div>
-        <span style={{ fontSize: 11, fontWeight: 500, color: numColor, letterSpacing: '0.5px' }}>
-          {calc.number}
-        </span>
       </div>
 
       <div>

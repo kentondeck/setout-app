@@ -24,8 +24,8 @@ export function BalusterCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(() => ({
     totalLength: '',
-    balusterWidth: '42',
-    maxGap: String(BALUSTER_MAX_GAP[settings.region]),
+    balusterWidth: '',
+    maxGap: '',
   }));
   const [result, setResult] = useState<{ outputs: BalusterOutputs; steps: WorkingStep[] } | null>(null);
   const [jobName, setJobName] = useState('');

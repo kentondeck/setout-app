@@ -11,7 +11,6 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckBlueprint } from '../components/DeckBlueprint';
-import { CoastalNote } from '../components/CoastalNote';
 
 interface Inputs {
   deckLength: string;
@@ -380,8 +379,6 @@ export function DeckingCalc() {
               boardCount={result.outputs.boardCount}
               joistCount={result.outputs.joistCount}
             />
-
-            <CoastalNote />
 
             <p
               style={{

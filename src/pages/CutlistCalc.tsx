@@ -150,7 +150,7 @@ export function CutlistCalc() {
                 onChange={setForcedStock}
                 units={['mm', 'm']}
                 placeholder="auto"
-                hint="optional — leave blank to mix"
+                hint="leave blank to optimise waste"
               />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>

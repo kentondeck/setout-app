@@ -115,7 +115,7 @@ export function StairsCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholder="2700" hint="floor to floor" />
+              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholder="" hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholder="optional" hint="leave blank to calculate" />
@@ -123,7 +123,7 @@ export function StairsCalc() {
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholder="175" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
+              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholder="" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholder="optional" hint={`${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />

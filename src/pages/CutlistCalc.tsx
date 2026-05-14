@@ -127,7 +127,7 @@ export function CutlistCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Stock length" value={stockLength} onChange={setStockLength} units={['mm', 'm']} placeholder="5400" hint="e.g. 5400, 4200" />
+              <NumberInput label="Stock length" value={stockLength} onChange={setStockLength} units={['mm', 'm']} placeholder="" hint="" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="optional" />
@@ -157,7 +157,7 @@ export function CutlistCalc() {
                   value={row.length}
                   onChange={v => updateRow(row.id, 'length', v)}
                   units={['mm', 'm']}
-                  placeholder="1200"
+                  placeholder=""
                 />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

@@ -29,6 +29,11 @@ body {
   flex-direction: column;
 }
 
+/* Smaller placeholder so text like "optional" fits in narrow inputs */
+input::placeholder {
+  font-size: 13px;
+}
+
 /* Hide number input spinners */
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {

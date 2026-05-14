@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decking Diagram — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #f0f0ee;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 40px 20px;
+      font-family: Inter, -apple-system, sans-serif;
+    }
+    .card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.06);
+      border-radius: 16px;
+      padding: 20px;
+      width: 360px;
+    }
+    .card-label   { margin: 0 0 10px; font-size: 13px; font-weight: 500; color: #0a0a0a; }
+    .card-caption { margin: 8px 0 0; font-size: 11px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p class="card-label">Layout preview</p>
+
+    <svg viewBox="0 0 380 320" width="100%" role="img" style="display:block">
+      <title>Decking layout</title>
+      <desc>32 boards at 90mm width, 5mm gap over 4200×3000mm deck</desc>
+
+      <defs>
+        <marker id="dkS" viewBox="0 0 10 10" refX="1" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M8 1L2 5L8 9" fill="none" stroke="context-stroke"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="dkE" viewBox="0 0 10 10" refX="9" refY="5"
+                markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!--
+        Deck frame:  x=98  y=30  w=206  h=184  right=304  bottom=214
+        7 boards:    boardH=22  gapH=5  step=27
+        4 corner posts: 14×14 centred on each deck corner
+      -->
+
+<!-- Dark background — gaps between boards show as this colour -->
+      <rect x="98" y="30" width="206" height="184" fill="#1a1512"/>
+
+      <!-- Deck boards — no stroke, gaps created by dark background showing through -->
+      <rect x="98" y="30"  width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="57"  width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="84"  width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="111" width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="138" width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="165" width="206" height="22" fill="#e8e8e6"/>
+      <rect x="98" y="192" width="206" height="22" fill="#e8e8e6"/>
+
+      <!-- Deck outer frame — drawn on top for clean perimeter -->
+      <rect x="98" y="30" width="206" height="184" fill="none" stroke="#0a0a0a" stroke-width="3"/>
+
+      <!-- ── Dim 1: Deck width (left, vertical) ─────────────── -->
+      <line x1="70" y1="30" x2="70" y2="214"
+            stroke="#FF5A1F" stroke-width="1"
+            marker-start="url(#dkS)" marker-end="url(#dkE)"/>
+      <line x1="64" y1="30"  x2="76" y2="30"  stroke="#FF5A1F" stroke-width="1.5"/>
+      <line x1="64" y1="214" x2="76" y2="214" stroke="#FF5A1F" stroke-width="1.5"/>
+      <line x1="56" y1="122" x2="70" y2="122"
+            stroke="#FF5A1F" stroke-width="0.5" stroke-dasharray="3,3"/>
+      <text x="34" y="96"  text-anchor="middle" font-size="18" font-weight="500"
+            font-family="Inter,sans-serif" fill="#FF5A1F" letter-spacing="-0.3">Width</text>
+      <text x="34" y="122" text-anchor="middle" font-size="22" font-weight="600"
+            font-family="Inter,sans-serif" fill="#FF5A1F">3000</text>
+      <text x="34" y="140" text-anchor="middle" font-size="14"
+            font-family="'JetBrains Mono',monospace" fill="#FF5A1F" opacity="0.72">mm</text>
+
+      <!-- ── Dim 2: Board width (right, vertical) ──────────── -->
+      <line x1="304" y1="30" x2="320" y2="30" stroke="#FF5A1F" stroke-width="1"/>
+      <line x1="304" y1="52" x2="320" y2="52" stroke="#FF5A1F" stroke-width="1"/>
+      <line x1="320" y1="30" x2="320" y2="52"
+            stroke="#FF5A1F" stroke-width="1"
+            marker-start="url(#dkS)" marker-end="url(#dkE)"/>
+      <line x1="314" y1="30" x2="326" y2="30" stroke="#FF5A1F" stroke-width="1.5"/>
+      <line x1="314" y1="52" x2="326" y2="52" stroke="#FF5A1F" stroke-width="1.5"/>
+      <line x1="326" y1="41" x2="336" y2="41"
+            stroke="#FF5A1F" stroke-width="0.5" stroke-dasharray="3,3"/>
+      <text x="358" y="26" text-anchor="middle" font-size="14" font-weight="500"
+            font-family="Inter,sans-serif" fill="#FF5A1F" letter-spacing="-0.3">Board</text>
+      <text x="358" y="46" text-anchor="middle" font-size="18" font-weight="600"
+            font-family="Inter,sans-serif" fill="#FF5A1F">90 <tspan font-size="12"
+            font-family="'JetBrains Mono',monospace" opacity="0.72">mm</tspan></text>
+
+      <!-- ── Dim 3: Deck length (bottom, horizontal) ───────── -->
+      <line x1="98"  y1="214" x2="98"  y2="256" stroke="#FF5A1F" stroke-width="1"/>
+      <line x1="304" y1="214" x2="304" y2="256" stroke="#FF5A1F" stroke-width="1"/>
+      <line x1="98" y1="256" x2="304" y2="256"
+            stroke="#FF5A1F" stroke-width="1"
+            marker-start="url(#dkS)" marker-end="url(#dkE)"/>
+      <line x1="98"  y1="250" x2="98"  y2="262" stroke="#FF5A1F" stroke-width="1.5"/>
+      <line x1="304" y1="250" x2="304" y2="262" stroke="#FF5A1F" stroke-width="1.5"/>
+      <text x="201" y="274" text-anchor="middle" font-size="18" font-weight="500"
+            font-family="Inter,sans-serif" fill="#FF5A1F" letter-spacing="-0.3">Deck length</text>
+      <text x="201" y="300" text-anchor="middle" font-size="22" font-weight="600"
+            font-family="Inter,sans-serif" fill="#FF5A1F">4200</text>
+      <text x="201" y="318" text-anchor="middle" font-size="14"
+            font-family="'JetBrains Mono',monospace" fill="#FF5A1F" opacity="0.72">mm</text>
+
+    </svg>
+
+    <p class="card-caption">Approximate. Check measurements before cutting.</p>
+  </div>
+</body>
+</html>

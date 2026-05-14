@@ -167,7 +167,7 @@ export function CladdingCalc() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Courses" value={result.outputs.courseCount} accent />
-                <ResultCard label="Face cover" value={result.outputs.faceCover} units={['mm', 'm']} />
+                <ResultCard label="Face cover" value={result.outputs.faceCover} unit="mm" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Boards" value={result.outputs.stockCount} unit={`@ ${inputs.boardLength}mm`} />
@@ -175,7 +175,7 @@ export function CladdingCalc() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Total lineal m" value={result.outputs.totalLm} unit="lm" />
-                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} units={['mm', 'm']} />
+                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} unit="mm" />
               </div>
             </div>
 

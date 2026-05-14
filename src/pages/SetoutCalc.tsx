@@ -177,9 +177,9 @@ export function SetoutCalc() {
           <>
             {/* Diagonal result */}
             <div style={{ display: 'grid', gridTemplateColumns: mode === 'check' ? '1fr 1fr' : '1fr', gap: 10 }}>
-              <ResultCard label="Diagonal" value={result.outputs.diagonal} units={['mm', 'm']} accent />
+              <ResultCard label="Diagonal" value={result.outputs.diagonal} unit="mm" accent />
               {mode === 'check' && (
-                <ResultCard label="Measured" value={parseFloat(inputs.measured)} units={['mm', 'm']} />
+                <ResultCard label="Measured" value={parseFloat(inputs.measured)} unit="mm" />
               )}
             </div>
 

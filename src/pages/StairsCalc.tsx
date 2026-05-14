@@ -224,11 +224,11 @@ export function StairsCalc() {
                 <ResultCard label="Treads" value={result.outputs.treadCount} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Riser height" value={result.outputs.riserHeight} units={['mm', 'm']} />
-                <ResultCard label="Tread depth" value={result.outputs.treadDepth} units={['mm', 'm']} />
+                <ResultCard label="Riser height" value={result.outputs.riserHeight} unit="mm" />
+                <ResultCard label="Tread depth" value={result.outputs.treadDepth} unit="mm" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Stringer" value={result.outputs.stringerLength} units={['mm', 'm']} />
+                <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
               </div>
             </div>

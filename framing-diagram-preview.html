@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wall Framing Diagram — Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #F5F5F3;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 40px 20px;
+      font-family: Inter, -apple-system, sans-serif;
+    }
+    .card {
+      background: #fff;
+      border: 0.5px solid rgba(0,0,0,0.08);
+      border-radius: 20px;
+      padding: 20px;
+      width: 390px;
+    }
+    .label {
+      margin: 0 0 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .caption {
+      margin: 10px 0 0;
+      font-size: 11px;
+      color: #bbb;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <p class="label">WALL FRAMING</p>
+
+    <!--
+      Example values: wall length 2700mm · height 2400mm · stud spacing 450mm
+      7 studs (floor(2700/450)+1) · double top plate · 1 noggin row
+
+      ViewBox 900×760
+      Wall: x1=100 x2=776 y1=110 y2=570
+      Top plate 1:  y=110–148 (38px)
+      Top plate 2:  y=148–186 (38px)
+      Bottom plate: y=532–570 (38px)
+      Stud area:    y=186–532  h=346px
+      7 studs at c-to-c=110px, stud width=16px
+        x = 100, 210, 320, 430, 540, 650, 760
+      Noggin row mid: y=186+173=359 → rect y=350–368 (18px)
+    -->
+
+    <svg viewBox="0 0 900 760" width="100%" style="display:block" role="img">
+      <title>Wall framing diagram</title>
+
+      <!-- ══════════════════════════════════════════════
+           STRUCTURE
+      ══════════════════════════════════════════════ -->
+
+      <!-- Top plate 1 (outer) -->
+      <rect x="100" y="110" width="676" height="38"
+            fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+
+      <!-- Top plate 2 (inner) — double top plate -->
+      <rect x="100" y="148" width="676" height="38"
+            fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+
+      <!-- Bottom plate -->
+      <rect x="100" y="532" width="676" height="38"
+            fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
+
+      <!-- ── Studs (7, y=186 to y=532, h=346) ── -->
+      <rect x="100" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="210" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="320" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="430" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="540" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="650" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="760" y="186" width="16" height="346" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+
+      <!-- ── Noggins (6, mid-height at y=350–368, inner bay width=94) ── -->
+      <rect x="116" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="226" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="336" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="446" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="556" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+      <rect x="666" y="350" width="94" height="18" fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
+
+      <!-- ── Floor line + hatch ── -->
+      <line x1="75"  y1="570" x2="800" y2="570"
+            stroke="#0A0A0A" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Hatch every 34px -->
+      <line x1="75"  y1="570" x2="88"  y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="109" y1="570" x2="122" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="143" y1="570" x2="156" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="177" y1="570" x2="190" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="211" y1="570" x2="224" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="245" y1="570" x2="258" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="279" y1="570" x2="292" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="313" y1="570" x2="326" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="347" y1="570" x2="360" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="381" y1="570" x2="394" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="415" y1="570" x2="428" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="449" y1="570" x2="462" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="483" y1="570" x2="496" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="517" y1="570" x2="530" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="551" y1="570" x2="564" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="585" y1="570" x2="598" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="619" y1="570" x2="632" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="653" y1="570" x2="666" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="687" y1="570" x2="700" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="721" y1="570" x2="734" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="755" y1="570" x2="768" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <line x1="789" y1="570" x2="800" y2="583" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+
+
+      <!-- ══════════════════════════════════════════════
+           ANNOTATION 1 — Wall Height (left)
+           y=110 to y=570, arrow at x=58
+      ══════════════════════════════════════════════ -->
+      <!-- Extension lines -->
+      <line x1="100" y1="110" x2="55"  y2="110" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <line x1="100" y1="570" x2="55"  y2="570" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <!-- Arrow shaft -->
+      <line x1="58" y1="122" x2="58" y2="558" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Arrowheads -->
+      <polygon points="58,110 53,122 63,122" fill="#FF5A1F"/>
+      <polygon points="58,570 53,558 63,558" fill="#FF5A1F"/>
+      <!-- Label — centred at mid wall y=340 -->
+      <text x="28" y="325" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="18" font-weight="500"
+            fill="#FF5A1F" letter-spacing="-0.3">Height</text>
+      <text x="28" y="349" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="22" font-weight="600"
+            fill="#FF5A1F">2400</text>
+      <text x="28" y="367" text-anchor="middle"
+            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
+            fill="#FF5A1F" opacity="0.72">mm</text>
+
+
+      <!-- ══════════════════════════════════════════════
+           ANNOTATION 2 — Wall Length (bottom)
+           x=100 to x=776, arrow at y=638
+      ══════════════════════════════════════════════ -->
+      <!-- Extension lines -->
+      <line x1="100" y1="570" x2="100" y2="635" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <line x1="776" y1="570" x2="776" y2="635" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <!-- Arrow shaft -->
+      <line x1="112" y1="638" x2="764" y2="638" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Arrowheads -->
+      <polygon points="100,638 112,633 112,643" fill="#FF5A1F"/>
+      <polygon points="776,638 764,633 764,643" fill="#FF5A1F"/>
+      <!-- Label -->
+      <text x="438" y="661" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="18" font-weight="500"
+            fill="#FF5A1F" letter-spacing="-0.3">Length</text>
+      <text x="438" y="685" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="22" font-weight="600"
+            fill="#FF5A1F">2700</text>
+      <text x="438" y="703" text-anchor="middle"
+            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
+            fill="#FF5A1F" opacity="0.72">mm</text>
+
+
+      <!-- ══════════════════════════════════════════════
+           ANNOTATION 3 — Stud spacing (above wall)
+           Between s3 (centre=328) and s4 (centre=438)
+           Arrow at y=82
+      ══════════════════════════════════════════════ -->
+      <!-- Extension lines down from stud centres to arrow -->
+      <line x1="328" y1="110" x2="328" y2="85" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <line x1="438" y1="110" x2="438" y2="85" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <!-- Arrow shaft -->
+      <line x1="340" y1="82" x2="426" y2="82" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Arrowheads -->
+      <polygon points="328,82 340,77 340,87" fill="#FF5A1F"/>
+      <polygon points="438,82 426,77 426,87" fill="#FF5A1F"/>
+      <!-- Label above arrow (stairDiagram style: unit nearest, label farthest) -->
+      <text x="383" y="72" text-anchor="middle"
+            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
+            fill="#FF5A1F" opacity="0.72">mm c/c</text>
+      <text x="383" y="52" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="22" font-weight="600"
+            fill="#FF5A1F">450</text>
+      <text x="383" y="28" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="18" font-weight="500"
+            fill="#FF5A1F" letter-spacing="-0.3">Stud spacing</text>
+
+
+      <!-- ══════════════════════════════════════════════
+           ANNOTATION 4 — Stud height (right)
+           Between bottom of inner top plate (y=186)
+           and top of bottom plate (y=532)
+           Arrow at x=820
+      ══════════════════════════════════════════════ -->
+      <!-- Extension lines -->
+      <line x1="776" y1="186" x2="817" y2="186" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <line x1="776" y1="532" x2="817" y2="532" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
+      <!-- Arrow shaft -->
+      <line x1="820" y1="198" x2="820" y2="520" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Arrowheads -->
+      <polygon points="820,186 815,198 825,198" fill="#FF5A1F"/>
+      <polygon points="820,532 815,520 825,520" fill="#FF5A1F"/>
+      <!-- Label — centred at mid of stud area y=359 -->
+      <text x="854" y="344" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="18" font-weight="500"
+            fill="#FF5A1F" letter-spacing="-0.3">Stud</text>
+      <text x="854" y="363" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="18" font-weight="500"
+            fill="#FF5A1F" letter-spacing="-0.3">height</text>
+      <text x="854" y="387" text-anchor="middle"
+            font-family="Inter,sans-serif" font-size="22" font-weight="600"
+            fill="#FF5A1F">2130</text>
+      <text x="854" y="405" text-anchor="middle"
+            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
+            fill="#FF5A1F" opacity="0.72">mm</text>
+
+    </svg>
+
+    <p class="caption">7 studs · 450mm c/c · double top plate · 1 noggin row · 2400mm wall</p>
+
+    <button onclick="void(0)" style="margin-top:14px;width:100%;padding:13px;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;background:#F5F5F3;color:#FF5A1F;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;letter-spacing:-0.2px">
+      Save diagram
+    </button>
+  </div>
+</body>
+</html>

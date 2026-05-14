@@ -10,6 +10,7 @@ import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { FramingDiagram } from '../components/FramingDiagram';
 
 interface Inputs {
   wallLength: string;
@@ -342,6 +343,16 @@ export function FramingCalc() {
                 <ResultCard label="Nogs" value={result.outputs.nogginCount} />
               )}
             </div>
+
+            <FramingDiagram
+              wallLengthMm={wallLengthMm}
+              wallHeightMm={wallHeightMm}
+              studCount={result.outputs.studCount}
+              studSpacingMm={resolvedSpacingMm}
+              nogginRows={includeNoggins ? (parseInt(inputs.nogginRows) || 1) : 0}
+              doubleTopPlate={doubleTopPlate}
+              doubleStuds={doubleStuds}
+            />
 
             <ApprenticeWorking
               steps={framingSteps}

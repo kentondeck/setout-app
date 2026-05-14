@@ -9,6 +9,7 @@ const defaults: Settings = {
   userName: '',
   voiceInput: true,
   region: 'AU',
+  pinnedCalcs: [],
 };
 
 function load(): Settings {

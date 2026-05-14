@@ -18,6 +18,7 @@ export interface Settings {
   userName: string;
   voiceInput: boolean;
   region: Region;
+  pinnedCalcs: CalculatorId[];
 }
 
 export interface HistoryEntry {

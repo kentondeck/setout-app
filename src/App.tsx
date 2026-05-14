@@ -5,6 +5,7 @@ import { SettingsContext, HistoryContext } from './contexts';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
+import { SavedJobs } from './pages/SavedJobs';
 import { Settings as SettingsPage } from './pages/Settings';
 import { CalcPlaceholder } from './pages/CalcPlaceholder';
 import { DeckingCalc } from './pages/DeckingCalc';
@@ -26,6 +27,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/history" element={<History />} />
+          <Route path="/saved" element={<SavedJobs />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/calc/decking" element={<DeckingCalc />} />
           <Route path="/calc/framing" element={<FramingCalc />} />

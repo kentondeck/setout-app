@@ -191,8 +191,8 @@ export function SetoutCalc() {
                 {!isSquare && (
                   <p style={{ margin: 0, fontSize: 13, color: checkColor }}>
                     {result.outputs.error > 0
-                      ? `Diagonal is too long — push the far corner in ${absError}mm`
-                      : `Diagonal is too short — pull the far corner out ${absError}mm`}
+                      ? `Diagonal is too long — pull in ${absError}mm`
+                      : `Diagonal is too short — push out ${absError}mm`}
                   </p>
                 )}
               </div>
@@ -201,7 +201,7 @@ export function SetoutCalc() {
             <ApprenticeWorking
               steps={result.steps}
               finalAnswer={mode === 'check' && !isSquare
-                ? `${absError}mm out — ${result.outputs.error > 0 ? 'push' : 'pull'} corner ${absError}mm`
+                ? `${absError}mm out — ${result.outputs.error > 0 ? 'pull in' : 'push out'} ${absError}mm`
                 : `${result.outputs.diagonal}mm diagonal`}
               finalLabel={mode === 'check' ? 'Square check' : 'Required diagonal'}
               visible={settings.apprenticeMode}

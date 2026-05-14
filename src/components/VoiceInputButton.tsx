@@ -1,7 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { useVoiceInput } from '../hooks/useVoiceInput';
-import { SettingsContext } from '../contexts';
 
 interface VoiceInputButtonProps {
   /** Short prompt shown in the modal — e.g. "Say: length, width, board width" */
@@ -11,7 +10,6 @@ interface VoiceInputButtonProps {
 }
 
 export function VoiceInputButton({ prompt, onValues }: VoiceInputButtonProps) {
-  const { settings } = useContext(SettingsContext);
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [parseError, setParseError] = useState('');
@@ -51,9 +49,6 @@ export function VoiceInputButton({ prompt, onValues }: VoiceInputButtonProps) {
     setIsOpen(false);
     setParseError('');
   }
-
-  // Voice disabled in settings — render nothing
-  if (!settings.voiceInput) return null;
 
   // Browser doesn't support voice at all — render nothing
   if (!isSupported && !isDenied) return null;

@@ -16,6 +16,7 @@ export interface Settings {
   unit: 'metric' | 'imperial';
   apprenticeMode: boolean;
   userName: string;
+  voiceInput: boolean;
   region: Region;
   pinnedCalcs: CalculatorId[];
 }

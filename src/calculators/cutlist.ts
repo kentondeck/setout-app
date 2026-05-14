@@ -1,10 +1,3 @@
-
-Nick
-4:23 PM
-https://github.com/kentondeck/setout-app/edit/main/src/calculators/cutlist.ts
-
-Nick
-4:25 PM
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
 export interface CutItem {

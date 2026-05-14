@@ -5,14 +5,27 @@ import { CalculatorTile } from '../components/CalculatorTile';
 import { ContinueCard } from '../components/ContinueCard';
 import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
+import type { CalculatorId } from '../types';
 
 export function Home() {
-  const { settings } = useContext(SettingsContext);
+  const { settings, updateSettings } = useContext(SettingsContext);
   const { history } = useContext(HistoryContext);
 
   const { greeting, sub } = getGreeting(settings.userName);
   const lastEntry = history[0] ?? null;
   const highlightedId = lastEntry?.calculatorId ?? 'decking';
+  const pinned = settings.pinnedCalcs ?? [];
+
+  function handlePinToggle(id: string) {
+    const calcId = id as CalculatorId;
+    const next = pinned.includes(calcId)
+      ? pinned.filter(p => p !== calcId)
+      : [...pinned, calcId];
+    updateSettings({ pinnedCalcs: next });
+  }
+
+  const pinnedCalcs = CALCULATORS.filter(c => pinned.includes(c.id));
+  const restCalcs   = CALCULATORS.filter(c => !pinned.includes(c.id));
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -33,15 +46,43 @@ export function Home() {
         </div>
       )}
 
-      <div style={{ padding: '8px 20px 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {CALCULATORS.map(calc => (
-            <CalculatorTile
-              key={calc.id}
-              calc={calc}
-              highlighted={calc.id === highlightedId}
-            />
-          ))}
+      <div style={{ padding: '8px 20px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        {pinnedCalcs.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+              Pinned
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {pinnedCalcs.map(calc => (
+                <CalculatorTile
+                  key={calc.id}
+                  calc={calc}
+                  highlighted={calc.id === highlightedId}
+                  pinned
+                  onPinToggle={handlePinToggle}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {pinnedCalcs.length > 0 && (
+            <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
+              All calculators
+            </p>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {restCalcs.map(calc => (
+              <CalculatorTile
+                key={calc.id}
+                calc={calc}
+                highlighted={calc.id === highlightedId}
+                pinned={false}
+                onPinToggle={handlePinToggle}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

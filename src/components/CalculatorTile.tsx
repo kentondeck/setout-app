@@ -4,9 +4,11 @@ import type { CalcMeta } from '../lib/calculators';
 interface CalculatorTileProps {
   calc: CalcMeta;
   highlighted: boolean;
+  pinned?: boolean;
+  onPinToggle?: (id: string) => void;
 }
 
-export function CalculatorTile({ calc, highlighted }: CalculatorTileProps) {
+export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle }: CalculatorTileProps) {
   const navigate = useNavigate();
 
   const bg = highlighted ? 'var(--color-orange)' : 'var(--color-card)';
@@ -55,6 +57,26 @@ export function CalculatorTile({ calc, highlighted }: CalculatorTileProps) {
             )}
           </svg>
         </div>
+
+        {onPinToggle && (
+          <button
+            onClick={e => { e.stopPropagation(); onPinToggle(calc.id); }}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              opacity: pinned ? 1 : 0.3,
+              lineHeight: 1,
+            }}
+            aria-label={pinned ? 'Unpin' : 'Pin to top'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={highlighted ? '#fff' : 'var(--color-orange)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.69l-1.78.9A2 2 0 0 0 5 15.24Z" fill={pinned ? (highlighted ? '#fff' : 'var(--color-orange)') : 'none'} />
+              <line x1="12" y1="17" x2="12" y2="22" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div>

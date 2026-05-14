@@ -15,7 +15,7 @@ interface HistoryCtx {
 }
 
 export const SettingsContext = createContext<SettingsCtx>({
-  settings: { unit: 'metric', apprenticeMode: false, userName: '', voiceInput: true, region: 'AU', pinnedCalcs: [] },
+  settings: { unit: 'metric', apprenticeMode: false, userName: '', region: 'AU', pinnedCalcs: [] },
   updateSettings: () => {},
 });
 

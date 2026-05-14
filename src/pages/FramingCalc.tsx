@@ -8,7 +8,6 @@ import { calculateFraming } from '../calculators/framing';
 import type { FramingOutputs } from '../calculators/framing';
 import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
-import { VoiceInputButton } from '../components/VoiceInputButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { CoastalNote } from '../components/CoastalNote';
@@ -133,17 +132,6 @@ export function FramingCalc() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
         title="Wall Framing"
-        right={
-          <VoiceInputButton
-            prompt="Say: wall length, wall height, stud spacing"
-            onValues={values => setInputs(prev => ({
-              ...prev,
-              ...(values[0] !== undefined && { wallLength: String(values[0]) }),
-              ...(values[1] !== undefined && { wallHeight: String(values[1]) }),
-              ...(values[2] !== undefined && { studSpacing: String(values[2]) }),
-            }))}
-          />
-        }
       />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>

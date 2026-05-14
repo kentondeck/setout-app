@@ -142,7 +142,7 @@ export function CutlistCalc() {
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
                 label="Stock length"
@@ -150,11 +150,11 @@ export function CutlistCalc() {
                 onChange={setForcedStock}
                 units={['mm', 'm']}
                 placeholder="auto"
-                hint="leave blank to optimise"
+                hint="optional — leave blank to mix"
               />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="optional" />
+              <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="optional" hint="for cost estimate" />
             </div>
           </div>
         </div>

@@ -124,10 +124,6 @@ export const RoofDiagram = memo(function RoofDiagram({
   const midAnnX = (annX1 + annX2) / 2 + lnx * 32;
   const midAnnY = (annY1 + annY2) / 2 + lny * 32;
 
-  // ── Pitch reference triangle — floating reference at top-left ─
-  const triBase = 80;
-  const triRise = triBase * Math.tan(pitchDegrees * Math.PI / 180);
-  const triBaseY = 72;
 
   // ── Floor hatch ───────────────────────────────────────────────────────────
   const hatchXs: number[] = [];
@@ -214,14 +210,26 @@ export const RoofDiagram = memo(function RoofDiagram({
             stroke={INK} strokeWidth={0.7} opacity={0.30} />
         ))}
 
-        {/* ── ANNOTATION 1 — Pitch reference triangle ── */}
-        <line x1={200} y1={triBaseY} x2={280} y2={triBaseY} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <line x1={200} y1={Math.round(triBaseY - triRise)} x2={200} y2={triBaseY} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <line x1={280} y1={triBaseY} x2={200} y2={Math.round(triBaseY - triRise)} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <path d={`M200,${triBaseY - 10} L210,${triBaseY - 10} L210,${triBaseY}`} fill="none" stroke={ORANGE} strokeWidth={1} opacity={0.55} />
-        <text x={298} y={Math.round(triBaseY - triRise - 10)} textAnchor="start" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
-        <text x={298} y={Math.round(triBaseY - triRise + 14)} textAnchor="start" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}</text>
-        <text x={298} y={Math.round(triBaseY - triRise + 32)} textAnchor="start" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>°</text>
+        {/* ── ANNOTATION 1 — Pitch angle arc at wall-plate junction ── */}
+        {(() => {
+          const pitchRad = pitchDegrees * Math.PI / 180;
+          const arcR = 62;
+          const halfPitchRad = pitchRad / 2;
+          const arcEndX = wallLeft + arcR * lux;
+          const arcEndY = PLATE_Y + arcR * luy;
+          const labelDist = arcR + 42;
+          const labelX = wallLeft + labelDist * Math.cos(halfPitchRad);
+          const rawLabelY = PLATE_Y - labelDist * Math.sin(halfPitchRad);
+          const labelY = Math.min(rawLabelY, PLATE_Y - 52);
+          return <>
+            <path
+              d={`M ${Math.round(wallLeft + arcR)},${PLATE_Y} A ${arcR},${arcR} 0 0,0 ${Math.round(arcEndX)},${Math.round(arcEndY)}`}
+              fill="none" stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round"
+            />
+            <text x={Math.round(labelX)} y={Math.round(labelY - 6)} textAnchor="middle" fontFamily={FONT} fontSize={17} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
+            <text x={Math.round(labelX)} y={Math.round(labelY + 18)} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}°</text>
+          </>;
+        })()}
 
         {/* ── ANNOTATION 2 — Ridge height (left) ── */}
         <line x1={Math.round(wallLeft)} y1={Math.round(ridgeY)} x2={55} y2={Math.round(ridgeY)} stroke={ORANGE} strokeWidth={1} opacity={0.38} />

@@ -521,7 +521,6 @@ export function JobDetailPage() {
             boxSizing: 'border-box',
             lineHeight: 1.5,
             WebkitAppearance: 'none',
-            color: '#0a0a0a',
           } as React.CSSProperties}
         />
       </div>

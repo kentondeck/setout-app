@@ -37,6 +37,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'General squareness tolerance for residential construction is ±3mm in 3m. Verify with your engineer or project specification for structural elements.',
     NZ: 'General squareness tolerance for residential construction is ±3mm in 3m. Verify with your engineer or project specification for structural elements.',
   },
+  codecheck: {
+    AU: 'Answers are AI-generated and reference AS 1684, NCC Volume 2, AS 1657, and AS 3600. Always verify against current standards and consult a licensed engineer or building certifier for structural or complex compliance decisions.',
+    NZ: 'Answers are AI-generated and reference NZS 3604, NZBC, NZS 3109, and E2/AS1. Always verify against current standards and consult a licensed engineer or Licensed Building Practitioner (LBP) for structural or complex compliance decisions.',
+  },
 };
 
 export interface StairLimits {

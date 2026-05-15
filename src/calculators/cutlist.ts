@@ -145,10 +145,11 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
 
 export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   const { cuts, stockLength, forcedStockLength, millAllowance = 0, pricePerMetre = 0 } = inputs;
-  // stockLength is kept for backward compat (DeckingCalc passes it); forcedStockLength takes precedence
   const forced = forcedStockLength ?? stockLength;
-  const effectiveForced = forced ? forced + millAllowance : undefined;
-  const lengths = effectiveForced ? [effectiveForced] : DEFAULT_STOCK_LENGTHS;
+  const baseLengths = forced ? [forced] : DEFAULT_STOCK_LENGTHS;
+  // Effective lengths: millAllowance accounts for timber arriving slightly over nominal.
+  // Used for fitting capacity only — plan and materialList display nominal lengths.
+  const lengths = baseLengths.map(l => l + millAllowance);
 
   const allCuts: number[] = [];
   for (const { length, qty } of cuts) {
@@ -178,11 +179,13 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
     }
   }
 
+  // Convert effective stock lengths back to nominal (subtract millAllowance) for display
   const plan: CutlistPlan[] = winnerBins.map((bin, i) => {
+    const nominalStock = bin.stockLength - millAllowance;
     const used = bin.cuts.reduce((s, l) => s + l + KERF, 0);
     return {
       stockIndex: i + 1,
-      stockLength: bin.stockLength,
+      stockLength: nominalStock,
       cuts: bin.cuts.map(l => ({ length: l, qty: 1 })),
       waste: bin.stockLength - used,
     };
@@ -190,7 +193,8 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
 
   const countMap = new Map<number, number>();
   for (const bin of winnerBins) {
-    countMap.set(bin.stockLength, (countMap.get(bin.stockLength) ?? 0) + 1);
+    const nominalStock = bin.stockLength - millAllowance;
+    countMap.set(nominalStock, (countMap.get(nominalStock) ?? 0) + 1);
   }
   const materialList: MaterialItem[] = [...countMap.entries()]
     .sort((a, b) => b[0] - a[0])
@@ -199,7 +203,7 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   const totalPieces = winnerBins.length;
   const totalCutLength = allCuts.reduce((s, l) => s + l, 0);
   const totalWaste = plan.reduce((s, p) => s + p.waste, 0);
-  const totalStock = winnerTotal;
+  const totalStock = winnerBins.reduce((s, b) => s + (b.stockLength - millAllowance), 0);
   const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
   const totalCost =
     pricePerMetre > 0

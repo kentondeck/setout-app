@@ -7,6 +7,7 @@ import { JobNameInput } from '../components/JobNameInput';
 import { calculateDecking } from '../calculators/decking';
 import type { DeckingResult, GapSuggestion } from '../calculators/decking';
 import { calculateCutlist } from '../calculators/cutlist';
+import type { CutlistResult } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -42,6 +43,7 @@ export function DeckingCalc() {
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
+  const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -116,6 +118,32 @@ export function DeckingCalc() {
   const bearerCutlist = result && bearerLengthMm > 0 && bearerLengthMm <= bearerStock + MILL_ALLOWANCE
     ? calculateCutlist({ stockLength: bearerStock, cuts: [{ length: bearerLengthMm, qty: result.outputs.bearerCount }], millAllowance: MILL_ALLOWANCE })
     : null;
+
+  const joinRequired = result !== null && joistLengthMm > 6000;
+
+  const joistJoinOptions: { at: number; piece1: number; piece2: number; cutlist: CutlistResult }[] = (() => {
+    if (!joinRequired || !result) return [];
+    const bs = parseFloat(inputs.bearerSpacing);
+    if (!bs || bs <= 0) return [];
+    const maxWithMill = 6000 + MILL_ALLOWANCE;
+    const opts: { at: number; piece1: number; piece2: number; cutlist: CutlistResult }[] = [];
+    for (let pos = bs; pos < joistLengthMm; pos += bs) {
+      const p1 = Math.round(pos);
+      const p2 = joistLengthMm - p1;
+      if (p1 + 3 <= maxWithMill && p2 + 3 <= maxWithMill) {
+        opts.push({
+          at: p1,
+          piece1: p1,
+          piece2: p2,
+          cutlist: calculateCutlist({
+            cuts: [{ length: p1, qty: result.outputs.joistCount }, { length: p2, qty: result.outputs.joistCount }],
+            millAllowance: MILL_ALLOWANCE,
+          }),
+        });
+      }
+    }
+    return opts;
+  })();
 
   const deckingSteps: WorkingStep[] = result ? [
     { label: 'Deck length', explanation: 'The length your boards will run along', result: `${deckLengthMm} mm` },
@@ -290,32 +318,76 @@ export function DeckingCalc() {
 
               {/* Joists cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[3000, 4800, 6000].map(len => (
-                  <button key={len} onClick={() => setJoistStock(len)} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 10,
-                    border: '0.5px solid var(--color-border)',
-                    background: joistStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
-                    color: joistStock === len ? '#fff' : 'var(--color-text)',
-                    fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                  }}>
-                    {(len / 1000).toFixed(1)}m
-                  </button>
-                ))}
-              </div>
-              {joistCutlist ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {joistCutlist.outputs.totalPieces} × {(joistStock / 1000).toFixed(1)}m lengths
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                    {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
-                  </span>
-                </div>
+
+              {joinRequired ? (
+                joistJoinOptions.length === 0 ? (
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                    {(joistLengthMm / 1000).toFixed(1)}m span exceeds 6m — enter bearer spacing to calculate join options
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+                      {(joistLengthMm / 1000).toFixed(1)}m span — join over bearer at:
+                    </p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {joistJoinOptions.map((opt, i) => (
+                        <button key={opt.at} onClick={() => setSelectedJoinIdx(i)} style={{
+                          flex: 1, padding: '8px 0', borderRadius: 10,
+                          border: '0.5px solid var(--color-border)',
+                          background: selectedJoinIdx === i ? 'var(--color-orange)' : 'var(--color-bg)',
+                          color: selectedJoinIdx === i ? '#fff' : 'var(--color-text)',
+                          fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                        }}>
+                          {(opt.at / 1000).toFixed(1)}m
+                        </button>
+                      ))}
+                    </div>
+                    {(() => {
+                      const opt = joistJoinOptions[Math.min(selectedJoinIdx, joistJoinOptions.length - 1)];
+                      if (!opt) return null;
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                            {opt.cutlist.materialList.map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1)}m`).join(' + ')}
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                            {opt.cutlist.plan[opt.cutlist.plan.length - 1]?.waste}mm off-cut · {opt.cutlist.outputs.wastePercent}% waste
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )
               ) : (
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
-                  Joist length ({joistLengthMm}mm) exceeds selected stock — increase stock size or join on bearer
-                </p>
+                <>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[3000, 4800, 6000].map(len => (
+                      <button key={len} onClick={() => setJoistStock(len)} style={{
+                        flex: 1, padding: '8px 0', borderRadius: 10,
+                        border: '0.5px solid var(--color-border)',
+                        background: joistStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                        color: joistStock === len ? '#fff' : 'var(--color-text)',
+                        fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                      }}>
+                        {(len / 1000).toFixed(1)}m
+                      </button>
+                    ))}
+                  </div>
+                  {joistCutlist ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                        {joistCutlist.outputs.totalPieces} × {(joistStock / 1000).toFixed(1)}m lengths
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                        {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
+                      </span>
+                    </div>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                      Joist length ({joistLengthMm}mm) exceeds selected stock — choose a longer length above
+                    </p>
+                  )}
+                </>
               )}
 
               <div style={{ height: 0.5, background: 'var(--color-border)' }} />

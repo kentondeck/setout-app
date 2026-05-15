@@ -21,6 +21,7 @@ import { ConcreteCalc } from './pages/ConcreteCalc';
 import { RakedWallCalc } from './pages/RakedWallCalc';
 import { CladdingCalc } from './pages/CladdingCalc';
 import { SetoutCalc } from './pages/SetoutCalc';
+import { CodeCheckCalc } from './pages/CodeCheckCalc';
 
 
 function AppShell() {
@@ -44,6 +45,7 @@ function AppShell() {
           <Route path="/calc/raked" element={<RakedWallCalc />} />
           <Route path="/calc/cladding" element={<CladdingCalc />} />
           <Route path="/calc/setout" element={<SetoutCalc />} />
+          <Route path="/calc/codecheck" element={<CodeCheckCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

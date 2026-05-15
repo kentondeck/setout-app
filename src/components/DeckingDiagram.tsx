@@ -153,7 +153,6 @@ export const DeckingDiagram = memo(function DeckingDiagram({
             {/* Deck outer frame */}
             <rect x={DK_X} y={DK_Y} width={DK_W} height={DK_H} fill="none" stroke={BLACK} strokeWidth={3} />
 
-
             {/* ── Dim 1: Deck width (left, vertical) ── */}
             <line x1={70} y1={DK_Y} x2={70} y2={DK_BOTTOM}
               stroke={ORANGE} strokeWidth={1} markerStart="url(#ddS)" markerEnd="url(#ddE)" />

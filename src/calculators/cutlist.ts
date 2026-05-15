@@ -144,8 +144,11 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
 }
 
 export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
-  const { cuts, forcedStockLength, pricePerMetre = 0 } = inputs;
-  const lengths = forcedStockLength ? [forcedStockLength] : DEFAULT_STOCK_LENGTHS;
+  const { cuts, stockLength, forcedStockLength, millAllowance = 0, pricePerMetre = 0 } = inputs;
+  // stockLength is kept for backward compat (DeckingCalc passes it); forcedStockLength takes precedence
+  const forced = forcedStockLength ?? stockLength;
+  const effectiveForced = forced ? forced + millAllowance : undefined;
+  const lengths = effectiveForced ? [effectiveForced] : DEFAULT_STOCK_LENGTHS;
 
   const allCuts: number[] = [];
   for (const { length, qty } of cuts) {

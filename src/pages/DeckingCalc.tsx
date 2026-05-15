@@ -306,7 +306,7 @@ export function DeckingCalc() {
               {joistCutlist ? (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {joistCutlist.outputs.stockCount} × {(joistStock / 1000).toFixed(1)}m lengths
+                    {joistCutlist.outputs.totalPieces} × {(joistStock / 1000).toFixed(1)}m lengths
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
                     {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
@@ -336,26 +336,13 @@ export function DeckingCalc() {
                 ))}
               </div>
               {bearerCutlist ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                      {bearerCutlist.outputs.stockCount} × {(bearerStock / 1000).toFixed(1)}m lengths
-                    </span>
-                    <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                      {bearerCutlist.outputs.wastePercent}% waste
-                    </span>
-                  </div>
-                  {bearerCutlist.plan.map((stick, i) => (
-                    <div key={i} style={{
-                      background: 'var(--color-bg)', borderRadius: 8, padding: '8px 12px',
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    }}>
-                      <span style={{ fontSize: 13, color: 'var(--color-text)' }}>
-                        Length {i + 1} — {stick.cuts.reduce((s, c) => s + c.qty, 0)} × {bearerLengthMm}mm
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{stick.waste}mm off-cut</span>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                    {bearerCutlist.outputs.totalPieces} × {(bearerStock / 1000).toFixed(1)}m lengths
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                    {bearerCutlist.plan[bearerCutlist.plan.length - 1]?.waste}mm off-cut · {bearerCutlist.outputs.wastePercent}% waste
+                  </span>
                 </div>
               ) : (
                 <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>

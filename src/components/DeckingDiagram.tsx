@@ -1,11 +1,12 @@
 import { memo, useRef } from 'react';
 
 export type DeckingDiagramProps = {
-  deckLength: number;  // mm
-  deckWidth: number;   // mm
-  boardWidth: number;  // mm
-  boardGap: number;    // mm
+  deckLength: number;   // mm
+  deckWidth: number;    // mm
+  boardWidth: number;   // mm
+  boardGap: number;     // mm
   boardCount: number;
+  joistSpacing?: number;  // mm
 };
 
 const ORANGE = '#FF5A1F';
@@ -29,6 +30,7 @@ const MAX_VIS = 7;
 
 export const DeckingDiagram = memo(function DeckingDiagram({
   deckLength, deckWidth, boardWidth, boardGap, boardCount,
+  joistSpacing,
 }: DeckingDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -49,8 +51,16 @@ export const DeckingDiagram = memo(function DeckingDiagram({
   const boardYs: number[] = [];
   for (let i = 0; i < visCount; i++) boardYs.push(DK_Y + i * step);
 
-  // Joist lines (4 evenly spaced verticals, drawn before boards)
-  const joistXs = [1, 2, 3, 4].map(i => DK_X + (DK_W / 5) * i);
+  // Joist lines — horizontal, proportional to joistSpacing/deckLength (joists spaced along length)
+  const joistYs: number[] = [];
+  if (joistSpacing != null && joistSpacing > 0 && deckLength > 0) {
+    for (let pos = joistSpacing; pos < deckLength; pos += joistSpacing) {
+      if (joistYs.length >= 16) break;
+      joistYs.push(DK_Y + (pos / deckLength) * DK_H);
+    }
+  } else {
+    [1, 2, 3, 4, 5].forEach(i => joistYs.push(DK_Y + (DK_H / 6) * i));
+  }
 
   // Board dim arrow spans first board top → bottom
   const bArrY1  = DK_Y;
@@ -128,9 +138,9 @@ export const DeckingDiagram = memo(function DeckingDiagram({
           </>
         ) : (
           <>
-            {/* Joist lines — drawn first so boards sit on top */}
-            {joistXs.map((x, i) => (
-              <line key={i} x1={x} y1={DK_Y} x2={x} y2={DK_BOTTOM}
+            {/* Joist lines — horizontal, drawn first so boards sit on top */}
+            {joistYs.map((y, i) => (
+              <line key={i} x1={DK_X} y1={y} x2={DK_RIGHT} y2={y}
                 stroke={BLACK} strokeWidth={1.5} opacity={0.18} />
             ))}
 
@@ -140,7 +150,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
                 fill={FILL} stroke={BLACK} strokeWidth={1} />
             ))}
 
-            {/* Deck outer frame — drawn last for clean perimeter */}
+            {/* Deck outer frame */}
             <rect x={DK_X} y={DK_Y} width={DK_W} height={DK_H} fill="none" stroke={BLACK} strokeWidth={3} />
 
             {/* ── Dim 1: Deck width (left, vertical) ── */}

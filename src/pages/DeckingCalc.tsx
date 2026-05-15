@@ -191,7 +191,7 @@ export function DeckingCalc() {
               <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholder="e.g. 450" hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholder="e.g. 1800" />
+              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholder="e.g. 1300" />
             </div>
           </div>
         </div>
@@ -346,13 +346,23 @@ export function DeckingCalc() {
                       const opt = joistJoinOptions[Math.min(selectedJoinIdx, joistJoinOptions.length - 1)];
                       if (!opt) return null;
                       return (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                            {opt.cutlist.materialList.map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1)}m`).join(' + ')}
-                          </span>
-                          <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                            {opt.cutlist.plan[opt.cutlist.plan.length - 1]?.waste}mm off-cut · {opt.cutlist.outputs.wastePercent}% waste
-                          </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {opt.cutlist.materialList.map(m => {
+                            const bins = opt.cutlist.plan.filter(p => p.stockLength === m.stockLength);
+                            const totalWaste = bins.reduce((s, p) => s + p.waste, 0);
+                            const totalStock = m.stockLength * m.count;
+                            const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
+                            return (
+                              <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                                  {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                                </span>
+                                <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                                  {wastePercent}% waste
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })()}
@@ -361,7 +371,7 @@ export function DeckingCalc() {
               ) : (
                 <>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    {[3000, 4800, 6000].map(len => (
+                    {[3000, 4800, 5400, 6000].map(len => (
                       <button key={len} onClick={() => setJoistStock(len)} style={{
                         flex: 1, padding: '8px 0', borderRadius: 10,
                         border: '0.5px solid var(--color-border)',
@@ -395,7 +405,7 @@ export function DeckingCalc() {
               {/* Bearers cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — BEARERS</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                {[3600, 4800, 6000].map(len => (
+                {[3600, 4800, 5400, 6000].map(len => (
                   <button key={len} onClick={() => setBearerStock(len)} style={{
                     flex: 1, padding: '8px 0', borderRadius: 10,
                     border: '0.5px solid var(--color-border)',
@@ -436,6 +446,7 @@ export function DeckingCalc() {
               boardWidth={bw}
               boardGap={bg}
               boardCount={result.outputs.boardCount}
+              joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
             />
 
             <p

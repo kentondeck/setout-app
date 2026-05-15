@@ -70,6 +70,13 @@ export function DeckingCalc() {
 
     const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
     setResult(calc);
+
+    // Joists span deckWidth, bearers span deckLength — pick smallest fitting stock for each
+    const MILL = 10;
+    const joistLen = width * 1000;
+    const bearerLen = length * 1000;
+    setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL >= joistLen) ?? 6000);
+    setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL >= bearerLen) ?? 6000);
     setPersistedSuggestions(
       calc.gapSuggestions.length > 0
         ? { items: calc.gapSuggestions, lastBoardWidth: calc.lastBoardWidth }

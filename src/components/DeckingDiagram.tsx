@@ -51,15 +51,15 @@ export const DeckingDiagram = memo(function DeckingDiagram({
   const boardYs: number[] = [];
   for (let i = 0; i < visCount; i++) boardYs.push(DK_Y + i * step);
 
-  // Joist lines — horizontal, proportional to joistSpacing/deckLength (joists spaced along length)
-  const joistYs: number[] = [];
+  // Joist lines — vertical, spaced along X (deckLength). Joists span deckWidth (Y axis).
+  const joistXs: number[] = [];
   if (joistSpacing != null && joistSpacing > 0 && deckLength > 0) {
     for (let pos = joistSpacing; pos < deckLength; pos += joistSpacing) {
-      if (joistYs.length >= 16) break;
-      joistYs.push(DK_Y + (pos / deckLength) * DK_H);
+      if (joistXs.length >= 16) break;
+      joistXs.push(DK_X + (pos / deckLength) * DK_W);
     }
   } else {
-    [1, 2, 3, 4, 5].forEach(i => joistYs.push(DK_Y + (DK_H / 6) * i));
+    [1, 2, 3, 4, 5].forEach(i => joistXs.push(DK_X + (DK_W / 6) * i));
   }
 
   // Board dim arrow spans first board top → bottom
@@ -138,9 +138,9 @@ export const DeckingDiagram = memo(function DeckingDiagram({
           </>
         ) : (
           <>
-            {/* Joist lines — horizontal, drawn first so boards sit on top */}
-            {joistYs.map((y, i) => (
-              <line key={i} x1={DK_X} y1={y} x2={DK_RIGHT} y2={y}
+            {/* Joist lines — vertical (span deckWidth), spaced along deckLength, drawn before boards */}
+            {joistXs.map((x, i) => (
+              <line key={i} x1={x} y1={DK_Y} x2={x} y2={DK_BOTTOM}
                 stroke={BLACK} strokeWidth={1.5} opacity={0.18} />
             ))}
 
@@ -152,6 +152,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
 
             {/* Deck outer frame */}
             <rect x={DK_X} y={DK_Y} width={DK_W} height={DK_H} fill="none" stroke={BLACK} strokeWidth={3} />
+
 
             {/* ── Dim 1: Deck width (left, vertical) ── */}
             <line x1={70} y1={DK_Y} x2={70} y2={DK_BOTTOM}

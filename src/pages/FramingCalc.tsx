@@ -391,14 +391,14 @@ export function FramingCalc() {
 
               {/* Studs cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — STUDS</p>
-              {studCutlist ? studCutlist.materialList.map(m => (
-                <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {studCutlist && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                    {result.outputs.studCount} × {wallHeightMm}mm
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{studCutlist.outputs.wastePercent}% waste</span>
                 </div>
-              )) : null}
+              )}
 
               <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
@@ -419,7 +419,7 @@ export function FramingCalc() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                  {totalPlateStocks} × {(plateStock / 1000).toFixed(1)}m lengths
+                  {plateRuns} × {wallLengthMm}mm
                 </span>
                 {plateWasteMm > 0 && (
                   <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{plateWasteMm}mm waste</span>
@@ -431,14 +431,14 @@ export function FramingCalc() {
                 <>
                   <div style={{ height: 0.5, background: 'var(--color-border)' }} />
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGGINS</p>
-                  {nogginCutlist ? nogginCutlist.materialList.map(m => (
-                    <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {nogginCutlist && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                        {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                        {nogginCount} × {nogginLengthMm}mm
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{nogginCutlist.outputs.wastePercent}% waste</span>
                     </div>
-                  )) : null}
+                  )}
                 </>
               )}
 

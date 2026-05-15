@@ -22,6 +22,8 @@ interface Inputs {
   bearerSpacing: string;
 }
 
+const MILL_ALLOWANCE = 10;
+
 const DEFAULTS: Inputs = {
   deckLength: '',
   deckWidth: '',
@@ -72,11 +74,8 @@ export function DeckingCalc() {
     setResult(calc);
 
     // Joists span deckWidth, bearers span deckLength — pick smallest fitting stock for each
-    const MILL = 10;
-    const joistLen = width * 1000;
-    const bearerLen = length * 1000;
-    setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL >= joistLen) ?? 6000);
-    setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL >= bearerLen) ?? 6000);
+    setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= width * 1000) ?? 6000);
+    setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= length * 1000) ?? 6000);
     setPersistedSuggestions(
       calc.gapSuggestions.length > 0
         ? { items: calc.gapSuggestions, lastBoardWidth: calc.lastBoardWidth }
@@ -118,7 +117,6 @@ export function DeckingCalc() {
   // joists span the width, bearers span the length
   const joistLengthMm = deckWidthMm;
   const bearerLengthMm = deckLengthMm;
-  const MILL_ALLOWANCE = 10;
   const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock + MILL_ALLOWANCE
     ? calculateCutlist({ stockLength: joistStock, cuts: [{ length: joistLengthMm, qty: result.outputs.joistCount }], millAllowance: MILL_ALLOWANCE })
     : null;

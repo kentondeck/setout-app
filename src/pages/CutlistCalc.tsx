@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { JobNameInput } from '../components/JobNameInput';
+import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateCutlist, DEFAULT_STOCK_LENGTHS } from '../calculators/cutlist';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
@@ -361,6 +362,7 @@ export function CutlistCalc() {
             />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+            <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Optimised across standard NZ/AU stock lengths (2.4–6.0m) using best-fit decreasing with lookahead scoring, 3mm saw kerf per cut. Order 5–10% extra for splits and defects.

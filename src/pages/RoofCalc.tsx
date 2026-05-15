@@ -125,12 +125,12 @@ export function RoofCalc() {
               <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} units={['m', 'mm']} placeholder="" hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="e.g. 22.5" hint="degrees" />
+              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="" hint="degrees" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="e.g. 0.6" hint="each side" />
+              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="" hint="each side" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

@@ -1,6 +1,9 @@
 import { useState, useContext } from 'react';
-import { HistoryContext } from '../contexts';
+import { useNavigate } from 'react-router-dom';
+import { HistoryContext, JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
+import { AddToJobSheet } from '../components/AddToJobSheet';
+import { Toast } from '../components/Toast';
 import type { HistoryEntry } from '../types';
 
 function groupByDate(entries: HistoryEntry[]): { label: string; entries: HistoryEntry[] }[] {
@@ -30,9 +33,13 @@ interface HistoryRowProps {
 }
 
 function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
+  const { jobs } = useContext(JobsContext);
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [notes, setNotes] = useState(entry.notes ?? '');
   const [notesSaved, setNotesSaved] = useState(false);
+  const [showSheet, setShowSheet] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   function handleSaveNotes() {
     onUpdate(entry.id, { notes: notes.trim() });
@@ -41,6 +48,7 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
   }
   const meta = CALCULATORS.find(c => c.id === entry.calculatorId);
   const label = entry.jobName ?? meta?.label ?? entry.calculatorId;
+  const linkedJob = entry.jobId ? jobs.find(j => j.id === entry.jobId) : null;
   const timeStr = new Date(entry.timestamp).toLocaleTimeString('en-AU', {
     hour: '2-digit',
     minute: '2-digit',
@@ -102,9 +110,26 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
           >
             {label}
           </p>
-          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>
-            {meta?.label} · {timeStr}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
+              {meta?.label} · {timeStr}
+            </p>
+            {linkedJob && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 500,
+                  color: '#FF5A1F',
+                  background: 'rgba(255,90,31,0.1)',
+                  borderRadius: 5,
+                  padding: '1px 6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {linkedJob.name}
+              </span>
+            )}
+          </div>
         </div>
 
         <svg
@@ -211,6 +236,47 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
             </button>
           </div>
 
+          {/* Add to job / View job */}
+          {linkedJob ? (
+            <button
+              onClick={() => navigate(`/jobs/${linkedJob.id}`)}
+              style={{
+                background: 'none',
+                border: '0.5px solid rgba(255,90,31,0.25)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                fontSize: 13,
+                color: '#FF5A1F',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <span>Saved to <strong style={{ fontWeight: 600 }}>{linkedJob.name}</strong></span>
+              <span style={{ fontSize: 12, opacity: 0.7 }}>View job →</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowSheet(true)}
+              style={{
+                background: 'none',
+                border: '0.5px solid rgba(255,90,31,0.25)',
+                borderRadius: 10,
+                padding: '10px',
+                fontSize: 13,
+                color: '#FF5A1F',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              + Add to job
+            </button>
+          )}
+
           <button
             onClick={() => onDelete(entry.id)}
             style={{
@@ -229,6 +295,18 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
           </button>
         </div>
       )}
+
+      {showSheet && (
+        <AddToJobSheet
+          calculationId={entry.id}
+          onClose={() => setShowSheet(false)}
+          onAdded={name => {
+            setShowSheet(false);
+            setToast(`Added to ${name}`);
+          }}
+        />
+      )}
+      <Toast message={toast} onDismiss={() => setToast(null)} />
     </div>
   );
 }

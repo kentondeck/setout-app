@@ -28,4 +28,14 @@ export interface HistoryEntry {
   outputs: Record<string, number | string>;
   jobName?: string;
   notes?: string;
+  jobId?: string;
 }
+
+export type SavedJob = {
+  id: string;
+  name: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  calculationIds: string[];
+};

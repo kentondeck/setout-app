@@ -1,11 +1,14 @@
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 import { useHistory } from './lib/useHistory';
-import { SettingsContext, HistoryContext } from './contexts';
+import { useJobs } from './hooks/useJobs';
+import { SettingsContext, HistoryContext, JobsContext } from './contexts';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
 import { SavedJobs } from './pages/SavedJobs';
+import { JobsPage } from './pages/JobsPage';
+import { JobDetailPage } from './pages/JobDetailPage';
 import { Settings as SettingsPage } from './pages/Settings';
 import { CalcPlaceholder } from './pages/CalcPlaceholder';
 import { DeckingCalc } from './pages/DeckingCalc';
@@ -27,6 +30,8 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/history" element={<History />} />
+          <Route path="/jobs" element={<JobsPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/saved" element={<SavedJobs />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/calc/decking" element={<DeckingCalc />} />
@@ -50,13 +55,16 @@ function AppShell() {
 export function App() {
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
+  const jobsApi = useJobs(history, updateEntry);
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>
       <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
-        <HashRouter>
-          <AppShell />
-        </HashRouter>
+        <JobsContext.Provider value={jobsApi}>
+          <HashRouter>
+            <AppShell />
+          </HashRouter>
+        </JobsContext.Provider>
       </HistoryContext.Provider>
     </SettingsContext.Provider>
   );

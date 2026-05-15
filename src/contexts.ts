@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { Settings, HistoryEntry } from './types';
+import type { Settings, HistoryEntry, SavedJob } from './types';
 
 interface SettingsCtx {
   settings: Settings;
@@ -25,4 +25,24 @@ export const HistoryContext = createContext<HistoryCtx>({
   updateEntry: () => {},
   deleteEntry: () => {},
   clearAll: () => {},
+});
+
+interface JobsCtx {
+  jobs: SavedJob[];
+  createJob: (name: string) => SavedJob;
+  updateJob: (id: string, updates: Partial<SavedJob>) => void;
+  deleteJob: (id: string) => void;
+  addCalculationToJob: (jobId: string, calculationId: string) => void;
+  removeCalculationFromJob: (jobId: string, calculationId: string) => void;
+  getJobCalculations: (jobId: string) => HistoryEntry[];
+}
+
+export const JobsContext = createContext<JobsCtx>({
+  jobs: [],
+  createJob: () => ({ id: '', name: '', notes: '', createdAt: '', updatedAt: '', calculationIds: [] }),
+  updateJob: () => {},
+  deleteJob: () => {},
+  addCalculationToJob: () => {},
+  removeCalculationFromJob: () => {},
+  getJobCalculations: () => [],
 });

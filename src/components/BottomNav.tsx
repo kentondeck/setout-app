@@ -12,21 +12,21 @@ const tabs = [
     ),
   },
   {
+    path: '/jobs',
+    label: 'Jobs',
+    icon: (active: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    ),
+  },
+  {
     path: '/history',
     label: 'History',
     icon: (active: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
-  },
-  {
-    path: '/saved',
-    label: 'Saved Jobs',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
       </svg>
     ),
   },
@@ -62,7 +62,9 @@ export function BottomNav() {
       }}
     >
       {tabs.map(tab => {
-        const active = pathname === tab.path;
+        const active = tab.path === '/'
+        ? pathname === '/'
+        : pathname === tab.path || pathname.startsWith(tab.path + '/');
         return (
           <button
             key={tab.path}

@@ -433,13 +433,6 @@ export function DeckingCalc() {
               )}
             </div>
 
-            {/* Job name + compliance note */}
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastEntryId, { jobName: name })}
-            />
-
             <DeckingDiagram
               deckLength={deckLengthMm}
               deckWidth={deckWidthMm}
@@ -459,6 +452,12 @@ export function DeckingCalc() {
             >
               {COMPLIANCE_NOTES.decking[settings.region]}
             </p>
+
+            <JobNameInput
+              value={jobName}
+              onChange={setJobName}
+              onSave={name => updateEntry(lastEntryId, { jobName: name })}
+            />
           </>
         )}
       </div>

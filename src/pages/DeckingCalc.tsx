@@ -33,6 +33,8 @@ const DEFAULTS: Inputs = {
   bearerSpacing: '',
 };
 
+const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
+
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry } = useContext(HistoryContext);
@@ -44,6 +46,7 @@ export function DeckingCalc() {
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
+  const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
 
   function set(field: keyof Inputs) {
@@ -54,7 +57,8 @@ export function DeckingCalc() {
     const length = parseFloat(inputs.deckLength);
     const width = parseFloat(inputs.deckWidth);
     const boardWidth = parseFloat(inputs.boardWidth);
-    const boardGap = parseFloat(inputs.boardGap);
+    const boardGapRaw = parseFloat(inputs.boardGap);
+    const boardGap = isFinite(boardGapRaw) && boardGapRaw >= 0 ? boardGapRaw : 5;
     const joistSpacing = parseFloat(inputs.joistSpacing);
     const bearerSpacing = parseFloat(inputs.bearerSpacing);
 
@@ -72,14 +76,15 @@ export function DeckingCalc() {
     const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
     setResult(calc);
 
-    // Joists span deckWidth, bearers span deckLength — pick smallest fitting stock for each
-    setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= width * 1000) ?? 6000);
-    setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= length * 1000) ?? 6000);
+    // Joists span deckLength, bearers span deckWidth — pick smallest fitting stock for each
+    setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= length * 1000) ?? 6000);
+    setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= width * 1000) ?? 6000);
     setPersistedSuggestions(
       calc.gapSuggestions.length > 0
         ? { items: calc.gapSuggestions, lastBoardWidth: calc.lastBoardWidth }
         : null
     );
+    setOriginalGap(boardGap);
 
     const id = crypto.randomUUID();
     setLastEntryId(id);
@@ -112,9 +117,9 @@ export function DeckingCalc() {
   const js = result ? parseFloat(inputs.joistSpacing) : 0;
   const coverage = bw + bg;
 
-  // joists span the width, bearers span the length
-  const joistLengthMm = deckWidthMm;
-  const bearerLengthMm = deckLengthMm;
+  // joists span the length (parallel to long axis), bearers span the width (perpendicular to joists)
+  const joistLengthMm = deckLengthMm;
+  const bearerLengthMm = deckWidthMm;
   const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock + MILL_ALLOWANCE
     ? calculateCutlist({ stockLength: joistStock, cuts: [{ length: joistLengthMm, qty: result.outputs.joistCount }], millAllowance: MILL_ALLOWANCE })
     : null;
@@ -148,11 +153,14 @@ export function DeckingCalc() {
     return opts;
   })();
 
+  const coverageDiv = Number.isFinite(deckLengthMm / coverage) ? (deckLengthMm / coverage).toFixed(1) : '—';
+  const joistDiv = Number.isFinite(deckWidthMm / js) ? (deckWidthMm / js).toFixed(1) : '—';
+
   const deckingSteps: WorkingStep[] = result ? [
-    { label: 'Deck length', explanation: 'The length your boards will run along', result: `${deckLengthMm} mm` },
-    { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${bw} + ${bg}`, result: `${coverage} mm per board` },
-    { label: 'Boards needed', explanation: 'Divide the deck width by how much each board covers', calculation: `${deckWidthMm} ÷ ${coverage} = ${(deckWidthMm / coverage).toFixed(1)}`, result: `Round up to ${result.outputs.boardCount} boards` },
-    { label: 'Joists needed', explanation: 'Divide the deck length by the joist spacing, then add one for the end', calculation: `${deckLengthMm} ÷ ${js} = ${(deckLengthMm / js).toFixed(1)}, then + 1`, result: `${result.outputs.joistCount} joists` },
+    { label: 'Deck width', explanation: 'Each board runs across this dimension (perpendicular to joists)', result: `${fmt(deckWidthMm)} mm` },
+    { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${fmt(bw)} + ${fmt(bg)}`, result: `${fmt(coverage)} mm per board` },
+    { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${fmt(deckLengthMm)} ÷ ${fmt(coverage)} = ${coverageDiv}`, result: `Round up to ${fmt(result.outputs.boardCount)} boards` },
+    { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${fmt(deckWidthMm)} ÷ ${fmt(js)} = ${joistDiv}, then + 1`, result: `${fmt(result.outputs.joistCount)} joists` },
   ] : [];
 
   return (
@@ -230,13 +238,13 @@ export function DeckingCalc() {
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Boards" value={result.outputs.boardCount} accent />
-                <ResultCard label="Lineal metres" value={result.outputs.totalLinealMetres} unit="lm" />
+                <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
+                <ResultCard label="Lineal metres" value={fmt(result.outputs.totalLinealMetres)} unit="lm" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <ResultCard label="Joists" value={result.outputs.joistCount} />
-                <ResultCard label="Bearers" value={result.outputs.bearerCount} />
-                <ResultCard label="Fixings (approx)" value={result.outputs.fixingsCount} />
+                <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
+                <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
+                <ResultCard label="Fixings (approx)" value={fmt(result.outputs.fixingsCount)} />
               </div>
             </div>
 
@@ -259,7 +267,7 @@ export function DeckingCalc() {
                     return (
                       <button
                         key={s.boardCount}
-                        onClick={() => applyGapSuggestion(s.gap)}
+                        onClick={() => applyGapSuggestion(active && originalGap !== null ? originalGap : s.gap)}
                         style={{
                           background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                           border: `0.5px solid ${active ? 'var(--color-orange)' : 'var(--color-border)'}`,
@@ -304,7 +312,7 @@ export function DeckingCalc() {
             }}>
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
               {[
-                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckLengthMm },
+                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckWidthMm },
                 { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
                 { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
                 { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
@@ -312,7 +320,7 @@ export function DeckingCalc() {
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
                   <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.mm !== null ? `${row.qty} × ${row.mm}mm` : `${row.qty} screws`}
+                    {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
                   </span>
                 </div>
               ))}

@@ -41,34 +41,31 @@ export const DeckingDiagram = memo(function DeckingDiagram({
     boardGap  >= 0 && isFinite(boardGap)   &&
     boardCount > 0 && isFinite(boardCount);
 
-  // Visual board layout — vBoardH computed so boards fill DK_H exactly (no dark gap at bottom)
-  const visCount = Math.min(boardCount, MAX_VIS);
-  const rawFrac  = boardGap / (boardWidth + boardGap);
-  const vGapH    = Math.max(4, (DK_H / visCount) * rawFrac);
-  const vBoardH  = (DK_H - vGapH * (visCount - 1)) / visCount;
-  const step     = vBoardH + vGapH;
+  // Joist stripes — horizontal, running parallel to deckLength (X axis),
+  // spaced down the deckWidth (Y axis). Each stripe is one joist in plan view.
+  const joistVisCount = joistSpacing != null && joistSpacing > 0 && deckWidth > 0
+    ? Math.min(Math.floor(deckWidth / joistSpacing) + 1, MAX_VIS)
+    : Math.min(5, MAX_VIS);
+  const jGapH    = Math.max(4, DK_H * 0.04);
+  const vJoistH  = (DK_H - jGapH * (joistVisCount - 1)) / joistVisCount;
+  const joistYs: number[] = [];
+  for (let i = 0; i < joistVisCount; i++) joistYs.push(DK_Y + i * (vJoistH + jGapH));
 
-  const boardYs: number[] = [];
-  for (let i = 0; i < visCount; i++) boardYs.push(DK_Y + i * step);
+  // Boards — vertical lines crossing the joists, spaced along X (deckLength).
+  // Cap visible count so a 30+ board deck doesn't render as a solid wall.
+  const BOARD_VIS_MAX = 14;
+  const boardVisCount = Math.min(boardCount, BOARD_VIS_MAX);
+  const boardXs: number[] = [];
+  const xStep = DK_W / boardVisCount;
+  for (let i = 0; i < boardVisCount; i++) boardXs.push(DK_X + xStep * (i + 0.5));
 
-  // Joist lines — vertical, spaced along X (deckLength). Joists span deckWidth (Y axis).
-  const joistXs: number[] = [];
-  if (joistSpacing != null && joistSpacing > 0 && deckLength > 0) {
-    for (let pos = joistSpacing; pos < deckLength; pos += joistSpacing) {
-      if (joistXs.length >= 16) break;
-      joistXs.push(DK_X + (pos / deckLength) * DK_W);
-    }
-  } else {
-    [1, 2, 3, 4, 5].forEach(i => joistXs.push(DK_X + (DK_W / 6) * i));
-  }
+  // Board dim arrow — horizontal, spans one board's width along X
+  const bArrX1  = boardXs[0] - xStep * 0.4;
+  const bArrX2  = boardXs[0] + xStep * 0.4;
+  const bMidX   = (bArrX1 + bArrX2) / 2;
 
-  // Board dim arrow spans first board top → bottom
-  const bArrY1  = DK_Y;
-  const bArrY2  = DK_Y + vBoardH;
-  const bMidY   = (bArrY1 + bArrY2) / 2;
-
-  // Width dim midpoint
-  const wMidY   = (DK_Y + DK_BOTTOM) / 2;  // 122
+  // Width dim midpoint (vertical, left side)
+  const wMidY   = (DK_Y + DK_BOTTOM) / 2;
 
   async function handleSave() {
     const svg = svgRef.current;
@@ -138,20 +135,26 @@ export const DeckingDiagram = memo(function DeckingDiagram({
           </>
         ) : (
           <>
-            {/* Joist lines — vertical (span deckWidth), spaced along deckLength, drawn before boards */}
-            {joistXs.map((x, i) => (
-              <line key={i} x1={x} y1={DK_Y} x2={x} y2={DK_BOTTOM}
-                stroke={BLACK} strokeWidth={1.5} opacity={0.18} />
+            {/* Joists — horizontal stripes running parallel to deckLength */}
+            {joistYs.map((y, i) => (
+              <rect key={i} x={DK_X} y={y} width={DK_W} height={vJoistH}
+                fill={FILL} stroke={BLACK} strokeWidth={1} />
             ))}
 
-            {/* Deck boards */}
-            {boardYs.map((y, i) => (
-              <rect key={i} x={DK_X} y={y} width={DK_W} height={vBoardH}
-                fill={FILL} stroke={BLACK} strokeWidth={1} />
+            {/* Boards — vertical dashed lines running perpendicular to joists (parallel to deckWidth) */}
+            {boardXs.map((x, i) => (
+              <line key={i} x1={x} y1={DK_Y} x2={x} y2={DK_BOTTOM}
+                stroke={BLACK} strokeWidth={1} strokeDasharray="3 3" opacity={0.55} />
             ))}
 
             {/* Deck outer frame */}
             <rect x={DK_X} y={DK_Y} width={DK_W} height={DK_H} fill="none" stroke={BLACK} strokeWidth={3} />
+
+            {/* Joist label — small caption on the first joist stripe */}
+            <text x={DK_X + 4} y={DK_Y + vJoistH / 2 + 3} textAnchor="start"
+              fontSize={9} fontFamily={FONT} fill={BLACK} opacity={0.6} letterSpacing="0.5">
+              JOIST
+            </text>
 
             {/* ── Dim 1: Deck width (left, vertical) ── */}
             <line x1={70} y1={DK_Y} x2={70} y2={DK_BOTTOM}
@@ -160,12 +163,12 @@ export const DeckingDiagram = memo(function DeckingDiagram({
             <text x={34} y={wMidY}      textAnchor="middle" fontSize={22} fontWeight={600} fontFamily={FONT} fill={ORANGE}>{Math.round(deckWidth)}</text>
             <text x={34} y={wMidY + 18} textAnchor="middle" fontSize={14} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
 
-            {/* ── Dim 2: Board width (right, vertical) ── */}
-            <line x1={320} y1={bArrY1} x2={320} y2={bArrY2}
+            {/* ── Dim 2: Board width (top, horizontal — boards run vertically) ── */}
+            <line x1={bArrX1} y1={18} x2={bArrX2} y2={18}
               stroke={ORANGE} strokeWidth={1} markerStart="url(#ddS)" markerEnd="url(#ddE)" />
-            <text x={344} y={bMidY - 20} textAnchor="middle" fontSize={14} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.3">Board</text>
-            <text x={344} y={bMidY + 4}  textAnchor="middle" fontSize={18} fontWeight={600} fontFamily={FONT} fill={ORANGE}>{Math.round(boardWidth)}</text>
-            <text x={344} y={bMidY + 20} textAnchor="middle" fontSize={12} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
+            <text x={bMidX} y={12} textAnchor="middle" fontSize={11} fontWeight={500} fontFamily={FONT} fill={ORANGE} letterSpacing="-0.2">
+              Board {Math.round(boardWidth)}<tspan fontSize={9} fontFamily={MONO} opacity={0.72}> mm</tspan>
+            </text>
 
             {/* ── Dim 3: Deck length (bottom, horizontal) ── */}
             <line x1={DK_X}     y1={DK_BOTTOM} x2={DK_X}     y2={256} stroke={ORANGE} strokeWidth={1} />

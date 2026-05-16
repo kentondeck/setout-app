@@ -2,96 +2,7 @@ import { useState, useContext, useRef } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { SettingsContext } from '../contexts';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { lookupSpan } from '../lib/spanTables';
-import { SYSTEM_PROMPTS } from '../lib/codeCheckPrompts';
 import type { Region } from '../types';
-
-// Build the tools array per-call so we can bias web_search to the active region.
-function buildTools(region: Region) {
-  return [
-    {
-      name: 'lookup_span',
-      description:
-        'Look up an approximate span or height for a timber framing member from embedded AS 1684 / NZS 3604 span tables. Returns a mid-range value with the table reference. Use this for any joist, bearer, rafter, or stud sizing question — quote both the value and the table reference in the final answer.',
-      input_schema: {
-        type: 'object' as const,
-        properties: {
-          region: { type: 'string', enum: ['AU', 'NZ'], description: 'AU for AS 1684, NZ for NZS 3604' },
-          member: {
-            type: 'string',
-            description: 'floor_joist, floor_bearer, rafter, wall_stud, or ceiling_joist',
-          },
-          size: { type: 'string', description: 'Section size e.g. 90x45, 140x45, 190x45, 240x45' },
-          grade: {
-            type: 'string',
-            description: 'Timber grade e.g. MSG8, MSG10, MSG12, MGP10, MGP12, MGP15',
-          },
-          spacing_mm: { type: 'number', description: 'Spacing in mm e.g. 400, 450, 600' },
-        },
-        required: ['region', 'member'],
-      },
-    },
-    {
-      type: 'web_search_20250305',
-      name: 'web_search',
-      max_uses: 3,
-      user_location: {
-        type: 'approximate',
-        country: region === 'NZ' ? 'NZ' : 'AU',
-      },
-    },
-  ];
-}
-
-type TextBlock = { type: 'text'; text: string };
-type ToolUseBlock = { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> };
-type ContentBlock = TextBlock | ToolUseBlock | { type: string; [key: string]: unknown };
-
-interface ApiResponse {
-  content: ContentBlock[];
-  stop_reason: string;
-}
-
-async function callApi(
-  apiKey: string,
-  system: string,
-  messages: unknown[],
-  tools: unknown[],
-  signal: AbortSignal,
-): Promise<ApiResponse> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system,
-      tools,
-      messages,
-    }),
-    signal,
-  });
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API error ${res.status}: ${body}`);
-  }
-
-  return (await res.json()) as ApiResponse;
-}
-
-function isTextBlock(b: ContentBlock): b is TextBlock {
-  return b.type === 'text';
-}
-
-function isClientToolUse(b: ContentBlock): b is ToolUseBlock {
-  return b.type === 'tool_use';
-}
 
 export function CodeCheckCalc() {
   const { settings } = useContext(SettingsContext);
@@ -106,65 +17,50 @@ export function CodeCheckCalc() {
     const q = question.trim();
     if (!q || loading) return;
 
-    const apiKey = (import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined) ?? '';
-    if (!apiKey) {
-      setError('Add VITE_ANTHROPIC_API_KEY to your .env.local file to use Code Check.');
-      return;
-    }
-
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-    const signal = abortRef.current.signal;
-
     setLoading(true);
     setAnswer('');
     setError('');
 
     try {
-      const tools = buildTools(region);
-      const messages: unknown[] = [{ role: 'user', content: q }];
+      const res = await fetch('/api/code-check', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question: q, region }),
+        signal: abortRef.current.signal,
+      });
 
-      // Agentic loop — keep handing tool results back until the model stops
-      // requesting client tools. Server tools (web_search) are executed by the
-      // API server inline; we only have to relay lookup_span results.
-      for (let i = 0; i < 6; i++) {
-        const result = await callApi(apiKey, SYSTEM_PROMPTS[region], messages, tools, signal);
-
-        if (result.stop_reason !== 'tool_use') {
-          const text = result.content
-            .filter(isTextBlock)
-            .map(b => b.text)
-            .join('')
-            .trim();
-          setAnswer(text || 'No response. Try rephrasing the question.');
-          return;
-        }
-
-        messages.push({ role: 'assistant', content: result.content });
-
-        const toolResults = result.content.filter(isClientToolUse).map(block => {
-          if (block.name === 'lookup_span') {
-            return {
-              type: 'tool_result' as const,
-              tool_use_id: block.id,
-              content: lookupSpan(block.input as unknown as Parameters<typeof lookupSpan>[0]),
-            };
-          }
-          return {
-            type: 'tool_result' as const,
-            tool_use_id: block.id,
-            content: `Unknown client tool: ${block.name}`,
-            is_error: true,
-          };
-        });
-
-        messages.push({ role: 'user', content: toolResults });
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`API error ${res.status}: ${body}`);
       }
 
-      throw new Error('Reached tool-use limit. Try a more focused question.');
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (!data || data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data) as { type: string; delta?: { type: string; text: string } };
+            if (parsed.type === 'content_block_delta' && parsed.delta?.type === 'text_delta') {
+              setAnswer(prev => prev + parsed.delta!.text);
+            }
+          } catch { /* skip malformed SSE lines */ }
+        }
+      }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      setError(err instanceof Error ? err.message : 'Something went wrong. Check your API key.');
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
       setLoading(false);
     }
@@ -232,8 +128,8 @@ export function CodeCheckCalc() {
             onChange={e => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={region === 'AU'
-              ? 'e.g. Max span for 140×45 MGP10 floor joist at 450mm spacing?'
-              : 'e.g. Max span for 140×45 MSG8 floor joist at 600mm spacing?'}
+              ? 'e.g. Max joist span for 90×45 MGP10 at 450mm spacing?'
+              : 'e.g. Max stud height for 90×45 MSG8 at 600mm spacing?'}
             rows={4}
             style={{
               width: '100%',
@@ -295,10 +191,11 @@ export function CodeCheckCalc() {
           }}>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>ANSWER</p>
             {loading && !answer ? (
-              <p style={{ margin: 0, fontSize: 14, color: 'var(--color-muted)' }}>Checking code, searching sources…</p>
+              <p style={{ margin: 0, fontSize: 14, color: 'var(--color-muted)' }}>Checking code…</p>
             ) : (
               <p style={{ margin: 0, fontSize: 15, color: 'var(--color-text)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
                 {answer}
+                {loading && <span style={{ opacity: 0.4 }}>▍</span>}
               </p>
             )}
           </div>

@@ -52,7 +52,6 @@ export function ConcreteCalc() {
   function switchTab(t: Tab) {
     setTab(t);
     setError('');
-    setJobName('');
   }
 
   function handleCalculate() {
@@ -74,7 +73,6 @@ export function ConcreteCalc() {
         id,
         calculatorId: 'concrete',
         timestamp: Date.now(),
-        jobName: jobName || undefined,
         inputs: { type: 'slab', length, width, thickness, wastage },
         outputs: calc.outputs,
       });
@@ -107,7 +105,6 @@ export function ConcreteCalc() {
         id,
         calculatorId: 'concrete',
         timestamp: Date.now(),
-        jobName: jobName || undefined,
         inputs: {
           type: 'postholes',
           holeType,

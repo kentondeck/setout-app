@@ -1,12 +1,14 @@
 interface AvatarProps {
   name: string;
+  onClick?: () => void;
 }
 
-export function Avatar({ name }: AvatarProps) {
+export function Avatar({ name, onClick }: AvatarProps) {
   const initial = name.trim().charAt(0).toUpperCase() || '?';
 
   return (
-    <div
+    <button
+      onClick={onClick}
       style={{
         width: 36,
         height: 36,
@@ -20,11 +22,14 @@ export function Avatar({ name }: AvatarProps) {
         fontWeight: 500,
         fontSize: 13,
         flexShrink: 0,
-        cursor: 'default',
+        cursor: onClick ? 'pointer' : 'default',
         userSelect: 'none',
+        padding: 0,
+        fontFamily: 'inherit',
       }}
+      aria-label="Profile"
     >
       {initial}
-    </div>
+    </button>
   );
 }

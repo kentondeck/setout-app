@@ -4,30 +4,6 @@ import { SettingsContext } from '../contexts';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import type { Region } from '../types';
 
-const SYSTEM_PROMPTS: Record<Region, string> = {
-  AU: `You are a construction compliance advisor for Australian residential builders and tradespeople. Give accurate, practical answers about residential construction standards.
-
-Reference standards: AS 1684 (Residential Timber-Framed Construction), NCC Volume 2 (Housing Provisions), AS 1657 (Stairways and ladders), AS 3600 (Concrete structures), AS/NZS 1170 (Structural loading).
-
-Rules:
-- Direct answer first, then cite the standard and clause/table number if known
-- Under 120 words unless complexity demands more
-- If a licensed engineer or building certifier is required, say so clearly
-- Never invent clause numbers — say "refer to [standard]" if unsure
-- Use Australian trade terminology (bearer, joist, top plate, nogging, stud)`,
-
-  NZ: `You are a construction compliance advisor for New Zealand residential builders and tradespeople. Give accurate, practical answers about residential construction standards.
-
-Reference standards: NZS 3604 (Timber-framed buildings), NZBC (New Zealand Building Code), NZS 3109 (Concrete construction), NZS/AS 1170 (Structural loading), E2/AS1 (External moisture).
-
-Rules:
-- Direct answer first, then cite the standard and clause/table number if known
-- Under 120 words unless complexity demands more
-- If a Licensed Building Practitioner (LBP) or engineer is required, say so clearly
-- Never invent clause numbers — say "refer to [standard]" if unsure
-- Use New Zealand trade terminology`,
-};
-
 export function CodeCheckCalc() {
   const { settings } = useContext(SettingsContext);
   const [region, setRegion] = useState<Region>(settings.region);
@@ -41,12 +17,6 @@ export function CodeCheckCalc() {
     const q = question.trim();
     if (!q || loading) return;
 
-    const apiKey = (import.meta.env.VITE_ANTHROPIC_API_KEY as string | undefined) ?? '';
-    if (!apiKey) {
-      setError('Add VITE_ANTHROPIC_API_KEY to your .env.local file to use Code Check.');
-      return;
-    }
-
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setLoading(true);
@@ -54,21 +24,10 @@ export function CodeCheckCalc() {
     setError('');
 
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/code-check', {
         method: 'POST',
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 512,
-          stream: true,
-          system: SYSTEM_PROMPTS[region],
-          messages: [{ role: 'user', content: q }],
-        }),
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question: q, region }),
         signal: abortRef.current.signal,
       });
 

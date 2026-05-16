@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -18,7 +18,7 @@ SCOPE: Answer only what was asked. Omit uncertain details.
 BANNED: Restating question, "Hope this helps", bold/asterisks/markdown/emoji, invented clause numbers, adjacent unrequested facts, LBP disclaimers unless asked.`,
 }
 
-function codeCheckDevPlugin(): Plugin {
+function codeCheckDevPlugin(apiKey: string): Plugin {
   return {
     name: 'code-check-dev',
     apply: 'serve',
@@ -26,7 +26,6 @@ function codeCheckDevPlugin(): Plugin {
       server.middlewares.use('/api/code-check', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
 
-        const apiKey = process.env.ANTHROPIC_API_KEY ?? '';
         if (!apiKey) {
           res.statusCode = 500;
           res.end('Add ANTHROPIC_API_KEY to .env.local to use Code Check locally.');
@@ -72,42 +71,45 @@ function codeCheckDevPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    codeCheckDevPlugin(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
-      manifest: {
-        name: 'Setout',
-        short_name: 'Setout',
-        description: 'Construction calculators for tradies',
-        theme_color: '#863bff',
-        background_color: '#F5F5F3',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
-        icons: [
-          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+        manifest: {
+          name: 'Setout',
+          short_name: 'Setout',
+          description: 'Construction calculators for tradies',
+          theme_color: '#863bff',
+          background_color: '#F5F5F3',
+          display: 'standalone',
+          orientation: 'portrait',
+          start_url: '/',
+          icons: [
+            { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
             },
-          },
-        ],
-      },
-    }),
-  ],
+          ],
+        },
+      }),
+    ],
+  }
 })

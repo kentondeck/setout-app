@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateStairs } from '../calculators/stairs';
 import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
@@ -28,11 +27,10 @@ const DEFAULTS: Inputs = {
 
 export function StairsCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: StairsOutputs; steps: WorkingStep[]; warnings: StairsWarnings } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -77,7 +75,6 @@ export function StairsCalc() {
       id,
       calculatorId: 'stairs',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}) },
       outputs: calc.outputs,
     });
@@ -244,7 +241,6 @@ export function StairsCalc() {
               id="stairs"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

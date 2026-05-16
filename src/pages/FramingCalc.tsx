@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateFraming } from '../calculators/framing';
 import type { FramingOutputs } from '../calculators/framing';
@@ -31,7 +30,7 @@ const DEFAULTS: Inputs = {
 
 export function FramingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [includeNoggins, setIncludeNoggins] = useState(true);
@@ -39,7 +38,6 @@ export function FramingCalc() {
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -75,7 +73,6 @@ export function FramingCalc() {
       id,
       calculatorId: 'framing',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { wallLength, wallHeight, studSpacing, nogginRows, includeNoggins: includeNoggins ? 1 : 0, doubleStuds: doubleStuds ? 1 : 0 },
       outputs: calc.outputs,
     });
@@ -466,7 +463,6 @@ export function FramingCalc() {
               doubleStuds={doubleStuds}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

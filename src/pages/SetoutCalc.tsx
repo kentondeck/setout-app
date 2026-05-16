@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateSetout } from '../calculators/setout';
 import type { SetoutOutputs } from '../calculators/setout';
@@ -23,12 +22,11 @@ const DEFAULTS: Inputs = { sideA: '', sideB: '', measured: '' };
 
 export function SetoutCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('find');
   const [result, setResult] = useState<{ outputs: SetoutOutputs; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -65,7 +63,6 @@ export function SetoutCalc() {
       id,
       calculatorId: 'setout',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { sideA, sideB, ...(measured !== undefined && { measured }) },
       outputs: calc.outputs,
     });
@@ -209,7 +206,6 @@ export function SetoutCalc() {
               id="setout"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

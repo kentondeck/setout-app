@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -24,7 +23,7 @@ const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numH
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastage, setWastage] = useState(0.10);
@@ -40,7 +39,6 @@ export function ConcreteCalc() {
   const [postResult, setPostResult] = useState<{ outputs: PostHoleOutputs; steps: WorkingStep[] } | null>(null);
   const [lastPostId, setLastPostId] = useState('');
 
-  const [jobName, setJobName] = useState('');
   const [error, setError] = useState('');
 
   function setSlab(field: keyof SlabFields) {
@@ -406,11 +404,6 @@ export function ConcreteCalc() {
               id="concrete-slab"
             />
 
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastSlabId, { jobName: name })}
-            />
             <AddToJobPrompt calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
@@ -466,11 +459,6 @@ export function ConcreteCalc() {
               id="concrete-postholes"
             />
 
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastPostId, { jobName: name })}
-            />
             <AddToJobPrompt calculationId={lastPostId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateBaluster } from '../calculators/baluster';
 import type { BalusterOutputs } from '../calculators/baluster';
@@ -20,7 +19,7 @@ interface Inputs {
 
 export function BalusterCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(() => ({
     totalLength: '',
@@ -28,7 +27,6 @@ export function BalusterCalc() {
     maxGap: '',
   }));
   const [result, setResult] = useState<{ outputs: BalusterOutputs; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [diagramProps, setDiagramProps] = useState<{
@@ -81,7 +79,6 @@ export function BalusterCalc() {
       id,
       calculatorId: 'baluster',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { totalLength, balusterWidth, maxGap },
       outputs: calc.outputs,
     });
@@ -195,7 +192,6 @@ export function BalusterCalc() {
               id="balusters"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

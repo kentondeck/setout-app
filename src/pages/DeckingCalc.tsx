@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateDecking } from '../calculators/decking';
 import type { DeckingResult, GapSuggestion } from '../calculators/decking';
@@ -36,13 +35,12 @@ const DEFAULTS: Inputs = {
 
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<DeckingResult | null>(null);
   const [joistStock, setJoistStock] = useState(4800);
   const [bearerStock, setBearerStock] = useState(4800);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
@@ -89,7 +87,6 @@ export function DeckingCalc() {
       id,
       calculatorId: 'decking',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing },
       outputs: calc.outputs,
     });
@@ -459,11 +456,6 @@ export function DeckingCalc() {
               {COMPLIANCE_NOTES.decking[settings.region]}
             </p>
 
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastEntryId, { jobName: name })}
-            />
             <AddToJobPrompt calculationId={lastEntryId} />
           </>
         )}

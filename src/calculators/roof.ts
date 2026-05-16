@@ -1,52 +1,156 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
+// Any 2 of (span, rise, rafterLength, pitchDegrees) are required.
+// The other 2 are derived. All lengths in metres, pitch in degrees.
 export interface RoofInputs {
-  buildingWidth: number;   // metres (full width — run = half this)
-  pitchDegrees: number;    // degrees
-  overhang: number;        // metres (eaves overhang each side)
-  rafterDepth?: number;    // mm — optional, for birdsmouth depth check
-  plateWidth?: number;     // mm — optional, for birdsmouth geometry
-  ridgeThickness?: number; // mm — optional, for ridge shortening
+  span?: number;            // metres — full building width (= 2 × run)
+  rise?: number;            // metres — vertical from wall plate to ridge
+  rafterLength?: number;    // metres — to ridge centreline (no overhang)
+  pitchDegrees?: number;    // degrees
+  overhang: number;         // metres — eaves overhang each side
+  rafterDepth?: number;     // mm — optional, for birdsmouth depth check
+  plateWidth?: number;      // mm — optional, for birdsmouth geometry
+  ridgeThickness?: number;  // mm — optional, for ridge shortening
 }
 
 export interface RoofOutputs extends Record<string, number> {
-  run: number;                  // metres (half building width)
-  ridgeHeight: number;          // metres
-  rafterLength: number;         // metres (excluding overhang, to ridge centreline)
-  totalRafterLength: number;    // metres (with overhang)
-  plumbCutAngle: number;        // degrees (at ridge)
-  seatCutAngle: number;         // degrees (at wall plate)
-  birdsmouthPlumbDepth: number; // mm — vertical cut depth of birdsmouth (0 if not calculated)
-  remainingDepth: number;       // mm — rafter depth minus birdsmouth plumb depth (0 if not calculated)
-  ridgeShortening: number;      // mm along rafter — deduct from line length (0 if not calculated)
-  netRafterLengthMm: number;    // mm — seat plumb to ridge face (0 if ridge thickness not provided)
+  span: number;                 // metres
+  run: number;                  // metres (half span)
+  rise: number;                 // metres (= ridgeHeight)
+  ridgeHeight: number;          // metres (alias for rise — kept for backwards compat with diagram/etc.)
+  rafterLength: number;         // metres — HEADLINE rafter (cut length if ridgeThickness provided, else line length)
+  lineRafterLength: number;     // metres — always to ridge centreline (geometric)
+  totalRafterLength: number;    // metres — rafterLength + overhang along rafter
+  pitchDegrees: number;         // degrees
+  plumbCutAngle: number;        // degrees (at ridge) = pitch
+  seatCutAngle: number;         // degrees (at wall plate) = 90 − pitch
+  birdsmouthPlumbDepth: number; // mm — 0 if not calculated
+  remainingDepth: number;       // mm — 0 if not calculated
+  ridgeShortening: number;      // mm along rafter — 0 if not calculated
+  netRafterLengthMm: number;    // mm — seat plumb to ridge face — 0 if no ridge thickness
 }
 
 export interface RoofResult {
   outputs: RoofOutputs;
   steps: WorkingStep[];
+  derivedKeys: Array<'span' | 'rise' | 'rafterLength' | 'pitchDegrees'>;
+}
+
+export class RoofInputError extends Error {}
+
+const r3 = (n: number) => parseFloat(n.toFixed(3));
+const r1 = (n: number) => parseFloat(n.toFixed(1));
+const DEG = 180 / Math.PI;
+
+// Returns true if a numeric input is "filled" (finite and positive).
+function filled(v: number | undefined): v is number {
+  return typeof v === 'number' && Number.isFinite(v) && v > 0;
+}
+
+// Solve the rafter triangle from any 2 of: span, rise, rafterLength, pitchDegrees.
+// run = span / 2; rafter is the hypotenuse of (run, rise); pitch = atan(rise/run).
+//
+// Branching collapses to two paths:
+//   (a) pitch is known + one length     → single trig op per derived value
+//   (b) pitch unknown + two lengths     → Pythagoras + one inverse trig
+// Uses Math.hypot / Math.atan2 for numerical stability near the extremes.
+function solveTriangle(args: {
+  span?: number; rise?: number; rafterLength?: number; pitchDegrees?: number;
+}): { span: number; rise: number; rafterLength: number; pitchDegrees: number } {
+  let { span, rise, rafterLength, pitchDegrees } = args;
+  let run = filled(span) ? span / 2 : undefined;
+
+  const lengthsKnown = [run, rise, rafterLength].filter(filled).length;
+  if (!filled(pitchDegrees) && lengthsKnown < 2) {
+    throw new RoofInputError('Enter any 2 of span, rise, rafter length or pitch.');
+  }
+
+  // Path A — pitch + at least one length
+  if (filled(pitchDegrees)) {
+    if (pitchDegrees <= 0 || pitchDegrees >= 90) {
+      throw new RoofInputError('Pitch must be between 1° and 89°.');
+    }
+    const rad = pitchDegrees * Math.PI / 180;
+    const sin = Math.sin(rad);
+    const cos = Math.cos(rad);
+    const tan = sin / cos;
+    if (filled(run))                  { rise = run * tan;          rafterLength = run / cos; }
+    else if (filled(rise))            { run = rise / tan;          rafterLength = rise / sin; }
+    else if (filled(rafterLength))    { run = rafterLength * cos;  rise = rafterLength * sin; }
+    else throw new RoofInputError('Enter a length to pair with the pitch.');
+  }
+  // Path B — no pitch, two lengths
+  else if (filled(run) && filled(rise)) {
+    rafterLength = Math.hypot(run, rise);
+    pitchDegrees = Math.atan2(rise, run) * DEG;
+  } else if (filled(run) && filled(rafterLength)) {
+    if (rafterLength <= run) throw new RoofInputError('Rafter length must exceed the run — check inputs.');
+    rise = Math.sqrt(rafterLength * rafterLength - run * run);
+    pitchDegrees = Math.atan2(rise, run) * DEG;
+  } else if (filled(rise) && filled(rafterLength)) {
+    if (rise >= rafterLength) throw new RoofInputError('Rise must be less than the rafter length — check inputs.');
+    run = Math.sqrt(rafterLength * rafterLength - rise * rise);
+    pitchDegrees = Math.atan2(rise, run) * DEG;
+  }
+
+  span = (run as number) * 2;
+
+  if (!filled(span) || !filled(rise) || !filled(rafterLength) || !filled(pitchDegrees)) {
+    throw new RoofInputError('Could not solve roof geometry — check inputs.');
+  }
+  if (pitchDegrees <= 0 || pitchDegrees >= 90) {
+    throw new RoofInputError('Pitch must be between 1° and 89°.');
+  }
+  return { span, rise, rafterLength, pitchDegrees };
 }
 
 export function calculateRoof(inputs: RoofInputs): RoofResult {
-  const { buildingWidth, pitchDegrees, overhang, rafterDepth, plateWidth, ridgeThickness } = inputs;
+  const { overhang, rafterDepth, plateWidth, ridgeThickness } = inputs;
 
-  const run = parseFloat((buildingWidth / 2).toFixed(3));
-  const pitchRad = (pitchDegrees * Math.PI) / 180;
+  const initiallyFilled = (['span', 'rise', 'rafterLength', 'pitchDegrees'] as const)
+    .filter(k => filled(inputs[k]));
 
-  const ridgeHeight = parseFloat((run * Math.tan(pitchRad)).toFixed(3));
-  const rafterLength = parseFloat((run / Math.cos(pitchRad)).toFixed(3));
+  // When ridge thickness is provided, the user's `rafterLength` input is the CUT length
+  // (rafter to ridge face). The geometry solver works in LINE length (to centreline).
+  // Iterate to back-compute: line = cut + (ridge/2) / cos(pitch).
+  // Converges in 2–4 iterations because cos is smooth.
+  let solverInputs = inputs;
+  const ridgeHalfM = filled(ridgeThickness) ? (ridgeThickness / 1000) / 2 : 0;
+  if (ridgeHalfM > 0 && filled(inputs.rafterLength)) {
+    let lineGuess = inputs.rafterLength + ridgeHalfM; // initial: pitch~0° => shortening ~= ridgeHalf
+    for (let i = 0; i < 12; i++) {
+      const trial = solveTriangle({ ...inputs, rafterLength: lineGuess });
+      const cosP = Math.cos(trial.pitchDegrees * Math.PI / 180);
+      const next = inputs.rafterLength + ridgeHalfM / cosP;
+      if (Math.abs(next - lineGuess) < 1e-6) { lineGuess = next; break; }
+      lineGuess = next;
+    }
+    solverInputs = { ...inputs, rafterLength: lineGuess };
+  }
 
-  const overhangRafter = parseFloat((overhang / Math.cos(pitchRad)).toFixed(3));
-  const totalRafterLength = parseFloat((rafterLength + overhangRafter).toFixed(3));
+  const solved = solveTriangle(solverInputs);
+  const span = r3(solved.span);
+  const rise = r3(solved.rise);
+  const lineRafterLength = r3(solved.rafterLength);
+  const pitchDegrees = r1(solved.pitchDegrees);
+  const run = r3(span / 2);
+  const pitchRad = pitchDegrees * Math.PI / 180;
 
-  const plumbCutAngle = parseFloat(pitchDegrees.toFixed(1));
-  const seatCutAngle = parseFloat((90 - pitchDegrees).toFixed(1));
+  // Shortening + cut rafter (only meaningful when ridge given)
+  const ridgeShorteningM = ridgeHalfM > 0 ? ridgeHalfM / Math.cos(pitchRad) : 0;
+  const cutRafterLength = r3(lineRafterLength - ridgeShorteningM);
 
-  // Rafter cut details — only when optional inputs are provided
+  // HEADLINE rafter is cut when ridge provided, line otherwise
+  const rafterLength = ridgeHalfM > 0 ? cutRafterLength : lineRafterLength;
+
+  const overhangRafter = overhang > 0 ? r3(overhang / Math.cos(pitchRad)) : 0;
+  const totalRafterLength = r3(rafterLength + overhangRafter);
+
+  const plumbCutAngle = r1(pitchDegrees);
+  const seatCutAngle = r1(90 - pitchDegrees);
+
   let birdsmouthPlumbDepth = 0;
   let remainingDepth = 0;
-  let ridgeShortening = 0;
-  let netRafterLengthMm = 0;
 
   if (plateWidth && plateWidth > 0) {
     birdsmouthPlumbDepth = Math.round(plateWidth * Math.tan(pitchRad));
@@ -54,33 +158,48 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
       remainingDepth = rafterDepth - birdsmouthPlumbDepth;
     }
   }
+  const ridgeShortening = ridgeHalfM > 0 ? Math.round(ridgeShorteningM * 1000) : 0;
+  const netRafterLengthMm = ridgeHalfM > 0 ? Math.round(cutRafterLength * 1000) : 0;
 
-  if (ridgeThickness && ridgeThickness > 0) {
-    ridgeShortening = Math.round((ridgeThickness / 2) / Math.cos(pitchRad));
-    netRafterLengthMm = Math.round(run * 1000) - ridgeShortening;
-  }
+  const derivedKeys = (['span', 'rise', 'rafterLength', 'pitchDegrees'] as const)
+    .filter(k => !initiallyFilled.includes(k));
 
   const steps: WorkingStep[] = [
     {
-      label: 'Run (half span)',
-      formula: 'building width ÷ 2',
-      result: `${buildingWidth}m ÷ 2 = ${run}m`,
+      label: 'Inputs given',
+      formula: 'any 2 of: span, rise, rafter length, pitch',
+      result: initiallyFilled.length === 0 ? '—' : initiallyFilled.join(', '),
     },
     {
-      label: 'Ridge height',
+      label: 'Pitch',
+      formula: 'derived if not entered',
+      result: `${pitchDegrees}°`,
+    },
+    {
+      label: 'Span / Run',
+      formula: 'run = span ÷ 2',
+      result: `span ${span}m → run ${run}m`,
+    },
+    {
+      label: 'Rise (ridge height)',
       formula: 'run × tan( pitch )',
-      result: `${run}m × tan(${pitchDegrees}°) = ${ridgeHeight}m`,
+      result: `${run}m × tan(${pitchDegrees}°) = ${rise}m`,
     },
     {
-      label: 'Rafter length',
-      formula: 'run ÷ cos( pitch )',
-      result: `${run}m ÷ cos(${pitchDegrees}°) = ${rafterLength}m`,
+      label: ridgeHalfM > 0 ? 'Rafter line length (centreline)' : 'Rafter length',
+      formula: 'run ÷ cos( pitch )  (= √(run² + rise²))',
+      result: `${lineRafterLength}m`,
     },
-    {
+    ...(ridgeHalfM > 0 ? [{
+      label: 'Cut rafter (to ridge face)',
+      formula: 'line − (ridge ÷ 2) ÷ cos( pitch )',
+      result: `${lineRafterLength}m − ${(ridgeShorteningM).toFixed(3)}m = ${cutRafterLength}m`,
+    }] : []),
+    ...(overhang > 0 ? [{
       label: 'Total rafter with overhang',
       formula: 'rafter + overhang ÷ cos( pitch )',
-      result: `${rafterLength}m + (${overhang}m ÷ cos(${pitchDegrees}°)) = ${totalRafterLength}m`,
-    },
+      result: `${rafterLength}m + ${overhangRafter}m = ${totalRafterLength}m`,
+    }] : []),
     {
       label: 'Cut angles',
       formula: 'plumb cut = pitch ; seat cut = 90° − pitch',
@@ -91,7 +210,7 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
       formula: 'plate width × tan( pitch )',
       result: `${plateWidth}mm × tan(${pitchDegrees}°) = ${birdsmouthPlumbDepth}mm`,
     }] : []),
-    ...(ridgeThickness && ridgeThickness > 0 ? [{
+    ...(ridgeHalfM > 0 ? [{
       label: 'Ridge shortening',
       formula: '(ridge thickness ÷ 2) ÷ cos( pitch )',
       result: `(${ridgeThickness}mm ÷ 2) ÷ cos(${pitchDegrees}°) = ${ridgeShortening}mm`,
@@ -100,10 +219,13 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
 
   return {
     outputs: {
-      run, ridgeHeight, rafterLength, totalRafterLength,
-      plumbCutAngle, seatCutAngle,
+      span, run, rise,
+      ridgeHeight: rise,
+      rafterLength, lineRafterLength, totalRafterLength,
+      pitchDegrees, plumbCutAngle, seatCutAngle,
       birdsmouthPlumbDepth, remainingDepth, ridgeShortening, netRafterLengthMm,
     },
     steps,
+    derivedKeys,
   };
 }

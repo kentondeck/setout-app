@@ -4,6 +4,10 @@ import { JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import type { HistoryEntry } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
+import { FramingDiagram } from '../components/FramingDiagram';
+import { StairDiagram } from '../components/StairDiagram';
+import { RoofDiagram } from '../components/RoofDiagram';
+import { BalusterDiagram } from '../components/BalusterDiagram';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -46,6 +50,26 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Row = { label: string; qty: number | null; detail: string };
+
+function MaterialsBlock({ rows }: { rows: Row[] }) {
+  return (
+    <div>
+      <SectionLabel>Materials</SectionLabel>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {rows.map(row => (
+          <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, gap: 8 }}>
+            <span style={{ color: '#999' }}>{row.label}</span>
+            <span style={{ color: '#0a0a0a', fontWeight: 500, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>
+              {row.qty !== null && row.qty > 1 ? `${fmt(row.qty)} × ` : ''}{row.detail}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DeckingMaterials({ entry }: { entry: HistoryEntry }) {
   const deckLength = Number(entry.inputs.deckLength);
   const deckWidth = Number(entry.inputs.deckWidth);
@@ -60,28 +84,14 @@ function DeckingMaterials({ entry }: { entry: HistoryEntry }) {
   const deckLengthMm = Math.round(deckLength * 1000);
   const deckWidthMm = Math.round(deckWidth * 1000);
 
-  const rows = [
-    { label: 'Decking boards', qty: boardCount, mm: deckWidthMm },
-    { label: 'Joists', qty: joistCount, mm: deckLengthMm },
-    { label: 'Bearers', qty: bearerCount, mm: deckWidthMm },
-    { label: 'Fixings (approx)', qty: fixingsCount, mm: null as number | null },
-  ];
-
   return (
     <>
-      <div>
-        <SectionLabel>Materials</SectionLabel>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {rows.map(row => (
-            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-              <span style={{ color: '#999' }}>{row.label}</span>
-              <span style={{ color: '#0a0a0a', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
-                {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <MaterialsBlock rows={[
+        { label: 'Decking boards', qty: boardCount, detail: `${fmt(deckWidthMm)}mm` },
+        { label: 'Joists', qty: joistCount, detail: `${fmt(deckLengthMm)}mm` },
+        { label: 'Bearers', qty: bearerCount, detail: `${fmt(deckWidthMm)}mm` },
+        { label: 'Fixings (approx)', qty: null, detail: `${fmt(fixingsCount)} screws` },
+      ]} />
       <DeckingDiagram
         deckLength={deckLengthMm}
         deckWidth={deckWidthMm}
@@ -92,6 +102,217 @@ function DeckingMaterials({ entry }: { entry: HistoryEntry }) {
       />
     </>
   );
+}
+
+function FramingMaterials({ entry }: { entry: HistoryEntry }) {
+  const wallLength = Number(entry.inputs.wallLength);
+  const wallHeight = Number(entry.inputs.wallHeight);
+  const studSpacing = Number(entry.inputs.studSpacing);
+  const nogginRows = Number(entry.inputs.nogginRows);
+  const includeNoggins = Number(entry.inputs.includeNoggins) === 1;
+  const doubleStuds = Number(entry.inputs.doubleStuds) === 1;
+  const studCount = Number(entry.outputs.studCount);
+  const nogginCount = Number(entry.outputs.nogginCount);
+  // doubleTopPlate isn't stored, but topPlateLineal vs bottomPlateLineal tells us
+  const topPlateLineal = Number(entry.outputs.topPlateLineal);
+  const bottomPlateLineal = Number(entry.outputs.bottomPlateLineal);
+  const doubleTopPlate = topPlateLineal > bottomPlateLineal * 1.5;
+
+  const wallLengthMm = Math.round(wallLength * 1000);
+  const wallHeightMm = Math.round(wallHeight * 1000);
+  const nogginLengthMm = Math.round(studSpacing - 90);
+
+  const rows: Row[] = [
+    { label: 'Studs', qty: studCount, detail: `${fmt(wallHeightMm)}mm` },
+    { label: `Top plate (${doubleTopPlate ? '2 runs' : '1 run'})`, qty: doubleTopPlate ? 2 : 1, detail: `${fmt(wallLengthMm)}mm` },
+    { label: 'Bottom plate', qty: 1, detail: `${fmt(wallLengthMm)}mm` },
+  ];
+  if (includeNoggins && nogginCount > 0) {
+    rows.push({ label: 'Noggins', qty: nogginCount, detail: `${fmt(nogginLengthMm)}mm` });
+  }
+
+  return (
+    <>
+      <MaterialsBlock rows={rows} />
+      <FramingDiagram
+        wallLengthMm={wallLengthMm}
+        wallHeightMm={wallHeightMm}
+        studCount={studCount}
+        studSpacingMm={studSpacing}
+        nogginRows={includeNoggins ? (nogginRows || 1) : 0}
+        doubleTopPlate={doubleTopPlate}
+        doubleStuds={doubleStuds}
+      />
+    </>
+  );
+}
+
+function StairsMaterials({ entry }: { entry: HistoryEntry }) {
+  const totalRise = Number(entry.inputs.totalRise);
+  const totalRun = Number(entry.inputs.totalRun);
+  const riserCount = Number(entry.outputs.riserCount);
+  const treadCount = Number(entry.outputs.treadCount);
+  const riserHeight = Number(entry.outputs.riserHeight);
+  const treadDepth = Number(entry.outputs.treadDepth);
+  const stringerLength = Number(entry.outputs.stringerLength);
+
+  const effectiveRun = totalRun > 0 ? totalRun : treadCount * treadDepth;
+
+  return (
+    <>
+      <MaterialsBlock rows={[
+        { label: 'Stringers', qty: 2, detail: `${fmt(stringerLength)}mm` },
+        { label: 'Treads', qty: treadCount, detail: `${fmt(treadDepth)}mm deep` },
+        { label: 'Risers', qty: riserCount, detail: `${fmt(riserHeight)}mm high` },
+      ]} />
+      <StairDiagram
+        riserCount={riserCount}
+        riserHeight={riserHeight}
+        treadCount={treadCount}
+        treadDepth={treadDepth}
+        stringerLength={stringerLength}
+        totalRise={totalRise}
+        totalRun={effectiveRun}
+      />
+    </>
+  );
+}
+
+function RoofMaterials({ entry }: { entry: HistoryEntry }) {
+  // Support both new (span) and old (buildingWidth) saved entries
+  const span = Number(entry.inputs.span ?? entry.inputs.buildingWidth);
+  const pitchDegrees = Number(entry.outputs.pitchDegrees ?? entry.inputs.pitchDegrees);
+  const overhang = Number(entry.inputs.overhang);
+  const totalRafterLength = Number(entry.outputs.totalRafterLength);
+  const ridgeHeight = Number(entry.outputs.ridgeHeight);
+  const plumbCutAngle = Number(entry.outputs.plumbCutAngle);
+  const seatCutAngle = Number(entry.outputs.seatCutAngle);
+
+  return (
+    <>
+      <MaterialsBlock rows={[
+        { label: 'Span', qty: null, detail: `${fmt(span)}m` },
+        { label: 'Pitch', qty: null, detail: `${fmt(pitchDegrees)}°` },
+        { label: 'Rafter length (each)', qty: null, detail: `${fmt(totalRafterLength)}m` },
+        { label: 'Ridge height', qty: null, detail: `${fmt(ridgeHeight)}m` },
+        { label: 'Plumb cut', qty: null, detail: `${fmt(plumbCutAngle)}°` },
+        { label: 'Seat cut', qty: null, detail: `${fmt(seatCutAngle)}°` },
+      ]} />
+      <RoofDiagram
+        buildingWidthMm={span * 1000}
+        pitchDegrees={pitchDegrees}
+        ridgeHeightMm={ridgeHeight * 1000}
+        rafterLengthMm={Math.round(totalRafterLength * 1000)}
+        overhangMm={Number.isFinite(overhang) ? overhang * 1000 : 0}
+      />
+    </>
+  );
+}
+
+function BalusterMaterials({ entry }: { entry: HistoryEntry }) {
+  const totalLength = Number(entry.inputs.totalLength);
+  const balusterWidth = Number(entry.inputs.balusterWidth);
+  const balusters = Number(entry.outputs.balusters);
+  const actualGap = Number(entry.outputs.actualGap);
+
+  return (
+    <>
+      <MaterialsBlock rows={[
+        { label: 'Balusters', qty: balusters, detail: `${fmt(balusterWidth)}mm wide` },
+        { label: 'Gap between', qty: null, detail: `${fmt(actualGap)}mm` },
+      ]} />
+      <BalusterDiagram
+        totalLength={totalLength}
+        balusterWidth={balusterWidth}
+        balusterCount={balusters}
+        gap={actualGap}
+      />
+    </>
+  );
+}
+
+function ConcreteMaterials({ entry }: { entry: HistoryEntry }) {
+  const type = String(entry.inputs.type);
+  if (type === 'slab') {
+    const length = Number(entry.inputs.length);
+    const width = Number(entry.inputs.width);
+    const thickness = Number(entry.inputs.thickness);
+    const orderVolume = Number(entry.outputs.orderVolume);
+    const litres = Number(entry.outputs.litres);
+    const weightTonnes = Number(entry.outputs.weightTonnes);
+    return <MaterialsBlock rows={[
+      { label: 'Slab', qty: null, detail: `${fmt(length)} × ${fmt(width)} × ${fmt(thickness)}mm` },
+      { label: 'Order volume', qty: null, detail: `${fmt(orderVolume)} m³` },
+      { label: 'Litres', qty: null, detail: `${fmt(litres)} L` },
+      { label: 'Weight', qty: null, detail: `${fmt(weightTonnes)} t` },
+    ]} />;
+  }
+  // postholes
+  const numHoles = Number(entry.inputs.numHoles);
+  const depth = Number(entry.inputs.depth);
+  const orderVolume = Number(entry.outputs.orderVolume);
+  const bagCount = Number(entry.outputs.bagCount);
+  const useBagMix = Number(entry.outputs.useBagMix) === 1;
+  return <MaterialsBlock rows={[
+    { label: 'Holes', qty: numHoles, detail: `${fmt(depth)}mm deep` },
+    useBagMix
+      ? { label: 'Bag mix (20 kg)', qty: bagCount, detail: 'bags' }
+      : { label: 'Ready-mix', qty: null, detail: `${fmt(orderVolume)} m³` },
+  ]} />;
+}
+
+function CladdingMaterials({ entry }: { entry: HistoryEntry }) {
+  const boardLength = Number(entry.inputs.boardLength);
+  const courseCount = Number(entry.outputs.courseCount);
+  const faceCover = Number(entry.outputs.faceCover);
+  const totalLm = Number(entry.outputs.totalLm);
+  const stockCount = Number(entry.outputs.stockCount);
+  return <MaterialsBlock rows={[
+    { label: 'Courses', qty: courseCount, detail: `${fmt(faceCover)}mm cover` },
+    { label: `Cladding boards (${fmt(boardLength)}mm)`, qty: stockCount, detail: `${fmt(totalLm)}lm` },
+  ]} />;
+}
+
+function RakedMaterials({ entry }: { entry: HistoryEntry }) {
+  const studCount = Number(entry.outputs.studCount);
+  const lowStudHeight = Number(entry.outputs.lowStudHeight);
+  const highStudHeight = Number(entry.outputs.highStudHeight);
+  const rakePlateLength = Number(entry.outputs.rakePlateLength);
+  const bottomPlateLineal = Number(entry.outputs.bottomPlateLineal);
+  return <MaterialsBlock rows={[
+    { label: 'Studs (varying heights)', qty: studCount, detail: `${fmt(lowStudHeight)}–${fmt(highStudHeight)}mm` },
+    { label: 'Rake plate', qty: 1, detail: `${fmt(rakePlateLength)}mm` },
+    { label: 'Bottom plate', qty: 1, detail: `${fmt(Math.round(bottomPlateLineal * 1000))}mm` },
+  ]} />;
+}
+
+function SetoutMaterials({ entry }: { entry: HistoryEntry }) {
+  const diagonal = Number(entry.outputs.diagonal);
+  const error = Number(entry.outputs.error);
+  const sideA = Number(entry.inputs.sideA);
+  const sideB = Number(entry.inputs.sideB);
+  return <MaterialsBlock rows={[
+    { label: 'Sides', qty: null, detail: `${fmt(sideA)} × ${fmt(sideB)}mm` },
+    { label: 'Required diagonal', qty: null, detail: `${fmt(diagonal)}mm` },
+    ...(error !== 0 && Number.isFinite(error)
+      ? [{ label: 'Error', qty: null, detail: `${error > 0 ? '+' : ''}${fmt(error)}mm` }]
+      : []),
+  ]} />;
+}
+
+function MaterialsForCalc({ entry }: { entry: HistoryEntry }) {
+  switch (entry.calculatorId) {
+    case 'decking': return <DeckingMaterials entry={entry} />;
+    case 'framing': return <FramingMaterials entry={entry} />;
+    case 'stairs': return <StairsMaterials entry={entry} />;
+    case 'roof': return <RoofMaterials entry={entry} />;
+    case 'baluster': return <BalusterMaterials entry={entry} />;
+    case 'concrete': return <ConcreteMaterials entry={entry} />;
+    case 'cladding': return <CladdingMaterials entry={entry} />;
+    case 'raked': return <RakedMaterials entry={entry} />;
+    case 'setout': return <SetoutMaterials entry={entry} />;
+    default: return null;
+  }
 }
 
 // ─── CalcEntryCard ───────────────────────────────────────────────────────────
@@ -296,7 +517,7 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
               gap: 12,
             }}
           >
-            {entry.calculatorId === 'decking' && <DeckingMaterials entry={entry} />}
+            <MaterialsForCalc entry={entry} />
             <div>
               <p
                 style={{

@@ -224,10 +224,10 @@ export function RoofCalc() {
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholder="" hint="timber size" />
+              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholder="e.g. 190" hint="optional · timber size" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholder="" hint="seat width" />
+              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholder="e.g. 90" hint="optional · birdsmouth seat" />
             </div>
           </div>
         </div>

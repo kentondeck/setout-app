@@ -124,10 +124,6 @@ export const RoofDiagram = memo(function RoofDiagram({
   const midAnnX = (annX1 + annX2) / 2 + lnx * 32;
   const midAnnY = (annY1 + annY2) / 2 + lny * 32;
 
-  // ── Pitch reference triangle — floating reference at top-left ─
-  const triBase = 80;
-  const triRise = triBase * Math.tan(pitchDegrees * Math.PI / 180);
-  const triBaseY = 72;
 
   // ── Floor hatch ───────────────────────────────────────────────────────────
   const hatchXs: number[] = [];
@@ -214,14 +210,15 @@ export const RoofDiagram = memo(function RoofDiagram({
             stroke={INK} strokeWidth={0.7} opacity={0.30} />
         ))}
 
-        {/* ── ANNOTATION 1 — Pitch reference triangle ── */}
-        <line x1={200} y1={triBaseY} x2={280} y2={triBaseY} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <line x1={200} y1={Math.round(triBaseY - triRise)} x2={200} y2={triBaseY} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <line x1={280} y1={triBaseY} x2={200} y2={Math.round(triBaseY - triRise)} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <path d={`M200,${triBaseY - 10} L210,${triBaseY - 10} L210,${triBaseY}`} fill="none" stroke={ORANGE} strokeWidth={1} opacity={0.55} />
-        <text x={298} y={Math.round(triBaseY - triRise - 10)} textAnchor="start" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
-        <text x={298} y={Math.round(triBaseY - triRise + 14)} textAnchor="start" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}</text>
-        <text x={298} y={Math.round(triBaseY - triRise + 32)} textAnchor="start" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>°</text>
+        {/* ── ANNOTATION 1 — Pitch label above ridge ── */}
+        {(() => {
+          const labelY = Math.max(ridgeY - 72, 48);
+          return <>
+            <line x1={RIDGE_X} y1={ridgeY - 6} x2={RIDGE_X} y2={labelY + 28} stroke={ORANGE} strokeWidth={1} strokeDasharray="3,4" opacity={0.4} />
+            <text x={RIDGE_X} y={labelY} textAnchor="middle" fontFamily={FONT} fontSize={17} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
+            <text x={RIDGE_X} y={labelY + 24} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}°</text>
+          </>;
+        })()}
 
         {/* ── ANNOTATION 2 — Ridge height (left) ── */}
         <line x1={Math.round(wallLeft)} y1={Math.round(ridgeY)} x2={55} y2={Math.round(ridgeY)} stroke={ORANGE} strokeWidth={1} opacity={0.38} />

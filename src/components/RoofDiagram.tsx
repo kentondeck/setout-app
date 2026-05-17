@@ -8,131 +8,138 @@ export interface RoofDiagramProps {
   overhangMm: number;
 }
 
-const VB_W  = 900;
-const VB_H  = 760;
 const ORANGE = '#FF5A1F';
 const INK    = '#0A0A0A';
-const FILL   = '#ECECE8';
-const BG     = '#F5F5F3';
+const WOOD   = '#ECECE8';
+const TIMBER = '#C9A870';
+const WALL   = '#C0C0BC';
 const FONT   = 'Inter, system-ui, sans-serif';
 const MONO   = "'JetBrains Mono','Courier New',monospace";
 
-const PLATE_Y          = 490;
-const FLOOR_Y          = 536;
-const RIDGE_X          = 450;
-const MAX_RIDGE_PX     = 350;
-const NAT_HALF_SPAN_PX = 270;
-const RAFTER_HD        = 10;   // half-depth of rafter in px
-const RIDGE_W          = 18;   // ridge board width in px
-const WALL_W           = 16;
-const WALL_H           = 46;
-const PLATE_H          = 16;
+const VB_W = 760;
+const VB_H = 420;
+const FLOOR_Y = 380;
 
-function fmt(n: number) { return String(Math.round(n)); }
-function polyPts(pts: [number, number][]) {
-  return pts.map(([x, y]) => `${Math.round(x)},${Math.round(y)}`).join(' ');
-}
+// Fixed birdsmouth / wall plate anchor — these never move
+const HEEL_X        = 268;   // outer face of wall plate = heel cut x
+const PLATE_Y_TOP   = 236;   // top of wall plate = seat cut y
+const SEAT_W        = 80;    // seat cut width in px (represents plate width)
+const SEAT_INNER_X  = HEEL_X + SEAT_W;   // = 348
+const PLATE_OUTER_X = 264;   // left edge of plate rect
+const PLATE_H       = 36;
+const WALL_H        = 82;
+const RAFTER_PERP   = 46;    // perpendicular rafter depth in px
+const ARC_R         = 44;    // pitch arc radius in px
+
+function r(n: number) { return Math.round(n); }
 
 export const RoofDiagram = memo(function RoofDiagram({
-  buildingWidthMm,
   pitchDegrees,
-  ridgeHeightMm,
   rafterLengthMm,
-  overhangMm,
 }: RoofDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const halfSpanMm = buildingWidthMm / 2;
+  // Clamp pitch to a drawable range
+  const pitch  = Math.max(5, Math.min(pitchDegrees, 70));
+  const pRad   = pitch * Math.PI / 180;
+  const cosP   = Math.cos(pRad);
+  const sinP   = Math.sin(pRad);
+  const tanP   = sinP / cosP;
 
-  // Scale so ridge height fits within MAX_RIDGE_PX
-  const naturalRidgePx = NAT_HALF_SPAN_PX * (ridgeHeightMm / halfSpanMm);
-  const scale      = naturalRidgePx > MAX_RIDGE_PX ? MAX_RIDGE_PX / naturalRidgePx : 1;
-  const halfSpanPx = NAT_HALF_SPAN_PX * scale;
-  const ridgePx    = Math.min(naturalRidgePx, MAX_RIDGE_PX);
-  const overhangPx = (overhangMm / halfSpanMm) * halfSpanPx;
+  // ── Birdsmouth geometry ────────────────────────────────────────────────────
+  // Lower face is horizontal SEAT_W along the seat, then drops at pitch angle.
+  // heelYBot = y where the lower rafter face re-emerges below the birdsmouth notch.
+  const heelYBot = PLATE_Y_TOP + SEAT_W * tanP;
 
-  // Key x positions
-  const wallLeft  = RIDGE_X - halfSpanPx;           // outer face of left wall
-  const wallRight = RIDGE_X + halfSpanPx;           // inner face of right wall rect (outer = +WALL_W)
-  const eaveLeft  = wallLeft  - overhangPx;
-  const eaveRight = wallRight + WALL_W + overhangPx;
-  const ridgeY    = PLATE_Y - ridgePx;
+  // ── Ridge span (distance along rafter from seat inner to ridge cut) ────────
+  // Constrain so the ridge top (upper face plumb cut) stays above MIN_Y.
+  const MIN_Y      = 18;
+  const RIDGE_FULL = 327;
+  const ridgeAvailH = PLATE_Y_TOP - MIN_Y - RAFTER_PERP / cosP;
+  const ridgeSpan   = Math.min(RIDGE_FULL, Math.max(ridgeAvailH / sinP, 80));
 
-  // ── Left rafter geometry ──────────────────────────────────────────────────
-  const ridgeFaceL = RIDGE_X - RIDGE_W / 2;  // left face of ridge board
-  const ldx = RIDGE_X - eaveLeft;
-  const ldy = ridgeY - PLATE_Y;
+  // ── Tail span (distance along rafter from heel to tail cut) ───────────────
+  const TAIL_FULL  = 200;
+  const tailAvailH = FLOOR_Y - 30 - heelYBot;
+  // tailAvailH can be negative for steep pitches (deep birdsmouth), so clamp to 0
+  const tailSpan   = tailAvailH <= 0 ? 0 : Math.min(TAIL_FULL, tailAvailH / sinP);
 
-  const lLen = Math.sqrt(ldx * ldx + ldy * ldy);
-  const lux = ldx / lLen, luy = ldy / lLen;
-  // CW normal = (luy, -lux) → upper-left (toward roof surface)
-  const lnx = luy, lny = -lux;
+  // ── Key rafter points (plumb cuts at both ends) ───────────────────────────
+  // Plumb cut height = RAFTER_PERP / cosP  (vertical face dimension)
+  const plumbH = RAFTER_PERP / cosP;
 
-  const lA: [number, number] = [eaveLeft + lnx * RAFTER_HD, PLATE_Y + lny * RAFTER_HD];
-  const lD: [number, number] = [eaveLeft - lnx * RAFTER_HD, PLATE_Y - lny * RAFTER_HD];
-  // Ridge end: vertical cut — intersect upper/lower face lines with x = ridgeFaceL
-  const tUpperL = (ridgeFaceL - lA[0]) / ldx;
-  const lB: [number, number] = [ridgeFaceL, lA[1] + tUpperL * ldy];
-  const tLowerL = (ridgeFaceL - lD[0]) / ldx;
-  const lC: [number, number] = [ridgeFaceL, lD[1] + tLowerL * ldy];
+  const ridgeBotX = SEAT_INNER_X + ridgeSpan * cosP;
+  const ridgeBotY = PLATE_Y_TOP  - ridgeSpan * sinP;
+  const ridgeTopX = ridgeBotX;                     // plumb cut: same x
+  const ridgeTopY = ridgeBotY - plumbH;
 
-  // ── Right rafter geometry ─────────────────────────────────────────────────
-  const ridgeFaceR = RIDGE_X + RIDGE_W / 2;  // right face of ridge board
-  const rdx = RIDGE_X - eaveRight;
-  const rdy = ridgeY - PLATE_Y;
+  const tailBotX  = HEEL_X   - tailSpan * cosP;
+  const tailBotY  = heelYBot + tailSpan * sinP;
+  const tailTopX  = tailBotX;                      // plumb cut: same x
+  const tailTopY  = tailBotY - plumbH;
 
-  const rLen = Math.sqrt(rdx * rdx + rdy * rdy);
-  const rux = rdx / rLen, ruy = rdy / rLen;
-  // CCW normal = (-ruy, rux) → upper-right (toward roof surface)
-  const rnx = -ruy, rny = rux;
+  // ── Rafter polygon (clockwise) ─────────────────────────────────────────────
+  const pts = [
+    [tailTopX,     tailTopY],
+    [ridgeTopX,    ridgeTopY],
+    [ridgeBotX,    ridgeBotY],
+    [SEAT_INNER_X, PLATE_Y_TOP],
+    [HEEL_X,       PLATE_Y_TOP],
+    [HEEL_X,       heelYBot],
+    [tailBotX,     tailBotY],
+  ].map(([x, y]) => `${r(x)},${r(y)}`).join(' ');
 
-  const rA: [number, number] = [eaveRight + rnx * RAFTER_HD, PLATE_Y + rny * RAFTER_HD];
-  const rD: [number, number] = [eaveRight - rnx * RAFTER_HD, PLATE_Y - rny * RAFTER_HD];
-  // Ridge end: vertical cut — intersect upper/lower face lines with x = ridgeFaceR
-  const tUpperR = (ridgeFaceR - rA[0]) / rdx;
-  const rB: [number, number] = [ridgeFaceR, rA[1] + tUpperR * rdy];
-  const tLowerR = (ridgeFaceR - rD[0]) / rdx;
-  const rC: [number, number] = [ridgeFaceR, rD[1] + tLowerR * rdy];
+  // ── Pitch arc at tail bottom ───────────────────────────────────────────────
+  const arcStartX = tailBotX + ARC_R;              // horizontal reference
+  const arcEndX   = tailBotX + ARC_R * cosP;
+  const arcEndY   = tailBotY - ARC_R * sinP;
 
-  // Ridge board rect: flush between rafter faces
-  const ridgeBoardY = lB[1];
-  const ridgeBoardH = lC[1] - lB[1];
+  // ── Rafter length annotation (offset above upper face, along rafter) ───────
+  // Unit normal pointing toward the top of the rafter (visually up in SVG y-down):
+  const nx = -sinP;
+  const ny = -cosP;
 
-  // ── Seat cuts (birdsmouths) at wall plates ────────────────────────────────
-  // Left: lower face intersects top-of-plate (y = PLATE_Y - PLATE_H) and outer wall (x = wallLeft)
-  const tSeatL  = (PLATE_Y - PLATE_H - lD[1]) / ldy;
-  const lBMi: [number, number] = [lD[0] + tSeatL * ldx, PLATE_Y - PLATE_H];  // seat inner corner
-  const lBMo: [number, number] = [wallLeft, PLATE_Y - PLATE_H];               // seat outer corner
-  const tPlumbL = (wallLeft - lD[0]) / ldx;
-  const lBMp: [number, number] = [wallLeft, lD[1] + tPlumbL * ldy];           // plumb cut bottom
+  // How far to push the annotation line above the upper face — clamp so it
+  // doesn't leave the viewbox at the ridge end.
+  const annOff   = Math.min(38, Math.max((ridgeTopY - 5) / cosP, 8));
 
-  // Right: same logic, outer face = wallRight + WALL_W
-  const wallOuter = wallRight + WALL_W;
-  const tSeatR  = (PLATE_Y - PLATE_H - rD[1]) / rdy;
-  const rBMi: [number, number] = [rD[0] + tSeatR * rdx, PLATE_Y - PLATE_H];
-  const rBMo: [number, number] = [wallOuter, PLATE_Y - PLATE_H];
-  const tPlumbR = (wallOuter - rD[0]) / rdx;
-  const rBMp: [number, number] = [wallOuter, rD[1] + tPlumbR * rdy];
+  const annSX = tailTopX  + annOff * nx;
+  const annSY = tailTopY  + annOff * ny;
+  const annEX = ridgeTopX + annOff * nx;
+  const annEY = ridgeTopY + annOff * ny;
 
-  // ── Rafter annotation (stringer style, offset upper-left of left rafter) ──
-  const annOff = 28;
-  const annX1 = lA[0] + lnx * annOff;
-  const annY1 = lA[1] + lny * annOff;
-  const annX2 = lB[0] + lnx * annOff;
-  const annY2 = lB[1] + lny * annOff;
-  const tickX = lux * 10, tickY = luy * 10;
-  const midAnnX = (annX1 + annX2) / 2 + lnx * 32;
-  const midAnnY = (annY1 + annY2) / 2 + lny * 32;
+  // Tick direction: along the rafter face
+  const TICK = 10;
+  const tdx  = cosP, tdy = -sinP;
 
+  // Rotated label — centred above the annotation midpoint
+  const labelOff  = annOff + 24;
+  const midX      = (tailBotX  + ridgeBotX) / 2;
+  const midTopY   = (tailTopY  + ridgeTopY) / 2;
+  const lblX      = r(midX   + labelOff * nx);
+  const lblY      = r(midTopY + labelOff * ny);
 
-  // ── Floor hatch ───────────────────────────────────────────────────────────
-  const hatchXs: number[] = [];
-  for (let x = 75; x < eaveRight + 40; x += 34) hatchXs.push(x);
+  // ── Anatomy label leader endpoints ─────────────────────────────────────────
+  const tailMidY  = r((tailBotY  + tailTopY)  / 2);
+  const heelMidY  = r((PLATE_Y_TOP + heelYBot) / 2);
+  const ridgeMidY = r((ridgeBotY  + ridgeTopY) / 2);
 
-  // Width annotation outer faces: wallLeft (left outer) and wallRight+WALL_W (right outer)
-  const widthLeft  = wallLeft;
-  const widthRight = wallRight + WALL_W;
+  // Ridge label x — place to the right of ridge cut, clamped inside viewbox
+  const ridgeLabelX = Math.min(r(ridgeBotX) + 8, VB_W - 95);
 
+  // ── Wall hatch lines (clipped to wall rect) ────────────────────────────────
+  const wallY0 = PLATE_Y_TOP + PLATE_H;
+  const wallY1 = wallY0 + WALL_H;
+  const hatchLines: number[] = [];
+  for (let x = PLATE_OUTER_X - WALL_H; x < PLATE_OUTER_X + 90 + 10; x += 12) {
+    hatchLines.push(x);
+  }
+
+  // ── Floor hatch ────────────────────────────────────────────────────────────
+  const floorHatch: number[] = [];
+  for (let x = 40; x < VB_W - 20; x += 18) floorHatch.push(x);
+
+  // ── Save diagram ───────────────────────────────────────────────────────────
   async function handleSave() {
     const svg = svgRef.current;
     if (!svg) return;
@@ -140,7 +147,8 @@ export const RoofDiagram = memo(function RoofDiagram({
     clone.setAttribute('width', String(VB_W));
     clone.setAttribute('height', String(VB_H));
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', BG);
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%');
+    bg.setAttribute('fill', '#F5F5F3');
     clone.insertBefore(bg, clone.firstChild);
     const url = URL.createObjectURL(
       new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }),
@@ -154,13 +162,14 @@ export const RoofDiagram = memo(function RoofDiagram({
       URL.revokeObjectURL(url);
       canvas.toBlob(async blob => {
         if (!blob) return;
-        const name = `roof-${Math.round(buildingWidthMm)}w-${pitchDegrees}deg.png`;
+        const name = `roof-${pitchDegrees}deg.png`;
         const file = new File([blob], name, { type: 'image/png' });
         if (navigator.share && navigator.canShare({ files: [file] })) {
           try { await navigator.share({ files: [file], title: 'Roof Pitch Diagram' }); return; } catch { /**/ }
         }
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href);
+        a.href = URL.createObjectURL(blob); a.download = name; a.click();
+        URL.revokeObjectURL(a.href);
       }, 'image/png');
     };
     img.src = url;
@@ -168,102 +177,163 @@ export const RoofDiagram = memo(function RoofDiagram({
 
   return (
     <div style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)', padding: '16px' }}>
-      <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.04em' }}>ROOF PITCH</p>
+      <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.04em' }}>RAFTER ANATOMY</p>
 
       <svg ref={svgRef} width="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} style={{ display: 'block' }} role="img">
-        <title>Roof pitch diagram</title>
+        <title>Roof rafter anatomy diagram</title>
+        <defs>
+          <marker id="roofArr" viewBox="0 0 10 8" refX="9" refY="4"
+            markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 4 L 0 8 Z" fill={ORANGE} />
+          </marker>
+          <clipPath id="roofWallClip">
+            <rect x={PLATE_OUTER_X} y={wallY0} width={90} height={WALL_H} />
+          </clipPath>
+        </defs>
 
-        {/* Left rafter — with birdsmouth notch over wall plate */}
-        <polygon points={polyPts([lA, lB, lC, lBMi, lBMo, lBMp, lD])}
-          fill={FILL} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
+        {/* ── Supporting wall ───────────────────────────────────────────── */}
+        <rect x={PLATE_OUTER_X} y={wallY0} width={90} height={WALL_H}
+          fill={WALL} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
+        <g clipPath="url(#roofWallClip)" opacity={0.35}>
+          {hatchLines.map(x => (
+            <line key={x}
+              x1={x} y1={wallY0 - 20}
+              x2={x + WALL_H + 20} y2={wallY1 + 20}
+              stroke={INK} strokeWidth={0.8} />
+          ))}
+        </g>
 
-        {/* Right rafter — with birdsmouth notch over wall plate */}
-        <polygon points={polyPts([rA, rB, rC, rBMi, rBMo, rBMp, rD])}
-          fill={FILL} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
+        {/* ── Wall plate ────────────────────────────────────────────────── */}
+        <rect x={PLATE_OUTER_X} y={PLATE_Y_TOP} width={90} height={PLATE_H}
+          fill={TIMBER} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
+        <line x1={PLATE_OUTER_X + 4} y1={PLATE_Y_TOP + 10} x2={PLATE_OUTER_X + 86} y2={PLATE_Y_TOP + 10}
+          stroke={INK} strokeWidth={0.5} opacity={0.2} />
+        <line x1={PLATE_OUTER_X + 4} y1={PLATE_Y_TOP + 22} x2={PLATE_OUTER_X + 86} y2={PLATE_Y_TOP + 22}
+          stroke={INK} strokeWidth={0.5} opacity={0.2} />
 
-        {/* Ridge board — upright, flush between rafter faces */}
-        <rect x={Math.round(ridgeFaceL)} y={Math.round(ridgeBoardY)}
-          width={RIDGE_W} height={Math.round(ridgeBoardH)}
-          fill={FILL} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
-
-        {/* Left wall plate */}
-        <rect x={Math.round(wallLeft)} y={PLATE_Y - PLATE_H} width={WALL_W} height={PLATE_H}
-          fill={FILL} stroke={INK} strokeWidth={2} strokeLinejoin="round" />
-
-        {/* Right wall plate */}
-        <rect x={Math.round(wallRight)} y={PLATE_Y - PLATE_H} width={WALL_W} height={PLATE_H}
-          fill={FILL} stroke={INK} strokeWidth={2} strokeLinejoin="round" />
-
-        {/* Left wall stub */}
-        <rect x={Math.round(wallLeft)} y={PLATE_Y} width={WALL_W} height={WALL_H}
-          fill={FILL} stroke={INK} strokeWidth={1.5} />
-
-        {/* Right wall stub */}
-        <rect x={Math.round(wallRight)} y={PLATE_Y} width={WALL_W} height={WALL_H}
-          fill={FILL} stroke={INK} strokeWidth={1.5} />
-
-        {/* Floor line + hatch */}
-        <line x1={75} y1={FLOOR_Y} x2={Math.round(eaveRight) + 40} y2={FLOOR_Y}
+        {/* ── Floor line + hatch ────────────────────────────────────────── */}
+        <line x1={30} y1={FLOOR_Y} x2={VB_W - 20} y2={FLOOR_Y}
           stroke={INK} strokeWidth={2.5} strokeLinecap="round" />
-        {hatchXs.map(x => (
+        {floorHatch.map(x => (
           <line key={x} x1={x} y1={FLOOR_Y} x2={x + 13} y2={FLOOR_Y + 13}
-            stroke={INK} strokeWidth={0.7} opacity={0.30} />
+            stroke={INK} strokeWidth={0.7} opacity={0.28} />
         ))}
 
-        {/* ── ANNOTATION 1 — Pitch label above ridge ── */}
-        {(() => {
-          const labelY = Math.max(ridgeY - 72, 48);
-          return <>
-            <line x1={RIDGE_X} y1={ridgeY - 6} x2={RIDGE_X} y2={labelY + 28} stroke={ORANGE} strokeWidth={1} strokeDasharray="3,4" opacity={0.4} />
-            <text x={RIDGE_X} y={labelY} textAnchor="middle" fontFamily={FONT} fontSize={17} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
-            <text x={RIDGE_X} y={labelY + 24} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}°</text>
-          </>;
-        })()}
+        {/* ── Rafter body (with birdsmouth notch) ──────────────────────── */}
+        <polygon points={pts} fill={WOOD} stroke={INK} strokeWidth={2} strokeLinejoin="round" />
 
-        {/* ── ANNOTATION 2 — Ridge height (left) ── */}
-        <line x1={Math.round(wallLeft)} y1={Math.round(ridgeY)} x2={55} y2={Math.round(ridgeY)} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        <line x1={Math.round(wallLeft)} y1={PLATE_Y - PLATE_H}  x2={55} y2={PLATE_Y - PLATE_H}  stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        <line x1={58} y1={Math.round(ridgeY) + 12} x2={58} y2={PLATE_Y - PLATE_H - 12} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <polygon points={`58,${Math.round(ridgeY)} 53,${Math.round(ridgeY) + 12} 63,${Math.round(ridgeY) + 12}`} fill={ORANGE} />
-        <polygon points={`58,${PLATE_Y - PLATE_H} 53,${PLATE_Y - PLATE_H - 12} 63,${PLATE_Y - PLATE_H - 12}`} fill={ORANGE} />
-        {(() => {
-          const midY = (ridgeY + PLATE_Y - PLATE_H) / 2;
-          return <>
-            <text x={28} y={Math.round(midY - 14)} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Height</text>
-            <text x={28} y={Math.round(midY + 10)} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(ridgeHeightMm)}</text>
-            <text x={28} y={Math.round(midY + 28)} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
-          </>;
-        })()}
+        {/* ── Pitch arc + dashed reference line + label ─────────────────── */}
+        <line
+          x1={r(tailBotX)} y1={r(tailBotY)}
+          x2={r(tailBotX + ARC_R + 16)} y2={r(tailBotY)}
+          stroke={ORANGE} strokeWidth={1} strokeDasharray="3,3" opacity={0.5} />
+        <path
+          d={`M ${r(arcStartX)},${r(tailBotY)} A ${ARC_R},${ARC_R} 0 0,0 ${r(arcEndX)},${r(arcEndY)}`}
+          fill="none" stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        <text
+          x={r(tailBotX + ARC_R + 10)}
+          y={r(tailBotY - ARC_R * sinP * 0.5) - 2}
+          fontFamily={FONT} fontSize={15} fontWeight={600} fill={ORANGE}>
+          {pitchDegrees}°
+        </text>
 
-        {/* ── ANNOTATION 3 — Building width (bottom, outer faces) ── */}
-        <line x1={Math.round(widthLeft)}  y1={FLOOR_Y} x2={Math.round(widthLeft)}  y2={623} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        <line x1={Math.round(widthRight)} y1={FLOOR_Y} x2={Math.round(widthRight)} y2={623} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        <line x1={Math.round(widthLeft) + 12} y1={626} x2={Math.round(widthRight) - 12} y2={626} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        <polygon points={`${Math.round(widthLeft)},626 ${Math.round(widthLeft) + 12},621 ${Math.round(widthLeft) + 12},631`} fill={ORANGE} />
-        <polygon points={`${Math.round(widthRight)},626 ${Math.round(widthRight) - 12},621 ${Math.round(widthRight) - 12},631`} fill={ORANGE} />
-        <text x={RIDGE_X} y={649} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Width</text>
-        <text x={RIDGE_X} y={673} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(buildingWidthMm)}</text>
-        <text x={RIDGE_X} y={691} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        {/* ── Rafter length annotation line + label ─────────────────────── */}
+        {/* Extension lines from upper face to annotation line */}
+        <line x1={r(tailTopX)} y1={r(tailTopY)} x2={r(annSX)} y2={r(annSY)}
+          stroke={ORANGE} strokeWidth={0.8} opacity={0.4} />
+        <line x1={r(ridgeTopX)} y1={r(ridgeTopY)} x2={r(annEX)} y2={r(annEY)}
+          stroke={ORANGE} strokeWidth={0.8} opacity={0.4} />
+        {/* Annotation shaft */}
+        <line x1={r(annSX)} y1={r(annSY)} x2={r(annEX)} y2={r(annEY)}
+          stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        {/* End ticks (perpendicular to rafter) */}
+        <line
+          x1={r(annSX - TICK * tdx)} y1={r(annSY + TICK * tdy)}
+          x2={r(annSX + TICK * tdx)} y2={r(annSY - TICK * tdy)}
+          stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        <line
+          x1={r(annEX - TICK * tdx)} y1={r(annEY + TICK * tdy)}
+          x2={r(annEX + TICK * tdx)} y2={r(annEY - TICK * tdy)}
+          stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        {/* Rotated label near midpoint */}
+        <g transform={`rotate(${-pitch}, ${lblX}, ${lblY})`}>
+          <text x={lblX} y={lblY - 14} textAnchor="middle"
+            fontFamily={FONT} fontSize={16} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">
+            Rafter
+          </text>
+          <text x={lblX} y={lblY + 8} textAnchor="middle"
+            fontFamily={FONT} fontSize={20} fontWeight={600} fill={ORANGE}>
+            {Math.round(rafterLengthMm)}
+          </text>
+          <text x={lblX} y={lblY + 22} textAnchor="middle"
+            fontFamily={MONO} fontSize={12} fill={ORANGE} opacity={0.72}>
+            mm
+          </text>
+        </g>
 
-        {/* ── ANNOTATION 4 — Rafter length (stringer style, left rafter) ── */}
-        {/* Extension lines from rafter face to annotation line */}
-        <line x1={Math.round(lA[0])} y1={Math.round(lA[1])} x2={Math.round(annX1)} y2={Math.round(annY1)} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        <line x1={Math.round(lB[0])} y1={Math.round(lB[1])} x2={Math.round(annX2)} y2={Math.round(annY2)} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
-        {/* Annotation line */}
-        <line x1={Math.round(annX1)} y1={Math.round(annY1)} x2={Math.round(annX2)} y2={Math.round(annY2)} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        {/* Tick at eave */}
-        <line x1={Math.round(annX1 - tickX)} y1={Math.round(annY1 - tickY)} x2={Math.round(annX1 + tickX)} y2={Math.round(annY1 + tickY)} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        {/* Tick at ridge */}
-        <line x1={Math.round(annX2 - tickX)} y1={Math.round(annY2 - tickY)} x2={Math.round(annX2 + tickX)} y2={Math.round(annY2 + tickY)} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        {/* Label */}
-        <text x={Math.round(midAnnX)} y={Math.round(midAnnY - 14)} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Rafter</text>
-        <text x={Math.round(midAnnX)} y={Math.round(midAnnY + 10)} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(rafterLengthMm)}</text>
-        <text x={Math.round(midAnnX)} y={Math.round(midAnnY + 28)} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        {/* ── Anatomy labels ─────────────────────────────────────────────── */}
+
+        {/* Tail Cut — left side, horizontal leader to tail cut face (hidden for very steep pitches) */}
+        {tailSpan >= 40 && (
+          <>
+            <text x={12} y={tailMidY - 7}
+              fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Tail</text>
+            <text x={12} y={tailMidY + 9}
+              fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Cut</text>
+            <line x1={54} y1={tailMidY} x2={r(tailBotX) - 2} y2={tailMidY}
+              stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+          </>
+        )}
+
+        {/* Heel Cut — below, diagonal leader to heel cut face */}
+        <text x={110} y={370}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Heel Cut</text>
+        <line x1={168} y1={363} x2={HEEL_X - 2} y2={heelMidY}
+          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+
+        {/* Seat Cut — below, vertical leader up to seat */}
+        <text x={282} y={390}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Seat Cut</text>
+        <line x1={308} y1={382} x2={308} y2={PLATE_Y_TOP + 2}
+          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+
+        {/* Ridge Cut — right of ridge, leader to midpoint of cut face */}
+        <text x={ridgeLabelX} y={r(ridgeTopY) + 5}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Ridge</text>
+        <text x={ridgeLabelX} y={r(ridgeTopY) + 21}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Cut</text>
+        <line
+          x1={ridgeLabelX - 3} y1={ridgeMidY}
+          x2={r(ridgeBotX) + 2} y2={ridgeMidY}
+          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+
+        {/* Wall Plate — right of plate, leader pointing left into plate */}
+        {/* plate right edge = PLATE_OUTER_X + 90 = 354 */}
+        <text x={366} y={PLATE_Y_TOP + 14}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Wall</text>
+        <text x={366} y={PLATE_Y_TOP + 30}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Plate</text>
+        <line x1={363} y1={PLATE_Y_TOP + 18} x2={356} y2={PLATE_Y_TOP + 18}
+          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+
+        {/* Supporting Wall — right of wall, leader pointing left into wall */}
+        <text x={366} y={wallY0 + 28}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Supporting</text>
+        <text x={366} y={wallY0 + 44}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Wall</text>
+        <line x1={363} y1={wallY0 + 34} x2={356} y2={wallY0 + 34}
+          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
       </svg>
 
       <button
         onClick={handleSave}
-        style={{ marginTop: 14, width: '100%', padding: '13px', border: '0.5px solid var(--color-border)', borderRadius: 12, background: 'var(--color-bg)', color: 'var(--color-orange)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '-0.2px' }}
+        style={{
+          marginTop: 14, width: '100%', padding: '13px',
+          border: '0.5px solid var(--color-border)', borderRadius: 12,
+          background: 'var(--color-bg)', color: 'var(--color-orange)',
+          fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+          cursor: 'pointer', letterSpacing: '-0.2px',
+        }}
         onPointerDown={e => (e.currentTarget.style.opacity = '0.7')}
         onPointerUp={e => (e.currentTarget.style.opacity = '1')}
         onPointerLeave={e => (e.currentTarget.style.opacity = '1')}

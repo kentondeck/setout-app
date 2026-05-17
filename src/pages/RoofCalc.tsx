@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
@@ -62,20 +62,15 @@ export function RoofCalc() {
   const activeFields = MODES.find(m => m.id === mode)!.fields;
 
   function set(field: keyof Inputs) {
-    return (value: string) => {
-      setLastEntryId('');
-      setInputs(prev => ({ ...prev, [field]: value }));
-    };
+    return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
   }
 
-  // Live calc — re-run on any input or mode change
-  useEffect(() => {
+  function handleCalculate() {
     const [aKey, bKey] = activeFields;
     const a = parseOpt(inputs[aKey]);
     const b = parseOpt(inputs[bKey]);
     if (a === undefined || b === undefined) {
-      setResult(null);
-      setError('');
+      setError(`Enter ${FIELD_META[aKey].label.toLowerCase()} and ${FIELD_META[bKey].label.toLowerCase()}.`);
       return;
     }
     try {
@@ -89,33 +84,31 @@ export function RoofCalc() {
       });
       setResult(calc);
       setError('');
+
+      const id = crypto.randomUUID();
+      setLastEntryId(id);
+      addEntry({
+        id,
+        calculatorId: 'roof',
+        timestamp: Date.now(),
+        inputs: {
+          span: calc.outputs.span,
+          rise: calc.outputs.rise,
+          rafterLength: calc.outputs.rafterLength,
+          pitchDegrees: calc.outputs.pitchDegrees,
+          overhang: parseOpt(inputs.overhang) ?? 0,
+          ...(parseOpt(inputs.rafterDepth) !== undefined && { rafterDepth: parseOpt(inputs.rafterDepth)! }),
+          ...(parseOpt(inputs.plateWidth) !== undefined && { plateWidth: parseOpt(inputs.plateWidth)! }),
+          ...(parseOpt(inputs.ridgeThickness) !== undefined && { ridgeThickness: parseOpt(inputs.ridgeThickness)! }),
+        },
+        outputs: calc.outputs,
+      });
+
+      if (navigator.vibrate) navigator.vibrate(30);
     } catch (e) {
       setResult(null);
       setError(e instanceof RoofInputError ? e.message : 'Could not calculate — check inputs.');
     }
-  }, [inputs, mode, activeFields]);
-
-  function handleSave() {
-    if (!result) return;
-    const id = crypto.randomUUID();
-    setLastEntryId(id);
-    addEntry({
-      id,
-      calculatorId: 'roof',
-      timestamp: Date.now(),
-      inputs: {
-        span: result.outputs.span,
-        rise: result.outputs.rise,
-        rafterLength: result.outputs.rafterLength,
-        pitchDegrees: result.outputs.pitchDegrees,
-        overhang: parseOpt(inputs.overhang) ?? 0,
-        ...(parseOpt(inputs.rafterDepth) !== undefined && { rafterDepth: parseOpt(inputs.rafterDepth)! }),
-        ...(parseOpt(inputs.plateWidth) !== undefined && { plateWidth: parseOpt(inputs.plateWidth)! }),
-        ...(parseOpt(inputs.ridgeThickness) !== undefined && { ridgeThickness: parseOpt(inputs.ridgeThickness)! }),
-      },
-      outputs: result.outputs,
-    });
-    if (navigator.vibrate) navigator.vibrate(30);
   }
 
   const out = result?.outputs;
@@ -236,6 +229,27 @@ export function RoofCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <button
+          onClick={handleCalculate}
+          style={{
+            background: 'var(--color-orange)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 14,
+            padding: '16px',
+            fontSize: 16,
+            fontWeight: 500,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            letterSpacing: '-0.3px',
+          }}
+          onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
+          onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+          onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+        >
+          Calculate
+        </button>
+
         {result && out && (
           <>
             <RoofDiagram
@@ -330,30 +344,7 @@ export function RoofCalc() {
               id="roof"
             />
 
-            {!lastEntryId ? (
-              <button
-                onClick={handleSave}
-                style={{
-                  background: 'var(--color-orange)',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 14,
-                  padding: '14px',
-                  fontSize: 15,
-                  fontWeight: 500,
-                  fontFamily: 'inherit',
-                  cursor: 'pointer',
-                  letterSpacing: '-0.3px',
-                }}
-                onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
-                onPointerUp={e => (e.currentTarget.style.opacity = '1')}
-                onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
-              >
-                Save calculation
-              </button>
-            ) : (
-              <AddToJobPrompt calculationId={lastEntryId} />
-            )}
+            <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.roof[settings.region]}

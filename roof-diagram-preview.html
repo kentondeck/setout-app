@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Roof Pitch Diagram — Preview</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet"/>
   <style>
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: #F5F5F3;
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin: 0;
+      gap: 24px;
       padding: 40px 20px;
       font-family: Inter, -apple-system, sans-serif;
     }
@@ -25,216 +25,240 @@
       padding: 20px;
       width: 390px;
     }
-    .label {
-      margin: 0 0 10px;
+    .heading {
       font-size: 11px;
       font-weight: 500;
       color: #999;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
     }
     .caption {
-      margin: 10px 0 0;
+      margin-top: 10px;
       font-size: 11px;
       color: #bbb;
       text-align: center;
     }
+    svg { display: block; width: 100%; }
+    .note {
+      font-size: 13px;
+      color: #666;
+      max-width: 390px;
+      text-align: center;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <p class="label">ROOF PITCH</p>
+    <p class="heading">ROOF PITCH</p>
 
     <!--
-      Example: 7000mm span · 22.5° pitch · 600mm overhang
-      Run = 3500mm · Ridge height = 1449mm · Rafter = 3789mm
+      Single-rafter anatomy diagram — Setout brand
+      Pitch: 22.5° · Rafter: 3789mm · Plumb cut: 67.5° · Seat cut: 22.5°
+      ViewBox: 760 × 420
 
-      ViewBox 900×760
-      Left rafter:  polygon 123,483 → 433,211 → 447,226 → 137,498
-      Right rafter: polygon 777,483 → 467,211 → 453,226 → 763,498
-      Ridge board:  rect x=433 y=211 w=34 h=15
-      Left plate:   rect x=177 y=474 w=16 h=16
-      Right plate:  rect x=707 y=474 w=16 h=16
-      Walls:        rect x=177/707 y=490 w=16 h=46 → floor y=536
+      Rafter polygon points (20° visual pitch, clockwise):
+        Tail cut top    (80, 285)
+        Ridge cut top   (655, 73)
+        Ridge cut bot   (655, 122)
+        Inner seat      (348, 236)
+        Outer seat      (268, 236)
+        Heel bottom     (268, 264)
+        Tail cut bot    (80, 334)
+
+      Lower face slope: rise=70 / run=188  ≈ 20.3°
+      Upper face slope: rise=212 / run=575 ≈ 20.3°
+
+      Wall plate: x=264 y=236 w=90 h=36   (top=236, bottom=272)
+      Support wall: x=264 y=272 w=90 h=82
     -->
 
-    <svg viewBox="0 0 900 760" width="100%" style="display:block" role="img">
-      <title>Roof pitch diagram</title>
+    <svg viewBox="0 0 760 420" role="img">
+      <title>Roof pitch rafter anatomy diagram</title>
+      <desc>Single rafter showing tail cut, heel cut, seat cut, ridge cut, wall plate and supporting wall</desc>
 
-      <!-- ══════════════════════════════════════════════
-           STRUCTURE
-      ══════════════════════════════════════════════ -->
+      <defs>
+        <!-- Arrow marker — tip points in line direction -->
+        <marker id="arr" viewBox="0 0 10 8" refX="9" refY="4"
+                markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 0 L 10 4 L 0 8 Z" fill="#FF5A1F"/>
+        </marker>
+        <!-- Clip for wall hatch -->
+        <clipPath id="wallClip">
+          <rect x="264" y="272" width="90" height="82"/>
+        </clipPath>
+      </defs>
 
-      <!-- Left rafter — terminates at left face of ridge board (x=441) -->
-      <polygon points="123,483 441,204 441,231 137,498"
-               fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- ── Supporting wall (below plate) ─────────────────────────── -->
+      <rect x="264" y="272" width="90" height="82"
+            fill="#C0C0BC" stroke="#0A0A0A" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- Diagonal hatch -->
+      <g clip-path="url(#wallClip)" opacity="0.35">
+        <line x1="224" y1="272" x2="304" y2="354" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="236" y1="272" x2="316" y2="352" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="248" y1="272" x2="328" y2="352" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="260" y1="272" x2="340" y2="352" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="272" y1="272" x2="352" y2="352" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="284" y1="272" x2="354" y2="342" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="296" y1="272" x2="354" y2="330" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="308" y1="272" x2="354" y2="318" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="320" y1="272" x2="354" y2="306" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="332" y1="272" x2="354" y2="294" stroke="#0A0A0A" stroke-width="0.8"/>
+        <line x1="344" y1="272" x2="354" y2="282" stroke="#0A0A0A" stroke-width="0.8"/>
+      </g>
 
-      <!-- Right rafter — terminates at right face of ridge board (x=459) -->
-      <polygon points="777,483 459,204 459,231 763,498"
-               fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- ── Wall plate timber ───────────────────────────────────────── -->
+      <rect x="264" y="236" width="90" height="36"
+            fill="#C9A870" stroke="#0A0A0A" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- Subtle wood grain lines -->
+      <line x1="268" y1="246" x2="350" y2="246" stroke="#0A0A0A" stroke-width="0.5" opacity="0.2"/>
+      <line x1="268" y1="256" x2="350" y2="256" stroke="#0A0A0A" stroke-width="0.5" opacity="0.2"/>
+      <line x1="268" y1="264" x2="350" y2="264" stroke="#0A0A0A" stroke-width="0.5" opacity="0.2"/>
 
-      <!-- Ridge board — upright vertical timber, fits between rafter faces y=204–231 -->
-      <rect x="441" y="204" width="18" height="27"
-            fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5" stroke-linejoin="round"/>
-
-      <!-- Left wall plate -->
-      <rect x="177" y="474" width="16" height="16"
-            fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
-
-      <!-- Right wall plate -->
-      <rect x="707" y="474" width="16" height="16"
-            fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"/>
-
-      <!-- Left wall stub -->
-      <rect x="177" y="490" width="16" height="46"
-            fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
-
-      <!-- Right wall stub -->
-      <rect x="707" y="490" width="16" height="46"
-            fill="#ECECE8" stroke="#0A0A0A" stroke-width="1.5"/>
-
-      <!-- ── Floor line + hatch ── -->
-      <line x1="75" y1="536" x2="825" y2="536"
+      <!-- ── Floor line + hatch ──────────────────────────────────────── -->
+      <line x1="30" y1="380" x2="720" y2="380"
             stroke="#0A0A0A" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="75"  y1="536" x2="88"  y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="109" y1="536" x2="122" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="143" y1="536" x2="156" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="177" y1="536" x2="190" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="211" y1="536" x2="224" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="245" y1="536" x2="258" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="279" y1="536" x2="292" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="313" y1="536" x2="326" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="347" y1="536" x2="360" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="381" y1="536" x2="394" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="415" y1="536" x2="428" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="449" y1="536" x2="462" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="483" y1="536" x2="496" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="517" y1="536" x2="530" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="551" y1="536" x2="564" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="585" y1="536" x2="598" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="619" y1="536" x2="632" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="653" y1="536" x2="666" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="687" y1="536" x2="700" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="721" y1="536" x2="734" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="755" y1="536" x2="768" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
-      <line x1="789" y1="536" x2="802" y2="549" stroke="#0A0A0A" stroke-width="0.7" opacity="0.30"/>
+      <!-- Hatch marks below floor line -->
+      <line x1="40"  y1="380" x2="53"  y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="58"  y1="380" x2="71"  y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="76"  y1="380" x2="89"  y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="94"  y1="380" x2="107" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="112" y1="380" x2="125" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="130" y1="380" x2="143" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="148" y1="380" x2="161" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="166" y1="380" x2="179" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="184" y1="380" x2="197" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="202" y1="380" x2="215" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="220" y1="380" x2="233" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="238" y1="380" x2="251" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="256" y1="380" x2="269" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="274" y1="380" x2="287" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="292" y1="380" x2="305" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="310" y1="380" x2="323" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="328" y1="380" x2="341" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="346" y1="380" x2="359" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="364" y1="380" x2="377" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="382" y1="380" x2="395" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="400" y1="380" x2="413" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="418" y1="380" x2="431" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="436" y1="380" x2="449" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="454" y1="380" x2="467" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="472" y1="380" x2="485" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="490" y1="380" x2="503" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="508" y1="380" x2="521" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="526" y1="380" x2="539" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="544" y1="380" x2="557" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="562" y1="380" x2="575" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="580" y1="380" x2="593" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="598" y1="380" x2="611" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="616" y1="380" x2="629" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="634" y1="380" x2="647" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="652" y1="380" x2="665" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="670" y1="380" x2="683" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="688" y1="380" x2="701" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
+      <line x1="706" y1="380" x2="719" y2="393" stroke="#0A0A0A" stroke-width="0.7" opacity="0.28"/>
 
+      <!-- ── Rafter body (with birdsmouth notch) ────────────────────── -->
+      <!--
+        Points (clockwise):
+          (80, 285)   tail cut — top
+          (655, 73)   ridge cut — top
+          (655, 122)  ridge cut — bottom
+          (348, 236)  inner seat corner (where lower face meets seat)
+          (268, 236)  outer seat corner / birdsmouth corner
+          (268, 264)  heel bottom (lower face at x=268)
+          (80, 334)   tail cut — bottom
+      -->
+      <polygon
+        points="80,285 655,73 655,122 348,236 268,236 268,264 80,334"
+        fill="#ECECE8" stroke="#0A0A0A" stroke-width="2" stroke-linejoin="round"
+      />
 
-      <!-- ══════════════════════════════════════════════
-           ANNOTATION 1 — Pitch reference triangle (top-left)
-           Right angle at (200,72), run to (280,72), rise to (200,39)
-           22.5°: rise = 80 × tan(22.5°) = 33px
-      ══════════════════════════════════════════════ -->
-      <!-- Run (horizontal) -->
-      <line x1="200" y1="72" x2="280" y2="72"
+      <!-- ── Pitch angle arc at eave ────────────────────────────────── -->
+      <!-- Center: (80, 334). Arc from horizontal-right to rafter slope -->
+      <!-- Horizontal ref: dashed line -->
+      <line x1="80" y1="334" x2="130" y2="334"
+            stroke="#FF5A1F" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+      <!-- Arc: counterclockwise (sweep=0) from (124,334) to rafter direction -->
+      <!-- Rafter slope ~20°: arc end = (80+44·cos20°, 334-44·sin20°) = (121,319) -->
+      <path d="M 124,334 A 44,44 0 0,0 121,319"
+            fill="none" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Pitch label -->
+      <text x="133" y="330"
+            font-family="Inter, sans-serif" font-size="15" font-weight="600"
+            fill="#FF5A1F">22.5°</text>
+
+      <!-- ── Rafter length annotation ────────────────────────────────── -->
+      <!-- Offset line 36px above upper face (normal direction: (-0.347, -0.937)×36) -->
+      <!-- Annotation line: (67, 252) → (642, 39) -->
+      <!-- Extension lines from rafter face ends -->
+      <line x1="80"  y1="285" x2="67"  y2="252" stroke="#FF5A1F" stroke-width="0.8" opacity="0.4"/>
+      <line x1="655" y1="73"  x2="642" y2="40"  stroke="#FF5A1F" stroke-width="0.8" opacity="0.4"/>
+      <!-- Tick marks perpendicular to rafter at each end (rafter dir ≈ (0.937, −0.347)) -->
+      <!-- Tick at tail (67,252): ±10px along (0.937,−0.347) -->
+      <line x1="57" y1="255" x2="77" y2="249" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Tick at ridge (642,40) -->
+      <line x1="632" y1="43" x2="652" y2="37" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Annotation shaft -->
+      <line x1="67" y1="252" x2="642" y2="40"
             stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Rise (vertical) -->
-      <line x1="200" y1="39" x2="200" y2="72"
-            stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Hypotenuse (rafter slope) -->
-      <line x1="280" y1="72" x2="200" y2="39"
-            stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Right-angle box -->
-      <path d="M200,62 L210,62 L210,72" fill="none" stroke="#FF5A1F" stroke-width="1" opacity="0.55"/>
-      <!-- Labels -->
-      <text x="298" y="30" text-anchor="start"
-            font-family="Inter,sans-serif" font-size="18" font-weight="500"
-            fill="#FF5A1F" letter-spacing="-0.3">Pitch</text>
-      <text x="298" y="54" text-anchor="start"
-            font-family="Inter,sans-serif" font-size="22" font-weight="600"
-            fill="#FF5A1F">22.5</text>
-      <text x="342" y="72" text-anchor="start"
-            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
-            fill="#FF5A1F" opacity="0.72">°</text>
+      <!-- Label — stacked, rotated to match rafter slope, near midpoint -->
+      <!-- Midpoint of annotation line: (354, 146). Offset 38px further above: (341, 110) -->
+      <g transform="rotate(-20.3, 330, 130)">
+        <text x="330" y="118" text-anchor="middle"
+              font-family="Inter, sans-serif" font-size="16" font-weight="500"
+              fill="#FF5A1F" letter-spacing="-0.3">Rafter</text>
+        <text x="330" y="140" text-anchor="middle"
+              font-family="Inter, sans-serif" font-size="20" font-weight="600"
+              fill="#FF5A1F">3789</text>
+        <text x="330" y="156" text-anchor="middle"
+              font-family="'JetBrains Mono', monospace" font-size="12"
+              fill="#FF5A1F" opacity="0.72">mm</text>
+      </g>
 
+      <!-- ── LABELS with leader lines ───────────────────────────────── -->
 
-      <!-- ══════════════════════════════════════════════
-           ANNOTATION 2 — Ridge height (left)
-           From top of ridge board (y=211) to top of wall plate (y=474)
-           Arrow at x=58
-      ══════════════════════════════════════════════ -->
-      <!-- Extension lines -->
-      <line x1="177" y1="204" x2="55" y2="204" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <line x1="177" y1="474" x2="55" y2="474" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <!-- Arrow shaft -->
-      <line x1="58" y1="216" x2="58" y2="462" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Arrowheads -->
-      <polygon points="58,204 53,216 63,216" fill="#FF5A1F"/>
-      <polygon points="58,474 53,462 63,462" fill="#FF5A1F"/>
-      <!-- Label — centred at mid y=334 -->
-      <text x="28" y="319" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="18" font-weight="500"
-            fill="#FF5A1F" letter-spacing="-0.3">Height</text>
-      <text x="28" y="343" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="22" font-weight="600"
-            fill="#FF5A1F">1449</text>
-      <text x="28" y="361" text-anchor="middle"
-            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
-            fill="#FF5A1F" opacity="0.72">mm</text>
+      <!-- Tail Cut — left of diagram, arrow pointing to x=80 midpoint -->
+      <text x="12" y="299" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Tail</text>
+      <text x="12" y="315" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Cut</text>
+      <line x1="54" y1="307" x2="78" y2="307"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
 
+      <!-- Heel Cut — below-left, arrow to (268, 250) midpoint of heel cut -->
+      <text x="110" y="370" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Heel Cut</text>
+      <line x1="168" y1="363" x2="266" y2="252"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
 
-      <!-- ══════════════════════════════════════════════
-           ANNOTATION 3 — Building width (bottom)
-           x=185 to x=715, arrow at y=626
-      ══════════════════════════════════════════════ -->
-      <!-- Extension lines — outer face of each wall (x=177 left, x=723 right) -->
-      <line x1="177" y1="536" x2="177" y2="623" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <line x1="723" y1="536" x2="723" y2="623" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <!-- Arrow shaft -->
-      <line x1="189" y1="626" x2="711" y2="626" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Arrowheads -->
-      <polygon points="177,626 189,621 189,631" fill="#FF5A1F"/>
-      <polygon points="723,626 711,621 711,631" fill="#FF5A1F"/>
-      <!-- Label -->
-      <text x="450" y="649" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="18" font-weight="500"
-            fill="#FF5A1F" letter-spacing="-0.3">Width</text>
-      <text x="450" y="673" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="22" font-weight="600"
-            fill="#FF5A1F">7000</text>
-      <text x="450" y="691" text-anchor="middle"
-            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
-            fill="#FF5A1F" opacity="0.72">mm</text>
+      <!-- Seat Cut — below, arrow up to (308, 236) midpoint of seat -->
+      <text x="282" y="390" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Seat Cut</text>
+      <line x1="308" y1="382" x2="308" y2="239"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
 
+      <!-- Ridge Cut — upper right, arrow to (655, 97) midpoint of ridge cut -->
+      <text x="666" y="68" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Ridge</text>
+      <text x="666" y="83" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Cut</text>
+      <line x1="664" y1="88" x2="657" y2="110"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
 
-      <!-- ══════════════════════════════════════════════
-           ANNOTATION 4 — Rafter length (stringer style)
-           Parallel line offset 28px upper-left of left rafter centreline
-           Rafter centreline: (130,491) → (441,218)
-           Direction unit: (0.752, -0.660) · Upper-left normal: (-0.660, -0.752)
-           Offset 28px → (-18.5, -21.1)
-           Annotation line: (112,470) → (423,197)
-           Ticks ±10px along rafter direction at each end
-           Extension lines from rafter surface to annotation line
-      ══════════════════════════════════════════════ -->
-      <!-- Extension lines (rafter face → annotation line) -->
-      <line x1="130" y1="491" x2="112" y2="470" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <line x1="441" y1="218" x2="423" y2="197" stroke="#FF5A1F" stroke-width="1" opacity="0.38"/>
-      <!-- Annotation line (parallel to left rafter, offset upper-left) -->
-      <line x1="112" y1="470" x2="423" y2="197"
-            stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Tick at eave end — perpendicular to rafter (±10px along direction (0.752,−0.660)) -->
-      <line x1="105" y1="477" x2="120" y2="463" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Tick at ridge end -->
-      <line x1="416" y1="204" x2="431" y2="190" stroke="#FF5A1F" stroke-width="1.5" stroke-linecap="round"/>
-      <!-- Label — offset upper-left from annotation midpoint (267,333) -->
-      <text x="230" y="295" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="18" font-weight="500"
-            fill="#FF5A1F" letter-spacing="-0.3">Rafter</text>
-      <text x="230" y="319" text-anchor="middle"
-            font-family="Inter,sans-serif" font-size="22" font-weight="600"
-            fill="#FF5A1F">3789</text>
-      <text x="230" y="337" text-anchor="middle"
-            font-family="'JetBrains Mono','Courier New',monospace" font-size="14"
-            fill="#FF5A1F" opacity="0.72">mm</text>
+      <!-- Wall Plate — right, arrow left to plate -->
+      <text x="366" y="249" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Wall</text>
+      <text x="366" y="264" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Plate</text>
+      <line x1="362" y1="254" x2="357" y2="254"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
+
+      <!-- Supporting Wall — right, arrow left to wall -->
+      <text x="366" y="312" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Supporting</text>
+      <text x="366" y="327" font-family="Inter, sans-serif" font-size="13" font-weight="500" fill="#FF5A1F">Wall</text>
+      <line x1="362" y1="317" x2="357" y2="317"
+            stroke="#FF5A1F" stroke-width="1" marker-end="url(#arr)"/>
 
     </svg>
 
-    <p class="caption">22.5° pitch · 7000mm span · 1449mm height · 3789mm rafter</p>
-
-    <button onclick="void(0)" style="margin-top:14px;width:100%;padding:13px;border:0.5px solid rgba(0,0,0,0.08);border-radius:12px;background:#F5F5F3;color:#FF5A1F;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;letter-spacing:-0.2px">
-      Save diagram
-    </button>
+    <p class="caption">22.5° pitch · 3789mm rafter · plumb cut 67.5° · seat cut 22.5°</p>
   </div>
+
+  <p class="note">Preview only — open in browser to review before adding to the app.</p>
+
 </body>
 </html>

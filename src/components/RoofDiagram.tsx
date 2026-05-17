@@ -210,24 +210,13 @@ export const RoofDiagram = memo(function RoofDiagram({
             stroke={INK} strokeWidth={0.7} opacity={0.30} />
         ))}
 
-        {/* ── ANNOTATION 1 — Pitch angle arc at wall-plate junction ── */}
+        {/* ── ANNOTATION 1 — Pitch label above ridge ── */}
         {(() => {
-          const pitchRad = pitchDegrees * Math.PI / 180;
-          const arcR = 62;
-          const halfPitchRad = pitchRad / 2;
-          const arcEndX = wallLeft + arcR * lux;
-          const arcEndY = PLATE_Y + arcR * luy;
-          const labelDist = arcR + 42;
-          const labelX = wallLeft + labelDist * Math.cos(halfPitchRad);
-          const rawLabelY = PLATE_Y - labelDist * Math.sin(halfPitchRad);
-          const labelY = Math.min(rawLabelY, PLATE_Y - 52);
+          const labelY = Math.max(ridgeY - 72, 48);
           return <>
-            <path
-              d={`M ${Math.round(wallLeft + arcR)},${PLATE_Y} A ${arcR},${arcR} 0 0,0 ${Math.round(arcEndX)},${Math.round(arcEndY)}`}
-              fill="none" stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round"
-            />
-            <text x={Math.round(labelX)} y={Math.round(labelY - 6)} textAnchor="middle" fontFamily={FONT} fontSize={17} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
-            <text x={Math.round(labelX)} y={Math.round(labelY + 18)} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}°</text>
+            <line x1={RIDGE_X} y1={ridgeY - 6} x2={RIDGE_X} y2={labelY + 28} stroke={ORANGE} strokeWidth={1} strokeDasharray="3,4" opacity={0.4} />
+            <text x={RIDGE_X} y={labelY} textAnchor="middle" fontFamily={FONT} fontSize={17} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Pitch</text>
+            <text x={RIDGE_X} y={labelY + 24} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{pitchDegrees}°</text>
           </>;
         })()}
 

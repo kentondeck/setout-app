@@ -211,15 +211,15 @@ export function ConcreteCalc() {
             <>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Length" value={slabFields.length} onChange={setSlab('length')} units={['mm', 'm']} placeholder="e.g. 3000" />
+                  <NumberInput label="Length" value={slabFields.length} onChange={setSlab('length')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3000', m: 'e.g. 3' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Width" value={slabFields.width} onChange={setSlab('width')} units={['mm', 'm']} placeholder="e.g. 3000" />
+                  <NumberInput label="Width" value={slabFields.width} onChange={setSlab('width')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3000', m: 'e.g. 3' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Thickness" value={slabFields.thickness} onChange={setSlab('thickness')} units={['mm', 'm']} placeholder="e.g. 100" />
+                  <NumberInput label="Thickness" value={slabFields.thickness} onChange={setSlab('thickness')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 100', m: 'e.g. 0.1' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>
@@ -254,18 +254,18 @@ export function ConcreteCalc() {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {holeType === 'round' ? (
-                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholder="" />
+                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 300', m: 'e.g. 0.3' }} />
                   ) : (
-                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholder="" />
+                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 300', m: 'e.g. 0.3' }} />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholder="" />
+                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 600', m: 'e.g. 0.6' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="" hint="default 1" />
+                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="e.g. 4" hint="default 1" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>
@@ -319,7 +319,7 @@ export function ConcreteCalc() {
                     value={postFields.postSize}
                     onChange={setPost('postSize')}
                     units={['mm', 'm']}
-                    placeholder="e.g. 100"
+                    placeholders={{ mm: 'e.g. 100', m: 'e.g. 0.1' }}
                   />
                 </div>
               )}

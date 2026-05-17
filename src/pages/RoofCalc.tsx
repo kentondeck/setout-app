@@ -29,11 +29,11 @@ function getModeLabel(id: Mode, roofType: RoofType): string {
   return 'Rafter + Pitch';
 }
 
-const FIELD_META: Record<PairKey, { label: string; units: ['m', 'mm'] | ['mm', 'm'] | null; unit?: string; hintNoRidge: string; hintWithRidge?: string }> = {
-  span:         { label: 'Span',          units: ['m', 'mm'], hintNoRidge: 'full width' },
-  rise:         { label: 'Rise',          units: ['m', 'mm'], hintNoRidge: 'ridge height' },
-  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], hintNoRidge: 'to ridge centreline', hintWithRidge: 'cut length, to ridge face' },
-  pitchDegrees: { label: 'Pitch',         units: null, unit: '°', hintNoRidge: 'degrees' },
+const FIELD_META: Record<PairKey, { label: string; units: ['m', 'mm'] | ['mm', 'm'] | null; unit?: string; placeholder?: string; placeholders?: Record<string, string>; hintNoRidge: string; hintWithRidge?: string }> = {
+  span:         { label: 'Span',          units: ['m', 'mm'], placeholders: { m: 'e.g. 7', mm: 'e.g. 7000' },      hintNoRidge: 'full width' },
+  rise:         { label: 'Rise',          units: ['m', 'mm'], placeholders: { m: 'e.g. 1.5', mm: 'e.g. 1500' },    hintNoRidge: 'ridge height' },
+  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], placeholders: { m: 'e.g. 4.2', mm: 'e.g. 4200' },    hintNoRidge: 'to ridge centreline', hintWithRidge: 'cut length, to ridge face' },
+  pitchDegrees: { label: 'Pitch',         units: null, unit: '°', placeholder: 'e.g. 22.5',                         hintNoRidge: 'degrees' },
 };
 
 interface Inputs {
@@ -234,9 +234,9 @@ export function RoofCalc() {
               return (
                 <div key={field} style={{ flex: 1, minWidth: 0 }}>
                   {meta.units ? (
-                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} units={meta.units} placeholder="" hint={hint} />
+                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} units={meta.units} placeholders={meta.placeholders} hint={hint} />
                   ) : (
-                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} unit={meta.unit} placeholder="" hint={hint} />
+                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} unit={meta.unit} placeholder={meta.placeholder} hint={hint} />
                   )}
                 </div>
               );
@@ -246,11 +246,11 @@ export function RoofCalc() {
           <div style={{ display: 'flex', gap: 12 }}>
             {roofType === 'gabled' && (
               <div style={{ flex: 1, minWidth: 0 }}>
-                <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholder="" hint="for cut length" />
+                <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 35', m: 'e.g. 0.035' }} hint="for cut length" />
               </div>
             )}
             <div style={{ flex: roofType === 'skillion' ? undefined : 1, minWidth: 0 }}>
-              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="" hint="each side" />
+              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholders={{ m: 'e.g. 0.6', mm: 'e.g. 600' }} hint="each side" />
             </div>
           </div>
 
@@ -261,10 +261,10 @@ export function RoofCalc() {
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholder="e.g. 190" hint="optional · timber size" />
+              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 190', m: 'e.g. 0.19' }} hint="optional · timber size" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholder="e.g. 90" hint="optional · birdsmouth seat" />
+              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 90', m: 'e.g. 0.09' }} hint="optional · birdsmouth seat" />
             </div>
           </div>
         </div>

@@ -30,10 +30,11 @@ interface NumberInputProps {
   unit?: string;         // static non-switchable unit badge
   units?: string[];      // [canonicalUnit, alternate] — enables tap-to-toggle
   placeholder?: string;
+  placeholders?: Record<string, string>;
   hint?: string;
 }
 
-export function NumberInput({ label, value, onChange, unit, units, placeholder, hint }: NumberInputProps) {
+export function NumberInput({ label, value, onChange, unit, units, placeholder, placeholders, hint }: NumberInputProps) {
   const { settings } = useContext(SettingsContext);
   const imperial = settings.unit === 'imperial';
 
@@ -141,7 +142,7 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
           type="number"
           inputMode="decimal"
           value={local}
-          placeholder={placeholder}
+          placeholder={placeholders?.[activeUnit] ?? placeholder}
           onChange={e => handleChange(e.target.value)}
           style={{
             flex: 1,

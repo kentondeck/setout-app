@@ -183,26 +183,26 @@ export function DeckingCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} units={['m', 'mm']} placeholder="e.g. 4.2" />
+              <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} units={['m', 'mm']} placeholders={{ m: 'e.g. 4.2', mm: 'e.g. 4200' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} units={['m', 'mm']} placeholder="e.g. 3.6" />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholder="" hint="default 5mm" />
+              <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} units={['m', 'mm']} placeholders={{ m: 'e.g. 3.6', mm: 'e.g. 3600' }} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholder="" hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 90', m: 'e.g. 0.09' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 5', m: 'e.g. 0.005' }} hint="default 5mm" />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 450', m: 'e.g. 0.45' }} hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 1800', m: 'e.g. 1.8' }} />
             </div>
           </div>
         </div>

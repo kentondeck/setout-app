@@ -161,7 +161,7 @@ export function FramingCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['m', 'mm']} placeholder="" />
+              <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['m', 'mm']} placeholder="e.g. 4.8" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['m', 'mm']} placeholder="e.g. 2.4" />
@@ -202,7 +202,7 @@ export function FramingCalc() {
                   value={inputs.customSpacing}
                   onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))}
                   units={['mm', 'm']}
-                  placeholder=""
+                  placeholder="e.g. 500"
                 />
               </div>
             )}
@@ -307,7 +307,7 @@ export function FramingCalc() {
           {includeNoggins && (
             <div style={{ display: 'flex', gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <NumberInput label="Nog rows" value={inputs.nogginRows} onChange={set('nogginRows')} unit="" placeholder="e.g. 1" hint="rows per stud bay" />
+                <NumberInput label="Nog rows" value={inputs.nogginRows} onChange={set('nogginRows')} unit="" placeholder="e.g. 1" hint="optional · default 1" />
               </div>
               <div style={{ flex: 1, minWidth: 0 }} />
             </div>

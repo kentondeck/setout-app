@@ -99,10 +99,10 @@ export function CladdingCalc() {
           {/* Wall dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['mm', 'm']} placeholder="e.g. 2400" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} units={['mm', 'm']} placeholder="" />
+              <NumberInput label="Wall width" value={inputs.wallWidth} onChange={set('wallWidth')} units={['mm', 'm']} placeholder="e.g. 3600" />
             </div>
           </div>
 
@@ -124,7 +124,7 @@ export function CladdingCalc() {
           </div>
 
           {/* Stock length & start offset */}
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="e.g. 4200" />
             </div>

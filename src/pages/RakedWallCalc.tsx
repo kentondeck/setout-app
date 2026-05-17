@@ -137,23 +137,23 @@ export function RakedWallCalc() {
           </div>
 
           {/* Wall length */}
-          <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['mm', 'm']} placeholder="" />
+          <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['mm', 'm']} placeholder="e.g. 4800" />
 
           {/* Heights */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Low end height" value={inputs.lowHeight} onChange={set('lowHeight')} units={['mm', 'm']} placeholder="" hint="floor to top of rake plate" />
+              <NumberInput label="Low end height" value={inputs.lowHeight} onChange={set('lowHeight')} units={['mm', 'm']} placeholder="e.g. 2400" hint="floor to top of rake plate" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               {mode === 'heights' ? (
-                <NumberInput label="High end height" value={inputs.highHeight} onChange={set('highHeight')} units={['mm', 'm']} placeholder="" hint="floor to top of rake plate" />
+                <NumberInput label="High end height" value={inputs.highHeight} onChange={set('highHeight')} units={['mm', 'm']} placeholder="e.g. 3000" hint="floor to top of rake plate" />
               ) : (
                 <NumberInput
                   label="Roof pitch"
                   value={inputs.pitch}
                   onChange={set('pitch')}
                   unit="°"
-                  placeholder=""
+                  placeholder="e.g. 15"
                   hint={derivedHighHeight ? `high end ≈ ${derivedHighHeight}mm` : undefined}
                 />
               )}
@@ -172,7 +172,7 @@ export function RakedWallCalc() {
             </div>
             {inputs.studSpacing === 'custom' && (
               <div style={{ marginTop: 10 }}>
-                <NumberInput label="" value={inputs.customSpacing} onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))} units={['mm', 'm']} placeholder="" />
+                <NumberInput label="" value={inputs.customSpacing} onChange={v => setInputs(prev => ({ ...prev, customSpacing: v }))} units={['mm', 'm']} placeholder="e.g. 500" />
               </div>
             )}
           </div>
@@ -189,7 +189,7 @@ export function RakedWallCalc() {
             </div>
             {!['35', '45', '70', '90'].includes(inputs.timberThickness) && (
               <div style={{ marginTop: 10 }}>
-                <NumberInput label="" value={inputs.timberThickness} onChange={v => setInputs(prev => ({ ...prev, timberThickness: v }))} unit="mm" placeholder="" />
+                <NumberInput label="" value={inputs.timberThickness} onChange={v => setInputs(prev => ({ ...prev, timberThickness: v }))} unit="mm" placeholder="e.g. 50" />
               </div>
             )}
           </div>

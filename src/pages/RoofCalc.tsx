@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateRoof } from '../calculators/roof';
 import type { RoofOutputs } from '../calculators/roof';
@@ -32,11 +31,10 @@ const DEFAULTS: Inputs = {
 
 export function RoofCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: RoofOutputs; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -76,7 +74,6 @@ export function RoofCalc() {
       id,
       calculatorId: 'roof',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: {
         buildingWidth, pitchDegrees,
         overhang: isNaN(overhang) ? 0 : overhang,
@@ -126,12 +123,12 @@ export function RoofCalc() {
               <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} units={['m', 'mm']} placeholder="e.g. 7" hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="e.g. 22.5" hint="degrees" />
+              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="" hint="degrees" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="e.g. 0.6" hint="each side" />
+              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="" hint="each side" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>
@@ -294,7 +291,6 @@ export function RoofCalc() {
               id="roof"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

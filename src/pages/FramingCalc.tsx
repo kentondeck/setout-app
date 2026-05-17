@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateFraming } from '../calculators/framing';
 import type { FramingOutputs } from '../calculators/framing';
@@ -31,7 +30,7 @@ const DEFAULTS: Inputs = {
 
 export function FramingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [includeNoggins, setIncludeNoggins] = useState(true);
@@ -39,7 +38,6 @@ export function FramingCalc() {
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -75,7 +73,6 @@ export function FramingCalc() {
       id,
       calculatorId: 'framing',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { wallLength, wallHeight, studSpacing, nogginRows, includeNoggins: includeNoggins ? 1 : 0, doubleStuds: doubleStuds ? 1 : 0 },
       outputs: calc.outputs,
     });
@@ -164,7 +161,7 @@ export function FramingCalc() {
               <NumberInput label="Wall length" value={inputs.wallLength} onChange={set('wallLength')} units={['m', 'mm']} placeholder="e.g. 4.8" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['m', 'mm']} placeholder="e.g. 2.4" />
+              <NumberInput label="Wall height" value={inputs.wallHeight} onChange={set('wallHeight')} units={['m', 'mm']} placeholder="" />
             </div>
           </div>
 
@@ -392,14 +389,14 @@ export function FramingCalc() {
 
               {/* Studs cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — STUDS</p>
-              {studCutlist ? studCutlist.materialList.map(m => (
-                <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {studCutlist && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                    {result.outputs.studCount} × {wallHeightMm}mm
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{studCutlist.outputs.wastePercent}% waste</span>
                 </div>
-              )) : null}
+              )}
 
               <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
@@ -420,7 +417,7 @@ export function FramingCalc() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                  {totalPlateStocks} × {(plateStock / 1000).toFixed(1)}m lengths
+                  {plateRuns} × {wallLengthMm}mm
                 </span>
                 {plateWasteMm > 0 && (
                   <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{plateWasteMm}mm waste</span>
@@ -432,14 +429,14 @@ export function FramingCalc() {
                 <>
                   <div style={{ height: 0.5, background: 'var(--color-border)' }} />
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGGINS</p>
-                  {nogginCutlist ? nogginCutlist.materialList.map(m => (
-                    <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  {nogginCutlist && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                        {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                        {nogginCount} × {nogginLengthMm}mm
                       </span>
                       <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{nogginCutlist.outputs.wastePercent}% waste</span>
                     </div>
-                  )) : null}
+                  )}
                 </>
               )}
 
@@ -466,7 +463,6 @@ export function FramingCalc() {
               doubleStuds={doubleStuds}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

@@ -55,52 +55,6 @@ export function Settings() {
       </h1>
 
       <div>
-        <SectionLabel>Your name</SectionLabel>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            type="text"
-            placeholder="Dave"
-            value={nameInput}
-            onChange={e => { setNameInput(e.target.value); setNameSaved(false); }}
-            onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); }}
-            style={{
-              flex: 1,
-              padding: '14px 16px',
-              borderRadius: 'var(--radius-card)',
-              border: '0.5px solid var(--color-border)',
-              background: 'var(--color-card)',
-              fontSize: 15,
-              fontFamily: 'inherit',
-              color: 'var(--color-text)',
-              outline: 'none',
-              minWidth: 0,
-              WebkitAppearance: 'none',
-            }}
-          />
-          <button
-            onClick={handleSaveName}
-            disabled={!nameInput.trim() || nameSaved}
-            style={{
-              padding: '0 18px',
-              borderRadius: 'var(--radius-card)',
-              border: 'none',
-              background: nameSaved ? '#22c55e' : nameInput.trim() ? 'var(--color-orange)' : 'var(--color-border)',
-              color: nameInput.trim() ? '#fff' : 'var(--color-muted)',
-              fontSize: 14,
-              fontWeight: 500,
-              fontFamily: 'inherit',
-              cursor: nameInput.trim() && !nameSaved ? 'pointer' : 'default',
-              flexShrink: 0,
-              transition: 'background 0.2s',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {nameSaved ? '✓ Saved' : 'Save'}
-          </button>
-        </div>
-      </div>
-
-      <div>
         <SectionLabel>Units</SectionLabel>
         <div
           style={{
@@ -182,6 +136,52 @@ export function Settings() {
         />
       </div>
 
+
+      <div>
+        <SectionLabel>Your name</SectionLabel>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            placeholder="Dave"
+            value={nameInput}
+            onChange={e => { setNameInput(e.target.value); setNameSaved(false); }}
+            onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); }}
+            style={{
+              flex: 1,
+              padding: '14px 16px',
+              borderRadius: 'var(--radius-card)',
+              border: '0.5px solid var(--color-border)',
+              background: 'var(--color-card)',
+              fontSize: 15,
+              fontFamily: 'inherit',
+              color: 'var(--color-text)',
+              outline: 'none',
+              minWidth: 0,
+              WebkitAppearance: 'none',
+            }}
+          />
+          <button
+            onClick={handleSaveName}
+            disabled={!nameInput.trim() || nameSaved}
+            style={{
+              padding: '0 18px',
+              borderRadius: 'var(--radius-card)',
+              border: 'none',
+              background: nameSaved ? '#22c55e' : nameInput.trim() ? 'var(--color-orange)' : 'var(--color-border)',
+              color: nameInput.trim() ? '#fff' : 'var(--color-muted)',
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              cursor: nameInput.trim() && !nameSaved ? 'pointer' : 'default',
+              flexShrink: 0,
+              transition: 'background 0.2s',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {nameSaved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
 
       <div style={{ marginTop: 'auto', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>

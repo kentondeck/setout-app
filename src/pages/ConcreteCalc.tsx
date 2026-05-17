@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -24,7 +23,7 @@ const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numH
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastage, setWastage] = useState(0.10);
@@ -40,7 +39,6 @@ export function ConcreteCalc() {
   const [postResult, setPostResult] = useState<{ outputs: PostHoleOutputs; steps: WorkingStep[] } | null>(null);
   const [lastPostId, setLastPostId] = useState('');
 
-  const [jobName, setJobName] = useState('');
   const [error, setError] = useState('');
 
   function setSlab(field: keyof SlabFields) {
@@ -54,7 +52,6 @@ export function ConcreteCalc() {
   function switchTab(t: Tab) {
     setTab(t);
     setError('');
-    setJobName('');
   }
 
   function handleCalculate() {
@@ -76,7 +73,6 @@ export function ConcreteCalc() {
         id,
         calculatorId: 'concrete',
         timestamp: Date.now(),
-        jobName: jobName || undefined,
         inputs: { type: 'slab', length, width, thickness, wastage },
         outputs: calc.outputs,
       });
@@ -109,7 +105,6 @@ export function ConcreteCalc() {
         id,
         calculatorId: 'concrete',
         timestamp: Date.now(),
-        jobName: jobName || undefined,
         inputs: {
           type: 'postholes',
           holeType,
@@ -259,18 +254,18 @@ export function ConcreteCalc() {
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {holeType === 'round' ? (
-                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholder="e.g. 300" />
+                    <NumberInput label="Diameter" value={postFields.diameter} onChange={setPost('diameter')} units={['mm', 'm']} placeholder="" />
                   ) : (
-                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholder="e.g. 300" />
+                    <NumberInput label="Side width" value={postFields.sideWidth} onChange={setPost('sideWidth')} units={['mm', 'm']} placeholder="" />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholder="e.g. 600" />
+                  <NumberInput label="Depth" value={postFields.depth} onChange={setPost('depth')} units={['mm', 'm']} placeholder="" />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="e.g. 1" hint="default 1" />
+                  <NumberInput label="Number of holes" value={postFields.numHoles} onChange={setPost('numHoles')} unit="" placeholder="" hint="default 1" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>
@@ -406,11 +401,6 @@ export function ConcreteCalc() {
               id="concrete-slab"
             />
 
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastSlabId, { jobName: name })}
-            />
             <AddToJobPrompt calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
@@ -466,11 +456,6 @@ export function ConcreteCalc() {
               id="concrete-postholes"
             />
 
-            <JobNameInput
-              value={jobName}
-              onChange={setJobName}
-              onSave={name => updateEntry(lastPostId, { jobName: name })}
-            />
             <AddToJobPrompt calculationId={lastPostId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

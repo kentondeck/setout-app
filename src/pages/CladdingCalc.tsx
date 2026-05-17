@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateCladding } from '../calculators/cladding';
 import type { CladdingOutputs } from '../calculators/cladding';
@@ -31,11 +30,10 @@ const DEFAULTS: Inputs = {
 
 export function CladdingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: CladdingOutputs; rodMarks: number[]; steps: WorkingStep[] } | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -69,7 +67,6 @@ export function CladdingCalc() {
       id,
       calculatorId: 'cladding',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { wallHeight, wallWidth, boardWidth, lap, boardLength, startOffset },
       outputs: calc.outputs,
     });
@@ -109,7 +106,7 @@ export function CladdingCalc() {
           {/* Board dimensions */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="e.g. 180" />
+              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholder="" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
@@ -117,7 +114,7 @@ export function CladdingCalc() {
                 value={inputs.lap}
                 onChange={set('lap')}
                 units={['mm', 'm']}
-                placeholder="e.g. 30"
+                placeholder=""
                 hint={inputs.boardWidth && inputs.lap ? `face ${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm` : undefined}
               />
             </div>
@@ -126,10 +123,10 @@ export function CladdingCalc() {
           {/* Stock length & start offset */}
           <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="e.g. 4200" />
+              <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholder="" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholder="e.g. 0" hint="from datum to first course" />
+              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholder="" hint="from datum to first course" />
             </div>
           </div>
         </div>
@@ -209,7 +206,6 @@ export function CladdingCalc() {
               id="cladding"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

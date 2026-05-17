@@ -80,4 +80,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '10',
     svgPath: 'M4 20V4M4 20h16M4 4l16 16',
   },
+  {
+    id: 'codecheck',
+    label: 'Code Check',
+    subtitle: 'Ask the standard',
+    number: '11',
+    svgPath: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h4',
+  },
 ];

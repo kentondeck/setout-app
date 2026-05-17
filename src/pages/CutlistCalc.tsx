@@ -3,7 +3,6 @@ import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
-import { JobNameInput } from '../components/JobNameInput';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateCutlist, DEFAULT_STOCK_LENGTHS } from '../calculators/cutlist';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
@@ -36,13 +35,12 @@ function fmtLength(mm: number): string {
 
 export function CutlistCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { addEntry } = useContext(HistoryContext);
 
   const [forcedStock, setForcedStock] = useState('');
   const [pricePerMetre, setPricePerMetre] = useState('');
   const [rows, setRows] = useState<CutRow[]>([newRow(), newRow()]);
   const [result, setResult] = useState<Result | null>(null);
-  const [jobName, setJobName] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [planCollapsed, setPlanCollapsed] = useState(true);
@@ -93,7 +91,6 @@ export function CutlistCalc() {
       id,
       calculatorId: 'cutlist',
       timestamp: Date.now(),
-      jobName: jobName || undefined,
       inputs: { forcedStockLength: forcedLength ?? 0, pricePerMetre: price, cutCount: cuts.length },
       outputs: calc.outputs,
     });
@@ -361,7 +358,6 @@ export function CutlistCalc() {
               id="cutlist"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import type { HistoryEntry } from '../types';
+import { DeckingDiagram } from '../components/DeckingDiagram';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,75 @@ function timeStr(ts: number): string {
     return 'Yesterday';
   }
   return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+// ─── Per-calculator material & diagram views ───────────────────────────────
+
+function fmt(n: number): string {
+  return Number.isFinite(n) ? String(n) : '—';
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{
+      margin: '0 0 6px',
+      fontSize: 10,
+      fontWeight: 500,
+      color: '#999',
+      textTransform: 'uppercase',
+      letterSpacing: '0.4px',
+    }}>
+      {children}
+    </p>
+  );
+}
+
+function DeckingMaterials({ entry }: { entry: HistoryEntry }) {
+  const deckLength = Number(entry.inputs.deckLength);
+  const deckWidth = Number(entry.inputs.deckWidth);
+  const boardWidth = Number(entry.inputs.boardWidth);
+  const boardGap = Number(entry.inputs.boardGap);
+  const joistSpacing = Number(entry.inputs.joistSpacing);
+  const boardCount = Number(entry.outputs.boardCount);
+  const joistCount = Number(entry.outputs.joistCount);
+  const bearerCount = Number(entry.outputs.bearerCount);
+  const fixingsCount = Number(entry.outputs.fixingsCount);
+
+  const deckLengthMm = Math.round(deckLength * 1000);
+  const deckWidthMm = Math.round(deckWidth * 1000);
+
+  const rows = [
+    { label: 'Decking boards', qty: boardCount, mm: deckWidthMm },
+    { label: 'Joists', qty: joistCount, mm: deckLengthMm },
+    { label: 'Bearers', qty: bearerCount, mm: deckWidthMm },
+    { label: 'Fixings (approx)', qty: fixingsCount, mm: null as number | null },
+  ];
+
+  return (
+    <>
+      <div>
+        <SectionLabel>Materials</SectionLabel>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {rows.map(row => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+              <span style={{ color: '#999' }}>{row.label}</span>
+              <span style={{ color: '#0a0a0a', fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+                {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <DeckingDiagram
+        deckLength={deckLengthMm}
+        deckWidth={deckWidthMm}
+        boardWidth={boardWidth}
+        boardGap={boardGap}
+        boardCount={boardCount}
+        joistSpacing={Number.isFinite(joistSpacing) ? joistSpacing : undefined}
+      />
+    </>
+  );
 }
 
 // ─── CalcEntryCard ───────────────────────────────────────────────────────────
@@ -226,6 +296,7 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
               gap: 12,
             }}
           >
+            {entry.calculatorId === 'decking' && <DeckingMaterials entry={entry} />}
             <div>
               <p
                 style={{

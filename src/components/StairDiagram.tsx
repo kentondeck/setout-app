@@ -164,12 +164,11 @@ export const StairDiagram = memo(function StairDiagram({
         {/* Stair profile */}
         <path d={profileD} fill="none" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
 
-        {/* Stringer — dotted diagonal from kick plate on the floor (bottom-left)
-            up to the ledger (top-right), which sits in the upper landing fascia
-            below the topmost tread surface. Mirrors the reference STRINGER line. */}
+        {/* Stringer — dotted diagonal from kick plate (floor, foot) to upper landing
+            level (top-right), matching the STRINGER line in BASIC STAIR FIG. 1. */}
         <line
           x1={FOOT_X} y1={FLOOR_Y}
-          x2={topX}   y2={topY + 16}
+          x2={topX}   y2={topY}
           stroke={ORANGE} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" opacity={0.7}
         />
 

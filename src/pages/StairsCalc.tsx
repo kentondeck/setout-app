@@ -113,18 +113,18 @@ export function StairsCalc() {
         >
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholder="e.g. 2700" hint="floor to floor" />
+              <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 2700', m: 'e.g. 2.7' }} hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholder="e.g. 3000" hint="optional · leave blank to calculate" />
+              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3000', m: 'e.g. 3' }} hint="optional · leave blank to calculate" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholder="" hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
+              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 175', m: 'e.g. 0.175' }} hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholder="e.g. 250" hint={`optional · ${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
+              <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 250', m: 'e.g. 0.25' }} hint={`optional · ${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
             </div>
           </div>
         </div>

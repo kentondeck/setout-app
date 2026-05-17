@@ -120,15 +120,15 @@ export function RoofCalc() {
         >
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} units={['m', 'mm']} placeholder="e.g. 7" hint="full span" />
+              <NumberInput label="Building width" value={inputs.buildingWidth} onChange={set('buildingWidth')} units={['m', 'mm']} placeholders={{ m: 'e.g. 7', mm: 'e.g. 7000' }} hint="full span" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="" hint="degrees" />
+              <NumberInput label="Pitch" value={inputs.pitchDegrees} onChange={set('pitchDegrees')} unit="°" placeholder="e.g. 22.5" hint="degrees" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="" hint="each side" />
+              <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholders={{ m: 'e.g. 0.6', mm: 'e.g. 600' }} hint="each side" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>
@@ -151,15 +151,15 @@ export function RoofCalc() {
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholder="e.g. 190" hint="optional · timber size" />
+              <NumberInput label="Rafter depth" value={inputs.rafterDepth} onChange={set('rafterDepth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 190', m: 'e.g. 0.19' }} hint="optional · timber size" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholder="e.g. 90" hint="optional · birdsmouth seat" />
+              <NumberInput label="Plate width" value={inputs.plateWidth} onChange={set('plateWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 90', m: 'e.g. 0.09' }} hint="optional · birdsmouth seat" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholder="e.g. 35" hint="optional · for shortening" />
+              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 35', m: 'e.g. 0.035' }} hint="optional · for shortening" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }} />
           </div>

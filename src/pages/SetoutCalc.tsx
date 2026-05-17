@@ -124,10 +124,10 @@ export function SetoutCalc() {
           {/* Sides */}
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Side A" value={inputs.sideA} onChange={set('sideA')} units={['mm', 'm']} placeholder="e.g. 3000" />
+              <NumberInput label="Side A" value={inputs.sideA} onChange={set('sideA')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3000', m: 'e.g. 3' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Side B" value={inputs.sideB} onChange={set('sideB')} units={['mm', 'm']} placeholder="e.g. 4000" />
+              <NumberInput label="Side B" value={inputs.sideB} onChange={set('sideB')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 4000', m: 'e.g. 4' }} />
             </div>
           </div>
 
@@ -138,7 +138,7 @@ export function SetoutCalc() {
               value={inputs.measured}
               onChange={set('measured')}
               units={['mm', 'm']}
-              placeholder="e.g. 5000"
+              placeholders={{ mm: 'e.g. 5000', m: 'e.g. 5' }}
               hint={previewDiagonal ? `required ${previewDiagonal}mm` : undefined}
             />
           )}

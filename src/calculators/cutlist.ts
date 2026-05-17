@@ -44,10 +44,6 @@ export const DEFAULT_STOCK_LENGTHS = [2400, 3000, 3600, 4200, 4800, 5400, 6000];
 
 const KERF = 3;
 
-function minStock(cut: number, lengths: number[]): number {
-  return lengths.find(l => l >= cut + KERF) ?? lengths[lengths.length - 1];
-}
-
 function packBin(cuts: number[], stockLen: number): number[] {
   const packed: number[] = [];
   let used = 0;
@@ -107,25 +103,19 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
       continue;
     }
 
+    // Open a new bin: pick the length that packs the most cuts from todo.
+    // Tie-break: shorter length (less waste).
     let bestLen = -1;
-    let bestScore = Infinity;
     let bestPacked: number[] = [];
 
     for (const stockLen of lengths) {
       if (stockLen < cut + KERF) continue;
       const packed = packBin(todo, stockLen);
-
-      const leftover = [...todo];
-      for (const c of packed) {
-        const idx = leftover.indexOf(c);
-        if (idx >= 0) leftover.splice(idx, 1);
-      }
-
-      const leftoverCost = leftover.reduce((s, c) => s + minStock(c, lengths), 0);
-      const score = stockLen + leftoverCost;
-
-      if (score < bestScore || (score === bestScore && packed.length > bestPacked.length)) {
-        bestScore = score;
+      if (
+        bestLen === -1 ||
+        packed.length > bestPacked.length ||
+        (packed.length === bestPacked.length && stockLen < bestLen)
+      ) {
         bestLen = stockLen;
         bestPacked = packed;
       }
@@ -158,13 +148,16 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   allCuts.sort((a, b) => b - a);
 
   let winnerBins: { stockLength: number; cuts: number[] }[] = [];
+  let winnerCount = Infinity;
   let winnerTotal = Infinity;
 
   for (const stockLen of lengths) {
     if (stockLen < allCuts[0] + KERF) continue;
     const singleBins = bfdSingle(allCuts, stockLen).map(c => ({ stockLength: stockLen, cuts: c }));
-    const total = singleBins.length * stockLen;
-    if (total < winnerTotal) {
+    const count = singleBins.length;
+    const total = count * stockLen;
+    if (count < winnerCount || (count === winnerCount && total < winnerTotal)) {
+      winnerCount = count;
       winnerTotal = total;
       winnerBins = singleBins;
     }
@@ -172,8 +165,10 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
 
   if (lengths.length > 1) {
     const mixed = mixedBFD(allCuts, lengths);
+    const mixedCount = mixed.length;
     const mixedTotal = mixed.reduce((s, b) => s + b.stockLength, 0);
-    if (mixedTotal < winnerTotal) {
+    if (mixedCount < winnerCount || (mixedCount === winnerCount && mixedTotal < winnerTotal)) {
+      winnerCount = mixedCount;
       winnerTotal = mixedTotal;
       winnerBins = mixed;
     }

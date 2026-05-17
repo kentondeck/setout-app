@@ -13,13 +13,21 @@ import { RoofDiagram } from '../components/RoofDiagram';
 
 type PairKey = 'span' | 'rise' | 'rafterLength' | 'pitchDegrees';
 type Mode = 'span-pitch' | 'span-rise' | 'rise-pitch' | 'rafter-pitch';
+type RoofType = 'gabled' | 'skillion';
 
-const MODES: { id: Mode; label: string; fields: [PairKey, PairKey] }[] = [
-  { id: 'span-pitch',   label: 'Span + Pitch',   fields: ['span', 'pitchDegrees'] },
-  { id: 'span-rise',    label: 'Span + Rise',    fields: ['span', 'rise'] },
-  { id: 'rise-pitch',   label: 'Rise + Pitch',   fields: ['rise', 'pitchDegrees'] },
-  { id: 'rafter-pitch', label: 'Rafter + Pitch', fields: ['rafterLength', 'pitchDegrees'] },
+const MODES: { id: Mode; fields: [PairKey, PairKey] }[] = [
+  { id: 'span-pitch',   fields: ['span', 'pitchDegrees'] },
+  { id: 'span-rise',    fields: ['span', 'rise'] },
+  { id: 'rise-pitch',   fields: ['rise', 'pitchDegrees'] },
+  { id: 'rafter-pitch', fields: ['rafterLength', 'pitchDegrees'] },
 ];
+
+function getModeLabel(id: Mode, roofType: RoofType): string {
+  if (id === 'span-pitch')   return roofType === 'skillion' ? 'Run + Pitch'   : 'Span + Pitch';
+  if (id === 'span-rise')    return roofType === 'skillion' ? 'Run + Rise'    : 'Span + Rise';
+  if (id === 'rise-pitch')   return 'Rise + Pitch';
+  return 'Rafter + Pitch';
+}
 
 const FIELD_META: Record<PairKey, { label: string; units: ['m', 'mm'] | ['mm', 'm'] | null; unit?: string; hintNoRidge: string; hintWithRidge?: string }> = {
   span:         { label: 'Span',          units: ['m', 'mm'], hintNoRidge: 'full width' },
@@ -53,6 +61,7 @@ export function RoofCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry } = useContext(HistoryContext);
 
+  const [roofType, setRoofType] = useState<RoofType>('gabled');
   const [mode, setMode] = useState<Mode>('span-pitch');
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: RoofOutputs; steps: WorkingStep[] } | null>(null);
@@ -80,7 +89,8 @@ export function RoofCalc() {
         overhang: parseOpt(inputs.overhang) ?? 0,
         rafterDepth: parseOpt(inputs.rafterDepth),
         plateWidth: parseOpt(inputs.plateWidth),
-        ridgeThickness: parseOpt(inputs.ridgeThickness),
+        ridgeThickness: roofType === 'skillion' ? undefined : parseOpt(inputs.ridgeThickness),
+        skillion: roofType === 'skillion',
       });
       setResult(calc);
       setError('');
@@ -142,6 +152,35 @@ export function RoofCalc() {
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
+        {/* Roof type toggle — Gabled vs Skillion */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          {(['gabled', 'skillion'] as RoofType[]).map(rt => {
+            const active = roofType === rt;
+            return (
+              <button
+                key={rt}
+                onClick={() => { setRoofType(rt); setResult(null); setError(''); }}
+                style={{
+                  flex: 1,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
+                  background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
+                  color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                  fontSize: 13,
+                  fontWeight: active ? 600 : 500,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  letterSpacing: '-0.2px',
+                  textTransform: 'capitalize',
+                }}
+              >
+                {rt === 'gabled' ? 'Gabled' : 'Skillion / Lean-to'}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Mode picker — pick which 2 inputs you have */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.5px' }}>
@@ -167,7 +206,7 @@ export function RoofCalc() {
                     letterSpacing: '-0.2px',
                   }}
                 >
-                  {m.label}
+                  {getModeLabel(m.id, roofType)}
                 </button>
               );
             })}
@@ -188,13 +227,16 @@ export function RoofCalc() {
           <div style={{ display: 'flex', gap: 12 }}>
             {activeFields.map(field => {
               const meta = FIELD_META[field];
-              const hint = field === 'rafterLength' && hasRidge && meta.hintWithRidge ? meta.hintWithRidge : meta.hintNoRidge;
+              const label = field === 'span' && roofType === 'skillion' ? 'Run' : meta.label;
+              const hint  = field === 'span' && roofType === 'skillion' ? 'horizontal run'
+                : field === 'rafterLength' && hasRidge && meta.hintWithRidge ? meta.hintWithRidge
+                : meta.hintNoRidge;
               return (
                 <div key={field} style={{ flex: 1, minWidth: 0 }}>
                   {meta.units ? (
-                    <NumberInput label={meta.label} value={inputs[field]} onChange={set(field)} units={meta.units} placeholder="" hint={hint} />
+                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} units={meta.units} placeholder="" hint={hint} />
                   ) : (
-                    <NumberInput label={meta.label} value={inputs[field]} onChange={set(field)} unit={meta.unit} placeholder="" hint={hint} />
+                    <NumberInput label={label} value={inputs[field]} onChange={set(field)} unit={meta.unit} placeholder="" hint={hint} />
                   )}
                 </div>
               );
@@ -202,10 +244,12 @@ export function RoofCalc() {
           </div>
 
           <div style={{ display: 'flex', gap: 12 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholder="" hint="for cut length" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            {roofType === 'gabled' && (
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Ridge thickness" value={inputs.ridgeThickness} onChange={set('ridgeThickness')} units={['mm', 'm']} placeholder="" hint="for cut length" />
+              </div>
+            )}
+            <div style={{ flex: roofType === 'skillion' ? undefined : 1, minWidth: 0 }}>
               <NumberInput label="Eaves overhang" value={inputs.overhang} onChange={set('overhang')} units={['m', 'mm']} placeholder="" hint="each side" />
             </div>
           </div>
@@ -271,7 +315,7 @@ export function RoofCalc() {
               gap: 10,
             }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <RafterDimChip label="Span"   value={String(out.span)}         unit="m" />
+                <RafterDimChip label={roofType === 'skillion' ? 'Run' : 'Span'} value={String(out.span)} unit="m" />
                 <RafterDimChip label="Rise"   value={String(out.rise)}         unit="m" />
                 <RafterDimChip label={hasRidge ? 'Rafter (cut)' : 'Rafter'} value={String(out.rafterLength)} unit="m" />
                 <RafterDimChip label="Pitch"  value={String(out.pitchDegrees)} unit="°" />

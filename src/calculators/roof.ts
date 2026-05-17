@@ -3,7 +3,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 // Any 2 of (span, rise, rafterLength, pitchDegrees) are required.
 // The other 2 are derived. All lengths in metres, pitch in degrees.
 export interface RoofInputs {
-  span?: number;            // metres — full building width (= 2 × run)
+  span?: number;            // metres — full building width (= 2 × run) for gabled; direct run for skillion
   rise?: number;            // metres — vertical from wall plate to ridge
   rafterLength?: number;    // metres — to ridge centreline (no overhang)
   pitchDegrees?: number;    // degrees
@@ -11,6 +11,7 @@ export interface RoofInputs {
   rafterDepth?: number;     // mm — optional, for birdsmouth depth check
   plateWidth?: number;      // mm — optional, for birdsmouth geometry
   ridgeThickness?: number;  // mm — optional, for ridge shortening
+  skillion?: boolean;       // true = single-side; span input treated as run directly (no ÷2)
 }
 
 export interface RoofOutputs extends Record<string, number> {
@@ -48,17 +49,18 @@ function filled(v: number | undefined): v is number {
 }
 
 // Solve the rafter triangle from any 2 of: span, rise, rafterLength, pitchDegrees.
-// run = span / 2; rafter is the hypotenuse of (run, rise); pitch = atan(rise/run).
+// Gabled: run = span / 2. Skillion: run = span (entered directly, no halving).
 //
 // Branching collapses to two paths:
 //   (a) pitch is known + one length     → single trig op per derived value
 //   (b) pitch unknown + two lengths     → Pythagoras + one inverse trig
 // Uses Math.hypot / Math.atan2 for numerical stability near the extremes.
 function solveTriangle(args: {
-  span?: number; rise?: number; rafterLength?: number; pitchDegrees?: number;
+  span?: number; rise?: number; rafterLength?: number; pitchDegrees?: number; skillion?: boolean;
 }): { span: number; rise: number; rafterLength: number; pitchDegrees: number } {
   let { span, rise, rafterLength, pitchDegrees } = args;
-  let run = filled(span) ? span / 2 : undefined;
+  const skillion = args.skillion ?? false;
+  let run = filled(span) ? (skillion ? span : span / 2) : undefined;
 
   const lengthsKnown = [run, rise, rafterLength].filter(filled).length;
   if (!filled(pitchDegrees) && lengthsKnown < 2) {
@@ -93,7 +95,7 @@ function solveTriangle(args: {
     pitchDegrees = Math.atan2(rise, run) * DEG;
   }
 
-  span = (run as number) * 2;
+  span = skillion ? (run as number) : (run as number) * 2;
 
   if (!filled(span) || !filled(rise) || !filled(rafterLength) || !filled(pitchDegrees)) {
     throw new RoofInputError('Could not solve roof geometry — check inputs.');
@@ -105,7 +107,7 @@ function solveTriangle(args: {
 }
 
 export function calculateRoof(inputs: RoofInputs): RoofResult {
-  const { overhang, rafterDepth, plateWidth, ridgeThickness } = inputs;
+  const { overhang, rafterDepth, plateWidth, ridgeThickness, skillion } = inputs;
 
   const initiallyFilled = (['span', 'rise', 'rafterLength', 'pitchDegrees'] as const)
     .filter(k => filled(inputs[k]));
@@ -117,9 +119,9 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   let solverInputs = inputs;
   const ridgeHalfM = filled(ridgeThickness) ? (ridgeThickness / 1000) / 2 : 0;
   if (ridgeHalfM > 0 && filled(inputs.rafterLength)) {
-    let lineGuess = inputs.rafterLength + ridgeHalfM; // initial: pitch~0° => shortening ~= ridgeHalf
+    let lineGuess = inputs.rafterLength + ridgeHalfM;
     for (let i = 0; i < 12; i++) {
-      const trial = solveTriangle({ ...inputs, rafterLength: lineGuess });
+      const trial = solveTriangle({ ...inputs, rafterLength: lineGuess, skillion });
       const cosP = Math.cos(trial.pitchDegrees * Math.PI / 180);
       const next = inputs.rafterLength + ridgeHalfM / cosP;
       if (Math.abs(next - lineGuess) < 1e-6) { lineGuess = next; break; }
@@ -128,12 +130,12 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
     solverInputs = { ...inputs, rafterLength: lineGuess };
   }
 
-  const solved = solveTriangle(solverInputs);
+  const solved = solveTriangle({ ...solverInputs, skillion });
   const span = r3(solved.span);
   const rise = r3(solved.rise);
   const lineRafterLength = r3(solved.rafterLength);
   const pitchDegrees = r1(solved.pitchDegrees);
-  const run = r3(span / 2);
+  const run = r3(skillion ? span : span / 2);
   const pitchRad = pitchDegrees * Math.PI / 180;
 
   // Shortening + cut rafter (only meaningful when ridge given)
@@ -176,9 +178,9 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
       result: `${pitchDegrees}°`,
     },
     {
-      label: 'Span / Run',
-      formula: 'run = span ÷ 2',
-      result: `span ${span}m → run ${run}m`,
+      label: skillion ? 'Run' : 'Span / Run',
+      formula: skillion ? 'run = input directly' : 'run = span ÷ 2',
+      result: skillion ? `run ${run}m` : `span ${span}m → run ${run}m`,
     },
     {
       label: 'Rise (ridge height)',

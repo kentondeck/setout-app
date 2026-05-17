@@ -9,7 +9,8 @@ export type CalculatorId =
   | 'raked'
   | 'cladding'
   | 'setout'
-  | 'codecheck';
+  | 'codecheck'
+  | 'roofing';
 
 export type Region = 'AU' | 'NZ';
 

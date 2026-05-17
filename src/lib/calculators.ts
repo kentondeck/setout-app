@@ -87,4 +87,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '11',
     svgPath: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h4',
   },
+  {
+    id: 'roofing',
+    label: 'Roofing',
+    subtitle: 'Sheets, screws, flashing',
+    number: '12',
+    svgPath: 'M3 20L12 5L21 20M5 18h14M7 15h10M9 12h6',
+  },
 ];

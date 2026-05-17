@@ -171,7 +171,7 @@ export function StairsCalc() {
             )}
 
             {/* Compliance warnings */}
-            {(result.warnings.riserOutOfRange || result.warnings.treadOutOfRange) && (
+            {(result.warnings.riserOutOfRange || result.warnings.treadOutOfRange || result.warnings.walklineOutOfRange || result.warnings.angleOutOfRange) && (
               <div style={{
                 background: '#fff8e1',
                 border: '0.5px solid #f59e0b',
@@ -201,6 +201,16 @@ export function StairsCalc() {
                     )}
                   </>
                 )}
+                {result.warnings.walklineOutOfRange && (
+                  <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>
+                    2R + G = {result.outputs.walklineSum}mm — outside ergonomic range 550–700mm (Blondel rule)
+                  </p>
+                )}
+                {result.warnings.angleOutOfRange && (
+                  <p style={{ margin: 0, fontSize: 12, color: '#92400e' }}>
+                    Stringer angle {result.outputs.stringerAngle}° is outside 20°–45° (steep / shallow)
+                  </p>
+                )}
               </div>
             )}
 
@@ -216,6 +226,9 @@ export function StairsCalc() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+                <ResultCard label="2R + G (Blondel)" value={result.outputs.walklineSum} unit="mm — comfort 550–700" />
               </div>
             </div>
 

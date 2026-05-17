@@ -78,16 +78,25 @@ export const StairDiagram = memo(function StairDiagram({
   const BASE_Y   = FLOOR_Y + 62;
   const baseMidX = FOOT_X + drawnW / 2;
 
-  // ── 5. STRINGER — upper-left open space above stair profile ───────────────
-  // Proportions taken from the reference design (860×660 viewBox, 6-riser stair):
-  //   label x = FOOT_X + drawnW*0.155,  label y = FLOOR_Y - drawnH*0.75
-  //   leader start = label + (drawnW*0.136, 12),  leader end = stringer midpoint
-  const stMidX   = FOOT_X + drawnW / 2;
-  const stMidY   = FLOOR_Y - drawnH / 2;
-  const stLabelX = FOOT_X + drawnW * 0.155;
-  const stLabelY = FLOOR_Y - drawnH * 0.75;
-  const stLeadX1 = stLabelX + drawnW * 0.136;
-  const stLeadY1 = stLabelY + 12;
+  // ── 5. STRINGER — parallel dimension line in upper-left open space ────────
+  // Unit vector along stringer (foot → top, in SVG coords where y increases down)
+  const sUx = drawnW / stringerPx;
+  const sUy = -drawnH / stringerPx;
+  // Perpendicular pointing upper-left (away from stair body, into open space)
+  const sPx = sUy;
+  const sPy = -sUx;
+  const STRINGER_DIM_OFFSET = 42;
+  // Dimension line endpoints (parallel to stringer, offset perpendicular)
+  const stDimAx = FOOT_X + sPx * STRINGER_DIM_OFFSET;
+  const stDimAy = FLOOR_Y + sPy * STRINGER_DIM_OFFSET;
+  const stDimBx = topX + sPx * STRINGER_DIM_OFFSET;
+  const stDimBy = topY + sPy * STRINGER_DIM_OFFSET;
+  const stDimMidX = (stDimAx + stDimBx) / 2;
+  const stDimMidY = (stDimAy + stDimBy) / 2;
+  // Label sits a bit further out from the dimension line
+  const stLabelOffset = 26;
+  const stLabelCx = stDimMidX + sPx * stLabelOffset;
+  const stLabelCy = stDimMidY + sPy * stLabelOffset;
 
   // Hatches
   const floorHatches: number[] = [];
@@ -155,19 +164,31 @@ export const StairDiagram = memo(function StairDiagram({
         {/* Stair profile */}
         <path d={profileD} fill="none" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
 
-        {/* Stringer diagonal with end ticks */}
-        <g transform={`translate(${FOOT_X},${FLOOR_Y}) rotate(${-angle})`}>
-          <line x1={0} y1={0} x2={stringerPx} y2={0} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-          <line x1={0}          y1={-9} x2={0}          y2={9} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-          <line x1={stringerPx} y1={-9} x2={stringerPx} y2={9} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
-        </g>
+        {/* Stringer — dotted diagonal from kick plate on the floor (bottom-left)
+            up to the ledger (top-right), which sits in the upper landing fascia
+            below the topmost tread surface. Mirrors the reference STRINGER line. */}
+        <line
+          x1={FOOT_X} y1={FLOOR_Y}
+          x2={topX}   y2={topY + 16}
+          stroke={ORANGE} strokeWidth={1.5} strokeDasharray="3 4" strokeLinecap="round" opacity={0.7}
+        />
 
-        {/* ── STRINGER — upper-left open space ── */}
-        <text x={stLabelX} y={stLabelY - 6}  textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Stringer length</text>
-        <text x={stLabelX} y={stLabelY + 21} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(stringerLength)}</text>
-        <text x={stLabelX} y={stLabelY + 40} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
-        <line x1={stLeadX1} y1={stLeadY1} x2={stMidX - 8} y2={stMidY - 2} stroke={ORANGE} strokeWidth={1} strokeDasharray="3 4" opacity={0.7} />
-        <circle cx={stMidX} cy={stMidY} r={3} fill={ORANGE} />
+        {/* ── STRINGER — parallel dimension in upper-left open space ── */}
+        {/* Extension lines from stringer endpoints out to dimension line */}
+        <line x1={FOOT_X} y1={FLOOR_Y} x2={stDimAx} y2={stDimAy} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
+        <line x1={topX}   y1={topY}    x2={stDimBx} y2={stDimBy} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
+        {/* Parallel dimension line */}
+        <line x1={stDimAx} y1={stDimAy} x2={stDimBx} y2={stDimBy} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        {/* End ticks perpendicular to dimension line */}
+        <line x1={stDimAx - sPx * 7} y1={stDimAy - sPy * 7} x2={stDimAx + sPx * 7} y2={stDimAy + sPy * 7} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        <line x1={stDimBx - sPx * 7} y1={stDimBy - sPy * 7} x2={stDimBx + sPx * 7} y2={stDimBy + sPy * 7} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+        {/* Label centred above dimension line, rotated parallel to slope */}
+        <g transform={`translate(${stLabelCx},${stLabelCy}) rotate(${-angle})`}>
+          <text x={0} y={-4} textAnchor="middle" fontFamily={FONT} fontSize={16} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Stringer length</text>
+          <text x={0} y={18} textAnchor="middle" fontFamily={FONT} fontSize={20} fontWeight={600} fill={ORANGE}>
+            {fmt(stringerLength)}<tspan dx={4} fontSize={12} fontFamily={MONO} opacity={0.72}>mm</tspan>
+          </text>
+        </g>
 
         {/* ── RISE — left ── */}
         <line x1={FOOT_X} y1={FLOOR_Y - risePx} x2={RISE_X + 8} y2={FLOOR_Y - risePx} stroke={ORANGE} strokeWidth={1} opacity={0.38} />

@@ -20,17 +20,27 @@ export interface StairsOutputs extends Record<string, number> {
   treadCount: number;
   riserHeight: number;    // mm (actual, rounded)
   treadDepth: number;     // mm
-  stringerLength: number; // mm
+  stringerLength: number; // mm — line length (hypotenuse). Add 50–100mm for top/bottom cuts when ordering stock.
   stringerAngle: number;  // degrees
+  walklineSum: number;    // mm — 2 × riser + going (Blondel ergonomic check)
 }
 
 export interface StairsWarnings {
   riserOutOfRange: boolean;
   treadOutOfRange: boolean;
-  suggestedMinRun?: number; // mm — min run for a compliant going
-  suggestedMaxRun?: number; // mm — max run for a compliant going
-  runDerived: boolean;      // true when totalRun was calculated from preferredGoing
+  walklineOutOfRange: boolean; // 2R + G not in 550–700mm
+  angleOutOfRange: boolean;    // stringer angle < 20° or > 45°
+  suggestedMinRun?: number;    // mm — min run for a compliant going
+  suggestedMaxRun?: number;    // mm — max run for a compliant going
+  runDerived: boolean;         // true when totalRun was calculated from preferredGoing
 }
+
+// Blondel rule: 2 risers + 1 going should fall in this range for comfortable steps.
+const WALKLINE_MIN = 550;
+const WALKLINE_MAX = 700;
+// Stringer angle bounds — outside this range warrants a warning.
+const ANGLE_MIN = 20;
+const ANGLE_MAX = 45;
 
 export interface StairsResult {
   outputs: StairsOutputs;
@@ -87,8 +97,12 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
     ((Math.atan2(totalRise, totalRun) * 180) / Math.PI).toFixed(1)
   );
 
+  const walklineSum = parseFloat((2 * riserHeight + treadDepth).toFixed(1));
+
   const riserOutOfRange = riserHeight < limits.riserMin || riserHeight > limits.riserMax;
   const treadOutOfRange = treadDepth < limits.treadMin || treadDepth > limits.treadMax;
+  const walklineOutOfRange = walklineSum < WALKLINE_MIN || walklineSum > WALKLINE_MAX;
+  const angleOutOfRange = stringerAngle < ANGLE_MIN || stringerAngle > ANGLE_MAX;
 
   // If going is out of range, suggest what total run would fix it
   const suggestedMinRun = treadOutOfRange ? Math.round(treadCount * limits.treadMin) : undefined;
@@ -134,8 +148,8 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   ];
 
   return {
-    outputs: { riserCount, treadCount, riserHeight, treadDepth, stringerLength, stringerAngle },
-    warnings: { riserOutOfRange, treadOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived },
+    outputs: { riserCount, treadCount, riserHeight, treadDepth, stringerLength, stringerAngle, walklineSum },
+    warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived },
     steps,
   };
 }

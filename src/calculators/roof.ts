@@ -136,6 +136,12 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   const lineRafterLength = r3(solved.rafterLength);
   const pitchDegrees = r1(solved.pitchDegrees);
   const run = r3(skillion ? span : span / 2);
+
+  // Guard against mm-entered-as-m (e.g. span=5400 instead of 5.4)
+  if (run > 200 || rise > 200 || lineRafterLength > 200) {
+    throw new RoofInputError('Results exceed 200 m — enter lengths in metres (e.g. 5.4, not 5400).');
+  }
+
   const pitchRad = pitchDegrees * Math.PI / 180;
 
   // Shortening + cut rafter (only meaningful when ridge given)

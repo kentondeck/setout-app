@@ -6,6 +6,9 @@ export interface RoofDiagramProps {
   ridgeHeightMm: number;
   rafterLengthMm: number;  // totalRafterLength with overhang
   overhangMm: number;
+  seatWidthMm?: number;       // plate width — shows seat dim when provided
+  plumbDepthMm?: number;      // birdsmouth plumb depth — shows plumb dim when provided
+  cutRafterLengthMm?: number; // rafter length ridge-to-seat (no overhang) — shows from-top measurement
 }
 
 const ORANGE = '#FF5A1F';
@@ -36,6 +39,9 @@ function r(n: number) { return Math.round(n); }
 export const RoofDiagram = memo(function RoofDiagram({
   pitchDegrees,
   rafterLengthMm,
+  seatWidthMm,
+  plumbDepthMm,
+  cutRafterLengthMm,
 }: RoofDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -118,6 +124,21 @@ export const RoofDiagram = memo(function RoofDiagram({
   const midTopY   = (tailTopY  + ridgeTopY) / 2;
   const lblX      = r(midX   + labelOff * nx);
   const lblY      = r(midTopY + labelOff * ny);
+
+  // ── Birdsmouth annotation positions ───────────────────────────────────────
+  const seatDimY    = PLATE_Y_TOP + 9;
+  const seatMidX    = r((HEEL_X + SEAT_INNER_X) / 2);
+  const birdsDimX   = HEEL_X + 12;
+  const heelYBotR   = r(heelYBot);
+  const plumbRange  = heelYBotR - PLATE_Y_TOP;
+  const plumbMidY   = r((PLATE_Y_TOP + heelYBotR) / 2);
+
+  // ── Ridge-to-seat dimension (along bottom rafter face) ──────────────────
+  // Label dropped below the midpoint of the bottom face, clear of anatomy labels
+  const rsMidX = r((ridgeBotX + SEAT_INNER_X) / 2);
+  const rsMidY = r((ridgeBotY + PLATE_Y_TOP)  / 2);
+  const rsLblX = r(rsMidX + sinP * 30);
+  const rsLblY = r(rsMidY + cosP * 30);
 
   // ── Anatomy label leader endpoints ─────────────────────────────────────────
   const tailMidY  = r((tailBotY  + tailTopY)  / 2);
@@ -237,6 +258,61 @@ export const RoofDiagram = memo(function RoofDiagram({
           {pitchDegrees}°
         </text>
 
+        {/* ── Ridge-to-seat dimension (along bottom rafter face) ──────────── */}
+        {cutRafterLengthMm !== undefined && <>
+          {/* Dim line along the bottom face from ridge to seat */}
+          <line x1={r(ridgeBotX)} y1={r(ridgeBotY)} x2={SEAT_INNER_X} y2={PLATE_Y_TOP}
+            stroke={ORANGE} strokeWidth={1.8} strokeLinecap="round" opacity={0.75} />
+          {/* Ticks perpendicular to rafter face at each end */}
+          <line
+            x1={r(SEAT_INNER_X - 7*sinP)} y1={r(PLATE_Y_TOP - 7*cosP)}
+            x2={r(SEAT_INNER_X + 7*sinP)} y2={r(PLATE_Y_TOP + 7*cosP)}
+            stroke={ORANGE} strokeWidth={1.8} strokeLinecap="round" />
+          <line
+            x1={r(ridgeBotX - 7*sinP)} y1={r(ridgeBotY - 7*cosP)}
+            x2={r(ridgeBotX + 7*sinP)} y2={r(ridgeBotY + 7*cosP)}
+            stroke={ORANGE} strokeWidth={1.8} strokeLinecap="round" />
+          {/* Rotated label dropped below face midpoint */}
+          <g transform={`rotate(${-pitch}, ${rsLblX}, ${rsLblY})`}>
+            <text x={rsLblX} y={rsLblY - 5} textAnchor="middle"
+              fontFamily={FONT} fontSize={11} fontWeight={500} fill={ORANGE}>
+              Ridge to seat
+            </text>
+            <text x={rsLblX} y={rsLblY + 10} textAnchor="middle"
+              fontFamily={MONO} fontSize={14} fontWeight={600} fill={ORANGE}>
+              {Math.round(cutRafterLengthMm)}mm
+            </text>
+          </g>
+        </>}
+
+        {/* ── Birdsmouth seat width ──────────────────────────────────────── */}
+        {seatWidthMm !== undefined && seatWidthMm > 0 && <>
+          <line x1={HEEL_X + 3} y1={seatDimY} x2={SEAT_INNER_X - 3} y2={seatDimY}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={HEEL_X}       y1={seatDimY - 5} x2={HEEL_X}       y2={seatDimY + 5}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={SEAT_INNER_X} y1={seatDimY - 5} x2={SEAT_INNER_X} y2={seatDimY + 5}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <text x={seatMidX} y={PLATE_Y_TOP - 2}
+            textAnchor="middle" fontFamily={MONO} fontSize={13} fontWeight={600} fill={ORANGE}>
+            {Math.round(seatWidthMm)}mm
+          </text>
+        </>}
+
+        {/* ── Birdsmouth plumb depth ─────────────────────────────────────── */}
+        {plumbDepthMm !== undefined && plumbDepthMm > 0 && plumbRange >= 14 && <>
+          <line x1={birdsDimX} y1={PLATE_Y_TOP + 3} x2={birdsDimX} y2={heelYBotR - 3}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={birdsDimX - 6} y1={PLATE_Y_TOP} x2={birdsDimX + 6} y2={PLATE_Y_TOP}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <line x1={birdsDimX - 6} y1={heelYBotR}   x2={birdsDimX + 6} y2={heelYBotR}
+            stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          <text x={birdsDimX + 14} y={plumbMidY + 4}
+            textAnchor="start" fontFamily={MONO} fontSize={13} fontWeight={600} fill={ORANGE}>
+            {Math.round(plumbDepthMm)}mm
+          </text>
+        </>}
+
         {/* ── Rafter length annotation line + label ─────────────────────── */}
         {/* Extension lines from upper face to annotation line */}
         <line x1={r(tailTopX)} y1={r(tailTopY)} x2={r(annSX)} y2={r(annSY)}
@@ -285,10 +361,12 @@ export const RoofDiagram = memo(function RoofDiagram({
           </>
         )}
 
-        {/* Heel Cut — below, diagonal leader to heel cut face */}
-        <text x={110} y={370}
-          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Heel Cut</text>
-        <line x1={168} y1={363} x2={HEEL_X - 2} y2={heelMidY}
+        {/* Heel Cut — left of heel face, horizontal leader */}
+        <text x={50} y={heelMidY - 7}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Heel</text>
+        <text x={50} y={heelMidY + 9}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Cut</text>
+        <line x1={98} y1={heelMidY} x2={HEEL_X - 2} y2={heelMidY}
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
 
         {/* Seat Cut — below, vertical leader up to seat */}

@@ -32,7 +32,7 @@ function getModeLabel(id: Mode, roofType: RoofType): string {
 const FIELD_META: Record<PairKey, { label: string; units: ['m', 'mm'] | ['mm', 'm'] | null; unit?: string; hintNoRidge: string; hintWithRidge?: string }> = {
   span:         { label: 'Span',          units: ['m', 'mm'], hintNoRidge: 'full width' },
   rise:         { label: 'Rise',          units: ['m', 'mm'], hintNoRidge: 'ridge height' },
-  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], hintNoRidge: 'to centreline', hintWithRidge: 'cut, to ridge face' },
+  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], hintNoRidge: 'to ridge centreline', hintWithRidge: 'cut length, to ridge face' },
   pitchDegrees: { label: 'Pitch',         units: null, unit: '°', hintNoRidge: 'degrees' },
 };
 
@@ -302,6 +302,9 @@ export function RoofCalc() {
               ridgeHeightMm={out.ridgeHeight * 1000}
               rafterLengthMm={Math.round(out.totalRafterLength * 1000)}
               overhangMm={parseOpt(inputs.overhang) ? parseOpt(inputs.overhang)! * 1000 : 0}
+              seatWidthMm={out.birdsmouthPlumbDepth > 0 ? parseOpt(inputs.plateWidth) : undefined}
+              plumbDepthMm={out.birdsmouthPlumbDepth > 0 ? out.birdsmouthPlumbDepth : undefined}
+              cutRafterLengthMm={out.totalRafterLength > out.rafterLength ? Math.round(out.rafterLength * 1000) : undefined}
             />
 
             {/* Summary: all 4 derived values + cut angles */}
@@ -317,18 +320,13 @@ export function RoofCalc() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <RafterDimChip label={roofType === 'skillion' ? 'Run' : 'Span'} value={String(out.span)} unit="m" />
                 <RafterDimChip label="Rise"   value={String(out.rise)}         unit="m" />
-                <RafterDimChip label={hasRidge ? 'Rafter (cut)' : 'Rafter'} value={String(out.rafterLength)} unit="m" />
+                <RafterDimChip label={hasRidge ? 'Rafter (cut)' : 'Rafter'} value={String(out.totalRafterLength)} unit="m" />
                 <RafterDimChip label="Pitch"  value={String(out.pitchDegrees)} unit="°" />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 <ResultCard label="Plumb cut" value={out.plumbCutAngle} unit="°" />
                 <ResultCard label="Seat cut" value={out.seatCutAngle} unit="°" />
               </div>
-              {parseOpt(inputs.overhang) && (
-                <p style={{ margin: '2px 4px 0', fontSize: 12, color: 'var(--color-muted)' }}>
-                  Total rafter with overhang: <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>{out.totalRafterLength}m</span>
-                </p>
-              )}
             </div>
 
             {/* Rafter cut details — only when optional inputs were provided */}

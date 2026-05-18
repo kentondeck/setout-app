@@ -235,7 +235,6 @@ export function StairsCalc() {
             <StairDiagram
               riserCount={result.outputs.riserCount}
               riserHeight={result.outputs.riserHeight}
-              treadCount={result.outputs.treadCount}
               treadDepth={result.outputs.treadDepth}
               stringerLength={result.outputs.stringerLength}
               totalRise={parseFloat(inputs.totalRise)}

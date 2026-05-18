@@ -3,7 +3,6 @@ import { memo, useRef } from 'react';
 export interface StairDiagramProps {
   riserCount: number;
   riserHeight: number;
-  treadCount: number;
   treadDepth: number;
   stringerLength: number;
   totalRise: number;
@@ -46,8 +45,6 @@ export const StairDiagram = memo(function StairDiagram({
   const topX    = FOOT_X + drawnW;
   const topY    = FLOOR_Y - drawnH;
 
-  // Stair stepped profile path — riserCount risers, riserCount-1 treads
-  // totalRun = (riserCount-1) * treadDepth, so the last step is a vertical riser only
   let profileD = `M${FOOT_X} ${FLOOR_Y}`;
   for (let i = 0; i < riserCount; i++) {
     profileD += ` V${(FLOOR_Y - (i + 1) * risePx).toFixed(1)}`;

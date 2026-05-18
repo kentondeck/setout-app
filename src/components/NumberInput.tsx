@@ -41,12 +41,8 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
   // Canonical (base) unit — always what value/onChange use
   const base = units?.[0] ?? unit ?? '';
 
-  // Which units to cycle through in the badge
   function buildDisplayUnits(): string[] {
-    if (units && units.length > 1) {
-      return imperial && IMP[base] ? IMP[base] : units;
-    }
-    if (units && units.length === 1) {
+    if (units && units.length >= 1) {
       return imperial && IMP[base] ? IMP[base] : units;
     }
     return unit !== undefined ? [unit] : [];
@@ -89,7 +85,7 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
     if (imperial !== prevImperial.current) {
       prevImperial.current = imperial;
       setActiveIdx(0);
-      const newUnits = buildDisplayUnits();
+      const newUnits = imperial && IMP[base] ? IMP[base] : (units ?? (unit !== undefined ? [unit] : []));
       setLocal(toDisplay(value, newUnits[0] ?? base));
     }
   }, [imperial]); // eslint-disable-line react-hooks/exhaustive-deps

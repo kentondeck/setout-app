@@ -1,6 +1,6 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, HistoryContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import type { HistoryEntry } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
@@ -164,7 +164,7 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
             background: 'none',
             border: 'none',
             color: '#fff',
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 500,
             fontFamily: 'inherit',
             cursor: 'pointer',
@@ -173,7 +173,7 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
             lineHeight: 1.4,
           }}
         >
-          Remove{'\n'}from job
+          Delete
         </button>
       </div>
 
@@ -361,6 +361,7 @@ export function JobDetailPage() {
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } =
     useContext(JobsContext);
+  const { deleteEntry } = useContext(HistoryContext);
 
   const job = jobs.find(j => j.id === id);
 
@@ -620,7 +621,10 @@ export function JobDetailPage() {
             <CalcEntryCard
               key={entry.id}
               entry={entry}
-              onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
+              onRemove={calcId => {
+                removeCalculationFromJob(job.id, calcId);
+                deleteEntry(calcId);
+              }}
             />
           ))
         )}

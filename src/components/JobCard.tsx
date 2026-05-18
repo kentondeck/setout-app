@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SavedJob, HistoryEntry } from '../types';
 import { CALCULATORS } from '../lib/calculators';
@@ -7,6 +7,8 @@ interface JobCardProps {
   job: SavedJob;
   calculations: HistoryEntry[];
   onDelete: (id: string) => void;
+  isEditing?: boolean;
+  onRename?: (id: string, name: string) => void;
 }
 
 function formatRelativeTime(isoString: string): string {
@@ -23,17 +25,36 @@ function formatRelativeTime(isoString: string): string {
 
 const SWIPE_THRESHOLD = 80;
 
-export function JobCard({ job, calculations, onDelete }: JobCardProps) {
+export function JobCard({ job, calculations, onDelete, isEditing = false, onRename }: JobCardProps) {
   const navigate = useNavigate();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const touchStartX = useRef(0);
   const hasSwiped = useRef(false);
+  const [draftName, setDraftName] = useState(job.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing) {
+      setDraftName(job.name);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [isEditing, job.name]);
+
+  function handleRenameCommit() {
+    const trimmed = draftName.trim();
+    if (trimmed && trimmed !== job.name) {
+      onRename?.(job.id, trimmed);
+    } else {
+      setDraftName(job.name);
+    }
+  }
 
   const uniqueCalcIds = [...new Set(calculations.map(c => c.calculatorId))];
 
   function handleTouchStart(e: React.TouchEvent) {
+    if (isEditing) return;
     touchStartX.current = e.touches[0].clientX;
     hasSwiped.current = false;
     setIsSwiping(true);
@@ -52,6 +73,7 @@ export function JobCard({ job, calculations, onDelete }: JobCardProps) {
   }
 
   function handleCardClick() {
+    if (isEditing) return;
     if (hasSwiped.current) {
       setSwipeX(0);
       return;
@@ -135,20 +157,45 @@ export function JobCard({ job, calculations, onDelete }: JobCardProps) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <p
-            style={{
-              margin: 0,
-              fontSize: 16,
-              fontWeight: 500,
-              color: '#0a0a0a',
-              letterSpacing: '-0.3px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {job.name}
-          </p>
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={draftName}
+              onChange={e => setDraftName(e.target.value)}
+              onBlur={handleRenameCommit}
+              onKeyDown={e => { if (e.key === 'Enter') { e.currentTarget.blur(); } }}
+              style={{
+                fontSize: 16,
+                fontWeight: 500,
+                color: '#0a0a0a',
+                letterSpacing: '-0.3px',
+                border: 'none',
+                borderBottom: '1.5px solid #FF5A1F',
+                borderRadius: 0,
+                background: 'transparent',
+                outline: 'none',
+                padding: '0 0 2px',
+                fontFamily: 'inherit',
+                width: '100%',
+                WebkitAppearance: 'none',
+              }}
+            />
+          ) : (
+            <p
+              style={{
+                margin: 0,
+                fontSize: 16,
+                fontWeight: 500,
+                color: '#0a0a0a',
+                letterSpacing: '-0.3px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {job.name}
+            </p>
+          )}
           <p style={{ margin: 0, fontSize: 12, color: '#999' }}>
             {calculations.length} {calculations.length === 1 ? 'calculation' : 'calculations'} · {formatRelativeTime(job.updatedAt)}
           </p>
@@ -175,19 +222,36 @@ export function JobCard({ job, calculations, onDelete }: JobCardProps) {
             </div>
           )}
         </div>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#999"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ flexShrink: 0 }}
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
+        {isEditing ? (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#FF5A1F"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+        ) : (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#999"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        )}
       </div>
     </div>
   );

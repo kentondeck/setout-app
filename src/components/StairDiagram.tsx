@@ -46,10 +46,14 @@ export const StairDiagram = memo(function StairDiagram({
   const topX    = FOOT_X + drawnW;
   const topY    = FLOOR_Y - drawnH;
 
-  // Stair stepped profile path
+  // Stair stepped profile path — riserCount risers, riserCount-1 treads
+  // totalRun = (riserCount-1) * treadDepth, so the last step is a vertical riser only
   let profileD = `M${FOOT_X} ${FLOOR_Y}`;
   for (let i = 0; i < riserCount; i++) {
-    profileD += ` V${(FLOOR_Y - (i + 1) * risePx).toFixed(1)} H${(FOOT_X + (i + 1) * goingPx).toFixed(1)}`;
+    profileD += ` V${(FLOOR_Y - (i + 1) * risePx).toFixed(1)}`;
+    if (i < riserCount - 1) {
+      profileD += ` H${(FOOT_X + (i + 1) * goingPx).toFixed(1)}`;
+    }
   }
   const bodyD = profileD + ` V${FLOOR_Y} Z`;
 
@@ -61,8 +65,8 @@ export const StairDiagram = memo(function StairDiagram({
   const RISE_X   = FOOT_X - 46;
   const riseMidY = FLOOR_Y - risePx / 2;
 
-  // ── 2. GOING — second-from-top tread (matches reference design) ───────────
-  const goingTread  = Math.max(0, riserCount - 2);
+  // ── 2. GOING — second-from-top tread (riserCount-1 treads total, 0-indexed) ─
+  const goingTread  = Math.max(0, riserCount - 3);
   const goingX1     = FOOT_X + goingTread * goingPx;
   const goingX2     = goingX1 + goingPx;
   const goingMidX   = (goingX1 + goingX2) / 2;

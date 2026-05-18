@@ -30,8 +30,10 @@ body {
 }
 
 /* Smaller placeholder so text like "optional" fits in narrow inputs */
-input::placeholder {
+input::placeholder,
+textarea::placeholder {
   font-size: 13px;
+  color: rgba(0, 0, 0, 0.35);
 }
 
 /* Hide number input spinners */

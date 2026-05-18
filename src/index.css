@@ -74,7 +74,7 @@ input[type='number'] {
 
   #root {
     width: 390px;
-    min-height: 844px;
+    height: 844px;
     max-height: 844px;
     border-radius: 44px;
     overflow-y: auto;

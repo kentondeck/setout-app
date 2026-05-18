@@ -101,4 +101,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '13',
     svgPath: 'M2,10 L8,10 L8,22 L16,22 L16,10 L22,10',
   },
+  {
+    id: 'gradient',
+    label: 'Gradient',
+    subtitle: 'Fall, ratio, grade',
+    number: '14',
+    svgPath: 'M3 20L21 4M21 4h-6M21 4v6',
+  },
 ];

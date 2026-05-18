@@ -49,6 +49,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Excavations deeper than 1.5m require shoring, benching, or a 1:1 batter — Safe Work Australia Code of Practice: Excavation Work. Call Dial Before You Dig (1100) before any excavation to locate underground services.',
     NZ: 'Excavations deeper than 1.5m require shoring, edge protection, or a battered face — WorkSafe NZ guidelines. Call Before You Dig (0800 248 344) before any excavation to locate underground services.',
   },
+  gradient: {
+    AU: 'Minimum drainage fall 1:100 (AS/NZS 3500). Accessible ramps max 1:14 (AS 1428.1), preferred 1:20. Sewer grades per AS/NZS 3500.2. Verify drainage gradients with your hydraulic engineer.',
+    NZ: 'Minimum drainage fall 1:60 for stormwater (G12/AS2). Accessible ramps max 1:12 (NZS 4121), preferred 1:20. Verify drainage gradients against NZS 4404 and your local authority drainage design requirements.',
+  },
 };
 
 export interface StairLimits {

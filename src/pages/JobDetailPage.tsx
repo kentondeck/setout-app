@@ -608,10 +608,6 @@ export function JobDetailPage() {
 
   const entryCosts = calculations.map(e => estimateEntryCost(e, settings.materialRates));
   const costById = new Map(calculations.map((e, i) => [e.id, entryCosts[i]]));
-  const hasAnyRate = Object.values(settings.materialRates).some(v => v > 0);
-  const totalCost = hasAnyRate
-    ? entryCosts.reduce<number | null>((sum, c) => c === null ? sum : (sum ?? 0) + c, null)
-    : null;
 
   const grouped: Record<string, HistoryEntry[]> = { today: [], yesterday: [], older: [] };
   for (const c of calculations) grouped[dayGroup(c.timestamp)].push(c);

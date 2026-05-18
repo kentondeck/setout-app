@@ -169,7 +169,6 @@ function StairsMaterials({ entry }: { entry: HistoryEntry }) {
       <StairDiagram
         riserCount={riserCount}
         riserHeight={riserHeight}
-        treadCount={treadCount}
         treadDepth={treadDepth}
         stringerLength={stringerLength}
         totalRise={totalRise}

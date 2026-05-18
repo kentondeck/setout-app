@@ -57,9 +57,10 @@ export const StairDiagram = memo(function StairDiagram({
   }
   const bodyD = profileD + ` V${FLOOR_Y} Z`;
 
-  // Stringer
-  const stringerPx = Math.sqrt(drawnW ** 2 + drawnH ** 2);
-  const angle      = Math.atan2(drawnH, drawnW) * (180 / Math.PI);
+  // Stringer — runs along bottom of risers: foot (FOOT_X, FLOOR_Y) → (topX, topY + risePx)
+  const stRisePx   = drawnH - risePx;
+  const stringerPx = Math.sqrt(drawnW ** 2 + stRisePx ** 2);
+  const angle      = Math.atan2(stRisePx, drawnW) * (180 / Math.PI);
 
   // ── 1. RISE — left of first riser ─────────────────────────────────────────
   const RISE_X   = FOOT_X - 46;
@@ -87,7 +88,7 @@ export const StairDiagram = memo(function StairDiagram({
   //   label x = FOOT_X + drawnW*0.155,  label y = FLOOR_Y - drawnH*0.75
   //   leader start = label + (drawnW*0.136, 12),  leader end = stringer midpoint
   const stMidX   = FOOT_X + drawnW / 2;
-  const stMidY   = FLOOR_Y - drawnH / 2;
+  const stMidY   = FLOOR_Y - stRisePx / 2;
   const stLabelX = FOOT_X + drawnW * 0.155;
   const stLabelY = FLOOR_Y - drawnH * 0.75;
   const stLeadX1 = stLabelX + drawnW * 0.136;
@@ -167,9 +168,9 @@ export const StairDiagram = memo(function StairDiagram({
         </g>
 
         {/* ── STRINGER — upper-left open space ── */}
-        <text x={stLabelX} y={stLabelY - 6}  textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Stringer length</text>
-        <text x={stLabelX} y={stLabelY + 21} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(stringerLength)}</text>
-        <text x={stLabelX} y={stLabelY + 40} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        <text x={stLabelX} y={stLabelY - 6}  textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">Stringer length</text>
+        <text x={stLabelX} y={stLabelY + 21} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(stringerLength)}</text>
+        <text x={stLabelX} y={stLabelY + 40} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
         <line x1={stLeadX1} y1={stLeadY1} x2={stMidX - 8} y2={stMidY - 2} stroke={ORANGE} strokeWidth={1} strokeDasharray="3 4" opacity={0.7} />
         <circle cx={stMidX} cy={stMidY} r={3} fill={ORANGE} />
 
@@ -179,9 +180,9 @@ export const StairDiagram = memo(function StairDiagram({
         <line x1={RISE_X} y1={FLOOR_Y - risePx + 10} x2={RISE_X} y2={FLOOR_Y - 10} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
         <polygon points={`${RISE_X},${FLOOR_Y - risePx} ${RISE_X-5},${FLOOR_Y-risePx+12} ${RISE_X+5},${FLOOR_Y-risePx+12}`} fill={ORANGE} />
         <polygon points={`${RISE_X},${FLOOR_Y}          ${RISE_X-5},${FLOOR_Y-12}          ${RISE_X+5},${FLOOR_Y-12}`}         fill={ORANGE} />
-        <text x={RISE_X - 10} y={riseMidY - 14} textAnchor="end" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Rise</text>
-        <text x={RISE_X - 10} y={riseMidY + 12} textAnchor="end" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(riserHeight)}</text>
-        <text x={RISE_X - 10} y={riseMidY + 30} textAnchor="end" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        <text x={RISE_X - 10} y={riseMidY - 14} textAnchor="end" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">Rise</text>
+        <text x={RISE_X - 10} y={riseMidY + 12} textAnchor="end" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(riserHeight)}</text>
+        <text x={RISE_X - 10} y={riseMidY + 30} textAnchor="end" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
         {/* ── GOING — second-from-top tread ── */}
         <line x1={goingX1} y1={goingTreadY} x2={goingX1} y2={goingArrY - 6} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
@@ -189,9 +190,9 @@ export const StairDiagram = memo(function StairDiagram({
         <line x1={goingX1 + ahW} y1={goingArrY} x2={goingX2 - ahW} y2={goingArrY} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
         <polygon points={`${goingX1},${goingArrY} ${goingX1+ahW},${goingArrY-5} ${goingX1+ahW},${goingArrY+5}`} fill={ORANGE} />
         <polygon points={`${goingX2},${goingArrY} ${goingX2-ahW},${goingArrY-5} ${goingX2-ahW},${goingArrY+5}`} fill={ORANGE} />
-        <text x={goingMidX} y={goingArrY - 54} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Going</text>
-        <text x={goingMidX} y={goingArrY - 28} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(treadDepth)}</text>
-        <text x={goingMidX} y={goingArrY - 10} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        <text x={goingMidX} y={goingArrY - 54} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">Going</text>
+        <text x={goingMidX} y={goingArrY - 28} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(treadDepth)}</text>
+        <text x={goingMidX} y={goingArrY - 10} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
         {/* ── HEIGHT — right ── */}
         <line x1={topX}      y1={topY}    x2={HEIGHT_X - 8} y2={topY}    stroke={ORANGE} strokeWidth={1} opacity={0.38} />
@@ -199,9 +200,9 @@ export const StairDiagram = memo(function StairDiagram({
         <line x1={HEIGHT_X} y1={topY + 10} x2={HEIGHT_X} y2={FLOOR_Y - 10} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
         <polygon points={`${HEIGHT_X},${topY}    ${HEIGHT_X-5},${topY+12}    ${HEIGHT_X+5},${topY+12}`}    fill={ORANGE} />
         <polygon points={`${HEIGHT_X},${FLOOR_Y} ${HEIGHT_X-5},${FLOOR_Y-12} ${HEIGHT_X+5},${FLOOR_Y-12}`} fill={ORANGE} />
-        <text x={HEIGHT_X + 14} y={heightMidY - 14} textAnchor="start" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Height</text>
-        <text x={HEIGHT_X + 14} y={heightMidY + 12} textAnchor="start" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(totalRise)}</text>
-        <text x={HEIGHT_X + 14} y={heightMidY + 30} textAnchor="start" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        <text x={HEIGHT_X + 14} y={heightMidY - 14} textAnchor="start" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">Height</text>
+        <text x={HEIGHT_X + 14} y={heightMidY + 12} textAnchor="start" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(totalRise)}</text>
+        <text x={HEIGHT_X + 14} y={heightMidY + 30} textAnchor="start" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
         {/* ── BASE LENGTH — below ── */}
         <line x1={FOOT_X} y1={FLOOR_Y} x2={FOOT_X} y2={BASE_Y - 8} stroke={ORANGE} strokeWidth={1} opacity={0.38} />
@@ -209,9 +210,9 @@ export const StairDiagram = memo(function StairDiagram({
         <line x1={FOOT_X + 10} y1={BASE_Y} x2={topX - 10} y2={BASE_Y} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
         <polygon points={`${FOOT_X},${BASE_Y} ${FOOT_X+14},${BASE_Y-5} ${FOOT_X+14},${BASE_Y+5}`} fill={ORANGE} />
         <polygon points={`${topX},${BASE_Y}   ${topX-14},${BASE_Y-5}   ${topX-14},${BASE_Y+5}`}   fill={ORANGE} />
-        <text x={baseMidX} y={BASE_Y + 26} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">Base length</text>
-        <text x={baseMidX} y={BASE_Y + 52} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{fmt(totalRun)}</text>
-        <text x={baseMidX} y={BASE_Y + 70} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+        <text x={baseMidX} y={BASE_Y + 26} textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">Base length</text>
+        <text x={baseMidX} y={BASE_Y + 52} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(totalRun)}</text>
+        <text x={baseMidX} y={BASE_Y + 70} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
       </svg>
 

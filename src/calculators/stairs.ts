@@ -86,6 +86,12 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
     }
   }
 
+  // At least 2 risers needed — 1 riser means 0 treads (division by zero)
+  if (riserCount < 2) {
+    riserCount = 2;
+    if (runDerived && preferredGoing) totalRun = preferredGoing;
+  }
+
   const riserHeight = parseFloat((totalRise / riserCount).toFixed(1));
   const treadCount = riserCount - 1;
   const treadDepth = parseFloat((totalRun / treadCount).toFixed(1));

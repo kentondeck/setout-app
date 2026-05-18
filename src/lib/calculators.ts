@@ -94,4 +94,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '12',
     svgPath: 'M3 20L12 5L21 20M5 18h14M7 15h10M9 12h6',
   },
+  {
+    id: 'excavation',
+    label: 'Excavation',
+    subtitle: 'Volume, swell, truck loads',
+    number: '13',
+    svgPath: 'M2,10 L8,10 L8,22 L16,22 L16,10 L22,10',
+  },
 ];

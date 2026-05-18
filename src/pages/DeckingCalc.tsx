@@ -10,6 +10,7 @@ import { calculateCutlist } from '../calculators/cutlist';
 import type { CutlistResult } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 
@@ -241,6 +242,13 @@ export function DeckingCalc() {
                 <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
                 <ResultCard label="Lineal metres" value={fmt(result.outputs.totalLinealMetres)} unit="lm" />
               </div>
+              {settings.materialRates.timberPerLm > 0 && (
+                <ResultCard
+                  label="Est. materials"
+                  value={formatCost(result.outputs.totalLinealMetres * settings.materialRates.timberPerLm)}
+                  accent
+                />
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
                 <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
                 <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />

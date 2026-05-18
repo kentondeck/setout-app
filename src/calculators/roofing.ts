@@ -1,7 +1,7 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
 export type RoofType = 'gable' | 'hip' | 'skillion';
-export type RoofProfile = 'corrugate' | 'trimdek' | 'superdek';
+export type RoofProfile = 'corrugate' | 'trimdek' | 'hirib';
 
 export interface RoofingInputs {
   roofType: RoofType;
@@ -39,7 +39,7 @@ export const ROOFING_PROFILES: Record<RoofProfile, {
 }> = {
   corrugate: { label: 'Corrugate', coverMm: 762, lapScrews: 11, fieldScrews: 6 },
   trimdek:   { label: 'Trimdek',   coverMm: 762, lapScrews: 4,  fieldScrews: 4 },
-  superdek:  { label: 'Superdek',  coverMm: 686, lapScrews: 4,  fieldScrews: 4 },
+  hirib:     { label: 'Hi-Rib',    coverMm: 762, lapScrews: 5,  fieldScrews: 3 },
 };
 
 const r1 = (n: number) => parseFloat(n.toFixed(1));

@@ -9,6 +9,7 @@ import type { FramingOutputs } from '../calculators/framing';
 import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { FramingDiagram } from '../components/FramingDiagram';
 
@@ -349,6 +350,13 @@ export function FramingCalc() {
               </div>
               {includeNoggins && (
                 <ResultCard label="Nogs" value={result.outputs.nogginCount} />
+              )}
+              {settings.materialRates.timberPerLm > 0 && (
+                <ResultCard
+                  label="Est. materials"
+                  value={formatCost(result.outputs.totalLinealMetres * settings.materialRates.timberPerLm)}
+                  accent
+                />
               )}
             </div>
 

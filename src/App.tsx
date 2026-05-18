@@ -23,6 +23,7 @@ import { CladdingCalc } from './pages/CladdingCalc';
 import { SetoutCalc } from './pages/SetoutCalc';
 import { CodeCheckCalc } from './pages/CodeCheckCalc';
 import { RoofingCalc } from './pages/RoofingCalc';
+import { ExcavationCalc } from './pages/ExcavationCalc';
 
 
 function AppShell() {
@@ -48,6 +49,7 @@ function AppShell() {
           <Route path="/calc/setout" element={<SetoutCalc />} />
           <Route path="/calc/codecheck" element={<CodeCheckCalc />} />
           <Route path="/calc/roofing" element={<RoofingCalc />} />
+          <Route path="/calc/excavation" element={<ExcavationCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

@@ -1,7 +1,8 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, SettingsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
+import { estimateEntryCost, formatCost } from '../lib/jobCost';
 import type { HistoryEntry } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
@@ -319,12 +320,13 @@ function MaterialsForCalc({ entry }: { entry: HistoryEntry }) {
 
 interface CalcEntryCardProps {
   entry: HistoryEntry;
+  cost: number | null;
   onRemove: (calcId: string) => void;
 }
 
 const SWIPE_THRESHOLD = 88;
 
-function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
+function CalcEntryCard({ entry, cost, onRemove }: CalcEntryCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -471,7 +473,7 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
             </p>
           </div>
 
-          {/* Key result */}
+          {/* Key result + cost */}
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <p
               style={{
@@ -482,9 +484,11 @@ function CalcEntryCard({ entry, onRemove }: CalcEntryCardProps) {
                 letterSpacing: '-0.3px',
               }}
             >
-              {keyValue}
+              {cost !== null ? formatCost(cost) : keyValue}
             </p>
-            <p style={{ margin: '1px 0 0', fontSize: 10, color: '#999' }}>{keyLabel}</p>
+            <p style={{ margin: '1px 0 0', fontSize: 10, color: '#999' }}>
+              {cost !== null ? 'est. materials' : keyLabel}
+            </p>
           </div>
 
           <svg
@@ -582,6 +586,7 @@ export function JobDetailPage() {
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } =
     useContext(JobsContext);
+  const { settings } = useContext(SettingsContext);
 
   const job = jobs.find(j => j.id === id);
 
@@ -634,6 +639,15 @@ export function JobDetailPage() {
   }
 
   const calculations = getJobCalculations(job.id);
+
+  const entryCosts = calculations.map(e => estimateEntryCost(e, settings.materialRates));
+  const hasAnyRate = Object.values(settings.materialRates).some(v => v > 0);
+  const totalCost = hasAnyRate
+    ? entryCosts.reduce<number | null>((sum, c) => {
+        if (c === null) return sum;
+        return (sum ?? 0) + c;
+      }, null)
+    : null;
 
   function handleNotesBlur() {
     if (notes !== job!.notes) {
@@ -817,6 +831,45 @@ export function JobDetailPage() {
         />
       </div>
 
+      {/* Cost total banner */}
+      {calculations.length > 0 && (
+        <div style={{ padding: '12px 20px 0' }}>
+          <div
+            style={{
+              background: totalCost !== null ? 'rgba(255,90,31,0.06)' : 'rgba(0,0,0,0.03)',
+              border: `0.5px solid ${totalCost !== null ? 'rgba(255,90,31,0.2)' : 'rgba(0,0,0,0.06)'}`,
+              borderRadius: 14,
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <div>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: '#999', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Est. materials cost
+              </p>
+              {totalCost !== null ? (
+                <p style={{ margin: '3px 0 0', fontSize: 22, fontWeight: 600, color: '#FF5A1F', letterSpacing: '-0.5px' }}>
+                  {formatCost(totalCost)}
+                </p>
+              ) : (
+                <p style={{ margin: '3px 0 0', fontSize: 13, color: '#999' }}>
+                  {hasAnyRate ? 'No priced items in this job' : 'Set rates in Settings'}
+                </p>
+              )}
+            </div>
+            {totalCost !== null && (
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ margin: 0, fontSize: 11, color: '#999' }}>
+                  {entryCosts.filter(c => c !== null).length} of {calculations.length} items priced
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Calculations */}
       <div style={{ flex: 1, padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {calculations.length === 0 ? (
@@ -837,10 +890,11 @@ export function JobDetailPage() {
             </p>
           </div>
         ) : (
-          calculations.map(entry => (
+          calculations.map((entry, i) => (
             <CalcEntryCard
               key={entry.id}
               entry={entry}
+              cost={entryCosts[i]}
               onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
             />
           ))

@@ -15,7 +15,14 @@ interface HistoryCtx {
 }
 
 export const SettingsContext = createContext<SettingsCtx>({
-  settings: { unit: 'metric', apprenticeMode: false, userName: '', region: 'AU', pinnedCalcs: [] },
+  settings: {
+    unit: 'metric',
+    apprenticeMode: false,
+    userName: '',
+    region: 'AU',
+    pinnedCalcs: [],
+    materialRates: { timberPerLm: 0, concretePerM3: 0, concreteBagEach: 0, roofingSheetEach: 0 },
+  },
   updateSettings: () => {},
 });
 

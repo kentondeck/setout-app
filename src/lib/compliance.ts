@@ -45,6 +45,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Sheet quantities and fixing patterns based on AS 1562.1 (metal roof cladding). Screw counts are indicative — verify fixing centres against manufacturer specifications, wind region, and roof pitch. Hip-end sheet counts include waste allowance for diagonal cuts.',
     NZ: 'Sheet quantities and fixing patterns based on NZS 3604 and NZRCA guidelines. Screw counts are indicative — verify fixing centres against manufacturer specifications, wind zone, and roof pitch. Hip-end sheet counts include waste allowance for diagonal cuts.',
   },
+  excavation: {
+    AU: 'Excavations deeper than 1.5m require shoring, benching, or a 1:1 batter — Safe Work Australia Code of Practice: Excavation Work. Call Dial Before You Dig (1100) before any excavation to locate underground services.',
+    NZ: 'Excavations deeper than 1.5m require shoring, edge protection, or a battered face — WorkSafe NZ guidelines. Call Before You Dig (0800 248 344) before any excavation to locate underground services.',
+  },
 };
 
 export interface StairLimits {

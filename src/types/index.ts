@@ -10,9 +10,17 @@ export type CalculatorId =
   | 'cladding'
   | 'setout'
   | 'codecheck'
-  | 'roofing';
+  | 'roofing'
+  | 'excavation';
 
 export type Region = 'AU' | 'NZ';
+
+export interface MaterialRates {
+  timberPerLm: number;
+  concretePerM3: number;
+  concreteBagEach: number;
+  roofingSheetEach: number;
+}
 
 export interface Settings {
   unit: 'metric' | 'imperial';
@@ -20,6 +28,7 @@ export interface Settings {
   userName: string;
   region: Region;
   pinnedCalcs: CalculatorId[];
+  materialRates: MaterialRates;
 }
 
 export interface HistoryEntry {

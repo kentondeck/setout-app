@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateRoofing, ROOFING_PROFILES } from '../calculators/roofing';
 import type { RoofType, RoofProfile, RoofingResult } from '../calculators/roofing';
@@ -244,6 +245,13 @@ export function RoofingCalc() {
                 <ResultCard label="Sheets" value={o.sheetCount} accent />
                 <ResultCard label="Sheet length" value={sheetLengthDisplay} />
               </div>
+              {settings.materialRates.roofingSheetEach > 0 && (
+                <ResultCard
+                  label="Est. materials"
+                  value={formatCost(o.sheetCount * settings.materialRates.roofingSheetEach)}
+                  accent
+                />
+              )}
 
               {/* Slope area + purlins */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

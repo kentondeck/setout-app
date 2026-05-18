@@ -27,6 +27,8 @@ function getRampPresets(region: Region) {
     { label: region === 'AU' ? '1:14' : '1:12', ratio: region === 'AU' ? 14 : 12, note: region === 'AU' ? 'Ramp max (AS 1428)' : 'Ramp max (NZS 4121)' },
     { label: '1:20', ratio: 20, note: 'Ramp preferred' },
     { label: '1:33', ratio: 33, note: 'Footpath / path max' },
+    { label: '1:5',  ratio: 5,  note: 'Driveway max (steep)' },
+    { label: '1:8',  ratio: 8,  note: 'Driveway typical' },
   ];
 }
 
@@ -178,7 +180,7 @@ export function GradientCalc() {
             <div style={{ height: 1, background: 'var(--color-border)', margin: '0 -2px' }} />
 
             <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
-              Ramps & Access
+              Ramps, Access & Driveways
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
               {rampPresets.map(p => {

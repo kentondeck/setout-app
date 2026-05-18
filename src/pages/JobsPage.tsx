@@ -3,9 +3,10 @@ import { JobsContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
 
 export function JobsPage() {
-  const { jobs, createJob, deleteJob, getJobCalculations } = useContext(JobsContext);
+  const { jobs, createJob, updateJob, deleteJob, getJobCalculations } = useContext(JobsContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
+  const [editMode, setEditMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -45,26 +46,51 @@ export function JobsPage() {
         >
           Saved jobs
         </h1>
-        <button
-          onClick={() => setShowNewJob(true)}
-          style={{
-            background: '#FF5A1F',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 10,
-            padding: '8px 14px',
-            fontSize: 14,
-            fontWeight: 500,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            minHeight: 36,
-          }}
-          onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
-          onPointerUp={e => (e.currentTarget.style.opacity = '1')}
-          onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          + New job
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {jobs.length > 0 && (
+            <button
+              onClick={() => setEditMode(e => !e)}
+              style={{
+                background: editMode ? 'rgba(255,90,31,0.1)' : 'rgba(0,0,0,0.06)',
+                color: editMode ? '#FF5A1F' : '#555',
+                border: 'none',
+                borderRadius: 10,
+                padding: '8px 14px',
+                fontSize: 14,
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                minHeight: 36,
+                transition: 'background 0.15s, color 0.15s',
+              }}
+              onPointerDown={e => (e.currentTarget.style.opacity = '0.75')}
+              onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+              onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+            >
+              {editMode ? 'Done' : 'Edit'}
+            </button>
+          )}
+          <button
+            onClick={() => { setShowNewJob(true); setEditMode(false); }}
+            style={{
+              background: '#FF5A1F',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              padding: '8px 14px',
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              minHeight: 36,
+            }}
+            onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
+            onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+            onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            + New job
+          </button>
+        </div>
       </div>
 
       {/* Empty state */}
@@ -123,6 +149,8 @@ export function JobsPage() {
               job={job}
               calculations={getJobCalculations(job.id)}
               onDelete={deleteJob}
+              isEditing={editMode}
+              onRename={(id, name) => updateJob(id, { name })}
             />
           ))}
         </div>

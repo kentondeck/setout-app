@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { SettingsContext, HistoryContext, JobsContext } from './contexts';
+import { SplashScreen } from './components/SplashScreen';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
@@ -55,19 +57,25 @@ function AppShell() {
 }
 
 export function App() {
+  const [splashDone, setSplashDone] = useState(false);
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
-      <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
-        <JobsContext.Provider value={jobsApi}>
-          <HashRouter>
-            <AppShell />
-          </HashRouter>
-        </JobsContext.Provider>
-      </HistoryContext.Provider>
-    </SettingsContext.Provider>
+    <>
+      {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
+      {splashDone && (
+        <SettingsContext.Provider value={{ settings, updateSettings }}>
+          <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
+            <JobsContext.Provider value={jobsApi}>
+              <HashRouter>
+                <AppShell />
+              </HashRouter>
+            </JobsContext.Provider>
+          </HistoryContext.Provider>
+        </SettingsContext.Provider>
+      )}
+    </>
   );
 }

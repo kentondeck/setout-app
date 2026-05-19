@@ -204,6 +204,13 @@ export function SetoutCalc() {
               finalLabel={mode === 'check' ? 'Square check' : 'Required diagonal'}
               visible={settings.apprenticeMode}
               id="setout"
+              glossary={[
+                { term: 'Setout', definition: 'The process of marking the exact positions of walls, columns, or footings on the ground before building starts.' },
+                { term: '3-4-5 rule', definition: 'A method to check square using Pythagoras: if one side is 3 units, the adjacent side 4 units, and the diagonal measures exactly 5 units — the corner is 90°.' },
+                { term: 'Diagonal', definition: 'The distance across a rectangle from corner to corner. Equal diagonals confirm the rectangle is square.' },
+                { term: 'Out of square', definition: 'When the diagonal measurements differ, the shape is a parallelogram not a rectangle. The difference tells you how much to adjust.' },
+                { term: 'Pythagoras', definition: 'The formula: diagonal² = length² + width². Used to calculate the correct diagonal for any rectangle.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

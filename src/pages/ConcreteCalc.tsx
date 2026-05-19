@@ -399,6 +399,13 @@ export function ConcreteCalc() {
               finalLabel="Concrete to order"
               visible={settings.apprenticeMode}
               id="concrete-slab"
+              glossary={[
+                { term: 'Cubic metre (m³)', definition: 'The standard unit for ordering concrete. Volume = length × width × depth (all in metres).' },
+                { term: 'Wastage', definition: 'Extra concrete ordered beyond the calculated volume to account for spillage, uneven sub-base, and form flex. Typically 10%.' },
+                { term: 'Slab', definition: 'A flat, horizontal concrete pour — the floor or base. Thickness is determined by load and ground conditions.' },
+                { term: 'MPa (megapascal)', definition: 'The strength rating of concrete mix. 20 MPa is standard residential, 25–32 MPa for structural or exposed slabs.' },
+                { term: 'Ready-mix', definition: 'Concrete delivered pre-mixed by truck. More consistent than site-batched; required when volume exceeds about 0.2 m³.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastSlabId} />
@@ -454,6 +461,12 @@ export function ConcreteCalc() {
               finalLabel={postResult.outputs.useBagMix ? '20kg bags needed' : 'Ready-mix to order'}
               visible={settings.apprenticeMode}
               id="concrete-postholes"
+              glossary={[
+                { term: 'Post hole', definition: 'The excavated hole that a structural post sits in. Diameter and depth depend on post size and soil conditions.' },
+                { term: 'Bag mix', definition: 'Pre-measured concrete in 20kg bags, mixed on site with water. Practical for small volumes like post holes.' },
+                { term: 'Cubic metre (m³)', definition: 'The standard unit for ordering concrete. For a post hole: π × radius² × depth.' },
+                { term: 'Wastage', definition: 'Extra concrete beyond the calculated volume for spillage and overdig. Allow 10% minimum.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastPostId} />

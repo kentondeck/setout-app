@@ -204,6 +204,13 @@ export function CladdingCalc() {
               finalLabel="Cladding setout"
               visible={settings.apprenticeMode}
               id="cladding"
+              glossary={[
+                { term: 'Course', definition: 'A single horizontal row of cladding boards. The number of courses is determined by wall height and the face cover of each board.' },
+                { term: 'Face cover', definition: 'The visible width of each cladding board once installed — the part exposed after the board above overlaps it.' },
+                { term: 'Overlap / Lap', definition: 'The amount one board covers the top of the board below. More overlap means better weatherproofing but more boards needed.' },
+                { term: 'Weatherboard', definition: 'Horizontal timber cladding boards that shed water using their lapped profile. Also called bevel-back or rusticated boards.' },
+                { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order cladding and framing timber.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

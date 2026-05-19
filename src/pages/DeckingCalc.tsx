@@ -298,6 +298,13 @@ export function DeckingCalc() {
               finalLabel="Total decking boards needed"
               visible={settings.apprenticeMode}
               id="decking"
+              glossary={[
+                { term: 'Bearer', definition: 'The main structural timber running parallel to the house, spanning from post to post. Joists sit on top of bearers.' },
+                { term: 'Joist', definition: 'Secondary framing timber running perpendicular to bearers. Decking boards are fixed directly to joists.' },
+                { term: 'Decking board', definition: 'The surface boards you walk on. Width and thickness vary — 90mm, 140mm are common. Gap between boards allows drainage.' },
+                { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order long materials like decking and framing timber.' },
+                { term: 'Board gap', definition: 'The space left between adjacent decking boards for drainage and seasonal timber movement. Typically 5–8mm.' },
+              ]}
             />
 
             {/* Material & Cut List */}

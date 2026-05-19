@@ -44,9 +44,9 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   }
 
   const firstMark = rodMarks[0];
-  const lastMark = Math.round(startOffset + (courseCount - 1) * faceCover);
+  const lastMark = rodMarks[courseCount - 1];
   // Top board is always ripped — its top edge would overshoot wall height by (boardWidth - faceCover)
-  const topBoardRip = Math.round(faceCover);
+  const topBoardRip = faceCover;
 
   // Lineal metres of boards: one board-width per course for the full wall width
   const totalLm = parseFloat(((wallWidth / 1000) * courseCount).toFixed(2));
@@ -63,7 +63,7 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
 
   // Waste: compare usable timber vs total purchased
   const purchased = stockCount * boardLength;
-  const used = (wallWidth / 1000) * courseCount * 1000; // mm total
+  const used = wallWidth * courseCount; // mm total
   const wastePercent = parseFloat((((purchased - used) / purchased) * 100).toFixed(1));
 
   const steps: WorkingStep[] = [

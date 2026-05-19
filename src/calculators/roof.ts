@@ -154,8 +154,8 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   const overhangRafter = overhang > 0 ? r3(overhang / Math.cos(pitchRad)) : 0;
   const totalRafterLength = r3(rafterLength + overhangRafter);
 
-  const plumbCutAngle = r1(pitchDegrees);
-  const seatCutAngle = r1(90 - pitchDegrees);
+  const plumbCutAngle = pitchDegrees;
+  const seatCutAngle = 90 - pitchDegrees;
 
   let birdsmouthPlumbDepth = 0;
   let remainingDepth = 0;

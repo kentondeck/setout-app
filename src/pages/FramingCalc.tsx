@@ -39,6 +39,7 @@ export function FramingCalc() {
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
+  const [calcNogginRows, setCalcNogginRows] = useState(0);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
 
@@ -67,6 +68,7 @@ export function FramingCalc() {
 
     const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds, doubleTopPlate });
     setResult(calc);
+    setCalcNogginRows(includeNoggins ? (nogginRows || 1) : 0);
 
     const id = crypto.randomUUID();
     setLastEntryId(id);
@@ -390,7 +392,7 @@ export function FramingCalc() {
                 { label: 'Studs', qty: result.outputs.studCount, mm: wallHeightMm },
                 { label: `Top plate (${doubleTopPlate ? '2 runs' : '1 run'})`, qty: doubleTopPlate ? 2 : 1, mm: wallLengthMm },
                 { label: 'Bottom plate', qty: 1, mm: wallLengthMm },
-                ...(includeNoggins && nogginCount > 0 ? [{ label: 'Noggins', qty: nogginCount, mm: nogginLengthMm }] : []),
+                ...(includeNoggins && nogginCount > 0 ? [{ label: 'Nogs', qty: nogginCount, mm: nogginLengthMm }] : []),
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
@@ -443,7 +445,7 @@ export function FramingCalc() {
               {includeNoggins && nogginCount > 0 && (
                 <>
                   <div style={{ height: 0.5, background: 'var(--color-border)' }} />
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGGINS</p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGS</p>
                   {nogginCutlist && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
@@ -473,7 +475,7 @@ export function FramingCalc() {
               wallHeightMm={wallHeightMm}
               studCount={result.outputs.studCount}
               studSpacingMm={resolvedSpacingMm}
-              nogginRows={includeNoggins ? (parseInt(inputs.nogginRows) || 1) : 0}
+              nogginRows={calcNogginRows}
               doubleTopPlate={doubleTopPlate}
               doubleStuds={doubleStuds}
             />

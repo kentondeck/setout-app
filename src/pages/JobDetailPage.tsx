@@ -241,7 +241,7 @@ function FramingMaterials({ entry }: { entry: HistoryEntry }) {
     { label: `Top plate (${doubleTopPlate ? '2 runs' : '1 run'})`, qty: doubleTopPlate ? 2 : 1, detail: `${fmt(wallLengthMm)}mm` },
     { label: 'Bottom plate', qty: 1, detail: `${fmt(wallLengthMm)}mm` },
   ];
-  if (includeNoggins && nogginCount > 0) rows.push({ label: 'Noggins', qty: nogginCount, detail: `${fmt(nogginLengthMm)}mm` });
+  if (includeNoggins && nogginCount > 0) rows.push({ label: 'Nogs', qty: nogginCount, detail: `${fmt(nogginLengthMm)}mm` });
   return (
     <>
       <MaterialsBlock rows={rows} />

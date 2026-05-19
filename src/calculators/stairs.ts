@@ -10,7 +10,7 @@ export interface StairLimitsInput {
 export interface StairsInputs {
   totalRise: number;        // mm
   totalRun?: number;        // mm — optional; derived from preferredGoing if omitted
-  preferredRiser: number;   // mm
+  preferredRiser?: number;  // mm — optional; auto-derived from limits midpoint when omitted
   preferredGoing?: number;  // mm (optional — drives tread count when provided)
   limits?: StairLimitsInput;
 }
@@ -33,6 +33,7 @@ export interface StairsWarnings {
   suggestedMinRun?: number;    // mm — min run for a compliant going
   suggestedMaxRun?: number;    // mm — max run for a compliant going
   runDerived: boolean;         // true when totalRun was calculated from preferredGoing
+  riserAutoSelected: boolean;  // true when preferredRiser was not provided
 }
 
 // Blondel rule: 2 risers + 1 going should fall in this range for comfortable steps.
@@ -51,7 +52,9 @@ export interface StairsResult {
 const AU_LIMITS: StairLimitsInput = { riserMin: 115, riserMax: 225, treadMin: 240, treadMax: 355 };
 
 export function calculateStairs(inputs: StairsInputs): StairsResult {
-  const { totalRise, totalRun: inputRun, preferredRiser, preferredGoing, limits = AU_LIMITS } = inputs;
+  const { totalRise, totalRun: inputRun, preferredGoing, limits = AU_LIMITS } = inputs;
+  const preferredRiser = inputs.preferredRiser ?? (limits.riserMin + limits.riserMax) / 2;
+  const riserAutoSelected = inputs.preferredRiser == null;
 
   const riserCountFromRiser = Math.round(totalRise / preferredRiser);
   let riserCount: number;
@@ -122,7 +125,9 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
       label: 'Riser count',
       formula: drivenByGoing
         ? 'round( total run ÷ preferred going ) + 1'
-        : 'round( total rise ÷ preferred riser height )',
+        : riserAutoSelected
+          ? `round( total rise ÷ midpoint of limits [${limits.riserMin}–${limits.riserMax}mm] )`
+          : 'round( total rise ÷ preferred riser height )',
       result: drivenByGoing
         ? `round( ${totalRun}mm ÷ ${preferredGoing}mm ) + 1 = ${riserCount} risers`
         : `round( ${totalRise}mm ÷ ${preferredRiser}mm ) = ${riserCount} risers`,
@@ -155,7 +160,7 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
 
   return {
     outputs: { riserCount, treadCount, riserHeight, treadDepth, stringerLength, stringerAngle, walklineSum },
-    warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived },
+    warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived, riserAutoSelected },
     steps,
   };
 }

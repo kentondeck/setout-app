@@ -52,18 +52,13 @@ export function StairsCalc() {
       setError('Enter a total run, or set a preferred going to calculate the run.');
       return;
     }
-    if (!preferredRiser || preferredRiser <= 0) {
-      setError('Enter a preferred riser height.');
-      return;
-    }
-
     setError('');
 
     const limits = STAIR_LIMITS[settings.region];
     const calc = calculateStairs({
       totalRise,
       ...(totalRun && totalRun > 0 ? { totalRun } : {}),
-      preferredRiser,
+      ...(preferredRiser && preferredRiser > 0 ? { preferredRiser } : {}),
       preferredGoing,
       limits,
     });
@@ -83,7 +78,11 @@ export function StairsCalc() {
   }
 
   const stairRise = result ? parseFloat(inputs.totalRise) : 0;
-  const stairPrefRiser = result ? parseFloat(inputs.preferredRiser) : 0;
+  const stairPrefRiser = result
+    ? (inputs.preferredRiser && parseFloat(inputs.preferredRiser) > 0
+        ? parseFloat(inputs.preferredRiser)
+        : Math.round((STAIR_LIMITS[settings.region].riserMin + STAIR_LIMITS[settings.region].riserMax) / 2))
+    : 0;
 
   const stairsSteps: WorkingStep[] = result ? [
     { label: 'Total rise', explanation: 'The full height from floor to floor', result: `${stairRise} mm` },
@@ -121,7 +120,7 @@ export function StairsCalc() {
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 175', m: 'e.g. 0.175' }} hint={`${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
+              <NumberInput label="Preferred riser" value={inputs.preferredRiser} onChange={set('preferredRiser')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 175', m: 'e.g. 0.175' }} hint={`optional · ${STAIR_LIMITS[settings.region].riserMin}–${STAIR_LIMITS[settings.region].riserMax}mm`} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 250', m: 'e.g. 0.25' }} hint={`optional · ${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
@@ -156,6 +155,20 @@ export function StairsCalc() {
 
         {result && (
           <>
+            {/* Auto riser callout */}
+            {result.warnings.riserAutoSelected && (
+              <div style={{
+                background: 'var(--color-card)',
+                border: '0.5px solid var(--color-border)',
+                borderRadius: 10,
+                padding: '12px 14px',
+              }}>
+                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                  Riser height auto-calculated — targeting <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{Math.round((STAIR_LIMITS[settings.region].riserMin + STAIR_LIMITS[settings.region].riserMax) / 2)}mm</span> midpoint of allowed range
+                </p>
+              </div>
+            )}
+
             {/* Derived run callout */}
             {result.warnings.runDerived && (
               <div style={{

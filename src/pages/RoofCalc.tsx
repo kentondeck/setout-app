@@ -384,6 +384,15 @@ export function RoofCalc() {
               finalLabel={hasRidge ? 'Cut rafter length' : 'Rafter length'}
               visible={settings.apprenticeMode}
               id="roof"
+              glossary={[
+                { term: 'Pitch', definition: 'The steepness of the roof expressed as degrees (or rise over run). A 22.5° pitch is common for metal roofing in Australia.' },
+                { term: 'Span', definition: 'The full width of the building from outside wall to outside wall, measured at the eaves.' },
+                { term: 'Rise', definition: 'The vertical height from the top of the ceiling joist (or top plate) up to the ridge.' },
+                { term: 'Common rafter', definition: 'The main sloping timber running from the ridge down to the top plate. Its length drives material orders.' },
+                { term: 'Ridge', definition: 'The horizontal beam at the very peak of the roof where opposing rafters meet.' },
+                { term: 'Fascia', definition: 'The vertical board fixed to the rafter tails at the eave. The gutter attaches to it.' },
+                { term: 'Eave', definition: 'The part of the roof that overhangs the wall. Provides weather protection and controls sun.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

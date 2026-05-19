@@ -251,6 +251,13 @@ export function StairsCalc() {
               finalLabel="Stair layout"
               visible={settings.apprenticeMode}
               id="stairs"
+              glossary={[
+                { term: 'Riser', definition: 'The vertical face of each step — the bit your foot kicks. Height is measured from the top of one tread to the top of the next.' },
+                { term: 'Tread / Going', definition: 'The horizontal part you walk on. "Going" is the depth of the tread, measured from nosing to nosing.' },
+                { term: 'Stringer', definition: 'The sloped structural board on each side of the staircase that carries the treads and risers. Calculated using Pythagoras.' },
+                { term: 'Flight', definition: 'A continuous run of stairs between two landings, or between floor and landing.' },
+                { term: 'Nosing', definition: 'The front edge of a tread that projects beyond the riser face below it.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

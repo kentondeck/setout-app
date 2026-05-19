@@ -284,6 +284,13 @@ export function RakedWallCalc() {
               finalLabel="Raked wall layout"
               visible={settings.apprenticeMode}
               id="raked"
+              glossary={[
+                { term: 'Raked wall', definition: 'A wall where the top plate follows the slope of a roof rather than running level. Each stud is a different height.' },
+                { term: 'Pitch / Rake', definition: 'The angle of the sloped top plate, expressed in degrees. Matches the roof pitch above the wall.' },
+                { term: 'Low point / High point', definition: 'The shortest and tallest stud heights in the wall. All intermediate studs step between these two values.' },
+                { term: 'Stud height', definition: 'The length of each individual stud in a raked wall, measured plumb (vertical). Changes incrementally across the wall.' },
+                { term: 'Top plate rise', definition: 'The total vertical increase from one end of the top plate to the other, driven by the pitch and wall length.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

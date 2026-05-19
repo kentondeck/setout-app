@@ -190,6 +190,13 @@ export function BalusterCalc() {
               finalLabel="Balusters needed"
               visible={settings.apprenticeMode}
               id="balusters"
+              glossary={[
+                { term: 'Baluster', definition: 'The individual vertical infill members of a balustrade. Spacing between them must meet code to prevent a child from passing through.' },
+                { term: 'Balustrade', definition: 'The complete railing assembly — handrail, posts, and balusters — that guards an open edge like a deck or staircase.' },
+                { term: 'Handrail', definition: 'The top rail you grip. Separate from the balustrade structure; height and grippability are code-controlled.' },
+                { term: 'In-fill gap', definition: 'The clear space between balusters. Max 125mm under NCC to prevent a 125mm sphere from passing through.' },
+                { term: 'NCC 125mm rule', definition: 'National Construction Code requirement: no opening in a balustrade that allows a 125mm sphere to pass, preventing child entrapment.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

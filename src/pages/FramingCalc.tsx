@@ -366,6 +366,13 @@ export function FramingCalc() {
               finalLabel="Total studs needed"
               visible={settings.apprenticeMode}
               id="framing"
+              glossary={[
+                { term: 'Stud', definition: 'The vertical timber members that make up the body of a wall frame. They carry load from the top plate down to the bottom plate.' },
+                { term: 'Top plate', definition: 'The horizontal timber running along the top of the wall frame. A double top plate is used when walls carry roof loads.' },
+                { term: 'Bottom plate', definition: 'The horizontal timber at the base of the wall frame, sitting on the floor or slab. Also called a sole plate.' },
+                { term: 'Noggin / Nog', definition: 'Horizontal blocking fitted between studs mid-height. Braces the wall and provides a fixing point for sheets and linings.' },
+                { term: 'C/C (centre-to-centre)', definition: 'The distance measured from the centre of one stud to the centre of the next. Standard spacings are 450mm and 600mm.' },
+              ]}
             />
 
             {/* Material & Cut List */}

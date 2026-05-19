@@ -356,6 +356,13 @@ export function CutlistCalc() {
               finalLabel="Order"
               visible={settings.apprenticeMode}
               id="cutlist"
+              glossary={[
+                { term: 'Stock length', definition: 'The length timber comes in from the supplier — e.g. 2.4m, 4.2m, 4.8m, 6.0m. The cut list works out how many to buy.' },
+                { term: 'Kerf', definition: 'The width of material removed by a saw blade when cutting. This app uses 3mm per cut, which adds up across many pieces.' },
+                { term: 'Yield', definition: 'The usable timber left after cutting. Depends on how efficiently pieces are nested into each stock length.' },
+                { term: 'Waste %', definition: 'The percentage of each stock length that ends up as offcuts. Lower is better; 5–10% is typical for well-optimised lists.' },
+                { term: 'Best-fit decreasing', definition: 'The optimisation method used here — largest pieces are placed first, then smaller pieces fill the gaps in remaining stock.' },
+              ]}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

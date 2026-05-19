@@ -8,6 +8,11 @@ export type WorkingStep = {
   result: string;
 };
 
+export type GlossaryTerm = {
+  term: string;
+  definition: string;
+};
+
 interface Props {
   steps: WorkingStep[];
   finalAnswer?: string;
@@ -15,6 +20,7 @@ interface Props {
   visible?: boolean;
   id?: string;
   why?: string;          // legacy — accepted but not rendered in new design
+  glossary?: GlossaryTerm[];
 }
 
 const C_ORANGE = '#FF5A1F';
@@ -24,12 +30,18 @@ const C_BG = '#f5f5f3';
 const C_BORDER = 'rgba(0,0,0,0.06)';
 const FONT = "Inter, -apple-system, sans-serif";
 
-export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = true, id }: Props) {
+export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = true, id, glossary }: Props) {
   const storageKey = id ? `apprentice_working_collapsed_${id}` : null;
+  const glossaryStorageKey = id ? `apprentice_glossary_collapsed_${id}` : null;
 
   const [collapsed, setCollapsed] = useState(() => {
     if (!storageKey) return false;
     return localStorage.getItem(storageKey) === 'true';
+  });
+
+  const [glossaryCollapsed, setGlossaryCollapsed] = useState(() => {
+    if (!glossaryStorageKey) return false;
+    return localStorage.getItem(glossaryStorageKey) === 'true';
   });
 
   if (!visible) return null;
@@ -38,6 +50,12 @@ export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = tr
     const next = !collapsed;
     setCollapsed(next);
     if (storageKey) localStorage.setItem(storageKey, String(next));
+  }
+
+  function toggleGlossary() {
+    const next = !glossaryCollapsed;
+    setGlossaryCollapsed(next);
+    if (glossaryStorageKey) localStorage.setItem(glossaryStorageKey, String(next));
   }
 
   const isNewFormat = steps.some(s => s.explanation !== undefined);
@@ -201,6 +219,81 @@ export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = tr
                   </p>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {glossary && glossary.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <button
+            onClick={toggleGlossary}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              padding: '8px 0',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: FONT,
+            }}
+          >
+            <span style={{ fontSize: 13, fontWeight: 500, color: C_DARK }}>Key terms</span>
+            <span style={{ fontSize: 12, color: C_MUTED }}>{glossaryCollapsed ? '▸' : '▾'}</span>
+          </button>
+
+          {!glossaryCollapsed && (
+            <div style={{ animation: 'fadeIn 200ms ease-in' }}>
+              <p style={{
+                margin: '0 0 8px',
+                fontSize: 13,
+                fontWeight: 500,
+                color: C_MUTED,
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                fontFamily: FONT,
+              }}>
+                Words to know
+              </p>
+              <div style={{ height: 1, width: 24, background: C_ORANGE, marginBottom: 16 }} />
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {glossary.map((entry, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      background: '#ffffff',
+                      border: `0.5px solid ${C_BORDER}`,
+                      borderRadius: 12,
+                      padding: 14,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        background: C_ORANGE, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: '#fff', fontFamily: FONT, lineHeight: 1 }}>
+                          {i + 1}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 500, color: C_DARK, fontFamily: FONT }}>
+                        {entry.term}
+                      </span>
+                    </div>
+                    <p style={{
+                      margin: '8px 0 0', marginLeft: 34,
+                      fontSize: 12, fontWeight: 400, color: C_MUTED,
+                      lineHeight: '16px', fontFamily: FONT,
+                    }}>
+                      {entry.definition}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -39,8 +39,8 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   const overhangRafter = parseFloat((overhang / Math.cos(pitchRad)).toFixed(3));
   const totalRafterLength = parseFloat((rafterLength + overhangRafter).toFixed(3));
 
-  const plumbCutAngle = parseFloat(pitchDegrees.toFixed(1));
-  const seatCutAngle = parseFloat((90 - pitchDegrees).toFixed(1));
+  const plumbCutAngle = pitchDegrees;
+  const seatCutAngle = 90 - pitchDegrees;
 
   // Rafter cut details — only when optional inputs are provided
   let birdsmouthPlumbDepth = 0;

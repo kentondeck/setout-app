@@ -52,6 +52,24 @@ input[type='number'] {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Splash screen animations */
+@keyframes splashLeft {
+  from { opacity: 0; transform: translateX(-36px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes splashRight {
+  from { opacity: 0; transform: translateX(36px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes splashCorner {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes splashSubtitle {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Voice input pulse animation */
 @keyframes voice-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 31, 0.45); }

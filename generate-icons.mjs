@@ -12,19 +12,19 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" wid
   <rect width="1024" height="1024" fill="url(#bg)"/>
 
   <!-- Helmet dome (semi-ellipse) -->
-  <path d="M 188 624 A 324 410 0 0 1 836 624 Z" fill="#FF5A1F"/>
+  <path d="M 188 676 A 324 410 0 0 1 836 676 Z" fill="#FF5A1F"/>
 
   <!-- Left half of dome slightly darker for 3D ridge effect -->
-  <path d="M 512 214 A 324 410 0 0 0 188 624 L 512 624 Z" fill="#E84E18"/>
+  <path d="M 512 266 A 324 410 0 0 0 188 676 L 512 676 Z" fill="#E84E18"/>
 
   <!-- Center ridge line -->
-  <rect x="509" y="214" width="6" height="410" fill="#C94015"/>
+  <rect x="509" y="266" width="6" height="410" fill="#C94015"/>
 
   <!-- Thin cream gap between dome and brim -->
-  <rect x="183" y="619" width="658" height="11" fill="#faf7f3"/>
+  <rect x="183" y="671" width="658" height="11" fill="#faf7f3"/>
 
   <!-- Brim -->
-  <rect x="148" y="630" width="728" height="76" rx="38" fill="#FF5A1F"/>
+  <rect x="148" y="682" width="728" height="76" rx="38" fill="#FF5A1F"/>
 </svg>`;
 
 const buf = Buffer.from(svg);

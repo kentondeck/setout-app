@@ -135,6 +135,7 @@ export function ExcavationCalc() {
   const [sloped, setSloped] = useState(false);
   const [swellFactor, setSwellFactor] = useState(0.25);
   const [truckSize, setTruckSize] = useState(8);
+  const [customTruck, setCustomTruck] = useState('');
   const [result, setResult] = useState<ExcavationResult | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
@@ -157,12 +158,15 @@ export function ExcavationCalc() {
     if (!depthNear || depthNear <= 0) { setError('Enter a depth.'); return; }
     if (sloped && (!depthFar || depthFar <= 0)) { setError('Enter the far-end depth for a sloped site.'); return; }
 
+    const effectiveTruckSize = customTruck && parseFloat(customTruck) > 0 ? parseFloat(customTruck) : truckSize;
+    if (effectiveTruckSize <= 0) { setError('Enter a truck capacity.'); return; }
+
     setError('');
     const calc = calculateExcavation({
       length, width, depthNear,
       ...(sloped && depthFar ? { depthFar } : {}),
       swellFactor,
-      truckCapacity: truckSize,
+      truckCapacity: effectiveTruckSize,
     });
     setResult(calc);
 
@@ -172,7 +176,7 @@ export function ExcavationCalc() {
       id,
       calculatorId: 'excavation',
       timestamp: Date.now(),
-      inputs: { length, width, depthNear, ...(sloped && depthFar ? { depthFar } : {}), swellFactor, truckSize },
+      inputs: { length, width, depthNear, ...(sloped && depthFar ? { depthFar } : {}), swellFactor, truckSize: effectiveTruckSize },
       outputs: calc.outputs,
     });
 
@@ -189,6 +193,7 @@ export function ExcavationCalc() {
     gap: 16,
   };
 
+  const displayTruckSize = customTruck && parseFloat(customTruck) > 0 ? parseFloat(customTruck) : truckSize;
   const swellLabel = SWELL_PRESETS.find(p => p.value === swellFactor)?.label ?? 'Custom';
 
   return (
@@ -289,13 +294,13 @@ export function ExcavationCalc() {
           <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
             Truck capacity
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
             {TRUCK_SIZES.map(size => {
-              const active = truckSize === size;
+              const active = !customTruck && truckSize === size;
               return (
                 <button
                   key={size}
-                  onClick={() => setTruckSize(size)}
+                  onClick={() => { setTruckSize(size); setCustomTruck(''); setResult(null); }}
                   style={{
                     padding: '12px 10px',
                     borderRadius: 'var(--radius-card)',
@@ -313,6 +318,38 @@ export function ExcavationCalc() {
                 </button>
               );
             })}
+            {/* Custom capacity inline */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '0 10px',
+              borderRadius: 'var(--radius-card)',
+              border: customTruck ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
+              background: customTruck ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
+            }}>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={customTruck}
+                onChange={e => { setCustomTruck(e.target.value); setResult(null); }}
+                placeholder="—"
+                style={{
+                  width: 0,
+                  flex: 1,
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: 14,
+                  fontFamily: 'inherit',
+                  color: customTruck ? 'var(--color-orange)' : 'var(--color-text)',
+                  fontWeight: customTruck ? 500 : 400,
+                  outline: 'none',
+                  textAlign: 'center',
+                  minWidth: 0,
+                }}
+              />
+              <span style={{ fontSize: 12, color: customTruck ? 'var(--color-orange)' : 'var(--color-muted)', flexShrink: 0 }}>m³</span>
+            </div>
           </div>
         </div>
 
@@ -354,7 +391,7 @@ export function ExcavationCalc() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Bank volume" value={fmt(result.outputs.bankVolume)} unit="m³" accent />
-                <ResultCard label="Truck loads" value={fmt(result.outputs.truckLoads)} unit={`× ${truckSize} m³`} accent />
+                <ResultCard label="Truck loads" value={fmt(result.outputs.truckLoads)} unit={`× ${displayTruckSize} m³`} accent />
               </div>
               {swellFactor > 0 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

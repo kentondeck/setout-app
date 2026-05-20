@@ -38,7 +38,6 @@ export function CutlistCalc() {
   const { addEntry } = useContext(HistoryContext);
 
   const [forcedStock, setForcedStock] = useState('');
-  const [pricePerMetre, setPricePerMetre] = useState('');
   const [rows, setRows] = useState<CutRow[]>([newRow(), newRow()]);
   const [result, setResult] = useState<Result | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -81,7 +80,7 @@ export function CutlistCalc() {
 
     setError('');
 
-    const price = parseFloat(pricePerMetre) || 0;
+    const price = settings.materialRates.timberPerLm || 0;
     const calc = calculateCutlist({ cuts, forcedStockLength: forcedLength, pricePerMetre: price });
     setResult(calc);
 
@@ -91,7 +90,7 @@ export function CutlistCalc() {
       id,
       calculatorId: 'cutlist',
       timestamp: Date.now(),
-      inputs: { forcedStockLength: forcedLength ?? 0, pricePerMetre: price, cutCount: cuts.length },
+      inputs: { forcedStockLength: forcedLength ?? 0, cutCount: cuts.length },
       outputs: calc.outputs,
     });
 
@@ -140,21 +139,14 @@ export function CutlistCalc() {
             gap: 16,
           }}
         >
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput
-                label="Stock length"
-                value={forcedStock}
-                onChange={setForcedStock}
-                units={['mm', 'm']}
-                placeholder="auto"
-                hint="leave blank to optimise waste"
-              />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="e.g. 8.50" hint="optional · for cost estimate" />
-            </div>
-          </div>
+          <NumberInput
+            label="Stock length"
+            value={forcedStock}
+            onChange={setForcedStock}
+            units={['mm', 'm']}
+            placeholder="auto"
+            hint="leave blank to optimise waste"
+          />
         </div>
 
         {/* Cut rows */}

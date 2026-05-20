@@ -39,6 +39,7 @@ export function CutlistCalc() {
 
   const [forcedStock, setForcedStock] = useState('');
   const [pricePerMetre, setPricePerMetre] = useState('');
+  const [wasteBuffer, setWasteBuffer] = useState('');
   const [rows, setRows] = useState<CutRow[]>([newRow(), newRow()]);
   const [result, setResult] = useState<Result | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -122,6 +123,18 @@ export function CutlistCalc() {
     ? result.materialList.map(m => `${m.count} × ${fmtLength(m.stockLength)}`).join(', ')
     : '';
 
+  const bufferPct = wasteBuffer ? parseFloat(wasteBuffer) : 0;
+  const bufferedList = result
+    ? result.materialList.map(m => ({
+        ...m,
+        bufferedCount: bufferPct > 0 ? Math.ceil(m.count * (1 + bufferPct / 100)) : m.count,
+      }))
+    : [];
+  const price = parseFloat(pricePerMetre) || 0;
+  const bufferedCost = price > 0 && result
+    ? parseFloat(bufferedList.reduce((sum, m) => sum + m.bufferedCount * (m.stockLength / 1000) * price, 0).toFixed(2))
+    : 0;
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader title="Cut list" />
@@ -154,6 +167,9 @@ export function CutlistCalc() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="e.g. 8.50" hint="optional · for cost estimate" />
             </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <NumberInput label="Waste buffer" value={wasteBuffer} onChange={setWasteBuffer} unit="%" placeholder="e.g. 10" hint="optional · adds extra sticks to order" />
           </div>
         </div>
 
@@ -274,19 +290,26 @@ export function CutlistCalc() {
                 gap: 10,
               }}
             >
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>ORDER</p>
-              {result.materialList.map(m => (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
+                ORDER{bufferPct > 0 ? ` · +${bufferPct}% buffer` : ''}
+              </p>
+              {bufferedList.map(m => (
                 <div
                   key={m.stockLength}
                   style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}
                 >
                   <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
-                    {m.count}
+                    {m.bufferedCount}
                   </span>
                   <span style={{ fontSize: 16, color: 'var(--color-muted)', fontWeight: 400 }}>×</span>
                   <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
                     {fmtLength(m.stockLength)}
                   </span>
+                  {m.bufferedCount > m.count && (
+                    <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                      +{m.bufferedCount - m.count} extra
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -295,8 +318,8 @@ export function CutlistCalc() {
               <ResultCard label="Pieces" value={result.outputs.totalPieces} accent />
               <ResultCard label="Waste" value={result.outputs.wastePercent} unit="%" />
             </div>
-            {result.outputs.totalCost > 0 && (
-              <ResultCard label="Total cost" value={`$${result.outputs.totalCost}`} />
+            {bufferedCost > 0 && (
+              <ResultCard label={bufferPct > 0 ? `Total cost (inc. buffer)` : 'Total cost'} value={`$${bufferedCost.toFixed(2)}`} />
             )}
 
             {/* Cutting plan — collapsible */}

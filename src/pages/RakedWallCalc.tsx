@@ -8,7 +8,6 @@ import { calculateRakedWall } from '../calculators/raked-wall';
 import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 
 type InputMode = 'heights' | 'pitch';
@@ -225,13 +224,6 @@ export function RakedWallCalc() {
                 <ResultCard label="Low stud" value={result.outputs.lowStudHeight} unit="mm" />
                 <ResultCard label="High stud" value={result.outputs.highStudHeight} unit="mm" />
               </div>
-              {settings.materialRates.timberPerLm > 0 && (
-                <ResultCard
-                  label="Est. materials"
-                  value={formatCost(result.outputs.totalLinealMetres * settings.materialRates.timberPerLm)}
-                  accent
-                />
-              )}
             </div>
 
             {/* Stud cut list */}

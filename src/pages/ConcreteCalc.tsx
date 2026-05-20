@@ -5,7 +5,6 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
 import type { SlabOutputs, PostHoleOutputs } from '../calculators/concrete';
@@ -392,13 +391,6 @@ export function ConcreteCalc() {
                 )}
                 <ResultCard label="Est. weight" value={slabResult.outputs.weightTonnes} unit="t" />
               </div>
-              {settings.materialRates.concretePerM3 > 0 && (
-                <ResultCard
-                  label="Est. materials"
-                  value={formatCost(slabResult.outputs.orderVolume * settings.materialRates.concretePerM3)}
-                  accent
-                />
-              )}
             </div>
 
             <ApprenticeWorking
@@ -437,22 +429,6 @@ export function ConcreteCalc() {
                 <ResultCard label="Total volume" value={postResult.outputs.totalVolume} unit="m³" />
                 <ResultCard label="Order (incl. wastage)" value={postResult.outputs.orderVolume} unit="m³" />
               </div>
-              {postResult.outputs.useBagMix
-                ? settings.materialRates.concreteBagEach > 0 && (
-                    <ResultCard
-                      label="Est. materials"
-                      value={formatCost(postResult.outputs.bagCount * settings.materialRates.concreteBagEach)}
-                      accent
-                    />
-                  )
-                : settings.materialRates.concretePerM3 > 0 && (
-                    <ResultCard
-                      label="Est. materials"
-                      value={formatCost(postResult.outputs.orderVolume * settings.materialRates.concretePerM3)}
-                      accent
-                    />
-                  )
-              }
             </div>
 
             {/* Bag / ready-mix recommendation */}

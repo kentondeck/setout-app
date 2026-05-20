@@ -8,7 +8,6 @@ import { calculateCladding } from '../calculators/cladding';
 import type { CladdingOutputs } from '../calculators/cladding';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
-import { formatCost } from '../lib/jobCost';
 import { SettingsContext, HistoryContext } from '../contexts';
 
 interface Inputs {
@@ -164,13 +163,6 @@ export function CladdingCalc() {
                 <ResultCard label="Total lineal m" value={result.outputs.totalLm} unit="lm" />
                 <ResultCard label="Top board rip" value={result.outputs.topBoardRip} unit="mm" />
               </div>
-              {settings.materialRates.timberPerLm > 0 && (
-                <ResultCard
-                  label="Est. materials"
-                  value={formatCost(result.outputs.totalLm * settings.materialRates.timberPerLm)}
-                  accent
-                />
-              )}
             </div>
 
             {/* Story rod */}

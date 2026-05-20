@@ -38,7 +38,6 @@ export function CutlistCalc() {
   const { addEntry } = useContext(HistoryContext);
 
   const [forcedStock, setForcedStock] = useState('');
-  const [pricePerMetre, setPricePerMetre] = useState('');
   const [wasteBuffer, setWasteBuffer] = useState('');
   const [rows, setRows] = useState<CutRow[]>([newRow(), newRow()]);
   const [result, setResult] = useState<Result | null>(null);
@@ -82,8 +81,7 @@ export function CutlistCalc() {
 
     setError('');
 
-    const price = parseFloat(pricePerMetre) || 0;
-    const calc = calculateCutlist({ cuts, forcedStockLength: forcedLength, pricePerMetre: price });
+    const calc = calculateCutlist({ cuts, forcedStockLength: forcedLength });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -92,7 +90,7 @@ export function CutlistCalc() {
       id,
       calculatorId: 'cutlist',
       timestamp: Date.now(),
-      inputs: { forcedStockLength: forcedLength ?? 0, pricePerMetre: price, cutCount: cuts.length },
+      inputs: { forcedStockLength: forcedLength ?? 0, cutCount: cuts.length },
       outputs: calc.outputs,
     });
 
@@ -130,10 +128,6 @@ export function CutlistCalc() {
         bufferedCount: bufferPct > 0 ? Math.ceil(m.count * (1 + bufferPct / 100)) : m.count,
       }))
     : [];
-  const price = parseFloat(pricePerMetre) || 0;
-  const bufferedCost = price > 0 && result
-    ? parseFloat(bufferedList.reduce((sum, m) => sum + m.bufferedCount * (m.stockLength / 1000) * price, 0).toFixed(2))
-    : 0;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -163,9 +157,6 @@ export function CutlistCalc() {
                 placeholder="auto"
                 hint="leave blank to optimise waste"
               />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Price / metre" value={pricePerMetre} onChange={setPricePerMetre} unit="$/m" placeholder="e.g. 8.50" hint="optional · for cost estimate" />
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -318,9 +309,6 @@ export function CutlistCalc() {
               <ResultCard label="Pieces" value={result.outputs.totalPieces} accent />
               <ResultCard label="Waste" value={result.outputs.wastePercent} unit="%" />
             </div>
-            {bufferedCost > 0 && (
-              <ResultCard label={bufferPct > 0 ? `Total cost (inc. buffer)` : 'Total cost'} value={`$${bufferedCost.toFixed(2)}`} />
-            )}
 
             {/* Cutting plan — collapsible */}
             <div

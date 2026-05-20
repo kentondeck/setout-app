@@ -12,7 +12,8 @@ export type CalculatorId =
   | 'codecheck'
   | 'roofing'
   | 'excavation'
-  | 'gradient';
+  | 'gradient'
+  | 'equalspacing';
 
 export type Region = 'AU' | 'NZ';
 

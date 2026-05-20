@@ -27,6 +27,7 @@ import { CodeCheckCalc } from './pages/CodeCheckCalc';
 import { RoofingCalc } from './pages/RoofingCalc';
 import { ExcavationCalc } from './pages/ExcavationCalc';
 import { GradientCalc } from './pages/GradientCalc';
+import { EqualSpacingCalc } from './pages/EqualSpacingCalc';
 
 
 function AppShell() {
@@ -54,6 +55,7 @@ function AppShell() {
           <Route path="/calc/roofing" element={<RoofingCalc />} />
           <Route path="/calc/excavation" element={<ExcavationCalc />} />
           <Route path="/calc/gradient" element={<GradientCalc />} />
+          <Route path="/calc/equalspacing" element={<EqualSpacingCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

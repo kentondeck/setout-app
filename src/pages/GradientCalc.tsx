@@ -24,11 +24,11 @@ function getDrainPresets(region: Region) {
 
 function getRampPresets(region: Region) {
   return [
+    { label: '1:5',  ratio: 5,  note: 'Driveway max (steep)' },
+    { label: '1:8',  ratio: 8,  note: 'Driveway typical' },
     { label: region === 'AU' ? '1:14' : '1:12', ratio: region === 'AU' ? 14 : 12, note: region === 'AU' ? 'Ramp max (AS 1428)' : 'Ramp max (NZS 4121)' },
     { label: '1:20', ratio: 20, note: 'Ramp preferred' },
     { label: '1:33', ratio: 33, note: 'Footpath / path max' },
-    { label: '1:5',  ratio: 5,  note: 'Driveway max (steep)' },
-    { label: '1:8',  ratio: 8,  note: 'Driveway typical' },
   ];
 }
 

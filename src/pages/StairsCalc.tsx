@@ -240,9 +240,6 @@ export function StairsCalc() {
                 <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                <ResultCard label="2R + G (Blondel)" value={result.outputs.walklineSum} unit="mm — comfort 550–700" />
-              </div>
             </div>
 
             <StairDiagram

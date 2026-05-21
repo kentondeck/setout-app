@@ -1,7 +1,6 @@
 import { useContext, useState } from 'react';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
-import type { MaterialRates } from '../types';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -181,72 +180,6 @@ export function Settings() {
           >
             {nameSaved ? '✓ Saved' : 'Save'}
           </button>
-        </div>
-      </div>
-
-      <div>
-        <SectionLabel>Material rates</SectionLabel>
-        <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          Set your supplier prices and jobs will show an estimated materials cost.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {(
-            [
-              { key: 'timberPerLm', label: 'Timber', unit: '/ lm' },
-              { key: 'concretePerM3', label: 'Concrete (ready-mix)', unit: '/ m³' },
-              { key: 'concreteBagEach', label: 'Concrete bags (20 kg)', unit: '/ bag' },
-              { key: 'roofingSheetEach', label: 'Roofing sheets', unit: '/ sheet' },
-            ] as { key: keyof MaterialRates; label: string; unit: string }[]
-          ).map(({ key, label, unit }) => (
-            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ flex: 1, fontSize: 14, color: 'var(--color-text)', minWidth: 0 }}>{label}</span>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  background: 'var(--color-card)',
-                  border: '0.5px solid var(--color-border)',
-                  borderRadius: 10,
-                  padding: '0 10px',
-                  flexShrink: 0,
-                }}
-              >
-                <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>$</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  step="0.01"
-                  value={settings.materialRates[key] || ''}
-                  placeholder="0"
-                  onChange={e => {
-                    const val = parseFloat(e.target.value);
-                    updateSettings({
-                      materialRates: {
-                        ...settings.materialRates,
-                        [key]: isFinite(val) && val >= 0 ? val : 0,
-                      },
-                    });
-                  }}
-                  style={{
-                    width: 72,
-                    padding: '10px 0',
-                    border: 'none',
-                    background: 'transparent',
-                    fontSize: 15,
-                    fontFamily: 'inherit',
-                    color: 'var(--color-text)',
-                    outline: 'none',
-                    textAlign: 'right',
-                    WebkitAppearance: 'none',
-                    MozAppearance: 'textfield',
-                  } as React.CSSProperties}
-                />
-                <span style={{ fontSize: 12, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>{unit}</span>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 

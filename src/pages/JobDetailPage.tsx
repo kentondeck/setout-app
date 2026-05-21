@@ -1,8 +1,7 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext, SettingsContext, HistoryContext } from '../contexts';
+import { JobsContext, HistoryContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
-import { estimateEntryCost, formatCost } from '../lib/jobCost';
 import type { HistoryEntry, CalculatorId } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
@@ -392,7 +391,7 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 
 const SWIPE_THRESHOLD = 88;
 
-function CalcEntryCard({ entry, cost, onRemove }: { entry: HistoryEntry; cost: number | null; onRemove: (id: string) => void }) {
+function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -471,10 +470,10 @@ function CalcEntryCard({ entry, cost, onRemove }: { entry: HistoryEntry; cost: n
 
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <p style={{ margin: 0, fontSize: 17, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px', fontVariantNumeric: 'tabular-nums' }}>
-              {cost !== null ? formatCost(cost) : keyValue}
+              {keyValue}
             </p>
             <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'var(--color-muted)' }}>
-              {cost !== null ? 'est. materials' : keyLabel}
+              {keyLabel}
             </p>
           </div>
 
@@ -560,7 +559,6 @@ export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } = useContext(JobsContext);
-  const { settings } = useContext(SettingsContext);
   const { deleteEntry } = useContext(HistoryContext);
 
   const job = jobs.find(j => j.id === id);
@@ -605,9 +603,6 @@ export function JobDetailPage() {
   }
 
   const calculations = getJobCalculations(job.id);
-
-  const entryCosts = calculations.map(e => estimateEntryCost(e, settings.materialRates));
-  const costById = new Map(calculations.map((e, i) => [e.id, entryCosts[i]]));
 
   const grouped: Record<string, HistoryEntry[]> = { today: [], yesterday: [], older: [] };
   for (const c of calculations) grouped[dayGroup(c.timestamp)].push(c);
@@ -733,7 +728,6 @@ export function JobDetailPage() {
                     <CalcEntryCard
                       key={entry.id}
                       entry={entry}
-                      cost={costById.get(entry.id) ?? null}
                       onRemove={calcId => { removeCalculationFromJob(job.id, calcId); deleteEntry(calcId); }}
                     />
                   ))}

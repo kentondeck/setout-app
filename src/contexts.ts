@@ -21,7 +21,6 @@ export const SettingsContext = createContext<SettingsCtx>({
     userName: '',
     region: 'AU',
     pinnedCalcs: [],
-    materialRates: { timberPerLm: 0, concretePerM3: 0, concreteBagEach: 0, roofingSheetEach: 0 },
   },
   updateSettings: () => {},
 });

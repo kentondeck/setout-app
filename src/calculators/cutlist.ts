@@ -10,7 +10,6 @@ export interface CutlistInputs {
   cuts: CutItem[];
   forcedStockLength?: number;
   millAllowance?: number;
-  pricePerMetre?: number;
 }
 
 export interface MaterialItem {
@@ -29,7 +28,6 @@ export interface CutlistOutputs extends Record<string, number> {
   totalPieces: number;
   totalWaste: number;
   wastePercent: number;
-  totalCost: number;
   totalCutLength: number;
 }
 
@@ -134,7 +132,7 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
 }
 
 export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
-  const { cuts, stockLength, forcedStockLength, millAllowance = 0, pricePerMetre = 0 } = inputs;
+  const { cuts, stockLength, forcedStockLength, millAllowance = 0 } = inputs;
   const forced = forcedStockLength ?? stockLength;
   const baseLengths = forced ? [forced] : DEFAULT_STOCK_LENGTHS;
   // Effective lengths: millAllowance accounts for timber arriving slightly over nominal.
@@ -200,11 +198,6 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   const totalWaste = plan.reduce((s, p) => s + p.waste, 0);
   const totalStock = winnerBins.reduce((s, b) => s + (b.stockLength - millAllowance), 0);
   const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
-  const totalCost =
-    pricePerMetre > 0
-      ? parseFloat(winnerBins.reduce((s, b) => s + (b.stockLength / 1000) * pricePerMetre, 0).toFixed(2))
-      : 0;
-
   const orderSummary = materialList
     .map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m`)
     .join(', ');
@@ -232,13 +225,10 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
       formula: '( total offcut ÷ total stock ) × 100',
       result: `${totalWaste}mm from ${totalStock}mm stock = ${wastePercent}% waste`,
     },
-    ...(pricePerMetre > 0
-      ? [{ label: 'Total cost', formula: 'each piece × its length (m) × price per metre', result: `$${totalCost}` }]
-      : []),
   ];
 
   return {
-    outputs: { totalPieces, totalWaste, wastePercent, totalCost, totalCutLength },
+    outputs: { totalPieces, totalWaste, wastePercent, totalCutLength },
     plan,
     materialList,
     steps,

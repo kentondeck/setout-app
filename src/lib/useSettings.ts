@@ -9,12 +9,6 @@ const defaults: Settings = {
   userName: '',
   region: 'AU',
   pinnedCalcs: [],
-  materialRates: {
-    timberPerLm: 0,
-    concretePerM3: 0,
-    concreteBagEach: 0,
-    roofingSheetEach: 0,
-  },
 };
 
 function load(): Settings {

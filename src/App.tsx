@@ -28,6 +28,7 @@ import { RoofingCalc } from './pages/RoofingCalc';
 import { ExcavationCalc } from './pages/ExcavationCalc';
 import { GradientCalc } from './pages/GradientCalc';
 import { EqualSpacingCalc } from './pages/EqualSpacingCalc';
+import { FencingCalc } from './pages/FencingCalc';
 
 
 function AppShell() {
@@ -56,6 +57,7 @@ function AppShell() {
           <Route path="/calc/excavation" element={<ExcavationCalc />} />
           <Route path="/calc/gradient" element={<GradientCalc />} />
           <Route path="/calc/equalspacing" element={<EqualSpacingCalc />} />
+          <Route path="/calc/fencing" element={<FencingCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

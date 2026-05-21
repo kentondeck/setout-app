@@ -108,4 +108,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '15',
     svgPath: 'M3 20L21 4M21 4h-6M21 4v6',
   },
+  {
+    id: 'fencing',
+    label: 'Fencing',
+    subtitle: 'Posts, rails, palings',
+    number: '16',
+    svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22',
+  },
 ];

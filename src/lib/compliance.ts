@@ -53,6 +53,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Minimum drainage fall 1:100 (AS/NZS 3500). Accessible ramps max 1:14 (AS 1428.1), preferred 1:20. Sewer grades per AS/NZS 3500.2. Verify drainage gradients with your hydraulic engineer.',
     NZ: 'Minimum drainage fall 1:60 for stormwater (G12/AS2). Accessible ramps max 1:12 (NZS 4121), preferred 1:20. Verify drainage gradients against NZS 4404 and your local authority drainage design requirements.',
   },
+  fencing: {
+    AU: 'Boundary fences generally permitted up to 1.8 m without approval — check your local council. Pool fencing must comply with AS 1926.1: minimum 1.2 m, no climbable objects within 900 mm, self-closing/latching gate. Post embedment depths are indicative — increase for unstable soils or exposed sites.',
+    NZ: 'Boundary fences generally permitted up to 2.0 m without resource consent — check with your local council. Pool fencing must comply with NZS 8500 and the Fencing of Swimming Pools Act 1987: minimum 1.2 m, no climbable objects within 1.2 m of pool side. Post embedment depths are indicative — increase for unstable soils or high-wind zones.',
+  },
   equalspacing: {
     AU: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant Australian Standard for your application.',
     NZ: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant New Zealand Standard for your application.',

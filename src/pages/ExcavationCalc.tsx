@@ -40,26 +40,28 @@ function ExcavationDiagram({ length, width, depthNear, depthFar, sloped }: {
   const FONT = 'Inter, system-ui, sans-serif';
 
   // Axonometric projection coords
-  const ox = 32, oy = 20; // perspective offset
-  // Front face
-  const fbl = { x: 40, y: 130 };
-  const fbr = { x: 200, y: 130 };
-  const ftl = { x: 40, y: 55 };
-  const ftr = { x: 200, y: 55 };
-  // Back face (offset by ox, -oy)
+  const ox = 32, oy = 20;
+  const groundY = 55;
+
+  // Scale diagram so the far end (top at y=35) never overflows the 160px viewBox.
+  // maxFarH=105 keeps the far bottom at y≤140, leaving headroom for labels.
+  const farRatio = sloped && depthNear > 0 ? depthFar / depthNear : 1;
+  const baseNearH = 75;
+  const maxFarH = 105;
+  const scale = Math.min(1, maxFarH / (baseNearH * Math.max(1, farRatio)));
+  const nearH = baseNearH * scale;
+  const farH = baseNearH * farRatio * scale;
+
+  const ftl = { x: 40,  y: groundY };
+  const ftr = { x: 200, y: groundY };
+  const fbl = { x: 40,  y: groundY + nearH };
+  const fbr = { x: 200, y: groundY + nearH };
   const bbl = { x: fbl.x + ox, y: fbl.y - oy };
   const bbr = { x: fbr.x + ox, y: fbr.y - oy };
   const btl = { x: ftl.x + ox, y: ftl.y - oy };
   const btr = { x: ftr.x + ox, y: ftr.y - oy };
-
-  // Sloped: far end (back) is shallower or deeper
-  const nearH = 75; // front face height px
-  const farRatio = sloped && depthNear > 0 ? depthFar / depthNear : 1;
-  const farH = nearH * farRatio;
   const bblSloped = { x: bbl.x, y: btl.y + farH };
   const bbrSloped = { x: bbr.x, y: btr.y + farH };
-
-  const groundY = ftl.y;
   const p = (pt: { x: number; y: number }) => `${pt.x},${pt.y}`;
 
   return (

@@ -10,6 +10,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
+import { JobNameInput } from '../components/JobNameInput';
 
 interface Inputs {
   totalLength: string;
@@ -29,6 +30,7 @@ export function BalusterCalc() {
   const [result, setResult] = useState<{ outputs: BalusterOutputs; steps: WorkingStep[] } | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
   const [diagramProps, setDiagramProps] = useState<{
     totalLength: number;
     balusterWidth: number;
@@ -131,6 +133,7 @@ export function BalusterCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -181,6 +184,7 @@ export function BalusterCalc() {
                 balusterWidth={diagramProps.balusterWidth}
                 gap={diagramProps.gap}
                 balusterCount={diagramProps.balusterCount}
+                label={jobName}
               />
             )}
 

@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateFencing } from '../calculators/fencing';
+import { JobNameInput } from '../components/JobNameInput';
 import type { FenceType, PalingStyle, FencingResult } from '../calculators/fencing';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -35,6 +36,7 @@ export function FencingCalc() {
   const [result, setResult] = useState<FencingResult | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   const resolvedHeight = height === 'custom' ? parseFloat(customHeight) || 0 : height;
   const resolvedSpacing = postSpacing === 'custom' ? parseFloat(customSpacing) || 0 : postSpacing;
@@ -284,6 +286,7 @@ export function FencingCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

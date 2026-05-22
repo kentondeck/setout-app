@@ -10,6 +10,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { RoofDiagram } from '../components/RoofDiagram';
+import { JobNameInput } from '../components/JobNameInput';
 
 type PairKey = 'span' | 'rise' | 'rafterLength' | 'pitchDegrees';
 type Mode = 'span-pitch' | 'span-rise' | 'rise-pitch' | 'rafter-pitch';
@@ -67,6 +68,7 @@ export function RoofCalc() {
   const [result, setResult] = useState<{ outputs: RoofOutputs; steps: WorkingStep[] } | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   const activeFields = MODES.find(m => m.id === mode)!.fields;
 
@@ -273,6 +275,7 @@ export function RoofCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -305,6 +308,7 @@ export function RoofCalc() {
               seatWidthMm={out.birdsmouthPlumbDepth > 0 ? parseOpt(inputs.plateWidth) : undefined}
               plumbDepthMm={out.birdsmouthPlumbDepth > 0 ? out.birdsmouthPlumbDepth : undefined}
               cutRafterLengthMm={out.totalRafterLength > out.rafterLength ? Math.round(out.rafterLength * 1000) : undefined}
+              label={jobName}
             />
 
             {/* Summary: all 4 derived values + cut angles */}

@@ -7,6 +7,7 @@ export type DeckingDiagramProps = {
   boardGap: number;     // mm
   boardCount: number;
   joistSpacing?: number;  // mm
+  label?: string;
 };
 
 const ORANGE = '#FF5A1F';
@@ -30,7 +31,7 @@ const MAX_VIS = 7;
 
 export const DeckingDiagram = memo(function DeckingDiagram({
   deckLength, deckWidth, boardWidth, boardGap, boardCount,
-  joistSpacing,
+  joistSpacing, label,
 }: DeckingDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -182,6 +183,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
             <text x={201} y={318} textAnchor="middle" fontSize={14} fontFamily={MONO} fill={ORANGE} opacity={0.72}>mm</text>
           </>
         )}
+        {label && <text x={368} y={18} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={BLACK} opacity={0.5}>{label}</text>}
       </svg>
 
       {isValid && (

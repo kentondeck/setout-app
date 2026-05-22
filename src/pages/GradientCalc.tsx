@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateGradient } from '../calculators/gradient';
+import { JobNameInput } from '../components/JobNameInput';
 import type { GradientResult } from '../calculators/gradient';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -48,6 +49,7 @@ export function GradientCalc() {
   const [result, setResult] = useState<GradientResult | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   // The active ratio: selected preset or custom input
   const activeRatio = selectedRatio ?? (customRatio ? parseFloat(customRatio) : null);
@@ -245,6 +247,7 @@ export function GradientCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

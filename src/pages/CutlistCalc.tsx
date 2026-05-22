@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateCutlist, DEFAULT_STOCK_LENGTHS } from '../calculators/cutlist';
+import { JobNameInput } from '../components/JobNameInput';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -43,6 +44,7 @@ export function CutlistCalc() {
   const [result, setResult] = useState<Result | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
   const [planCollapsed, setPlanCollapsed] = useState(true);
 
   function updateRow(id: string, field: 'length' | 'qty', value: string) {
@@ -246,6 +248,7 @@ export function CutlistCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

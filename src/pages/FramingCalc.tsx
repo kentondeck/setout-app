@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { FramingDiagram } from '../components/FramingDiagram';
+import { JobNameInput } from '../components/JobNameInput';
 
 interface Inputs {
   wallLength: string;
@@ -41,6 +42,7 @@ export function FramingCalc() {
   const [calcNogginRows, setCalcNogginRows] = useState(0);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -317,6 +319,7 @@ export function FramingCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -470,6 +473,7 @@ export function FramingCalc() {
               nogginRows={calcNogginRows}
               doubleTopPlate={doubleTopPlate}
               doubleStuds={doubleStuds}
+              label={jobName}
             />
 
             <AddToJobPrompt calculationId={lastEntryId} />

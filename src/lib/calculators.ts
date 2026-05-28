@@ -115,4 +115,11 @@ export const CALCULATORS: CalcMeta[] = [
     number: '16',
     svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22',
   },
+  {
+    id: 'feedback',
+    label: 'Feedback',
+    subtitle: 'Share thoughts or report bugs',
+    number: '17',
+    svgPath: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z',
+  },
 ];

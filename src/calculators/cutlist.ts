@@ -145,6 +145,15 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   }
   allCuts.sort((a, b) => b - a);
 
+  // A cut longer than the largest available stock can never be packed. Without
+  // this guard, mixedBFD would never empty its todo list and loop forever.
+  const maxStockLen = lengths.length ? Math.max(...lengths) : 0;
+  if (allCuts.length > 0 && allCuts[0] + KERF > maxStockLen) {
+    throw new Error(
+      `Cut ${allCuts[0]}mm is longer than the longest stock length (${maxStockLen - millAllowance}mm).`
+    );
+  }
+
   let winnerBins: { stockLength: number; cuts: number[] }[] = [];
   let winnerCount = Infinity;
   let winnerTotal = Infinity;

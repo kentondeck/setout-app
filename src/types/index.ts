@@ -14,7 +14,8 @@ export type CalculatorId =
   | 'excavation'
   | 'gradient'
   | 'equalspacing'
-  | 'fencing';
+  | 'fencing'
+  | 'feedback';
 
 export type Region = 'AU' | 'NZ';
 

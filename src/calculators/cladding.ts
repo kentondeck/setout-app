@@ -92,11 +92,17 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
       formula: 'top board has no board above to lap — rip down to face cover width',
       result: `rip top board to ${topBoardRip}mm (cut off ${boardWidth - topBoardRip}mm)`,
     },
-    {
-      label: 'Boards required',
-      formula: 'courses × ceil( wall width ÷ board length )',
-      result: `${courseCount} × ${boardsPerCourse} = ${stockCount} boards at ${boardLength}mm`,
-    },
+    cutsPerBoard >= 1
+      ? {
+          label: 'Boards required',
+          formula: 'ceil( courses ÷ cuts per board )',
+          result: `${cutsPerBoard} cuts per ${boardLength}mm board → ceil( ${courseCount} ÷ ${cutsPerBoard} ) = ${stockCount} boards`,
+        }
+      : {
+          label: 'Boards required',
+          formula: 'courses × ceil( wall width ÷ board length )',
+          result: `${courseCount} × ${boardsPerCourse} = ${stockCount} boards at ${boardLength}mm`,
+        },
   ];
 
   return {

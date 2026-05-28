@@ -43,8 +43,12 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   // Boards are spaced along the deck length direction
   const boardCount = Math.ceil((deckLength * 1000) / effectiveBoardWidth);
 
-  // Each board spans the deck width — round up to nearest available stock length
+  // Each board spans the deck width — round up to nearest available stock length.
+  // When the span exceeds the longest stock, the board must be butt-joined; the
+  // lineal-metre figure then reflects the true span (joins handled in the cut list).
   const boardLengthMm = deckWidth * 1000;
+  const maxStockMm = BOARD_STOCK_LENGTHS[BOARD_STOCK_LENGTHS.length - 1];
+  const needsJoin = boardLengthMm > maxStockMm;
   const boardStockMm = BOARD_STOCK_LENGTHS.find(s => s >= boardLengthMm) ?? boardLengthMm;
   const totalLinealMetres = parseFloat(((boardCount * boardStockMm) / 1000).toFixed(2));
 
@@ -63,9 +67,11 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     result: `${boardCount} × ${joistCount} × 2 × 1.1 = ${fixingsCount} screws`,
   };
 
-  const stockNote = boardStockMm > boardLengthMm
-    ? ` (${boardLengthMm}mm board rounded up to ${boardStockMm}mm stock)`
-    : '';
+  const stockNote = needsJoin
+    ? ` (${boardLengthMm}mm span exceeds the ${maxStockMm}mm max board — butt-joins required)`
+    : boardStockMm > boardLengthMm
+      ? ` (${boardLengthMm}mm board rounded up to ${boardStockMm}mm stock)`
+      : '';
 
   const steps: WorkingStep[] = [
     {

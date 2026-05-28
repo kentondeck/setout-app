@@ -9,6 +9,7 @@ export interface RoofDiagramProps {
   seatWidthMm?: number;       // plate width — shows seat dim when provided
   plumbDepthMm?: number;      // birdsmouth plumb depth — shows plumb dim when provided
   cutRafterLengthMm?: number; // rafter length ridge-to-seat (no overhang) — shows from-top measurement
+  label?: string;
 }
 
 const ORANGE = '#FF5A1F';
@@ -42,6 +43,7 @@ export const RoofDiagram = memo(function RoofDiagram({
   seatWidthMm,
   plumbDepthMm,
   cutRafterLengthMm,
+  label,
 }: RoofDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -401,6 +403,8 @@ export const RoofDiagram = memo(function RoofDiagram({
           fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Wall</text>
         <line x1={363} y1={wallY0 + 34} x2={356} y2={wallY0 + 34}
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
+
+        {label && <text x={748} y={20} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
       </svg>
 
       <button

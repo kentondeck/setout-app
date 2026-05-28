@@ -7,6 +7,7 @@ import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateRoofing, ROOFING_PROFILES } from '../calculators/roofing';
+import { JobNameInput } from '../components/JobNameInput';
 import type { RoofType, RoofProfile, RoofingResult } from '../calculators/roofing';
 
 interface Fields {
@@ -54,6 +55,7 @@ export function RoofingCalc() {
   const [result, setResult] = useState<RoofingResult | null>(null);
   const [lastId, setLastId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   function set(field: keyof Fields) {
     return (v: string) => setFields(prev => ({ ...prev, [field]: v }));
@@ -214,6 +216,7 @@ export function RoofingCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

@@ -5,6 +5,7 @@ export type BalusterDiagramProps = {
   balusterWidth: number;
   balusterCount: number;
   gap: number;
+  label?: string;
 };
 
 // ── Design tokens (locked Setout diagram brand) ───────────────────────────────
@@ -98,7 +99,7 @@ function HorizDim({
 }
 
 export const BalusterDiagram = memo(function BalusterDiagram({
-  totalLength, balusterWidth, balusterCount, gap,
+  totalLength, balusterWidth, balusterCount, gap, label,
 }: BalusterDiagramProps) {
   const isValid =
     totalLength > 0 && isFinite(totalLength) &&
@@ -228,6 +229,8 @@ export const BalusterDiagram = memo(function BalusterDiagram({
 
       {/* Total span label — centred below the arrow */}
       <DimLabel caption="Total span" value={totalLength} cx={190} cy={260} />
+
+      {label && <text x={368} y={18} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={BLACK} opacity={0.5}>{label}</text>}
     </svg>
   );
 });

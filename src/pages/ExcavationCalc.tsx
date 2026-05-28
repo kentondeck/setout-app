@@ -8,6 +8,7 @@ import { calculateExcavation } from '../calculators/excavation';
 import type { ExcavationResult } from '../calculators/excavation';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { JobNameInput } from '../components/JobNameInput';
 
 const SWELL_PRESETS = [
   { label: 'None', sublabel: 'Rock / fill', value: 0 },
@@ -31,8 +32,8 @@ function fmt(n: number): string {
   return Number.isFinite(n) ? String(n) : '—';
 }
 
-function ExcavationDiagram({ length, width, depthNear, depthFar, sloped }: {
-  length: number; width: number; depthNear: number; depthFar: number; sloped: boolean;
+function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, label }: {
+  length: number; width: number; depthNear: number; depthFar: number; sloped: boolean; label?: string;
 }) {
   const ORANGE = '#FF5A1F';
   const INK = '#0A0A0A';
@@ -125,6 +126,8 @@ function ExcavationDiagram({ length, width, depthNear, depthFar, sloped }: {
       {/* Length label — perspective top edge */}
       <line x1={btr.x + 8} y1={btr.y} x2={ftr.x + 8} y2={ftr.y} stroke={ORANGE} strokeWidth="1" />
       <text x={btr.x + 14} y={(btr.y + ftr.y) / 2 + 3} fontFamily={FONT} fontSize="9" fill={ORANGE}>L {length}m</text>
+
+      {label && <text x={274} y={13} textAnchor="end" fontFamily={FONT} fontSize="11" fontWeight="600" fill={ORANGE} opacity={0.7}>{label}</text>}
     </svg>
   );
 }
@@ -141,6 +144,7 @@ export function ExcavationCalc() {
   const [result, setResult] = useState<ExcavationResult | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   function set(field: keyof Inputs) {
     return (value: string) => {
@@ -359,6 +363,7 @@ export function ExcavationCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -388,6 +393,7 @@ export function ExcavationCalc() {
               depthNear={parseFloat(inputs.depthNear)}
               depthFar={sloped ? parseFloat(inputs.depthFar) : parseFloat(inputs.depthNear)}
               sloped={sloped}
+              label={jobName}
             />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

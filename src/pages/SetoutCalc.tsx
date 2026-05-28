@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateSetout } from '../calculators/setout';
+import { JobNameInput } from '../components/JobNameInput';
 import type { SetoutOutputs } from '../calculators/setout';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
@@ -29,6 +30,7 @@ export function SetoutCalc() {
   const [result, setResult] = useState<{ outputs: SetoutOutputs; steps: WorkingStep[] } | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -146,6 +148,7 @@ export function SetoutCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

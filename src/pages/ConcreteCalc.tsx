@@ -7,6 +7,7 @@ import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
+import { JobNameInput } from '../components/JobNameInput';
 import type { SlabOutputs, PostHoleOutputs } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
@@ -27,6 +28,7 @@ export function ConcreteCalc() {
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastage, setWastage] = useState(0.10);
+  const [jobName, setJobName] = useState('');
 
   const [slabFields, setSlabFields] = useState<SlabFields>(SLAB_DEFAULTS);
   const [slabResult, setSlabResult] = useState<{ outputs: SlabOutputs; steps: WorkingStep[] } | null>(null);
@@ -356,6 +358,7 @@ export function ConcreteCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

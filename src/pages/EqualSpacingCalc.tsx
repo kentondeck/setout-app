@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { calculateEqualSpacing } from '../calculators/equalspacing';
+import { JobNameInput } from '../components/JobNameInput';
 import type { EqualSpacingOutputs } from '../calculators/equalspacing';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
@@ -32,6 +33,7 @@ export function EqualSpacingCalc() {
   const [result, setResult] = useState<{ outputs: EqualSpacingOutputs; steps: WorkingStep[]; countDerived: boolean } | null>(null);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -152,6 +154,7 @@ export function EqualSpacingCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{

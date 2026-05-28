@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckingDiagram } from '../components/DeckingDiagram';
+import { JobNameInput } from '../components/JobNameInput';
 
 interface Inputs {
   deckLength: string;
@@ -45,6 +46,7 @@ export function DeckingCalc() {
   const [bearerStock, setBearerStock] = useState(4800);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
+  const [jobName, setJobName] = useState('');
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
   const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
@@ -211,6 +213,7 @@ export function DeckingCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
+        <JobNameInput value={jobName} onChange={setJobName} />
         {/* Calculate button */}
         <button
           onClick={handleCalculate}
@@ -458,6 +461,7 @@ export function DeckingCalc() {
               boardGap={bg}
               boardCount={result.outputs.boardCount}
               joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
+              label={jobName}
             />
 
             <p

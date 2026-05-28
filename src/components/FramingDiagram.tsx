@@ -8,6 +8,7 @@ export interface FramingDiagramProps {
   nogginRows: number;
   doubleTopPlate: boolean;
   doubleStuds: boolean;
+  label?: string;
 }
 
 const VB_W   = 900;
@@ -33,6 +34,7 @@ export const FramingDiagram = memo(function FramingDiagram({
   nogginRows,
   doubleTopPlate,
   doubleStuds,
+  label,
 }: FramingDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -199,6 +201,8 @@ export const FramingDiagram = memo(function FramingDiagram({
         <text x={854} y={studHeightMidY - 6}  textAnchor="middle" fontFamily={FONT} fontSize={18} fontWeight={500} fill={ORANGE} letterSpacing="-0.3">height</text>
         <text x={854} y={studHeightMidY + 18} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE}>{studHeightMm}</text>
         <text x={854} y={studHeightMidY + 36} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
+
+        {label && <text x={888} y={24} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
       </svg>
 
       <button

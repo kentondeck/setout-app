@@ -7,6 +7,7 @@ export interface StairDiagramProps {
   stringerLength: number;
   totalRise: number;
   totalRun: number;
+  label?: string;
 }
 
 // Layout — stringer label sits in the upper-left open space above the stair
@@ -34,6 +35,7 @@ export const StairDiagram = memo(function StairDiagram({
   stringerLength,
   totalRise,
   totalRun,
+  label,
 }: StairDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -208,6 +210,7 @@ export const StairDiagram = memo(function StairDiagram({
         <text x={baseMidX} y={BASE_Y + 52} textAnchor="middle" fontFamily={FONT} fontSize={22} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke">{fmt(totalRun)}</text>
         <text x={baseMidX} y={BASE_Y + 70} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
+        {label && <text x={888} y={24} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
       </svg>
 
       <button

@@ -5,6 +5,10 @@ import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { SettingsContext, HistoryContext, JobsContext } from './contexts';
 import { SplashScreen } from './components/SplashScreen';
+import { InstallPromptScreen } from './components/InstallPromptScreen';
+import { BetaThankYou } from './pages/BetaThankYou';
+import { OnboardingName } from './pages/OnboardingName';
+import { OnboardingRegion } from './pages/OnboardingRegion';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
@@ -66,16 +70,66 @@ function AppShell() {
   );
 }
 
+// Process URL params once at module load — synchronous localStorage writes before any render
+const _params = new URLSearchParams(window.location.search);
+if (_params.get('reset') === 'true') {
+  localStorage.removeItem('setout_install_seen');
+  localStorage.removeItem('setout_thankyou_seen');
+  localStorage.removeItem('setout_user_name');
+  localStorage.removeItem('setout_region');
+}
+if (_params.has('reset')) {
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
 export function App() {
   const [splashDone, setSplashDone] = useState(false);
+
+  const [installDone, setInstallDone] = useState(() => {
+    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+    const hasSeen = localStorage.getItem('setout_install_seen') === 'true';
+    return isInstalled || hasSeen;
+  });
+
+  const [thankYouDone, setThankYouDone] = useState(() => {
+    return localStorage.getItem('setout_thankyou_seen') === 'true';
+  });
+
+  const [nameDone, setNameDone] = useState(() => {
+    return !!localStorage.getItem('setout_user_name');
+  });
+
+  const [regionDone, setRegionDone] = useState(() => {
+    return !!localStorage.getItem('setout_region');
+  });
+
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
 
+  const onboardingDone = splashDone && installDone && thankYouDone && nameDone && regionDone;
+
   return (
     <>
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
-      {splashDone && (
+
+      {splashDone && !installDone && (
+        <InstallPromptScreen onComplete={() => setInstallDone(true)} />
+      )}
+
+      {splashDone && installDone && !thankYouDone && (
+        <BetaThankYou onComplete={() => setThankYouDone(true)} />
+      )}
+
+      {splashDone && installDone && thankYouDone && !nameDone && (
+        <OnboardingName onComplete={() => setNameDone(true)} />
+      )}
+
+      {splashDone && installDone && thankYouDone && nameDone && !regionDone && (
+        <OnboardingRegion onComplete={() => setRegionDone(true)} />
+      )}
+
+      {onboardingDone && (
         <SettingsContext.Provider value={{ settings, updateSettings }}>
           <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
             <JobsContext.Provider value={jobsApi}>

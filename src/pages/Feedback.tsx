@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 
-const FORMSPREE_ID = 'mlgvapzd';
+const FORMSPREE_ID = 'mykvovog';
 
 export function Feedback() {
   const [message, setMessage] = useState('');

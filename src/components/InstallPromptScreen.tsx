@@ -338,9 +338,10 @@ interface Props {
 }
 
 export function InstallPromptScreen({ onComplete }: Props) {
-  const [visible, setVisible] = useState(false);
-  const [exiting, setExiting] = useState(false);
-  const [toast, setToast]     = useState<string | null>(null);
+  const [visible, setVisible]   = useState(false);
+  const [exiting, setExiting]   = useState(false);
+  const [toast, setToast]       = useState<string | null>(null);
+  const [claimed, setClaimed]   = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 20);
@@ -348,10 +349,10 @@ export function InstallPromptScreen({ onComplete }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || claimed) return;
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [toast, claimed]);
 
   function proceed() {
     localStorage.setItem('setout_install_seen', 'true');
@@ -364,7 +365,8 @@ export function InstallPromptScreen({ onComplete }: Props) {
     if (installed) {
       proceed();
     } else {
-      setToast('Follow the steps above then tap again');
+      setClaimed(true);
+      setToast('The app should be on your home screen now — open it from there!');
     }
   }
 
@@ -421,7 +423,7 @@ export function InstallPromptScreen({ onComplete }: Props) {
         </div>
 
         {/* Primary button */}
-        {!isDesktop && (
+        {!isDesktop && !claimed && (
           <button
             onClick={handleClaimed}
             style={{

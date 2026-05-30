@@ -35,7 +35,7 @@ function getRampPresets(region: Region) {
 
 export function GradientCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   // Primary mode: know gradient + distance → find fall
   // Reverse mode: know fall + distance → find gradient
@@ -247,7 +247,6 @@ export function GradientCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -300,6 +299,7 @@ export function GradientCalc() {
               id="gradient"
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

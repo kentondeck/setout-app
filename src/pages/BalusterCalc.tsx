@@ -20,7 +20,7 @@ interface Inputs {
 
 export function BalusterCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(() => ({
     totalLength: '',
@@ -133,7 +133,6 @@ export function BalusterCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -203,6 +202,7 @@ export function BalusterCalc() {
               ]}
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

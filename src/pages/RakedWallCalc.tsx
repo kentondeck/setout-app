@@ -35,7 +35,7 @@ const DEFAULTS: Inputs = {
 
 export function RakedWallCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('heights');
@@ -196,7 +196,6 @@ export function RakedWallCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -288,6 +287,7 @@ export function RakedWallCalc() {
               ]}
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

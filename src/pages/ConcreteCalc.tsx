@@ -24,7 +24,7 @@ const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numH
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastage, setWastage] = useState(0.10);
@@ -358,7 +358,6 @@ export function ConcreteCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -411,6 +410,7 @@ export function ConcreteCalc() {
               ]}
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
@@ -472,6 +472,7 @@ export function ConcreteCalc() {
               ]}
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastPostId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

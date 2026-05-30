@@ -47,7 +47,7 @@ const btnBase: React.CSSProperties = {
 
 export function RoofingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [roofType, setRoofType] = useState<RoofType>('gable');
   const [profile, setProfile] = useState<RoofProfile>('corrugate');
@@ -216,7 +216,6 @@ export function RoofingCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -307,6 +306,7 @@ export function RoofingCalc() {
               id="roofing"
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

@@ -38,7 +38,7 @@ const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
 
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<DeckingResult | null>(null);
@@ -213,7 +213,6 @@ export function DeckingCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         {/* Calculate button */}
         <button
           onClick={handleCalculate}
@@ -475,6 +474,7 @@ export function DeckingCalc() {
               {COMPLIANCE_NOTES.decking[settings.region]}
             </p>
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
           </>
         )}

@@ -36,7 +36,7 @@ function fmtLength(mm: number): string {
 
 export function CutlistCalc() {
   const { settings } = useContext(SettingsContext);
-  const { addEntry } = useContext(HistoryContext);
+  const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [forcedStock, setForcedStock] = useState('');
   const [wasteBuffer, setWasteBuffer] = useState('');
@@ -248,7 +248,6 @@ export function CutlistCalc() {
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
-        <JobNameInput value={jobName} onChange={setJobName} />
         <button
           onClick={handleCalculate}
           style={{
@@ -379,6 +378,7 @@ export function CutlistCalc() {
               ]}
             />
 
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

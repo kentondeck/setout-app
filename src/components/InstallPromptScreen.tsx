@@ -412,9 +412,18 @@ export function InstallPromptScreen({ onComplete }: Props) {
         {/* Steps */}
         <div style={{ width: '100%', maxWidth: 380, marginTop: 28 }}>
           {isDesktop ? (
-            <p style={{ margin: 0, fontFamily: FONT, fontSize: 14, color: MUTED, textAlign: 'center', lineHeight: 1.6 }}>
-              Open this page on your phone in Safari (iPhone) or Chrome (Android) to install.
-            </p>
+            <div style={{ fontFamily: FONT, fontSize: 14, color: MUTED, textAlign: 'center', lineHeight: 1.6 }}>
+              <p style={{ margin: 0 }}>
+                Open this page on your phone in Safari (iPhone) or Chrome (Android) to install.
+              </p>
+              <p style={{ margin: '16px 0 0', color: DARK, fontWeight: 500 }}>Then add it to your home screen:</p>
+              <p style={{ margin: '8px 0 0' }}>
+                <span style={{ color: DARK, fontWeight: 500 }}>iPhone</span> — tap <span style={{ color: ORANGE }}>Share</span> → <span style={{ color: ORANGE }}>Add to Home Screen</span>
+              </p>
+              <p style={{ margin: '8px 0 0' }}>
+                <span style={{ color: DARK, fontWeight: 500 }}>Android</span> — tap <span style={{ color: ORANGE }}>⋮</span> → <span style={{ color: ORANGE }}>Add to Home Screen</span>
+              </p>
+            </div>
           ) : isIOS ? (
             <IOSSteps />
           ) : (

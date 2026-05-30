@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
           name: 'Setout',
           short_name: 'Setout',
           description: 'Construction calculators for tradies',
-          theme_color: '#863bff',
+          theme_color: '#FF5A1F',
           background_color: '#F5F5F3',
           display: 'standalone',
           orientation: 'portrait',

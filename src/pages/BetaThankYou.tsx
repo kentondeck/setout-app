@@ -69,7 +69,7 @@ export function BetaThankYou({ onComplete }: Props) {
             color: MUTED, textAlign: 'center', maxWidth: 260,
             animation: risen('260ms'),
           }}>
-            You're one of the first chippies to use Setout instead of builders. Your feedback means everything to us.
+            You're one of the first chippies to use setout. Your feedback means everything to us.
           </p>
 
           <button

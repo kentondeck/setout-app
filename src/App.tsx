@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import posthog from 'posthog-js';
 import { useSettings } from './lib/useSettings';
 import { useHistory } from './lib/useHistory';
@@ -37,9 +37,18 @@ import { FencingCalc } from './pages/FencingCalc';
 import { Feedback } from './pages/Feedback';
 
 
+function PageViewTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    posthog.capture('$pageview', { $current_url: window.location.href });
+  }, [location]);
+  return null;
+}
+
 function AppShell() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100svh', width: '100%' }}>
+      <PageViewTracker />
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%' }}>
         <Routes>
           <Route path="/" element={<Home />} />

@@ -24,14 +24,15 @@ const VB_W = 760;
 const VB_H = 420;
 const FLOOR_Y = 380;
 
-// Fixed birdsmouth / wall plate anchor — these never move
-const HEEL_X        = 268;   // outer face of wall plate = heel cut x
-const PLATE_Y_TOP   = 236;   // top of wall plate = seat cut y
-const SEAT_W        = 80;    // seat cut width in px (represents plate width)
-const SEAT_INNER_X  = HEEL_X + SEAT_W;   // = 348
+// Fixed birdsmouth / top plate anchor — these never move
 const PLATE_OUTER_X = 264;   // left edge of plate rect
-const PLATE_H       = 36;
-const WALL_H        = 82;
+const PLATE_W       = 90;    // plate width in px
+const HEEL_X        = PLATE_OUTER_X;             // outer face of top plate = heel cut x (= 264)
+const PLATE_Y_TOP   = 236;   // top of plate = seat cut y
+const SEAT_W        = PLATE_W;                   // seat spans the full plate width
+const SEAT_INNER_X  = HEEL_X + SEAT_W;           // inner face of plate (= 354)
+const PLATE_H       = 26;    // thinner plate — closer to real proportions
+const WALL_H        = 70;    // slightly shorter wall
 const RAFTER_PERP   = 46;    // perpendicular rafter depth in px
 const ARC_R         = 44;    // pitch arc radius in px
 
@@ -154,7 +155,7 @@ export const RoofDiagram = memo(function RoofDiagram({
   const wallY0 = PLATE_Y_TOP + PLATE_H;
   const wallY1 = wallY0 + WALL_H;
   const hatchLines: number[] = [];
-  for (let x = PLATE_OUTER_X - WALL_H; x < PLATE_OUTER_X + 90 + 10; x += 12) {
+  for (let x = PLATE_OUTER_X - WALL_H; x < PLATE_OUTER_X + PLATE_W + 10; x += 12) {
     hatchLines.push(x);
   }
 
@@ -210,12 +211,12 @@ export const RoofDiagram = memo(function RoofDiagram({
             <path d="M 0 0 L 10 4 L 0 8 Z" fill={ORANGE} />
           </marker>
           <clipPath id="roofWallClip">
-            <rect x={PLATE_OUTER_X} y={wallY0} width={90} height={WALL_H} />
+            <rect x={PLATE_OUTER_X} y={wallY0} width={PLATE_W} height={WALL_H} />
           </clipPath>
         </defs>
 
         {/* ── Supporting wall ───────────────────────────────────────────── */}
-        <rect x={PLATE_OUTER_X} y={wallY0} width={90} height={WALL_H}
+        <rect x={PLATE_OUTER_X} y={wallY0} width={PLATE_W} height={WALL_H}
           fill={WALL} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
         <g clipPath="url(#roofWallClip)" opacity={0.35}>
           {hatchLines.map(x => (
@@ -226,12 +227,10 @@ export const RoofDiagram = memo(function RoofDiagram({
           ))}
         </g>
 
-        {/* ── Wall plate ────────────────────────────────────────────────── */}
-        <rect x={PLATE_OUTER_X} y={PLATE_Y_TOP} width={90} height={PLATE_H}
+        {/* ── Top plate ─────────────────────────────────────────────────── */}
+        <rect x={PLATE_OUTER_X} y={PLATE_Y_TOP} width={PLATE_W} height={PLATE_H}
           fill={TIMBER} stroke={INK} strokeWidth={1.5} strokeLinejoin="round" />
-        <line x1={PLATE_OUTER_X + 4} y1={PLATE_Y_TOP + 10} x2={PLATE_OUTER_X + 86} y2={PLATE_Y_TOP + 10}
-          stroke={INK} strokeWidth={0.5} opacity={0.2} />
-        <line x1={PLATE_OUTER_X + 4} y1={PLATE_Y_TOP + 22} x2={PLATE_OUTER_X + 86} y2={PLATE_Y_TOP + 22}
+        <line x1={PLATE_OUTER_X + 4} y1={PLATE_Y_TOP + PLATE_H / 2} x2={PLATE_OUTER_X + PLATE_W - 4} y2={PLATE_Y_TOP + PLATE_H / 2}
           stroke={INK} strokeWidth={0.5} opacity={0.2} />
 
         {/* ── Floor line + hatch ────────────────────────────────────────── */}
@@ -371,12 +370,6 @@ export const RoofDiagram = memo(function RoofDiagram({
         <line x1={98} y1={heelMidY} x2={HEEL_X - 2} y2={heelMidY}
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
 
-        {/* Seat Cut — below, vertical leader up to seat */}
-        <text x={282} y={390}
-          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Seat Cut</text>
-        <line x1={308} y1={382} x2={308} y2={PLATE_Y_TOP + 2}
-          stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
-
         {/* Ridge Cut — right of ridge, leader to midpoint of cut face */}
         <text x={ridgeLabelX} y={r(ridgeTopY) + 5}
           fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Ridge</text>
@@ -387,13 +380,11 @@ export const RoofDiagram = memo(function RoofDiagram({
           x2={r(ridgeBotX) + 2} y2={ridgeMidY}
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
 
-        {/* Wall Plate — right of plate, leader pointing left into plate */}
-        {/* plate right edge = PLATE_OUTER_X + 90 = 354 */}
-        <text x={366} y={PLATE_Y_TOP + 14}
-          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Wall</text>
-        <text x={366} y={PLATE_Y_TOP + 30}
-          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Plate</text>
-        <line x1={363} y1={PLATE_Y_TOP + 18} x2={356} y2={PLATE_Y_TOP + 18}
+        {/* Top Plate — right of plate, single-line label with short leader */}
+        <text x={SEAT_INNER_X + 14} y={PLATE_Y_TOP + PLATE_H / 2 + 5}
+          fontFamily={FONT} fontSize={13} fontWeight={500} fill={ORANGE}>Top Plate</text>
+        <line x1={SEAT_INNER_X + 11} y1={PLATE_Y_TOP + PLATE_H / 2}
+              x2={SEAT_INNER_X + 2}  y2={PLATE_Y_TOP + PLATE_H / 2}
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
 
         {/* Supporting Wall — right of wall, leader pointing left into wall */}

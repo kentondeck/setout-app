@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
+import { SettingsContext } from '../contexts';
 
 const FORMSPREE_ID = 'mykvovog';
 
 export function Feedback() {
+  const { settings } = useContext(SettingsContext);
+  const userName = (settings.userName || localStorage.getItem('setout_user_name') || '').trim();
+
   const [message, setMessage] = useState('');
-  const [contact, setContact] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
   async function handleSubmit() {
@@ -15,12 +18,11 @@ export function Feedback() {
       const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ message: message.trim(), contact: contact.trim() || 'Anonymous' }),
+        body: JSON.stringify({ message: message.trim(), name: userName || 'Anonymous' }),
       });
       if (res.ok) {
         setStatus('success');
         setMessage('');
-        setContact('');
       } else {
         setStatus('error');
       }
@@ -111,27 +113,11 @@ export function Feedback() {
             />
           </div>
 
-          <div>
-            <p style={labelStyle}>Name or email (optional)</p>
-            <input
-              type="text"
-              value={contact}
-              onChange={e => setContact(e.target.value)}
-              placeholder="So we can follow up if needed"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                background: 'var(--color-bg)',
-                border: '0.5px solid var(--color-border)',
-                borderRadius: 10,
-                padding: '12px 14px',
-                fontSize: 15,
-                fontFamily: 'inherit',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-          </div>
+          {userName && (
+            <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+              Sending as <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{userName}</span>
+            </p>
+          )}
         </div>
 
         {/* Submit */}

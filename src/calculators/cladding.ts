@@ -37,10 +37,11 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   const courseCount = Math.round(rawCourseCount);
   const faceCover = parseFloat((availableHeight / courseCount).toFixed(1));
 
-  // Rod marks: one per course line (bottom edge of each board)
+  // Rod marks: one per course line (bottom edge of each board) — keep 1dp
+  // so the marks don't accumulate rounding drift up the wall.
   const rodMarks: number[] = [];
   for (let i = 0; i < courseCount; i++) {
-    rodMarks.push(Math.round(startOffset + i * faceCover));
+    rodMarks.push(parseFloat((startOffset + i * faceCover).toFixed(1)));
   }
 
   const firstMark = rodMarks[0];
@@ -85,7 +86,7 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
     {
       label: 'Story rod marks',
       formula: 'start offset + ( course index × face cover )',
-      result: `${firstMark}mm, ${Math.round(startOffset + faceCover)}mm … ${lastMark}mm`,
+      result: `${firstMark}mm, ${parseFloat((startOffset + faceCover).toFixed(1))}mm … ${lastMark}mm`,
     },
     {
       label: 'Top board rip',

@@ -19,8 +19,8 @@ export interface SetoutResult {
 export function calculateSetout(inputs: SetoutInputs): SetoutResult {
   const { sideA, sideB, measured } = inputs;
 
-  const diagonal = Math.round(Math.sqrt(sideA ** 2 + sideB ** 2));
-  const error = measured !== undefined ? Math.round(measured - diagonal) : 0;
+  const diagonal = parseFloat(Math.sqrt(sideA ** 2 + sideB ** 2).toFixed(1));
+  const error = measured !== undefined ? parseFloat((measured - diagonal).toFixed(1)) : 0;
 
   const steps: WorkingStep[] = [
     {

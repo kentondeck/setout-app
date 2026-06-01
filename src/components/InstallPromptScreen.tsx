@@ -10,6 +10,14 @@ const isIOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// Detect in-app browsers (Instagram, Facebook, Messenger, TikTok, etc.) — these
+// don't expose "Add to Home Screen", so the install steps below are useless
+// until the user opens the link in their real browser.
+const isInAppBrowser = (() => {
+  const ua = navigator.userAgent;
+  return /FBA[NV]|FB_IAB|FBSV|Instagram|Line\/|Twitter|TikTok|musical_ly|BytedanceWebview|MicroMessenger|Snapchat|Pinterest|LinkedInApp|Reddit|Discord|; wv\)/i.test(ua);
+})();
+
 // ─── SVG Diagrams ─────────────────────────────────────────────────────────────
 
 /**
@@ -411,7 +419,35 @@ export function InstallPromptScreen({ onComplete }: Props) {
 
         {/* Steps */}
         <div style={{ width: '100%', maxWidth: 380, marginTop: 28 }}>
-          {isDesktop ? (
+          {isInAppBrowser ? (
+            <div style={{
+              background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)',
+              borderRadius: 16, padding: '20px 18px',
+              fontFamily: FONT, fontSize: 14, color: DARK, lineHeight: 1.6,
+            }}>
+              <p style={{
+                margin: 0, fontSize: 10, fontWeight: 600, letterSpacing: '1.2px',
+                color: ORANGE, textTransform: 'uppercase',
+              }}>
+                Open in your browser first
+              </p>
+              <p style={{ margin: '8px 0 0', fontSize: 15, fontWeight: 500, color: DARK, letterSpacing: '-0.2px' }}>
+                You're in an in-app browser, so adding Setout to your home screen isn't available here.
+              </p>
+              <p style={{ margin: '14px 0 0', color: MUTED }}>
+                Tap the <span style={{ color: ORANGE, fontWeight: 500 }}>⋯</span> menu (usually top-right) and choose:
+              </p>
+              <p style={{ margin: '6px 0 0' }}>
+                <span style={{ color: DARK, fontWeight: 500 }}>iPhone</span> — <span style={{ color: ORANGE }}>Open in Safari</span>
+              </p>
+              <p style={{ margin: '4px 0 0' }}>
+                <span style={{ color: DARK, fontWeight: 500 }}>Android</span> — <span style={{ color: ORANGE }}>Open in Chrome</span>
+              </p>
+              <p style={{ margin: '14px 0 0', fontSize: 13, color: MUTED }}>
+                Then come back here and you'll see the "Add to Home Screen" steps.
+              </p>
+            </div>
+          ) : isDesktop ? (
             <div style={{ fontFamily: FONT, fontSize: 14, color: MUTED, textAlign: 'center', lineHeight: 1.6 }}>
               <p style={{ margin: 0 }}>
                 Open this page on your phone in Safari (iPhone) or Chrome (Android) to install.
@@ -431,8 +467,8 @@ export function InstallPromptScreen({ onComplete }: Props) {
           )}
         </div>
 
-        {/* Primary button */}
-        {!isDesktop && !claimed && (
+        {/* Primary button — hide in in-app browsers since install isn't possible from there */}
+        {!isDesktop && !isInAppBrowser && !claimed && (
           <button
             onClick={handleClaimed}
             style={{

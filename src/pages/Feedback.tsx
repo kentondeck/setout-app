@@ -9,16 +9,18 @@ export function Feedback() {
   const userName = (settings.userName || localStorage.getItem('setout_user_name') || '').trim();
 
   const [message, setMessage] = useState('');
+  const [anonymous, setAnonymous] = useState(false);
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
   async function handleSubmit() {
     if (!message.trim()) return;
     setStatus('submitting');
+    const sendName = anonymous || !userName ? 'Anonymous' : userName;
     try {
       const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ message: message.trim(), name: userName || 'Anonymous' }),
+        body: JSON.stringify({ message: message.trim(), name: sendName }),
       });
       if (res.ok) {
         setStatus('success');
@@ -113,11 +115,30 @@ export function Feedback() {
             />
           </div>
 
-          {userName && (
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-              Sending as <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{userName}</span>
-            </p>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            {userName ? (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+                Sending as{' '}
+                <span style={{ color: 'var(--color-text)', fontWeight: 500, textDecoration: anonymous ? 'line-through' : 'none' }}>
+                  {userName}
+                </span>
+                {anonymous && <span style={{ color: 'var(--color-text)', fontWeight: 500 }}> Anonymous</span>}
+              </p>
+            ) : (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>Sending anonymously</p>
+            )}
+            {userName && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--color-muted)', cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="checkbox"
+                  checked={anonymous}
+                  onChange={e => setAnonymous(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: 'var(--color-orange)', cursor: 'pointer', margin: 0 }}
+                />
+                Anonymous
+              </label>
+            )}
+          </div>
         </div>
 
         {/* Submit */}

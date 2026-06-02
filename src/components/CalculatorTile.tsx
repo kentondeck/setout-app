@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-declare function gtag(...args: unknown[]): void;
 import type { CalcMeta } from '../lib/calculators';
 
 interface CalculatorTileProps {
@@ -20,7 +19,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle 
 
   return (
     <button
-      onClick={() => { gtag('event', 'calculator_opened', { calculator: calc.id, label: calc.label }); navigate(`/calc/${calc.id}`); }}
+      onClick={() => navigate(`/calc/${calc.id}`)}
       style={{
         background: bg,
         borderRadius: 'var(--radius-tile)',

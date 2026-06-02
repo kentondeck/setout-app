@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
-import posthog from 'posthog-js';
+import { useState } from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
+
 import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { SettingsContext, HistoryContext, JobsContext } from './contexts';
@@ -37,18 +37,10 @@ import { FencingCalc } from './pages/FencingCalc';
 import { Feedback } from './pages/Feedback';
 
 
-function PageViewTracker() {
-  const location = useLocation();
-  useEffect(() => {
-    posthog.capture('$pageview', { $current_url: window.location.href });
-  }, [location]);
-  return null;
-}
 
 function AppShell() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100svh', width: '100%' }}>
-      <PageViewTracker />
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%' }}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -126,19 +118,19 @@ export function App() {
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
       {splashDone && !installDone && (
-        <InstallPromptScreen onComplete={() => { posthog.capture('onboarding_install_done'); setInstallDone(true); }} />
+        <InstallPromptScreen onComplete={() => { setInstallDone(true); }} />
       )}
 
       {splashDone && installDone && !thankYouDone && (
-        <BetaThankYou onComplete={() => { posthog.capture('onboarding_thankyou_done'); setThankYouDone(true); }} />
+        <BetaThankYou onComplete={() => { setThankYouDone(true); }} />
       )}
 
       {splashDone && installDone && thankYouDone && !nameDone && (
-        <OnboardingName onComplete={() => { posthog.capture('onboarding_name_done'); setNameDone(true); }} />
+        <OnboardingName onComplete={() => { setNameDone(true); }} />
       )}
 
       {splashDone && installDone && thankYouDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => { posthog.capture('onboarding_complete'); setRegionDone(true); }} />
+        <OnboardingRegion onComplete={() => { setRegionDone(true); }} />
       )}
 
       {onboardingDone && (

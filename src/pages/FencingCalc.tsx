@@ -30,6 +30,7 @@ export function FencingCalc() {
   const [customPalingWidth, setCustomPalingWidth] = useState('');
   const [palingStyle, setPalingStyle] = useState<PalingStyle>('lapped');
   const [customGap, setCustomGap] = useState('10');
+  const [customOverlap, setCustomOverlap] = useState('15');
 
   const [wasteBuffer, setWasteBuffer] = useState(0);
 
@@ -81,7 +82,7 @@ export function FencingCalc() {
       railCount: resolvedRailCount,
       palingWidthMm: resolvedPalingWidth,
       palingStyle,
-      palingOverlapMm: 15,
+      palingOverlapMm: parseFloat(customOverlap) || 15,
       palingGapMm: parseFloat(customGap) || 10,
     });
 
@@ -264,10 +265,21 @@ export function FencingCalc() {
                   </button>
                 </div>
                 <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>
-                  {palingStyle === 'lapped' ? 'Palings overlap 15 mm — traditional paling fence'
+                  {palingStyle === 'lapped' ? `Palings overlap ${customOverlap || 15} mm — traditional paling fence`
                     : palingStyle === 'tight' ? 'Palings butted edge to edge — solid/close-board'
                     : `Palings with ${customGap || 10} mm gap — picket / open style`}
                 </p>
+                {palingStyle === 'lapped' && (
+                  <div style={{ marginTop: 10 }}>
+                    <NumberInput
+                      label="Overlap between palings"
+                      value={customOverlap}
+                      onChange={v => { setCustomOverlap(v); setResult(null); }}
+                      unit="mm"
+                      placeholder="e.g. 15"
+                    />
+                  </div>
+                )}
                 {palingStyle === 'open' && (
                   <div style={{ marginTop: 10 }}>
                     <NumberInput
@@ -376,7 +388,7 @@ export function FencingCalc() {
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
                 Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep.
                 {fenceType === 'paling' && palingStyle !== 'tight'
-                  ? ` Paling count based on ${palingStyle === 'lapped' ? '15 mm overlap' : `${customGap || 10} mm gap`}.`
+                  ? ` Paling count based on ${palingStyle === 'lapped' ? `${customOverlap || 15} mm overlap` : `${customGap || 10} mm gap`}.`
                   : ''}
                 {' '}Add 5–10% to all timber quantities for waste and end cuts.
               </p>

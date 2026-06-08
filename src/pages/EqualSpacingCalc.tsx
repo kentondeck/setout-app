@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
+import { ShareCalcButton } from '../components/ShareCalcButton';
 import { calculateEqualSpacing } from '../calculators/equalspacing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { EqualSpacingOutputs } from '../calculators/equalspacing';
@@ -223,6 +224,7 @@ export function EqualSpacingCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
+            <ShareCalcButton calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.equalspacing[settings.region]}

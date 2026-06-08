@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
+import { ShareCalcButton } from '../components/ShareCalcButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
@@ -412,6 +413,7 @@ export function ConcreteCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastSlabId} />
+            <ShareCalcButton calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
@@ -474,6 +476,7 @@ export function ConcreteCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastPostId} />
+            <ShareCalcButton calculationId={lastPostId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}

@@ -95,6 +95,19 @@ export function BalusterCalc() {
   const balCount = result ? result.outputs.balusters : 0;
   const balGap = result ? result.outputs.actualGap : 0;
 
+  // Running marks from one end — centre of each baluster.
+  // First baluster centre = gap + width/2 ; each subsequent = previous + (gap + width).
+  const balusterMarks: { idx: number; centre: number }[] = [];
+  if (result && balCount > 0) {
+    const pitch = balGap + balWidth;
+    for (let i = 0; i < balCount; i++) {
+      balusterMarks.push({
+        idx: i + 1,
+        centre: parseFloat((balGap + balWidth / 2 + i * pitch).toFixed(1)),
+      });
+    }
+  }
+
   const balusterSteps: WorkingStep[] = result ? [
     { label: 'Length between posts', explanation: 'The distance from inside of one post to the inside of the next', result: `${balLen} mm` },
     { label: 'Max gap allowed', explanation: `${settings.region === 'NZ' ? 'NZS 3604' : 'AS 1657'} says no gap can be bigger than ${BALUSTER_MAX_GAP[settings.region]}mm`, result: `${balMax} mm` },
@@ -161,6 +174,56 @@ export function BalusterCalc() {
               <ResultCard label="Balusters" value={result.outputs.balusters} accent />
               <ResultCard label="Actual gap" value={result.outputs.actualGap} unit="mm" />
             </div>
+
+            {/* Running marks — centre of each baluster from one end */}
+            {balusterMarks.length > 0 && (
+              <div style={{
+                background: 'var(--color-card)',
+                border: '0.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)',
+                padding: '14px 16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.4px' }}>
+                    MARK OUT (centres from one end)
+                  </p>
+                  <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
+                    pitch {parseFloat((balGap + balWidth).toFixed(1))}mm
+                  </p>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: 6,
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                }}>
+                  {balusterMarks.map(m => (
+                    <div key={m.idx} style={{
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: 6,
+                      padding: '6px 8px',
+                      background: 'var(--color-bg)',
+                      borderRadius: 8,
+                      fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', minWidth: 18 }}>
+                        {m.idx}
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)' }}>
+                        {m.centre}
+                      </span>
+                      <span style={{ fontSize: 10, color: 'var(--color-muted)' }}>mm</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {parseFloat(inputs.maxGap) > BALUSTER_MAX_GAP[settings.region] && (
               <div style={{

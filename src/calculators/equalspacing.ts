@@ -38,8 +38,8 @@ export function calculateEqualSpacing(inputs: EqualSpacingInputs): EqualSpacingR
   }
 
   const gapCount = itemCount + 1;
-  const actualGap = Math.round((totalSpan - itemCount * itemWidth) / gapCount);
-  const centreSpacing = Math.round(actualGap + itemWidth);
+  const actualGap = parseFloat(((totalSpan - itemCount * itemWidth) / gapCount).toFixed(1));
+  const centreSpacing = parseFloat((actualGap + itemWidth).toFixed(1));
 
   const rawN = preferredSpacing && itemWidth >= 0
     ? (totalSpan - preferredSpacing) / (preferredSpacing + itemWidth)
@@ -71,7 +71,7 @@ export function calculateEqualSpacing(inputs: EqualSpacingInputs): EqualSpacingR
       label: 'First mark from end',
       formula: itemWidth > 0 ? 'gap + item width ÷ 2' : 'spacing',
       result: itemWidth > 0
-        ? `${actualGap}mm + ${itemWidth / 2}mm = ${Math.round(actualGap + itemWidth / 2)}mm from end`
+        ? `${actualGap}mm + ${itemWidth / 2}mm = ${parseFloat((actualGap + itemWidth / 2).toFixed(1))}mm from end`
         : `${actualGap}mm from end`,
     },
   ];

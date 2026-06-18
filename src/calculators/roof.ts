@@ -161,7 +161,7 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   let remainingDepth = 0;
 
   if (plateWidth && plateWidth > 0) {
-    birdsmouthPlumbDepth = Math.round(plateWidth * Math.tan(pitchRad));
+    birdsmouthPlumbDepth = parseFloat((plateWidth * Math.tan(pitchRad)).toFixed(1));
     if (rafterDepth && rafterDepth > 0) {
       remainingDepth = rafterDepth - birdsmouthPlumbDepth;
     }

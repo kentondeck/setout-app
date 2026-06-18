@@ -34,14 +34,15 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   const pitchRad = Math.atan2(rise, wallLength);
   const pitchAngle = parseFloat(((pitchRad * 180) / Math.PI).toFixed(1));
 
-  // Rake plate sits at an angle — its plumb (vertical) height at any stud is t/cos(θ)
-  const rakePlateVertical = Math.round(timberThickness / Math.cos(pitchRad));
+  // Rake plate sits at an angle — its plumb (vertical) height at any stud is t/cos(θ).
+  // Keep 1dp on every mm output so cut lengths don't accumulate rounding drift.
+  const rakePlateVertical = parseFloat((timberThickness / Math.cos(pitchRad)).toFixed(1));
 
   // Total deduction from each stud: bottom plate (flat) + rake plate (angled)
   const studDeduction = timberThickness + rakePlateVertical;
 
   // Extra mm on the high side of each stud top cut: t × tan(θ)
-  const studCutExtra = Math.round(timberThickness * Math.tan(pitchRad));
+  const studCutExtra = parseFloat((timberThickness * Math.tan(pitchRad)).toFixed(1));
 
   const studCount = Math.floor(wallLength / studSpacing) + 1;
 
@@ -49,14 +50,14 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   const studHeights: number[] = [];
   for (let i = 0; i < studCount; i++) {
     const position = i * studSpacing;
-    const totalHeight = Math.round(lowHeight + (rise * position) / wallLength);
-    studHeights.push(totalHeight - studDeduction);
+    const totalHeight = lowHeight + (rise * position) / wallLength;
+    studHeights.push(parseFloat((totalHeight - studDeduction).toFixed(1)));
   }
 
   const lowStudHeight = studHeights[0];
   const highStudHeight = studHeights[studCount - 1];
 
-  const rakePlateLength = Math.round(Math.sqrt(wallLength ** 2 + rise ** 2));
+  const rakePlateLength = parseFloat(Math.sqrt(wallLength ** 2 + rise ** 2).toFixed(1));
   const bottomPlateLineal = parseFloat((wallLength / 1000).toFixed(2));
 
   const totalStudLineal = parseFloat(

@@ -10,6 +10,14 @@ const isIOS =
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+// Detect in-app browsers (Instagram, Facebook, Messenger, TikTok, etc.) — these
+// don't expose "Add to Home Screen", so the install steps below are useless
+// until the user opens the link in their real browser.
+const isInAppBrowser = (() => {
+  const ua = navigator.userAgent;
+  return /FBA[NV]|FB_IAB|FBSV|Instagram|Line\/|Twitter|TikTok|musical_ly|BytedanceWebview|MicroMessenger|Snapchat|Pinterest|LinkedInApp|Reddit|Discord|; wv\)/i.test(ua);
+})();
+
 // ─── SVG Diagrams ─────────────────────────────────────────────────────────────
 
 /**
@@ -246,6 +254,42 @@ function ChromeDropdownMenu() {
   );
 }
 
+/**
+ * In-app browser dropdown — "Open in Safari/Chrome" highlighted with arrow
+ */
+function InAppDropdownMenu() {
+  return (
+    <svg viewBox="0 0 360 148" style={{ width: '100%', height: 'auto', display: 'block' }}>
+      <rect width="360" height="148" rx="12" fill="#ffffff" />
+      <rect x="0" y="0" width="360" height="1" rx="0" fill="rgba(0,0,0,0.06)" />
+
+      {/* Row 1: Copy link */}
+      <text x="18" y="36" fontFamily="Inter,system-ui,sans-serif" fontSize="14.5" fill="#5f6368">Copy link</text>
+      <line x1="0" y1="52" x2="360" y2="52" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
+
+      {/* Row 2: Share */}
+      <text x="18" y="78" fontFamily="Inter,system-ui,sans-serif" fontSize="14.5" fill="#5f6368">Share…</text>
+      <line x1="0" y1="94" x2="360" y2="94" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
+
+      {/* Row 3: Open in Browser — highlighted */}
+      <rect x="0" y="94" width="360" height="42" fill="rgba(255,90,31,0.06)" />
+      <rect x="0" y="94" width="3" height="42" rx="1.5" fill={ORANGE} />
+      {/* External-link icon box */}
+      <rect x="14" y="100" width="26" height="26" rx="7" fill={ORANGE} />
+      <path d="M22,113 L34,113 M34,113 L30,109 M34,113 L30,117 M22,109 L22,121" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <text x="50" y="118" fontFamily="Inter,system-ui,sans-serif" fontSize="14.5" fontWeight="500" fill={ORANGE}>
+        Open in Browser
+      </text>
+      <polygon points="336,113 320,105 320,121" fill={ORANGE} />
+
+      <line x1="0" y1="136" x2="360" y2="136" stroke="rgba(0,0,0,0.07)" strokeWidth="0.5" />
+
+      {/* Row 4: Refresh — faded */}
+      <text x="18" y="144" fontFamily="Inter,system-ui,sans-serif" fontSize="14.5" fill="#c8c8cc">Refresh</text>
+    </svg>
+  );
+}
+
 // ─── Step card ────────────────────────────────────────────────────────────────
 
 function StepCard({ num, diagram, label }: {
@@ -310,6 +354,30 @@ function IOSSteps() {
         diagram={<IOSConfirmDialog />}
         label="Tap 'Add' in the top right"
       />
+    </div>
+  );
+}
+
+function InAppBrowserSteps() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+      <StepCard
+        num={1}
+        diagram={<ChromeTopBar />}
+        label="Tap the ⋯ menu in the top right"
+      />
+      <StepCard
+        num={2}
+        diagram={<InAppDropdownMenu />}
+        label="Choose 'Open in Browser'"
+      />
+      <p style={{
+        margin: '4px 0 0',
+        fontFamily: FONT, fontSize: 13, color: MUTED,
+        textAlign: 'center', lineHeight: 1.5,
+      }}>
+        Then come back here to add Setout to your home screen.
+      </p>
     </div>
   );
 }
@@ -411,7 +479,29 @@ export function InstallPromptScreen({ onComplete }: Props) {
 
         {/* Steps */}
         <div style={{ width: '100%', maxWidth: 380, marginTop: 28 }}>
-          {isDesktop ? (
+          {isInAppBrowser ? (
+            <>
+              <div style={{
+                background: 'rgba(255,90,31,0.07)',
+                border: '0.5px solid rgba(255,90,31,0.25)',
+                borderRadius: 12, padding: '12px 14px',
+                marginBottom: 14,
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <span style={{
+                  fontSize: 10, fontWeight: 600, letterSpacing: '0.8px',
+                  color: ORANGE, background: 'rgba(255,90,31,0.12)',
+                  borderRadius: 4, padding: '2px 6px', flexShrink: 0,
+                }}>
+                  HEADS UP
+                </span>
+                <p style={{ margin: 0, fontFamily: FONT, fontSize: 13, color: DARK, lineHeight: 1.4 }}>
+                  You're in an in-app browser. Open Setout in your real browser to install it.
+                </p>
+              </div>
+              <InAppBrowserSteps />
+            </>
+          ) : isDesktop ? (
             <div style={{ fontFamily: FONT, fontSize: 14, color: MUTED, textAlign: 'center', lineHeight: 1.6 }}>
               <p style={{ margin: 0 }}>
                 Open this page on your phone in Safari (iPhone) or Chrome (Android) to install.
@@ -431,8 +521,8 @@ export function InstallPromptScreen({ onComplete }: Props) {
           )}
         </div>
 
-        {/* Primary button */}
-        {!isDesktop && !claimed && (
+        {/* Primary button — hide in in-app browsers since install isn't possible from there */}
+        {!isDesktop && !isInAppBrowser && !claimed && (
           <button
             onClick={handleClaimed}
             style={{

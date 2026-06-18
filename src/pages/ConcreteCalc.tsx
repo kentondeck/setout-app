@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
+import { ShareCalcButton } from '../components/ShareCalcButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
@@ -17,7 +18,7 @@ type HoleType = 'round' | 'square';
 interface SlabFields { length: string; width: string; thickness: string; }
 interface PostFields { diameter: string; sideWidth: string; depth: string; numHoles: string; postSize: string; }
 
-const WASTAGE_OPTIONS = [0.05, 0.10, 0.15, 0.20];
+const WASTAGE_OPTIONS = [0.05, 0.10, 0.15];
 
 const SLAB_DEFAULTS: SlabFields = { length: '', width: '', thickness: '' };
 const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numHoles: '', postSize: '' };
@@ -27,7 +28,11 @@ export function ConcreteCalc() {
   const { addEntry, updateEntry } = useContext(HistoryContext);
 
   const [tab, setTab] = useState<Tab>('slab');
-  const [wastage, setWastage] = useState(0.10);
+  const [wastageMode, setWastageMode] = useState<number | 'custom'>(0.10);
+  const [customWastage, setCustomWastage] = useState('');
+  const wastage = wastageMode === 'custom'
+    ? (parseFloat(customWastage) || 0) / 100
+    : wastageMode;
   const [jobName, setJobName] = useState('');
 
   const [slabFields, setSlabFields] = useState<SlabFields>(SLAB_DEFAULTS);
@@ -332,27 +337,58 @@ export function ConcreteCalc() {
           <div>
             <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WASTAGE</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              {WASTAGE_OPTIONS.map(w => (
-                <button
-                  key={w}
-                  onClick={() => setWastage(w)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 0',
-                    borderRadius: 10,
-                    border: '0.5px solid var(--color-border)',
-                    background: wastage === w ? 'var(--color-orange)' : 'var(--color-bg)',
-                    color: wastage === w ? '#fff' : 'var(--color-text)',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {Math.round(w * 100)}%
-                </button>
-              ))}
+              {WASTAGE_OPTIONS.map(w => {
+                const active = wastageMode === w;
+                return (
+                  <button
+                    key={w}
+                    onClick={() => setWastageMode(w)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 0',
+                      borderRadius: 10,
+                      border: '0.5px solid var(--color-border)',
+                      background: active ? 'var(--color-orange)' : 'var(--color-bg)',
+                      color: active ? '#fff' : 'var(--color-text)',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      fontFamily: 'inherit',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {Math.round(w * 100)}%
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setWastageMode('custom')}
+                style={{
+                  flex: 1,
+                  padding: '8px 0',
+                  borderRadius: 10,
+                  border: '0.5px solid var(--color-border)',
+                  background: wastageMode === 'custom' ? 'var(--color-orange)' : 'var(--color-bg)',
+                  color: wastageMode === 'custom' ? '#fff' : 'var(--color-text)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
+                Custom
+              </button>
             </div>
+            {wastageMode === 'custom' && (
+              <div style={{ marginTop: 10 }}>
+                <NumberInput
+                  label="Custom wastage"
+                  value={customWastage}
+                  onChange={setCustomWastage}
+                  unit="%"
+                  placeholder="e.g. 8"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -412,6 +448,7 @@ export function ConcreteCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastSlabId} />
+            <ShareCalcButton calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
@@ -474,6 +511,7 @@ export function ConcreteCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastPostId} />
+            <ShareCalcButton calculationId={lastPostId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 
-declare function gtag(...args: unknown[]): void;
 import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { SettingsContext, HistoryContext, JobsContext } from './contexts';
@@ -119,19 +118,19 @@ export function App() {
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
       {splashDone && !installDone && (
-        <InstallPromptScreen onComplete={() => { gtag('event', 'onboarding_install_done'); setInstallDone(true); }} />
+        <InstallPromptScreen onComplete={() => { setInstallDone(true); }} />
       )}
 
       {splashDone && installDone && !thankYouDone && (
-        <BetaThankYou onComplete={() => { gtag('event', 'onboarding_thankyou_done'); setThankYouDone(true); }} />
+        <BetaThankYou onComplete={() => { setThankYouDone(true); }} />
       )}
 
       {splashDone && installDone && thankYouDone && !nameDone && (
-        <OnboardingName onComplete={() => { gtag('event', 'onboarding_name_done'); setNameDone(true); }} />
+        <OnboardingName onComplete={() => { setNameDone(true); }} />
       )}
 
       {splashDone && installDone && thankYouDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => { gtag('event', 'onboarding_complete'); setRegionDone(true); }} />
+        <OnboardingRegion onComplete={() => { setRegionDone(true); }} />
       )}
 
       {onboardingDone && (

@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
+import { ShareCalcButton } from '../components/ShareCalcButton';
 import { calculateStairs } from '../calculators/stairs';
 import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
 import type { WorkingStep } from '../components/ApprenticeWorking';
@@ -117,7 +118,7 @@ export function StairsCalc() {
               <NumberInput label="Total rise" value={inputs.totalRise} onChange={set('totalRise')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 2700', m: 'e.g. 2.7' }} hint="floor to floor" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3000', m: 'e.g. 3' }} hint="optional · leave blank to calculate" />
+              <NumberInput label="Total run" value={inputs.totalRun} onChange={set('totalRun')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3500', m: 'e.g. 3.5' }} hint="optional · leave blank to calculate" />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
@@ -275,6 +276,7 @@ export function StairsCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
+            <ShareCalcButton calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.stairs[settings.region]}

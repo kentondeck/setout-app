@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
+import { ShareCalcButton } from '../components/ShareCalcButton';
 import { calculateDecking } from '../calculators/decking';
 import type { DeckingResult, GapSuggestion } from '../calculators/decking';
 import { calculateCutlist } from '../calculators/cutlist';
@@ -476,6 +477,7 @@ export function DeckingCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
+            <ShareCalcButton calculationId={lastEntryId} />
           </>
         )}
       </div>

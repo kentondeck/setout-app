@@ -465,10 +465,7 @@ export function ConcreteCalc() {
                 <ResultCard label="Total" value={postResult.outputs.totalVolume} unit="m³" />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Total volume" value={postResult.outputs.totalVolume} unit="m³" />
-                <ResultCard label="Order (incl. wastage)" value={postResult.outputs.orderVolume} unit="m³" />
-              </div>
+              <ResultCard label="Order (incl. wastage)" value={postResult.outputs.orderVolume} unit="m³" />
             </div>
 
             {/* Bag / ready-mix recommendation */}

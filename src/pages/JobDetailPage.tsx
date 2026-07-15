@@ -2,6 +2,8 @@ import { useState, useContext, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JobsContext, HistoryContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
+import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
+import type { OrderLine } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
@@ -374,6 +376,174 @@ function MaterialsForCalc({ entry }: { entry: HistoryEntry }) {
   }
 }
 
+// ─── Order card ───────────────────────────────────────────────────────────────
+
+const BUFFER_OPTIONS = [0, 5, 10, 15];
+
+function OrderRow({ line, bufferPct }: { line: OrderLine; bufferPct: number }) {
+  const noBuffer = line.unit === 'm³';
+  const buffed = noBuffer ? line.qty : applyBuffer(line.qty, bufferPct);
+  const showOriginal = !noBuffer && bufferPct > 0 && buffed !== line.qty;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderTop: '0.5px solid var(--color-border)' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
+          {line.name}
+        </p>
+        <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+          {line.sources.map(s => (
+            <span key={s} style={{ fontSize: 9.5, fontWeight: 500, color: 'var(--color-muted)', background: 'rgba(0,0,0,0.045)', borderRadius: 5, padding: '2px 6px' }}>
+              {s}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
+          {showOriginal && (
+            <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, textDecoration: 'line-through', marginRight: 5 }}>
+              {line.qty.toLocaleString()}
+            </span>
+          )}
+          {line.approx ? '~' : ''}{buffed.toLocaleString()}
+        </p>
+        <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'var(--color-muted)' }}>{line.unit}</p>
+      </div>
+    </div>
+  );
+}
+
+function OrderGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p style={{ margin: 0, padding: '10px 14px 4px', fontSize: 10, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      {children}
+    </p>
+  );
+}
+
+function OrderCard({ entries, jobName }: { entries: HistoryEntry[]; jobName: string }) {
+  const [bufferPct, setBufferPct] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  const order = buildJobOrder(entries);
+  const hasLines = order.timber.length + order.concrete.length + order.fixings.length + order.other.length > 0;
+  if (!hasLines) return null;
+
+  const orderText = formatOrderText(order, jobName, bufferPct);
+
+  async function handleShare() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: orderText });
+        return;
+      } catch { /* user cancelled — fall through to copy */ }
+    }
+    handleCopy();
+  }
+
+  function handleCopy() {
+    navigator.clipboard?.writeText(orderText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div style={{ padding: '0 18px 4px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginBottom: 10 }}>
+        {BUFFER_OPTIONS.map(pct => {
+          const active = bufferPct === pct;
+          return (
+            <button
+              key={pct}
+              onClick={() => setBufferPct(pct)}
+              style={{
+                padding: '9px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer',
+                border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
+                background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
+                color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {pct === 0 ? 'No buffer' : `+${pct}%`}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)', boxShadow: '0 1px 2px rgba(0,0,0,0.025)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '13px 14px 8px' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--color-text)' }}>Order</span>
+          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-orange)' }}>
+            {bufferPct === 0 ? 'No buffer' : `+${bufferPct}% buffer applied`}
+          </span>
+        </div>
+
+        {order.timber.length > 0 && (
+          <>
+            <OrderGroupLabel>Timber</OrderGroupLabel>
+            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+          </>
+        )}
+        {order.concrete.length > 0 && (
+          <>
+            <OrderGroupLabel>Concrete</OrderGroupLabel>
+            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+          </>
+        )}
+        {order.fixings.length > 0 && (
+          <>
+            <OrderGroupLabel>Fixings</OrderGroupLabel>
+            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+          </>
+        )}
+        {order.other.length > 0 && (
+          <>
+            <OrderGroupLabel>Other</OrderGroupLabel>
+            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+          </>
+        )}
+
+        {order.timberLinealM > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: 'rgba(255,90,31,0.05)' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>Timber total</span>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
+              {applyBuffer(order.timberLinealM, bufferPct)} lm
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        <button
+          onClick={handleShare}
+          style={{
+            flex: 1, padding: '13px', borderRadius: 14, border: 'none', cursor: 'pointer',
+            background: 'var(--color-orange)', color: '#fff', fontSize: 14.5, fontWeight: 500, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Send to supplier
+        </button>
+        <button
+          onClick={handleCopy}
+          style={{
+            padding: '13px 16px', borderRadius: 14, cursor: 'pointer',
+            border: '0.5px solid var(--color-border)', background: copied ? '#22c55e' : 'var(--color-card)',
+            color: copied ? '#fff' : 'var(--color-text)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+            transition: 'all 0.2s', whiteSpace: 'nowrap',
+          }}
+        >
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Group header ─────────────────────────────────────────────────────────────
 
 function GroupHeader({ label, count }: { label: string; count: number }) {
@@ -711,6 +881,9 @@ export function JobDetailPage() {
         </button>
       </div>
 
+
+      {/* Consolidated order */}
+      {calculations.length > 0 && <OrderCard entries={calculations} jobName={job.name} />}
 
       {/* Calc list */}
       <div style={{ flex: 1, padding: '14px 18px 100px', display: 'flex', flexDirection: 'column' }}>

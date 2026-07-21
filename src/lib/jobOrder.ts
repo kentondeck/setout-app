@@ -123,6 +123,17 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
         if (screws > 0) fixings.push({ id: `fix-roof-${e.id}`, name: 'Roofing screws', qty: screws, unit: 'screws', approx: true, sources: ['Roofing'] });
         break;
       }
+      case 'photoquote': {
+        const raw = String(o.materialsJson ?? '');
+        if (!raw) break;
+        let items: { item: string; quantity: number; unit: string }[] = [];
+        try { items = JSON.parse(raw); } catch { break; }
+        for (const m of items) {
+          if (!m.item?.trim() || !(m.quantity > 0)) continue;
+          other.push({ id: `photoquote-${e.id}-${m.item}`, name: m.item.trim(), qty: m.quantity, unit: m.unit?.trim() || 'each', sources: ['Photo Quote'] });
+        }
+        break;
+      }
     }
   }
 
@@ -146,23 +157,27 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
       return { id: `timber-${lengthMm}`, name, qty, unit: nouns.size === 1 ? group[0].noun : 'lengths', sources, lengthMm };
     });
 
-  // Merge identical concrete lines (e.g. bags from fencing + bags from concrete calc)
-  const mergedConcrete: OrderLine[] = [];
-  for (const line of concrete) {
-    const existing = mergedConcrete.find(l => l.name === line.name && l.unit === line.unit);
-    if (existing) {
-      existing.qty += line.qty;
-      existing.sources = [...new Set([...existing.sources, ...line.sources])];
-    } else {
-      mergedConcrete.push({ ...line });
+  // Merge identical lines by name + unit (e.g. bags from fencing + bags from concrete calc,
+  // or the same material appearing across multiple Photo Quotes in one job)
+  function mergeByNameAndUnit(lines: OrderLine[]): OrderLine[] {
+    const merged: OrderLine[] = [];
+    for (const line of lines) {
+      const existing = merged.find(l => l.name === line.name && l.unit === line.unit);
+      if (existing) {
+        existing.qty += line.qty;
+        existing.sources = [...new Set([...existing.sources, ...line.sources])];
+      } else {
+        merged.push({ ...line });
+      }
     }
+    return merged;
   }
 
   const timberLinealM = parseFloat(
     (timber.reduce((s, l) => s + ((l.lengthMm ?? 0) / 1000) * l.qty, 0) + looseTimberLm).toFixed(1)
   );
 
-  return { timber, concrete: mergedConcrete, fixings, other, timberLinealM };
+  return { timber, concrete: mergeByNameAndUnit(concrete), fixings, other: mergeByNameAndUnit(other), timberLinealM };
 }
 
 export function applyBuffer(qty: number, pct: number): number {

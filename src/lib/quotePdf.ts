@@ -1,0 +1,212 @@
+import { jsPDF } from 'jspdf';
+import type { Region } from '../types';
+
+export type QuoteDocType = 'quote' | 'estimate';
+
+export interface PdfLabourLine {
+  role: string;
+  hours: number;
+  rate: number;
+  lineTotal: number;
+}
+
+export interface PdfLogo {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+export interface PdfQuoteInput {
+  docType: QuoteDocType;
+  clientName: string;
+  jobName: string;
+  jobDescription: string;
+  logo?: PdfLogo | null;
+  region: Region;
+  areaM2: number;
+  lengthM: number;
+  widthM: number;
+  materialsSubtotal: number;
+  labour: PdfLabourLine[];
+  labourSubtotal: number;
+  travelAmount: number;
+  subtotal: number;
+  marginPct: number;
+  marginAmount: number;
+  gstPct: number;
+  gstAmount: number;
+  total: number;
+}
+
+const DISCLAIMERS: Record<QuoteDocType, string> = {
+  quote: 'Final price may vary if actual site conditions differ from those assessed. Valid for 30 days from the date above.',
+  estimate: 'This is a preliminary estimate, not a fixed price. A formal quote will be provided following an on-site assessment.',
+};
+
+function fmtCurrency(amount: number, region: Region): string {
+  return new Intl.NumberFormat(region === 'AU' ? 'en-AU' : 'en-NZ', {
+    style: 'currency',
+    currency: region === 'AU' ? 'AUD' : 'NZD',
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const marginX = 48;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  let y = 56;
+
+  const money = (n: number) => fmtCurrency(n, q.region);
+  const docTitle = q.docType === 'quote' ? 'Quote' : 'Estimate';
+
+  function ensureSpace(next: number) {
+    if (y + next > pageHeight - 90) {
+      doc.addPage();
+      y = 56;
+    }
+  }
+
+  // Header — company logo, big and centred; doc type label below it
+  const headerLogoHeight = 84;
+  let headerBottomY = y;
+
+  if (q.logo) {
+    const logoW = (q.logo.width / q.logo.height) * headerLogoHeight;
+    const logoTopY = 28;
+    try {
+      doc.addImage(q.logo.dataUrl, 'PNG', (pageWidth - logoW) / 2, logoTopY, logoW, headerLogoHeight);
+      headerBottomY = logoTopY + headerLogoHeight + 14;
+    } catch { /* unsupported image data — skip logo rather than fail the whole PDF */ }
+  }
+
+  y = Math.max(y, headerBottomY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(10, 10, 10);
+  doc.text(docTitle, pageWidth / 2, y, { align: 'center' });
+
+  y += 16;
+  doc.setDrawColor(255, 90, 31);
+  doc.setLineWidth(2);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 30;
+
+  // Job / client
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(10, 10, 10);
+  doc.text(q.jobName || `Job ${docTitle.toLowerCase()}`, marginX, y);
+  y += 18;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.5);
+  doc.setTextColor(100, 100, 100);
+  if (q.clientName) { doc.text(`For: ${q.clientName}`, marginX, y); y += 14; }
+  doc.text(`Date: ${new Date().toLocaleDateString(q.region === 'AU' ? 'en-AU' : 'en-NZ')}`, marginX, y);
+  y += 14;
+  doc.text(`Area: ${q.lengthM}m x ${q.widthM}m (${q.areaM2}m2)`, marginX, y);
+  y += 20;
+
+  // Job description
+  if (q.jobDescription.trim()) {
+    const descLines: string[] = doc.splitTextToSize(q.jobDescription.trim(), pageWidth - marginX * 2);
+    ensureSpace(descLines.length * 13 + 10);
+    doc.setTextColor(60, 60, 60);
+    doc.text(descLines, marginX, y);
+    y += descLines.length * 13 + 14;
+  } else {
+    y += 8;
+  }
+
+  // Line items table header
+  const col = { item: marginX, qty: marginX + 260, price: marginX + 340, total: pageWidth - marginX };
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(140, 140, 140);
+  doc.text('ITEM', col.item, y);
+  doc.text('HOURS', col.qty, y);
+  doc.text('RATE', col.price, y);
+  doc.text('TOTAL', col.total, y, { align: 'right' });
+  y += 6;
+  doc.setDrawColor(225, 225, 225);
+  doc.setLineWidth(0.75);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 16;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.5);
+
+  // Materials — one summary line, not itemised
+  ensureSpace(20);
+  doc.setTextColor(10, 10, 10);
+  doc.text('Materials', col.item, y);
+  doc.text(money(q.materialsSubtotal), col.total, y, { align: 'right' });
+  y += 22;
+
+  // Labour — one row per role
+  for (const l of q.labour) {
+    ensureSpace(20);
+    doc.setTextColor(10, 10, 10);
+    doc.text(`Labour — ${l.role}`, col.item, y);
+    doc.setTextColor(90, 90, 90);
+    doc.text(`${l.hours} hrs`, col.qty, y);
+    doc.text(money(l.rate) + '/hr', col.price, y);
+    doc.setTextColor(10, 10, 10);
+    doc.text(money(l.lineTotal), col.total, y, { align: 'right' });
+    y += 20;
+  }
+
+  // Travel — optional
+  if (q.travelAmount > 0) {
+    ensureSpace(20);
+    doc.setTextColor(10, 10, 10);
+    doc.text('Travel', col.item, y);
+    doc.text(money(q.travelAmount), col.total, y, { align: 'right' });
+    y += 20;
+  }
+
+  y += 6;
+  doc.setDrawColor(225, 225, 225);
+  doc.line(marginX, y, pageWidth - marginX, y);
+  y += 24;
+
+  // Totals
+  ensureSpace(120);
+  function totalRow(label: string, value: string, opts?: { bold?: boolean; accent?: boolean }) {
+    doc.setFont('helvetica', opts?.bold ? 'bold' : 'normal');
+    doc.setFontSize(opts?.bold ? 12.5 : 10.5);
+    doc.setTextColor(opts?.accent ? 255 : opts?.bold ? 10 : 100, opts?.accent ? 90 : opts?.bold ? 10 : 100, opts?.accent ? 31 : opts?.bold ? 10 : 100);
+    doc.text(label, col.price, y);
+    doc.text(value, col.total, y, { align: 'right' });
+    y += opts?.bold ? 22 : 18;
+  }
+  totalRow(`GST (${q.gstPct}%)`, money(q.gstAmount));
+  y += 4;
+  doc.setDrawColor(10, 10, 10);
+  doc.setLineWidth(1);
+  doc.line(col.price - 10, y - 14, pageWidth - marginX, y - 14);
+  totalRow('Total inc. GST', money(q.total), { bold: true, accent: true });
+  y += 20;
+
+  // Footer — disclaimer, with a small Setout credit line below it
+  const disclaimerLines: string[] = doc.splitTextToSize(DISCLAIMERS[q.docType], pageWidth - marginX * 2);
+  const wordmarkY = pageHeight - 22;
+  const disclaimerY = wordmarkY - 16 - (disclaimerLines.length - 1) * 11;
+  ensureSpace(30);
+
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8.5);
+  doc.setTextColor(150, 150, 150);
+  doc.text(disclaimerLines, marginX, disclaimerY);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(10, 10, 10);
+  doc.text('Set', marginX, wordmarkY);
+  const setWidth = doc.getTextWidth('Set');
+  doc.setTextColor(255, 90, 31);
+  doc.text('out', marginX + setWidth, wordmarkY);
+
+  return doc;
+}

@@ -71,6 +71,141 @@ function codeCheckDevPlugin(apiKey: string): Plugin {
   };
 }
 
+// Schema and prompt duplicated here for local dev — canonical copy lives in api/quote.ts
+const QUOTE_SCHEMA = {
+  type: 'object',
+  properties: {
+    dimensions: {
+      type: 'object',
+      properties: {
+        lengthM: { type: 'number' },
+        widthM: { type: 'number' },
+        areaM2: { type: 'number' },
+      },
+      required: ['lengthM', 'widthM', 'areaM2'],
+      additionalProperties: false,
+    },
+    materials: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          item: { type: 'string' },
+          quantity: { type: 'number' },
+          unit: { type: 'string' },
+          note: { type: 'string' },
+          estimatedUnitPrice: { type: 'number' },
+        },
+        required: ['item', 'quantity', 'unit', 'note', 'estimatedUnitPrice'],
+        additionalProperties: false,
+      },
+    },
+    labour: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          role: { type: 'string' },
+          hours: { type: 'number' },
+          estimatedRate: { type: 'number' },
+        },
+        required: ['role', 'hours', 'estimatedRate'],
+        additionalProperties: false,
+      },
+    },
+    scopeSummary: { type: 'string' },
+    assumptions: { type: 'array', items: { type: 'string' } },
+  },
+  required: ['dimensions', 'materials', 'labour', 'scopeSummary', 'assumptions'],
+  additionalProperties: false,
+}
+
+const QUOTE_SYSTEM_PROMPT = `You are a construction estimator helping a tradie scope a job from a site photo and a short description of what the client wants.
+
+Look at the photo to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description to produce a materials and pricing estimate.
+
+Rules:
+- Dimensions are your best estimate from the photo and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo.
+- Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved.
+- Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours and a realistic hourly rate per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix.
+- scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
+- The request tells you the region (AU or NZ). Give estimatedUnitPrice for every material and estimatedRate for every labour role in that region's currency (AUD or NZD) — realistic current mid-range trade pricing for the stated unit.
+- These prices are starting defaults the tradie will review and adjust before sending — give a reasonable ballpark, not false precision. Never invent brand names.
+- List every material or dimension assumption you made so the tradie can correct it before ordering.`
+
+function quoteDevPlugin(apiKey: string): Plugin {
+  return {
+    name: 'quote-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api/quote', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+
+        if (!apiKey) {
+          res.statusCode = 500;
+          res.end('Add ANTHROPIC_API_KEY to .env.local to use Photo Quote locally.');
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          const { imageBase64, mediaType, description, region } = JSON.parse(Buffer.concat(chunks).toString()) as {
+            imageBase64: string; mediaType: string; description: string; region: string;
+          };
+          const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
+
+          fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-opus-4-8',
+              max_tokens: 8192,
+              thinking: { type: 'adaptive' },
+              output_config: {
+                effort: 'medium',
+                format: { type: 'json_schema', schema: QUOTE_SCHEMA },
+              },
+              system: QUOTE_SYSTEM_PROMPT,
+              messages: [{
+                role: 'user',
+                content: [
+                  { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
+                  { type: 'text', text: `${description}\n\nRegion: ${regionLabel}` },
+                ],
+              }],
+            }),
+          }).then(async upstream => {
+            if (!upstream.ok) {
+              res.statusCode = upstream.status;
+              res.end(await upstream.text());
+              return;
+            }
+            const data = await upstream.json() as { content: { type: string; text?: string }[]; stop_reason?: string };
+            if (data.stop_reason === 'max_tokens') {
+              res.statusCode = 502;
+              res.end('Estimate was cut off — try a shorter job description');
+              return;
+            }
+            const textBlock = data.content.find(b => b.type === 'text');
+            if (!textBlock?.text) {
+              res.statusCode = 502;
+              res.end('No estimate returned');
+              return;
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(textBlock.text);
+          }).catch(() => { res.statusCode = 500; res.end('Upstream error'); });
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
@@ -78,6 +213,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      quoteDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],

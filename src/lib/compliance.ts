@@ -57,6 +57,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Boundary fences generally permitted up to 1.8 m without approval — check your local council. Pool fencing must comply with AS 1926.1: minimum 1.2 m, no climbable objects within 900 mm, self-closing/latching gate. Post embedment depths are indicative — increase for unstable soils or exposed sites.',
     NZ: 'Boundary fences generally permitted up to 2.0 m without resource consent — check with your local council. Pool fencing must comply with NZS 8500 and the Fencing of Swimming Pools Act 1987: minimum 1.2 m, no climbable objects within 1.2 m of pool side. Post embedment depths are indicative — increase for unstable soils or high-wind zones.',
   },
+  photoquote: {
+    AU: 'This estimate is AI-generated from a photo and description — dimensions, materials, and labour are approximate. Always measure the site and verify quantities before ordering or quoting a client.',
+    NZ: 'This estimate is AI-generated from a photo and description — dimensions, materials, and labour are approximate. Always measure the site and verify quantities before ordering or quoting a client.',
+  },
   equalspacing: {
     AU: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant Australian Standard for your application.',
     NZ: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant New Zealand Standard for your application.',

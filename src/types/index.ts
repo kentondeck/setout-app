@@ -15,6 +15,7 @@ export type CalculatorId =
   | 'gradient'
   | 'equalspacing'
   | 'fencing'
+  | 'photoquote'
   | 'feedback';
 
 export type Region = 'AU' | 'NZ';

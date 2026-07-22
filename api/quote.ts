@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+export const config = { runtime: 'edge' };
 
 const QUOTE_SCHEMA = {
   type: 'object',
@@ -46,7 +46,7 @@ const QUOTE_SCHEMA = {
   },
   required: ['dimensions', 'materials', 'labour', 'scopeSummary', 'assumptions'],
   additionalProperties: false,
-} as const;
+};
 
 const SYSTEM_PROMPT = `You are a construction estimator helping a tradie scope a job from a site photo and a short description of what the client wants.
 
@@ -88,10 +88,15 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
-  const client = new Anthropic({ apiKey });
 
-  try {
-    const response = await client.messages.parse({
+  const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
       model: 'claude-opus-4-8',
       max_tokens: 8192,
       thinking: { type: 'adaptive' },
@@ -104,31 +109,31 @@ export default async function handler(req: Request): Promise<Response> {
         {
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif', data: imageBase64 },
-            },
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
             { type: 'text', text: `${description.trim()}\n\nRegion: ${regionLabel}` },
           ],
         },
       ],
-    });
+    }),
+  });
 
-    if (response.stop_reason === 'max_tokens') {
-      return new Response('Estimate was cut off — try a shorter job description', { status: 502 });
-    }
-
-    if (!response.parsed_output) {
-      return new Response('No estimate returned', { status: 502 });
-    }
-
-    return new Response(JSON.stringify(response.parsed_output), {
-      headers: { 'content-type': 'application/json' },
-    });
-  } catch (err) {
-    if (err instanceof Anthropic.APIError) {
-      return new Response(err.message, { status: err.status ?? 500 });
-    }
-    return new Response('Estimate failed', { status: 500 });
+  if (!anthropicRes.ok) {
+    const body = await anthropicRes.text();
+    return new Response(`API error ${anthropicRes.status}: ${body}`, { status: anthropicRes.status });
   }
+
+  const data = (await anthropicRes.json()) as { content: { type: string; text?: string }[]; stop_reason?: string };
+
+  if (data.stop_reason === 'max_tokens') {
+    return new Response('Estimate was cut off — try a shorter job description', { status: 502 });
+  }
+
+  const textBlock = data.content.find(b => b.type === 'text');
+  if (!textBlock?.text) {
+    return new Response('No estimate returned', { status: 502 });
+  }
+
+  return new Response(textBlock.text, {
+    headers: { 'content-type': 'application/json' },
+  });
 }

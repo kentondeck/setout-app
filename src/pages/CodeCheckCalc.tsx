@@ -24,7 +24,8 @@ export function CodeCheckCalc() {
     setError('');
 
     try {
-      const res = await fetch('/api/code-check', {
+      const apiBase = import.meta.env.VITE_API_BASE ?? '';
+      const res = await fetch(`${apiBase}/api/code-check`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ question: q, region }),

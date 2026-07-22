@@ -35,7 +35,6 @@ import { GradientCalc } from './pages/GradientCalc';
 import { EqualSpacingCalc } from './pages/EqualSpacingCalc';
 import { FencingCalc } from './pages/FencingCalc';
 import { PhotoQuoteCalc } from './pages/PhotoQuoteCalc';
-import { Feedback } from './pages/Feedback';
 
 
 
@@ -67,7 +66,6 @@ function AppShell() {
           <Route path="/calc/equalspacing" element={<EqualSpacingCalc />} />
           <Route path="/calc/fencing" element={<FencingCalc />} />
           <Route path="/calc/photoquote" element={<PhotoQuoteCalc />} />
-          <Route path="/calc/feedback" element={<Feedback />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
       </div>

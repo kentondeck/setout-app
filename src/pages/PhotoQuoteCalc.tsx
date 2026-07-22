@@ -174,20 +174,20 @@ export function PhotoQuoteCalc() {
   }
 
   async function handleGenerate() {
-    if (!photo || !description.trim() || loading) return;
+    if (!description.trim() || loading) return;
 
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
-      const imageBase64 = await fileToJpegBase64(photo);
+      const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
       const res = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           imageBase64,
-          mediaType: 'image/jpeg',
+          mediaType: imageBase64 ? 'image/jpeg' : null,
           description: description.trim(),
           region: settings.region,
         }),
@@ -388,7 +388,7 @@ export function PhotoQuoteCalc() {
     } catch { /* ignore */ }
   }
 
-  const canGenerate = !!photo && description.trim().length > 0 && !loading;
+  const canGenerate = description.trim().length > 0 && !loading;
   const smallInputStyle: React.CSSProperties = {
     padding: '8px 0', border: 'none', background: 'transparent',
     fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
@@ -438,8 +438,8 @@ export function PhotoQuoteCalc() {
                   <circle cx="12" cy="13" r="4" />
                 </svg>
               </div>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>Take or upload a photo</p>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>The area you're quoting</p>
+              <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>Take or upload a photo <span style={{ fontWeight: 400, color: 'var(--color-muted)' }}>(optional)</span></p>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>The area you're quoting — or skip and describe the job below</p>
             </button>
           )}
         </div>
@@ -509,7 +509,7 @@ export function PhotoQuoteCalc() {
               <ResultCard label="Labour" value={totalLabourHours} unit="hrs" />
             </div>
             <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-              {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated from photo
+              {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated {photo ? 'from photo' : 'from description'}
             </p>
 
             <div style={{

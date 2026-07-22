@@ -46,12 +46,12 @@ const QUOTE_SCHEMA = {
   additionalProperties: false,
 };
 
-const SYSTEM_PROMPT = `You are a construction estimator helping a tradie scope a job from a site photo and a short description of what the client wants.
+const SYSTEM_PROMPT = `You are a construction estimator helping a tradie scope a job from a short description of what the client wants, optionally with a site photo.
 
-Look at the photo to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description to produce a materials and pricing estimate.
+If a photo is included, look at it to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description. If no photo is included, base your estimate on the description alone.
 
 Rules:
-- Dimensions are your best estimate from the photo and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo.
+- Dimensions are your best estimate from the photo (if provided) and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo. If there is no photo and no explicit dimension in the description, make a reasonable assumption for a typical job of this kind and list it under assumptions.
 - Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved. Do not price materials — pricing is applied separately from the tradie's own price list, so just get the item, quantity and unit right.
 - Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix. Do not estimate hourly rates.
 - scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
@@ -67,11 +67,11 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('API key not configured', { status: 500 });
   }
 
-  let imageBase64: string, mediaType: string, description: string, region: string;
+  let imageBase64: string | null, mediaType: string | null, description: string, region: string;
   try {
     ({ imageBase64, mediaType, description, region } = (await req.json()) as {
-      imageBase64: string;
-      mediaType: string;
+      imageBase64: string | null;
+      mediaType: string | null;
       description: string;
       region: string;
     });
@@ -79,11 +79,17 @@ export default async function handler(req: Request): Promise<Response> {
     return new Response('Invalid request body', { status: 400 });
   }
 
-  if (!imageBase64 || !description?.trim()) {
-    return new Response('Missing photo or description', { status: 400 });
+  if (!description?.trim()) {
+    return new Response('Missing description', { status: 400 });
   }
 
   const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
+
+  const content: Record<string, unknown>[] = [];
+  if (imageBase64 && mediaType) {
+    content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
+  }
+  content.push({ type: 'text', text: `${description.trim()}\n\nRegion: ${regionLabel}` });
 
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -101,15 +107,7 @@ export default async function handler(req: Request): Promise<Response> {
         format: { type: 'json_schema', schema: QUOTE_SCHEMA },
       },
       system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } },
-            { type: 'text', text: `${description.trim()}\n\nRegion: ${regionLabel}` },
-          ],
-        },
-      ],
+      messages: [{ role: 'user', content }],
     }),
   });
 

@@ -41,9 +41,15 @@ const MATERIAL_PRICES: MaterialPriceEntry[] = [
   { match: ['guttering', 'gutter'], unit: 'lm', priceAUD: 18, priceNZD: 19 },
   { match: ['plasterboard', 'gib board', 'gib'], unit: 'sheet', priceAUD: 28, priceNZD: 30 },
   { match: ['insulation', 'batts'], unit: 'm2', priceAUD: 8, priceNZD: 9 },
+  { match: ['sill tape', 'flashing tape'], unit: 'roll', priceAUD: 35, priceNZD: 38 },
   { match: ['flashing'], unit: 'lm', priceAUD: 10, priceNZD: 11 },
   { match: ['membrane', 'waterproofing'], unit: 'm2', priceAUD: 14, priceNZD: 15 },
   { match: ['paint', 'primer', 'stain'], unit: 'litre', priceAUD: 16, priceNZD: 17 },
+  { match: ['expanding foam', 'foam sealant'], unit: 'each', priceAUD: 13, priceNZD: 14 },
+  { match: ['silicone', 'sealant', 'no more gaps', 'no-more-gaps'], unit: 'each', priceAUD: 11, priceNZD: 12 },
+  { match: ['packer', 'shim'], unit: 'pack', priceAUD: 8, priceNZD: 9 },
+  { match: ['reveal', 'jamb liner', 'jamb'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
+  { match: ['architrave'], unit: 'lm', priceAUD: 6, priceNZD: 6.5 },
 ];
 
 const LABOUR_RATES: LabourRateEntry[] = [

@@ -22,9 +22,8 @@ const QUOTE_SCHEMA = {
           quantity: { type: 'number' },
           unit: { type: 'string' },
           note: { type: 'string' },
-          estimatedUnitPrice: { type: 'number' },
         },
-        required: ['item', 'quantity', 'unit', 'note', 'estimatedUnitPrice'],
+        required: ['item', 'quantity', 'unit', 'note'],
         additionalProperties: false,
       },
     },
@@ -35,9 +34,8 @@ const QUOTE_SCHEMA = {
         properties: {
           role: { type: 'string' },
           hours: { type: 'number' },
-          estimatedRate: { type: 'number' },
         },
-        required: ['role', 'hours', 'estimatedRate'],
+        required: ['role', 'hours'],
         additionalProperties: false,
       },
     },
@@ -54,11 +52,9 @@ Look at the photo to judge scale — fence lines, pavers, doorways, and other ob
 
 Rules:
 - Dimensions are your best estimate from the photo and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo.
-- Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved.
-- Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours and a realistic hourly rate per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix.
+- Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved. Do not price materials — pricing is applied separately from the tradie's own price list, so just get the item, quantity and unit right.
+- Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix. Do not estimate hourly rates.
 - scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
-- The request tells you the region (AU or NZ). Give estimatedUnitPrice for every material and estimatedRate for every labour role in that region's currency (AUD or NZD) — realistic current mid-range trade pricing for the stated unit.
-- These prices are starting defaults the tradie will review and adjust before sending — give a reasonable ballpark, not false precision. Never invent brand names.
 - List every material or dimension assumption you made so the tradie can correct it before ordering.`;
 
 export default async function handler(req: Request): Promise<Response> {

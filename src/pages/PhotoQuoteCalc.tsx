@@ -7,6 +7,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
+import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../lib/materialPricing';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [0, 10, 20, 30];
@@ -24,13 +25,11 @@ interface ApiMaterial {
   quantity: number;
   unit: string;
   note: string;
-  estimatedUnitPrice: number;
 }
 
 interface ApiLabour {
   role: string;
   hours: number;
-  estimatedRate: number;
 }
 
 interface QuoteResult {
@@ -206,14 +205,14 @@ export function PhotoQuoteCalc() {
         item: m.item,
         quantity: String(m.quantity),
         unit: m.unit,
-        unitPrice: String(m.estimatedUnitPrice ?? ''),
+        unitPrice: lookupMaterialPrice(m.item, settings.region),
         note: m.note,
       })));
       setLabourList(quote.labour.map(l => ({
         id: crypto.randomUUID(),
         role: l.role,
         hours: String(l.hours),
-        rate: String(l.estimatedRate ?? ''),
+        rate: lookupLabourRate(l.role, settings.region),
       })));
 
       const totalHours = quote.labour.reduce((s, l) => s + l.hours, 0);
@@ -518,7 +517,10 @@ export function PhotoQuoteCalc() {
               borderRadius: 'var(--radius-card)', padding: '18px 16px',
               display: 'flex', flexDirection: 'column', gap: 14,
             }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — TAP TO EDIT</p>
+              <div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — TAP TO EDIT</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Starting prices from your price book (updated {PRICE_BOOK_UPDATED}) — check before sending</p>
+              </div>
               {materialsList.map(m => (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: '0.5px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

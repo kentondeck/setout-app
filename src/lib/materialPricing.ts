@@ -22,6 +22,7 @@ interface LabourRateEntry {
 const MATERIAL_PRICES: MaterialPriceEntry[] = [
   { match: ['treated pine', 'h3 pine', 'h4 pine', 'h5 pine'], unit: 'lm', priceAUD: 9, priceNZD: 10 },
   { match: ['structural pine', 'framing timber', 'mgp10', 'mgp12'], unit: 'lm', priceAUD: 7, priceNZD: 8 },
+  { match: ['joist', 'bearer'], unit: 'lm', priceAUD: 10, priceNZD: 11 },
   { match: ['hardwood'], unit: 'lm', priceAUD: 16, priceNZD: 17 },
   { match: ['decking board', 'composite decking'], unit: 'lm', priceAUD: 14, priceNZD: 15 },
   { match: ['post', '4x4 post', '90x90 post', '100x100 post'], unit: 'each', priceAUD: 28, priceNZD: 30 },

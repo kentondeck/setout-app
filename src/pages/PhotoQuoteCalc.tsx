@@ -11,6 +11,9 @@ import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../li
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
+const TRAVEL_MODES = ['flat', 'perKm', 'perDay', 'perHour'] as const;
+type TravelMode = (typeof TRAVEL_MODES)[number];
+const TRAVEL_MODE_LABELS: Record<TravelMode, string> = { flat: 'Flat', perKm: 'Per km', perDay: 'Per day', perHour: 'Per hr' };
 
 function currencyFmt(region: 'AU' | 'NZ') {
   return new Intl.NumberFormat(region === 'AU' ? 'en-AU' : 'en-NZ', {
@@ -47,6 +50,7 @@ interface EditableMaterial {
   unit: string;
   unitPrice: string;
   note?: string;
+  sellOverride?: string; // manual client price per unit — undefined means use the material margin
 }
 
 interface EditableLabour {
@@ -54,6 +58,7 @@ interface EditableLabour {
   role: string;
   hours: string;
   rate: string;
+  rateOverride?: string; // manual client rate per hour — undefined means use the labour margin
 }
 
 const MAX_DIMENSION = 1568;
@@ -122,7 +127,12 @@ export function PhotoQuoteCalc() {
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
   const [labourList, setLabourList] = useState<EditableLabour[]>([]);
-  const [travelAmount, setTravelAmount] = useState('');
+  const [travelMode, setTravelMode] = useState<TravelMode>(() => {
+    const stored = localStorage.getItem('setout_photoquote_travel_mode');
+    return (TRAVEL_MODES as readonly string[]).includes(stored ?? '') ? (stored as TravelMode) : 'flat';
+  });
+  const [travelRate, setTravelRate] = useState('');
+  const [travelQty, setTravelQty] = useState('');
   const [materialMarginPct, setMaterialMarginPct] = useState(() => localStorage.getItem('setout_photoquote_material_margin') ?? '20');
   const [labourMarginPct, setLabourMarginPct] = useState(() => localStorage.getItem('setout_photoquote_labour_margin') ?? '20');
   const [logo, setLogo] = useState<PdfLogo | null>(() => {
@@ -250,6 +260,11 @@ export function PhotoQuoteCalc() {
     localStorage.setItem('setout_photoquote_labour_margin', v);
   }
 
+  function handleTravelModeChange(mode: TravelMode) {
+    setTravelMode(mode);
+    localStorage.setItem('setout_photoquote_travel_mode', mode);
+  }
+
   function updateMaterial(id: string, patch: Partial<EditableMaterial>) {
     setMaterialsList(prev => prev.map(m => (m.id === id ? { ...m, ...patch } : m)));
   }
@@ -283,11 +298,14 @@ export function PhotoQuoteCalc() {
 
     // unitPrice/rate are what the tradie pays (cost) — margin below scales them up to the client price,
     // so every dollar in the total is traceable to an itemised line instead of a hidden markup line.
+    // A per-row sellOverride/rateOverride replaces that margin-derived price for just that line.
     const materialLines = materialsList.map(m => {
       const quantity = parseFloat(m.quantity) || 0;
       const cost = parseFloat(m.unitPrice) || 0;
-      const unitPrice = cost * (1 + materialMargin / 100);
-      return { item: m.item.trim() || 'Untitled item', quantity, unit: m.unit, cost, unitPrice, costTotal: quantity * cost, lineTotal: quantity * unitPrice };
+      const autoUnitPrice = cost * (1 + materialMargin / 100);
+      const overridden = m.sellOverride !== undefined && m.sellOverride !== '';
+      const unitPrice = overridden ? (parseFloat(m.sellOverride!) || 0) : autoUnitPrice;
+      return { item: m.item.trim() || 'Untitled item', quantity, unit: m.unit, cost, unitPrice, overridden, costTotal: quantity * cost, lineTotal: quantity * unitPrice };
     });
     const materialsCost = materialLines.reduce((s, l) => s + l.costTotal, 0);
     const materialsSubtotal = materialLines.reduce((s, l) => s + l.lineTotal, 0);
@@ -295,13 +313,17 @@ export function PhotoQuoteCalc() {
     const labourLines = labourList.map(l => {
       const hours = parseFloat(l.hours) || 0;
       const payRate = parseFloat(l.rate) || 0;
-      const rate = payRate * (1 + labourMargin / 100);
-      return { role: l.role.trim() || 'Labour', hours, payRate, rate, costTotal: hours * payRate, lineTotal: hours * rate };
+      const autoRate = payRate * (1 + labourMargin / 100);
+      const overridden = l.rateOverride !== undefined && l.rateOverride !== '';
+      const rate = overridden ? (parseFloat(l.rateOverride!) || 0) : autoRate;
+      return { role: l.role.trim() || 'Labour', hours, payRate, rate, overridden, costTotal: hours * payRate, lineTotal: hours * rate };
     });
     const labourCost = labourLines.reduce((s, l) => s + l.costTotal, 0);
     const labourSubtotal = labourLines.reduce((s, l) => s + l.lineTotal, 0);
 
-    const travel = parseFloat(travelAmount) || 0;
+    const travelQtyNum = parseFloat(travelQty) || 0;
+    const travelRateNum = parseFloat(travelRate) || 0;
+    const travel = travelMode === 'flat' ? travelRateNum : travelRateNum * travelQtyNum;
     const subtotal = materialsSubtotal + labourSubtotal + travel;
     const gstAmount = subtotal * (gstPct / 100);
     const total = subtotal + gstAmount;
@@ -542,7 +564,8 @@ export function PhotoQuoteCalc() {
               </div>
               {materialsList.map(m => {
                 const matMarginNum = parseFloat(materialMarginPct) || 0;
-                const sellPrice = (parseFloat(m.unitPrice) || 0) * (1 + matMarginNum / 100);
+                const autoSellPrice = (parseFloat(m.unitPrice) || 0) * (1 + matMarginNum / 100);
+                const isOverridden = m.sellOverride !== undefined;
                 return (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: '0.5px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -597,11 +620,42 @@ export function PhotoQuoteCalc() {
                       />
                     </div>
                   </div>
-                  {sellPrice > 0 && (
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
-                      Client price: {currencyFmt(settings.region).format(sellPrice)}/{m.unit || 'unit'}
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                    {isOverridden ? (
+                      <>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>Client price $</span>
+                        <input
+                          type="number" inputMode="decimal" min="0" step="0.01"
+                          value={m.sellOverride}
+                          onChange={e => updateMaterial(m.id, { sellOverride: e.target.value })}
+                          style={{
+                            width: 56, padding: '3px 6px', border: '0.5px solid var(--color-orange)', borderRadius: 7,
+                            background: 'var(--color-bg)', fontSize: 12, fontFamily: 'inherit', color: 'var(--color-text)',
+                            outline: 'none', textAlign: 'right',
+                          }}
+                        />
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>/{m.unit || 'unit'}</span>
+                        <button
+                          onClick={() => updateMaterial(m.id, { sellOverride: undefined })}
+                          style={{ fontSize: 11, color: 'var(--color-orange)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                        >
+                          Use margin
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          Client price: {currencyFmt(settings.region).format(autoSellPrice)}/{m.unit || 'unit'}
+                        </span>
+                        <button
+                          onClick={() => updateMaterial(m.id, { sellOverride: autoSellPrice.toFixed(2) })}
+                          style={{ fontSize: 11, color: 'var(--color-orange)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                        >
+                          Edit
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 );
               })}
@@ -629,7 +683,8 @@ export function PhotoQuoteCalc() {
               </div>
               {labourList.map(l => {
                 const labMarginNum = parseFloat(labourMarginPct) || 0;
-                const sellRate = (parseFloat(l.rate) || 0) * (1 + labMarginNum / 100);
+                const autoSellRate = (parseFloat(l.rate) || 0) * (1 + labMarginNum / 100);
+                const isOverridden = l.rateOverride !== undefined;
                 return (
                 <div key={l.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: '0.5px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -676,11 +731,42 @@ export function PhotoQuoteCalc() {
                       <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>/hr</span>
                     </div>
                   </div>
-                  {sellRate > 0 && (
-                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
-                      Client rate: {currencyFmt(settings.region).format(sellRate)}/hr
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                    {isOverridden ? (
+                      <>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>Client rate $</span>
+                        <input
+                          type="number" inputMode="decimal" min="0" step="0.01"
+                          value={l.rateOverride}
+                          onChange={e => updateLabour(l.id, { rateOverride: e.target.value })}
+                          style={{
+                            width: 56, padding: '3px 6px', border: '0.5px solid var(--color-orange)', borderRadius: 7,
+                            background: 'var(--color-bg)', fontSize: 12, fontFamily: 'inherit', color: 'var(--color-text)',
+                            outline: 'none', textAlign: 'right',
+                          }}
+                        />
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>/hr</span>
+                        <button
+                          onClick={() => updateLabour(l.id, { rateOverride: undefined })}
+                          style={{ fontSize: 11, color: 'var(--color-orange)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                        >
+                          Use margin
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          Client rate: {currencyFmt(settings.region).format(autoSellRate)}/hr
+                        </span>
+                        <button
+                          onClick={() => updateLabour(l.id, { rateOverride: autoSellRate.toFixed(2) })}
+                          style={{ fontSize: 11, color: 'var(--color-orange)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}
+                        >
+                          Edit
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
                 );
               })}
@@ -709,24 +795,72 @@ export function PhotoQuoteCalc() {
                 }}>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>PRICING</p>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div>
                     <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Travel <span style={{ color: 'var(--color-muted)' }}>(optional)</span></span>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 3,
-                      background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 9, padding: '0 8px',
-                    }}>
-                      <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
-                      <input
-                        type="number" inputMode="decimal" min="0" step="1" placeholder="0"
-                        value={travelAmount}
-                        onChange={e => setTravelAmount(e.target.value)}
-                        style={{
-                          width: 60, padding: '8px 0', border: 'none', background: 'transparent',
-                          fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
-                          textAlign: 'right', WebkitAppearance: 'none', MozAppearance: 'textfield',
-                        } as React.CSSProperties}
-                      />
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8, marginBottom: 8 }}>
+                      {TRAVEL_MODES.map(mode => (
+                        <button
+                          key={mode}
+                          onClick={() => handleTravelModeChange(mode)}
+                          style={{
+                            flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                            border: `0.5px solid ${travelMode === mode ? 'var(--color-orange)' : 'var(--color-border)'}`,
+                            background: travelMode === mode ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                            color: travelMode === mode ? 'var(--color-orange)' : 'var(--color-muted)',
+                          }}
+                        >
+                          {TRAVEL_MODE_LABELS[mode]}
+                        </button>
+                      ))}
                     </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 3, flex: 1,
+                        background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 9, padding: '0 8px',
+                      }}>
+                        <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
+                        <input
+                          type="number" inputMode="decimal" min="0" step="0.01" placeholder="0"
+                          value={travelRate}
+                          onChange={e => setTravelRate(e.target.value)}
+                          style={{
+                            width: '100%', padding: '8px 0', border: 'none', background: 'transparent',
+                            fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
+                            textAlign: 'right', WebkitAppearance: 'none', MozAppearance: 'textfield',
+                          } as React.CSSProperties}
+                        />
+                        {travelMode !== 'flat' && (
+                          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                            /{travelMode === 'perKm' ? 'km' : travelMode === 'perDay' ? 'day' : 'hr'}
+                          </span>
+                        )}
+                      </div>
+                      {travelMode !== 'flat' && (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 4, flex: 1,
+                          background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 9, padding: '0 8px',
+                        }}>
+                          <input
+                            type="number" inputMode="decimal" min="0" step="1" placeholder="0"
+                            value={travelQty}
+                            onChange={e => setTravelQty(e.target.value)}
+                            style={{
+                              width: '100%', padding: '8px 0', border: 'none', background: 'transparent',
+                              fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
+                              textAlign: 'right', WebkitAppearance: 'none', MozAppearance: 'textfield',
+                            } as React.CSSProperties}
+                          />
+                          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                            {travelMode === 'perKm' ? 'km' : travelMode === 'perDay' ? 'days' : 'hrs'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {travelMode !== 'flat' && totals.travel > 0 && (
+                      <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
+                        = {fmt.format(totals.travel)}
+                      </p>
+                    )}
                   </div>
 
                   <div>

@@ -33,7 +33,7 @@ export interface FencingResult {
   steps: WorkingStep[];
 }
 
-const CONCRETE_BAG_M3 = 0.010; // 20 kg premix bag yield
+const CONCRETE_BAG_M3 = 0.009; // 20 kg premix bag yield — matches concrete.ts; slightly conservative so bag counts round up rather than fall short
 const HOLE_DIAMETER_MM = 250;  // standard auger for 90×90 posts
 
 export function calculateFencing(inputs: FencingInputs): FencingResult {

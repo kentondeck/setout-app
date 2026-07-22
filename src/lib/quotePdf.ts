@@ -31,8 +31,6 @@ export interface PdfQuoteInput {
   labourSubtotal: number;
   travelAmount: number;
   subtotal: number;
-  marginPct: number;
-  marginAmount: number;
   gstPct: number;
   gstAmount: number;
   total: number;

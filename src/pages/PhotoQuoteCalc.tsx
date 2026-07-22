@@ -10,7 +10,7 @@ import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../lib/materialPricing';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
-const MARGIN_PRESETS = [0, 10, 20, 30];
+const MARGIN_PRESETS = [10, 20, 30, 50];
 
 function currencyFmt(region: 'AU' | 'NZ') {
   return new Intl.NumberFormat(region === 'AU' ? 'en-AU' : 'en-NZ', {
@@ -123,7 +123,8 @@ export function PhotoQuoteCalc() {
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
   const [labourList, setLabourList] = useState<EditableLabour[]>([]);
   const [travelAmount, setTravelAmount] = useState('');
-  const [marginPct, setMarginPct] = useState(() => localStorage.getItem('setout_photoquote_margin') ?? '20');
+  const [materialMarginPct, setMaterialMarginPct] = useState(() => localStorage.getItem('setout_photoquote_material_margin') ?? '20');
+  const [labourMarginPct, setLabourMarginPct] = useState(() => localStorage.getItem('setout_photoquote_labour_margin') ?? '20');
   const [logo, setLogo] = useState<PdfLogo | null>(() => {
     const stored = localStorage.getItem('setout_photoquote_logo');
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
@@ -239,9 +240,14 @@ export function PhotoQuoteCalc() {
     }
   }
 
-  function handleMarginChange(v: string) {
-    setMarginPct(v);
-    localStorage.setItem('setout_photoquote_margin', v);
+  function handleMaterialMarginChange(v: string) {
+    setMaterialMarginPct(v);
+    localStorage.setItem('setout_photoquote_material_margin', v);
+  }
+
+  function handleLabourMarginChange(v: string) {
+    setLabourMarginPct(v);
+    localStorage.setItem('setout_photoquote_labour_margin', v);
   }
 
   function updateMaterial(id: string, patch: Partial<EditableMaterial>) {
@@ -272,28 +278,43 @@ export function PhotoQuoteCalc() {
     if (!result) return null;
     const region = settings.region;
     const gstPct = GST_RATE[region];
+    const materialMargin = parseFloat(materialMarginPct) || 0;
+    const labourMargin = parseFloat(labourMarginPct) || 0;
+
+    // unitPrice/rate are what the tradie pays (cost) — margin below scales them up to the client price,
+    // so every dollar in the total is traceable to an itemised line instead of a hidden markup line.
     const materialLines = materialsList.map(m => {
       const quantity = parseFloat(m.quantity) || 0;
-      const unitPrice = parseFloat(m.unitPrice) || 0;
-      return { item: m.item.trim() || 'Untitled item', quantity, unit: m.unit, unitPrice, lineTotal: quantity * unitPrice };
+      const cost = parseFloat(m.unitPrice) || 0;
+      const unitPrice = cost * (1 + materialMargin / 100);
+      return { item: m.item.trim() || 'Untitled item', quantity, unit: m.unit, cost, unitPrice, costTotal: quantity * cost, lineTotal: quantity * unitPrice };
     });
+    const materialsCost = materialLines.reduce((s, l) => s + l.costTotal, 0);
     const materialsSubtotal = materialLines.reduce((s, l) => s + l.lineTotal, 0);
 
     const labourLines = labourList.map(l => {
       const hours = parseFloat(l.hours) || 0;
-      const rate = parseFloat(l.rate) || 0;
-      return { role: l.role.trim() || 'Labour', hours, rate, lineTotal: hours * rate };
+      const payRate = parseFloat(l.rate) || 0;
+      const rate = payRate * (1 + labourMargin / 100);
+      return { role: l.role.trim() || 'Labour', hours, payRate, rate, costTotal: hours * payRate, lineTotal: hours * rate };
     });
+    const labourCost = labourLines.reduce((s, l) => s + l.costTotal, 0);
     const labourSubtotal = labourLines.reduce((s, l) => s + l.lineTotal, 0);
 
     const travel = parseFloat(travelAmount) || 0;
     const subtotal = materialsSubtotal + labourSubtotal + travel;
-    const margin = parseFloat(marginPct) || 0;
-    const marginAmount = subtotal * (margin / 100);
-    const preGst = subtotal + marginAmount;
-    const gstAmount = preGst * (gstPct / 100);
-    const total = preGst + gstAmount;
-    return { region, gstPct, materialLines, materialsSubtotal, labourLines, labourSubtotal, travel, subtotal, marginPct: margin, marginAmount, gstAmount, total };
+    const gstAmount = subtotal * (gstPct / 100);
+    const total = subtotal + gstAmount;
+
+    const totalCost = materialsCost + labourCost + travel;
+    const profit = subtotal - totalCost;
+    const profitPct = subtotal > 0 ? (profit / subtotal) * 100 : 0;
+
+    return {
+      region, gstPct, materialLines, materialsSubtotal, materialsCost, labourLines, labourSubtotal, labourCost,
+      travel, subtotal, gstAmount, total, materialMarginPct: materialMargin, labourMarginPct: labourMargin,
+      totalCost, profit, profitPct,
+    };
   }
 
   function buildPdfDoc() {
@@ -314,8 +335,6 @@ export function PhotoQuoteCalc() {
       labourSubtotal: totals.labourSubtotal,
       travelAmount: totals.travel,
       subtotal: totals.subtotal,
-      marginPct: totals.marginPct,
-      marginAmount: totals.marginAmount,
       gstPct: totals.gstPct,
       gstAmount: totals.gstAmount,
       total: totals.total,
@@ -518,10 +537,13 @@ export function PhotoQuoteCalc() {
               display: 'flex', flexDirection: 'column', gap: 14,
             }}>
               <div>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — TAP TO EDIT</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Starting prices from your price book (updated {PRICE_BOOK_UPDATED}) — check before sending</p>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — WHAT YOU PAY</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Starting cost prices from your price book (updated {PRICE_BOOK_UPDATED}) — material margin below sets the client price</p>
               </div>
-              {materialsList.map(m => (
+              {materialsList.map(m => {
+                const matMarginNum = parseFloat(materialMarginPct) || 0;
+                const sellPrice = (parseFloat(m.unitPrice) || 0) * (1 + matMarginNum / 100);
+                return (
                 <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: '0.5px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
@@ -575,8 +597,14 @@ export function PhotoQuoteCalc() {
                       />
                     </div>
                   </div>
+                  {sellPrice > 0 && (
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
+                      Client price: {currencyFmt(settings.region).format(sellPrice)}/{m.unit || 'unit'}
+                    </p>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               <button
                 onClick={addMaterialRow}
                 style={{
@@ -595,8 +623,14 @@ export function PhotoQuoteCalc() {
               borderRadius: 'var(--radius-card)', padding: '18px 16px',
               display: 'flex', flexDirection: 'column', gap: 14,
             }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>LABOUR — TAP TO EDIT</p>
-              {labourList.map(l => (
+              <div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>LABOUR — WHAT YOU PAY THE TEAM</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Labour margin below sets the client rate</p>
+              </div>
+              {labourList.map(l => {
+                const labMarginNum = parseFloat(labourMarginPct) || 0;
+                const sellRate = (parseFloat(l.rate) || 0) * (1 + labMarginNum / 100);
+                return (
                 <div key={l.id} style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 10, borderBottom: '0.5px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <input
@@ -642,8 +676,14 @@ export function PhotoQuoteCalc() {
                       <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>/hr</span>
                     </div>
                   </div>
+                  {sellRate > 0 && (
+                    <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
+                      Client rate: {currencyFmt(settings.region).format(sellRate)}/hr
+                    </p>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               <button
                 onClick={addLabourRow}
                 style={{
@@ -691,25 +731,54 @@ export function PhotoQuoteCalc() {
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Margin</span>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-orange)' }}>{marginPct || 0}%</span>
+                      <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Material margin</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-orange)' }}>{materialMarginPct || 0}%</span>
                     </div>
                     <input
-                      type="range" min="0" max="50" step="1"
-                      value={marginPct || '0'}
-                      onChange={e => handleMarginChange(e.target.value)}
+                      type="range" min="0" max="100" step="1"
+                      value={materialMarginPct || '0'}
+                      onChange={e => handleMaterialMarginChange(e.target.value)}
                       style={{ width: '100%', accentColor: 'var(--color-orange)' }}
                     />
                     <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
                       {MARGIN_PRESETS.map(p => (
                         <button
                           key={p}
-                          onClick={() => handleMarginChange(String(p))}
+                          onClick={() => handleMaterialMarginChange(String(p))}
                           style={{
                             flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                            border: `0.5px solid ${marginPct === String(p) ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                            background: marginPct === String(p) ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
-                            color: marginPct === String(p) ? 'var(--color-orange)' : 'var(--color-muted)',
+                            border: `0.5px solid ${materialMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-border)'}`,
+                            background: materialMarginPct === String(p) ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                            color: materialMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-muted)',
+                          }}
+                        >
+                          {p}%
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Labour margin</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-orange)' }}>{labourMarginPct || 0}%</span>
+                    </div>
+                    <input
+                      type="range" min="0" max="100" step="1"
+                      value={labourMarginPct || '0'}
+                      onChange={e => handleLabourMarginChange(e.target.value)}
+                      style={{ width: '100%', accentColor: 'var(--color-orange)' }}
+                    />
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      {MARGIN_PRESETS.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => handleLabourMarginChange(String(p))}
+                          style={{
+                            flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                            border: `0.5px solid ${labourMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-border)'}`,
+                            background: labourMarginPct === String(p) ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                            color: labourMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-muted)',
                           }}
                         >
                           {p}%
@@ -736,10 +805,6 @@ export function PhotoQuoteCalc() {
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: 'var(--color-muted)' }}>Margin ({totals.marginPct}%)</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.marginAmount)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>GST ({totals.gstPct}%)</span>
                       <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.gstAmount)}</span>
                     </div>
@@ -752,6 +817,48 @@ export function PhotoQuoteCalc() {
                     <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>Total inc. GST</span>
                     <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px' }}>
                       {fmt.format(totals.total)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {(() => {
+              const totals = computeTotals();
+              if (!totals) return null;
+              const fmt = currencyFmt(totals.region);
+              const materialMarginAmount = totals.materialsSubtotal - totals.materialsCost;
+              const labourMarginAmount = totals.labourSubtotal - totals.labourCost;
+              return (
+                <div style={{
+                  background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-card)', padding: '18px 16px',
+                  display: 'flex', flexDirection: 'column', gap: 10,
+                }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>YOUR PROFIT — NOT SENT TO CLIENT</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: 'var(--color-muted)' }}>Materials margin</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(materialMarginAmount)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: 'var(--color-muted)' }}>Labour margin</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(labourMarginAmount)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: 'var(--color-muted)' }}>Total cost (materials + team + travel)</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.totalCost)}</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                    paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
+                  }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>
+                      Profit ({totals.profitPct.toFixed(0)}%)
+                    </span>
+                    <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px' }}>
+                      {fmt.format(totals.profit)}
                     </span>
                   </div>
                 </div>

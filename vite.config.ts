@@ -205,6 +205,93 @@ function quoteDevPlugin(apiKey: string): Plugin {
   };
 }
 
+// Schema and prompt duplicated here for local dev — canonical copy lives in api/price-lookup.ts
+const PRICE_LOOKUP_SCHEMA = {
+  type: 'object',
+  properties: {
+    materials: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          item: { type: 'string' },
+          price: { type: 'number' },
+        },
+        required: ['item', 'price'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['materials'],
+  additionalProperties: false,
+}
+
+const PRICE_LOOKUP_SYSTEM_PROMPT = `You price construction materials for a residential tradie in Australia or New Zealand.
+For each material given, return a realistic current trade/merchant price per unit in the stated region's currency (AUD or NZD).
+Give a reasonable mid-range starting price the tradie will review, not false precision. Never invent brand names.
+Return the item name back exactly as given so it can be matched.`
+
+function priceLookupDevPlugin(apiKey: string): Plugin {
+  return {
+    name: 'price-lookup-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api/price-lookup', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+
+        if (!apiKey) {
+          res.statusCode = 500;
+          res.end('Add ANTHROPIC_API_KEY to .env.local to use Photo Quote locally.');
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          const { items, region } = JSON.parse(Buffer.concat(chunks).toString()) as {
+            items: { item: string; unit: string }[]; region: string;
+          };
+          const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
+          const itemsText = items.map(i => `- ${i.item} (per ${i.unit})`).join('\n');
+
+          fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-haiku-4-5-20251001',
+              max_tokens: 1024,
+              output_config: {
+                format: { type: 'json_schema', schema: PRICE_LOOKUP_SCHEMA },
+              },
+              system: PRICE_LOOKUP_SYSTEM_PROMPT,
+              messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems:\n${itemsText}` }],
+            }),
+          }).then(async upstream => {
+            if (!upstream.ok) {
+              res.statusCode = upstream.status;
+              res.end(await upstream.text());
+              return;
+            }
+            const data = await upstream.json() as { content: { type: string; text?: string }[] };
+            const textBlock = data.content.find(b => b.type === 'text');
+            if (!textBlock?.text) {
+              res.statusCode = 502;
+              res.end('No prices returned');
+              return;
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(textBlock.text);
+          }).catch(() => { res.statusCode = 500; res.end('Upstream error'); });
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
@@ -213,6 +300,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       quoteDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      priceLookupDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],

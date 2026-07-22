@@ -8,6 +8,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../lib/materialPricing';
+import { getRememberedMaterialPrice, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -211,20 +212,23 @@ export function PhotoQuoteCalc() {
 
       const quote = (await res.json()) as QuoteResult;
       setResult(quote);
-      setMaterialsList(quote.materials.map(m => ({
+      // Price priority: remembered (your own past edits/lookups) → static price book → AI lookup (below, cached after).
+      const newMaterials = quote.materials.map(m => ({
         id: crypto.randomUUID(),
         item: m.item,
         quantity: String(m.quantity),
         unit: m.unit,
-        unitPrice: lookupMaterialPrice(m.item, settings.region),
+        unitPrice: getRememberedMaterialPrice(m.item, settings.region) || lookupMaterialPrice(m.item, settings.region),
         note: m.note,
-      })));
+      }));
+      setMaterialsList(newMaterials);
       setLabourList(quote.labour.map(l => ({
         id: crypto.randomUUID(),
         role: l.role,
         hours: String(l.hours),
-        rate: lookupLabourRate(l.role, settings.region),
+        rate: getRememberedLabourRate(l.role, settings.region) || lookupLabourRate(l.role, settings.region),
       })));
+      fillMissingMaterialPrices(newMaterials, settings.region);
 
       const totalHours = quote.labour.reduce((s, l) => s + l.hours, 0);
       const id = crypto.randomUUID();
@@ -248,6 +252,32 @@ export function PhotoQuoteCalc() {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Runs in the background after results are already shown — looks up a price for anything the
+  // remembered list and static price book both missed, then remembers it so it's never looked up again.
+  async function fillMissingMaterialPrices(materials: EditableMaterial[], region: 'AU' | 'NZ') {
+    const missing = materials.filter(m => !m.unitPrice && m.item.trim());
+    if (missing.length === 0) return;
+    try {
+      const res = await fetch('/api/price-lookup', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          items: missing.map(m => ({ item: m.item, unit: m.unit || 'each' })),
+          region,
+        }),
+      });
+      if (!res.ok) return;
+      const { materials: priced } = (await res.json()) as { materials: { item: string; price: number }[] };
+      setMaterialsList(prev => prev.map(m => {
+        if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
+        const found = priced.find(p => p.item.trim().toLowerCase() === m.item.trim().toLowerCase());
+        if (!found) return m;
+        rememberMaterialPrice(m.item, region, String(found.price));
+        return { ...m, unitPrice: String(found.price) };
+      }));
+    } catch { /* leave blank — tradie fills in manually */ }
   }
 
   function handleMaterialMarginChange(v: string) {
@@ -616,6 +646,7 @@ export function PhotoQuoteCalc() {
                         type="number" inputMode="decimal" min="0" step="0.01" placeholder="0"
                         value={m.unitPrice}
                         onChange={e => updateMaterial(m.id, { unitPrice: e.target.value })}
+                        onBlur={e => rememberMaterialPrice(m.item, settings.region, e.target.value)}
                         style={{ ...smallInputStyle, width: '100%', textAlign: 'right' }}
                       />
                     </div>
@@ -726,6 +757,7 @@ export function PhotoQuoteCalc() {
                         type="number" inputMode="decimal" min="0" step="1" placeholder="0"
                         value={l.rate}
                         onChange={e => updateLabour(l.id, { rate: e.target.value })}
+                        onBlur={e => rememberLabourRate(l.role, settings.region, e.target.value)}
                         style={{ ...smallInputStyle, width: '100%', textAlign: 'right' }}
                       />
                       <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>/hr</span>

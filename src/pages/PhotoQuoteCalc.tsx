@@ -8,7 +8,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../lib/materialPricing';
-import { getRememberedMaterialPrice, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
+import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -52,6 +52,8 @@ interface EditableMaterial {
   unitPrice: string;
   note?: string;
   sellOverride?: string; // manual client price per unit — undefined means use the material margin
+  priceKind?: 'memory' | 'book' | 'search' | 'manual'; // where unitPrice (cost) came from, for trust display
+  priceSourceName?: string; // retailer name, when priceKind is 'search'
 }
 
 interface EditableLabour {
@@ -212,15 +214,21 @@ export function PhotoQuoteCalc() {
 
       const quote = (await res.json()) as QuoteResult;
       setResult(quote);
-      // Price priority: remembered (your own past edits/lookups) → static price book → AI lookup (below, cached after).
-      const newMaterials = quote.materials.map(m => ({
-        id: crypto.randomUUID(),
-        item: m.item,
-        quantity: String(m.quantity),
-        unit: m.unit,
-        unitPrice: getRememberedMaterialPrice(m.item, settings.region) || lookupMaterialPrice(m.item, settings.region),
-        note: m.note,
-      }));
+      // Price priority: remembered (your own past edits/lookups) → static price book → AI web search (below, cached after).
+      const newMaterials = quote.materials.map(m => {
+        const remembered = getRememberedMaterialPrice(m.item, settings.region);
+        const fromBook = remembered ? '' : lookupMaterialPrice(m.item, settings.region);
+        return {
+          id: crypto.randomUUID(),
+          item: m.item,
+          quantity: String(m.quantity),
+          unit: m.unit,
+          unitPrice: remembered || fromBook,
+          note: m.note,
+          priceKind: remembered ? ('memory' as const) : fromBook ? ('book' as const) : undefined,
+          priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
+        };
+      });
       setMaterialsList(newMaterials);
       setLabourList(quote.labour.map(l => ({
         id: crypto.randomUUID(),
@@ -269,13 +277,13 @@ export function PhotoQuoteCalc() {
         }),
       });
       if (!res.ok) return;
-      const { materials: priced } = (await res.json()) as { materials: { item: string; price: number }[] };
+      const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
       setMaterialsList(prev => prev.map(m => {
         if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
         const found = priced.find(p => p.item.trim().toLowerCase() === m.item.trim().toLowerCase());
         if (!found) return m;
-        rememberMaterialPrice(m.item, region, String(found.price));
-        return { ...m, unitPrice: String(found.price) };
+        rememberMaterialPrice(m.item, region, String(found.price), found.source);
+        return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
       }));
     } catch { /* leave blank — tradie fills in manually */ }
   }
@@ -645,12 +653,19 @@ export function PhotoQuoteCalc() {
                       <input
                         type="number" inputMode="decimal" min="0" step="0.01" placeholder="0"
                         value={m.unitPrice}
-                        onChange={e => updateMaterial(m.id, { unitPrice: e.target.value })}
+                        onChange={e => updateMaterial(m.id, { unitPrice: e.target.value, priceKind: 'manual', priceSourceName: undefined })}
                         onBlur={e => rememberMaterialPrice(m.item, settings.region, e.target.value)}
                         style={{ ...smallInputStyle, width: '100%', textAlign: 'right' }}
                       />
                     </div>
                   </div>
+                  {m.priceKind && m.priceKind !== 'manual' && (
+                    <p style={{ margin: 0, fontSize: 10.5, color: m.priceKind === 'memory' ? '#2f9e44' : 'var(--color-muted)' }}>
+                      {m.priceKind === 'memory' && 'Your saved price'}
+                      {m.priceKind === 'book' && 'Estimate — please confirm'}
+                      {m.priceKind === 'search' && `Web search${m.priceSourceName ? ` — ${m.priceSourceName}` : ''} — please confirm`}
+                    </p>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
                     {isOverridden ? (
                       <>

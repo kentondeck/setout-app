@@ -1,6 +1,6 @@
 // Per-device memory of prices the tradie has confirmed or corrected in Photo Quote —
 // checked before the static price book so a material/role only ever needs pricing once
-// (either by AI lookup or by hand) before it's remembered for every future quote.
+// (either by AI web-search lookup or by hand) before it's remembered for every future quote.
 import type { Region } from '../types';
 
 const MATERIAL_KEY = 'setout_photoquote_material_memory';
@@ -8,6 +8,7 @@ const LABOUR_KEY = 'setout_photoquote_labour_memory';
 
 interface MemoryEntry {
   price: string;
+  source?: string; // e.g. a retailer name, when the price came from a web-search lookup
   updatedAt: number;
 }
 
@@ -26,9 +27,9 @@ function readStore(key: string): MemoryStore {
   }
 }
 
-function writeEntry(key: string, storeKey: string, price: string) {
+function writeEntry(key: string, storeKey: string, price: string, source?: string) {
   const store = readStore(key);
-  store[storeKey] = { price, updatedAt: Date.now() };
+  store[storeKey] = { price, source, updatedAt: Date.now() };
   localStorage.setItem(key, JSON.stringify(store));
 }
 
@@ -38,9 +39,15 @@ export function getRememberedMaterialPrice(item: string, region: Region): string
   return entry?.price ?? '';
 }
 
-export function rememberMaterialPrice(item: string, region: Region, price: string) {
+export function getRememberedMaterialSource(item: string, region: Region): string {
+  if (!item.trim()) return '';
+  const entry = readStore(MATERIAL_KEY)[`${region}:${normalize(item)}`];
+  return entry?.source ?? '';
+}
+
+export function rememberMaterialPrice(item: string, region: Region, price: string, source?: string) {
   if (!item.trim() || !price.trim()) return;
-  writeEntry(MATERIAL_KEY, `${region}:${normalize(item)}`, price);
+  writeEntry(MATERIAL_KEY, `${region}:${normalize(item)}`, price, source);
 }
 
 export function getRememberedLabourRate(role: string, region: Region): string {

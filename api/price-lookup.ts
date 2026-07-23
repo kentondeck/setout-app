@@ -1,29 +1,20 @@
 export const config = { runtime: 'edge' };
 
-const PRICE_LOOKUP_SCHEMA = {
-  type: 'object',
-  properties: {
-    materials: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          item: { type: 'string' },
-          price: { type: 'number' },
-        },
-        required: ['item', 'price'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['materials'],
-  additionalProperties: false,
-};
-
+// Structured output (json_schema) can't be combined with the agentic web_search tool loop, so this
+// prompts for a bare JSON final answer instead and parses it defensively below.
 const SYSTEM_PROMPT = `You price construction materials for a residential tradie in Australia or New Zealand.
-For each material given, return a realistic current trade/merchant price per unit in the stated region's currency (AUD or NZD).
-Give a reasonable mid-range starting price the tradie will review, not false precision. Never invent brand names.
-Return the item name back exactly as given so it can be matched.`;
+
+For each material listed, use web search to find a real, current price at a mainstream AU/NZ trade or
+hardware retailer (e.g. Bunnings, Mitre 10, PlaceMakers, ITM, Carters, Bunnings Warehouse NZ). Search
+per item — do not guess from memory. Use the price in the stated region's currency (AUD or NZD).
+
+If you cannot find a real listed price for an item after searching, omit it from the output rather than
+guessing.
+
+When you are done searching, respond with ONLY a JSON object in this exact shape and nothing else — no
+markdown code fences, no commentary before or after:
+
+{"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`;
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
@@ -57,13 +48,11 @@ export default async function handler(req: Request): Promise<Response> {
       'content-type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      output_config: {
-        format: { type: 'json_schema', schema: PRICE_LOOKUP_SCHEMA },
-      },
+      model: 'claude-opus-4-8',
+      max_tokens: 4096,
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: items.length * 2 }],
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems:\n${itemsText}` }],
+      messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),
   });
 
@@ -73,12 +62,23 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const data = (await anthropicRes.json()) as { content: { type: string; text?: string }[] };
-  const textBlock = data.content.find(b => b.type === 'text');
-  if (!textBlock?.text) {
+  const textBlocks = data.content.filter(b => b.type === 'text' && b.text);
+  const finalText = textBlocks[textBlocks.length - 1]?.text;
+  if (!finalText) {
     return new Response('No prices returned', { status: 502 });
   }
 
-  return new Response(textBlock.text, {
+  let jsonText = finalText.trim();
+  const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) jsonText = fenceMatch[1].trim();
+
+  try {
+    JSON.parse(jsonText);
+  } catch {
+    return new Response('Could not parse prices', { status: 502 });
+  }
+
+  return new Response(jsonText, {
     headers: { 'content-type': 'application/json' },
   });
 }

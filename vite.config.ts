@@ -205,31 +205,20 @@ function quoteDevPlugin(apiKey: string): Plugin {
   };
 }
 
-// Schema and prompt duplicated here for local dev — canonical copy lives in api/price-lookup.ts
-const PRICE_LOOKUP_SCHEMA = {
-  type: 'object',
-  properties: {
-    materials: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          item: { type: 'string' },
-          price: { type: 'number' },
-        },
-        required: ['item', 'price'],
-        additionalProperties: false,
-      },
-    },
-  },
-  required: ['materials'],
-  additionalProperties: false,
-}
-
+// Prompt duplicated here for local dev — canonical copy lives in api/price-lookup.ts
 const PRICE_LOOKUP_SYSTEM_PROMPT = `You price construction materials for a residential tradie in Australia or New Zealand.
-For each material given, return a realistic current trade/merchant price per unit in the stated region's currency (AUD or NZD).
-Give a reasonable mid-range starting price the tradie will review, not false precision. Never invent brand names.
-Return the item name back exactly as given so it can be matched.`
+
+For each material listed, use web search to find a real, current price at a mainstream AU/NZ trade or
+hardware retailer (e.g. Bunnings, Mitre 10, PlaceMakers, ITM, Carters, Bunnings Warehouse NZ). Search
+per item — do not guess from memory. Use the price in the stated region's currency (AUD or NZD).
+
+If you cannot find a real listed price for an item after searching, omit it from the output rather than
+guessing.
+
+When you are done searching, respond with ONLY a JSON object in this exact shape and nothing else — no
+markdown code fences, no commentary before or after:
+
+{"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`
 
 function priceLookupDevPlugin(apiKey: string): Plugin {
   return {
@@ -262,13 +251,11 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
               'content-type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'claude-haiku-4-5-20251001',
-              max_tokens: 1024,
-              output_config: {
-                format: { type: 'json_schema', schema: PRICE_LOOKUP_SCHEMA },
-              },
+              model: 'claude-opus-4-8',
+              max_tokens: 4096,
+              tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: items.length * 2 }],
               system: PRICE_LOOKUP_SYSTEM_PROMPT,
-              messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems:\n${itemsText}` }],
+              messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
             }),
           }).then(async upstream => {
             if (!upstream.ok) {
@@ -277,14 +264,25 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
               return;
             }
             const data = await upstream.json() as { content: { type: string; text?: string }[] };
-            const textBlock = data.content.find(b => b.type === 'text');
-            if (!textBlock?.text) {
+            const textBlocks = data.content.filter(b => b.type === 'text' && b.text);
+            const finalText = textBlocks[textBlocks.length - 1]?.text;
+            if (!finalText) {
               res.statusCode = 502;
               res.end('No prices returned');
               return;
             }
+            let jsonText = finalText.trim();
+            const fenceMatch = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (fenceMatch) jsonText = fenceMatch[1].trim();
+            try {
+              JSON.parse(jsonText);
+            } catch {
+              res.statusCode = 502;
+              res.end('Could not parse prices');
+              return;
+            }
             res.setHeader('Content-Type', 'application/json');
-            res.end(textBlock.text);
+            res.end(jsonText);
           }).catch(() => { res.statusCode = 500; res.end('Upstream error'); });
         });
       });

@@ -1,7 +1,7 @@
 // Node runtime, not Edge — the agentic web_search loop can take well over Edge's ~25s cap, and this
 // call already runs in the background after results are shown, so the single-region latency Edge
 // avoids for the main quote flow doesn't matter here.
-export const config = { runtime: 'nodejs20.x', maxDuration: 300 };
+export const config = { runtime: 'nodejs', maxDuration: 300 };
 
 // Structured output (json_schema) can't be combined with the agentic web_search tool loop, so this
 // prompts for a bare JSON final answer instead and parses it defensively below.

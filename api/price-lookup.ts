@@ -1,4 +1,7 @@
-export const config = { runtime: 'edge' };
+// Node runtime, not Edge — the agentic web_search loop can take well over Edge's ~25s cap, and this
+// call already runs in the background after results are shown, so the single-region latency Edge
+// avoids for the main quote flow doesn't matter here.
+export const config = { runtime: 'nodejs', maxDuration: 60 };
 
 // Structured output (json_schema) can't be combined with the agentic web_search tool loop, so this
 // prompts for a bare JSON final answer instead and parses it defensively below.
@@ -50,7 +53,7 @@ export default async function handler(req: Request): Promise<Response> {
     body: JSON.stringify({
       model: 'claude-opus-4-8',
       max_tokens: 4096,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: items.length * 2 }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 10) }],
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),

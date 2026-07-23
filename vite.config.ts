@@ -253,7 +253,7 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
             body: JSON.stringify({
               model: 'claude-opus-4-8',
               max_tokens: 4096,
-              tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: items.length * 2 }],
+              tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 10) }],
               system: PRICE_LOOKUP_SYSTEM_PROMPT,
               messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
             }),

@@ -27,7 +27,7 @@ const MATERIAL_PRICES: MaterialPriceEntry[] = [
   // Structural/shaped timber components
   { match: ['joist', 'bearer'], unit: 'lm', priceAUD: 10, priceNZD: 11 },
   { match: ['decking board', 'composite decking'], unit: 'lm', priceAUD: 14, priceNZD: 15 },
-  { match: ['paling', 'fence paling'], unit: 'each', priceAUD: 6, priceNZD: 6.5 },
+  { match: ['paling', 'fence paling'], unit: 'each', priceAUD: 1.70, priceNZD: 1.90 },
   { match: ['rail', 'fence rail'], unit: 'lm', priceAUD: 5, priceNZD: 5.5 },
   { match: ['weatherboard', 'cladding board'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
   { match: ['architrave'], unit: 'lm', priceAUD: 6, priceNZD: 6.5 },

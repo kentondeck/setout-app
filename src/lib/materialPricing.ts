@@ -19,38 +19,53 @@ interface LabourRateEntry {
   rateNZD: number;
 }
 
+// Order matters: .find() below returns the FIRST match, so shaped/functional components (joist,
+// decking board, paling...) must be checked before the generic timber-species entries at the
+// bottom — otherwise an item like "125x125 H4 treated pine post" matches "treated pine" (a
+// per-lineal-metre board rate) before it ever reaches the per-each post rate.
 const MATERIAL_PRICES: MaterialPriceEntry[] = [
-  { match: ['treated pine', 'h3 pine', 'h4 pine', 'h5 pine'], unit: 'lm', priceAUD: 9, priceNZD: 10 },
-  { match: ['structural pine', 'framing timber', 'mgp10', 'mgp12'], unit: 'lm', priceAUD: 7, priceNZD: 8 },
+  // Structural/shaped timber components
   { match: ['joist', 'bearer'], unit: 'lm', priceAUD: 10, priceNZD: 11 },
-  { match: ['hardwood'], unit: 'lm', priceAUD: 16, priceNZD: 17 },
   { match: ['decking board', 'composite decking'], unit: 'lm', priceAUD: 14, priceNZD: 15 },
-  { match: ['post', '4x4 post', '90x90 post', '100x100 post'], unit: 'each', priceAUD: 28, priceNZD: 30 },
-  { match: ['concrete premix', 'premix bag', '20kg bag', 'concrete bag'], unit: 'bag', priceAUD: 9, priceNZD: 10 },
-  { match: ['ready mix concrete', 'concrete m3', 'concrete m³'], unit: 'm3', priceAUD: 250, priceNZD: 260 },
-  { match: ['gravel', 'aggregate', 'blue metal', 'road base'], unit: 'm3', priceAUD: 65, priceNZD: 70 },
-  { match: ['sand'], unit: 'm3', priceAUD: 55, priceNZD: 60 },
-  { match: ['screw', 'coach screw', 'batten screw'], unit: 'box', priceAUD: 18, priceNZD: 20 },
-  { match: ['nail', 'gun nail'], unit: 'box', priceAUD: 15, priceNZD: 16 },
-  { match: ['bolt', 'coach bolt', 'joist hanger', 'bracket', 'fixing'], unit: 'each', priceAUD: 4, priceNZD: 4.5 },
   { match: ['paling', 'fence paling'], unit: 'each', priceAUD: 6, priceNZD: 6.5 },
   { match: ['rail', 'fence rail'], unit: 'lm', priceAUD: 5, priceNZD: 5.5 },
   { match: ['weatherboard', 'cladding board'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
+  { match: ['architrave'], unit: 'lm', priceAUD: 6, priceNZD: 6.5 },
+  { match: ['reveal', 'jamb liner', 'jamb'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
+  // Sheet/roll goods
   { match: ['fibre cement', 'fc sheet', 'compressed sheet'], unit: 'sheet', priceAUD: 65, priceNZD: 70 },
   { match: ['colorbond', 'roofing sheet', 'roof sheet'], unit: 'lm', priceAUD: 22, priceNZD: 24 },
   { match: ['guttering', 'gutter'], unit: 'lm', priceAUD: 18, priceNZD: 19 },
   { match: ['plasterboard', 'gib board', 'gib'], unit: 'sheet', priceAUD: 28, priceNZD: 30 },
-  { match: ['insulation', 'batts'], unit: 'm2', priceAUD: 8, priceNZD: 9 },
   { match: ['sill tape', 'flashing tape'], unit: 'roll', priceAUD: 35, priceNZD: 38 },
   { match: ['flashing'], unit: 'lm', priceAUD: 10, priceNZD: 11 },
+  // Fixings and consumables
+  { match: ['screw', 'coach screw', 'batten screw'], unit: 'box', priceAUD: 18, priceNZD: 20 },
+  { match: ['nail', 'gun nail'], unit: 'box', priceAUD: 15, priceNZD: 16 },
+  { match: ['bolt', 'coach bolt', 'joist hanger', 'bracket', 'fixing'], unit: 'each', priceAUD: 4, priceNZD: 4.5 },
+  { match: ['insulation', 'batts'], unit: 'm2', priceAUD: 8, priceNZD: 9 },
   { match: ['membrane', 'waterproofing'], unit: 'm2', priceAUD: 14, priceNZD: 15 },
   { match: ['paint', 'primer', 'stain'], unit: 'litre', priceAUD: 16, priceNZD: 17 },
   { match: ['expanding foam', 'foam sealant'], unit: 'each', priceAUD: 13, priceNZD: 14 },
   { match: ['silicone', 'sealant', 'no more gaps', 'no-more-gaps'], unit: 'each', priceAUD: 11, priceNZD: 12 },
   { match: ['packer', 'shim'], unit: 'pack', priceAUD: 8, priceNZD: 9 },
-  { match: ['reveal', 'jamb liner', 'jamb'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
-  { match: ['architrave'], unit: 'lm', priceAUD: 6, priceNZD: 6.5 },
+  // Concrete and aggregate
+  { match: ['concrete premix', 'premix bag', '20kg bag', 'concrete bag'], unit: 'bag', priceAUD: 9, priceNZD: 10 },
+  { match: ['ready mix concrete', 'concrete m3', 'concrete m³'], unit: 'm3', priceAUD: 250, priceNZD: 260 },
+  { match: ['gravel', 'aggregate', 'blue metal', 'road base'], unit: 'm3', priceAUD: 65, priceNZD: 70 },
+  { match: ['sand'], unit: 'm3', priceAUD: 55, priceNZD: 60 },
+  // Generic timber species — catch-all fallback for boards not covered by a shape above
+  { match: ['hardwood'], unit: 'lm', priceAUD: 16, priceNZD: 17 },
+  { match: ['structural pine', 'framing timber', 'mgp10', 'mgp12'], unit: 'lm', priceAUD: 7, priceNZD: 8 },
+  { match: ['treated pine', 'h3 pine', 'h4 pine', 'h5 pine'], unit: 'lm', priceAUD: 9, priceNZD: 10 },
 ];
+
+// Posts are priced by cross-section, not matched against the generic table above — a 125x125/150x150
+// structural post costs meaningfully more than a standard 90x90/100x100 fence/deck post.
+const POST_PRICE: Record<'standard' | 'large', { AUD: number; NZD: number }> = {
+  standard: { AUD: 35, NZD: 38 }, // 90x90 / 100x100
+  large: { AUD: 85, NZD: 90 },    // 125x125 / 150x150
+};
 
 const LABOUR_RATES: LabourRateEntry[] = [
   { match: ['apprentice'], rateAUD: 38, rateNZD: 40 },
@@ -72,6 +87,12 @@ const DEFAULT_LABOUR_RATE_NZD = 62;
 /** Returns a starting unit price for a material name, or '' if nothing in the price book matches. */
 export function lookupMaterialPrice(itemName: string, region: Region): string {
   const s = itemName.toLowerCase();
+
+  if (s.includes('post')) {
+    const tier = s.includes('125') || s.includes('150') ? 'large' : 'standard';
+    return String(region === 'AU' ? POST_PRICE[tier].AUD : POST_PRICE[tier].NZD);
+  }
+
   const hit = MATERIAL_PRICES.find(entry => entry.match.some(k => s.includes(k)));
   if (!hit) return '';
   return String(region === 'AU' ? hit.priceAUD : hit.priceNZD);

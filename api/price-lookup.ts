@@ -17,7 +17,7 @@ guessing.
 When you are done searching, respond with ONLY a JSON object in this exact shape and nothing else — no
 markdown code fences, no commentary before or after:
 
-{"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`;
+{"materials":[{"item":"<exact item name as given, with no unit annotation added>","price":<number>,"source":"<retailer name>"}]}`;
 
 // Node runtime here only honors returned Response objects from a NAMED HTTP-method export
 // (e.g. POST) — a default export with this signature silently discards the response and hangs
@@ -34,7 +34,6 @@ export async function POST(req: Request): Promise<Response> {
   } catch {
     return new Response('Invalid request body', { status: 400 });
   }
-  console.log('[price-lookup] parsed body, items:', items?.length, 'region:', region);
 
   if (!items?.length) {
     return new Response('No items to price', { status: 400 });
@@ -43,7 +42,6 @@ export async function POST(req: Request): Promise<Response> {
   const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
   const itemsText = items.map(i => `- ${i.item} (per ${i.unit})`).join('\n');
 
-  console.log('[price-lookup] calling anthropic...');
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -59,7 +57,6 @@ export async function POST(req: Request): Promise<Response> {
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),
   });
-  console.log('[price-lookup] anthropic responded, status:', anthropicRes.status);
 
   if (!anthropicRes.ok) {
     const body = await anthropicRes.text();
@@ -67,7 +64,6 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const data = (await anthropicRes.json()) as { content: { type: string; text?: string }[] };
-  console.log('[price-lookup] parsed anthropic json, blocks:', data.content?.length);
   const textBlocks = data.content.filter(b => b.type === 'text' && b.text);
   const finalText = textBlocks[textBlocks.length - 1]?.text;
   if (!finalText) {

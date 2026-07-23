@@ -278,9 +278,12 @@ export function PhotoQuoteCalc() {
       });
       if (!res.ok) return;
       const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
+      // The model is asked to echo the item name back verbatim but sometimes appends the "(per
+      // unit)" hint from the request — strip any trailing parenthetical before matching.
+      const normalizeItemKey = (s: string) => s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
       setMaterialsList(prev => prev.map(m => {
         if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
-        const found = priced.find(p => p.item.trim().toLowerCase() === m.item.trim().toLowerCase());
+        const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
         if (!found) return m;
         rememberMaterialPrice(m.item, region, String(found.price), found.source);
         return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };

@@ -218,7 +218,7 @@ guessing.
 When you are done searching, respond with ONLY a JSON object in this exact shape and nothing else — no
 markdown code fences, no commentary before or after:
 
-{"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`
+{"materials":[{"item":"<exact item name as given, with no unit annotation added>","price":<number>,"source":"<retailer name>"}]}`
 
 function priceLookupDevPlugin(apiKey: string): Plugin {
   return {

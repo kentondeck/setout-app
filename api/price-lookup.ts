@@ -1,7 +1,7 @@
 // Node runtime, not Edge — the agentic web_search loop can take well over Edge's ~25s cap, and this
 // call already runs in the background after results are shown, so the single-region latency Edge
 // avoids for the main quote flow doesn't matter here.
-export const config = { runtime: 'nodejs', maxDuration: 60 };
+export const config = { runtime: 'nodejs20.x', maxDuration: 300 };
 
 // Structured output (json_schema) can't be combined with the agentic web_search tool loop, so this
 // prompts for a bare JSON final answer instead and parses it defensively below.
@@ -20,6 +20,7 @@ markdown code fences, no commentary before or after:
 {"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`;
 
 export default async function handler(req: Request): Promise<Response> {
+  console.log('[price-lookup] invoked', req.method);
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405 });
   }
@@ -35,6 +36,7 @@ export default async function handler(req: Request): Promise<Response> {
   } catch {
     return new Response('Invalid request body', { status: 400 });
   }
+  console.log('[price-lookup] parsed body, items:', items?.length, 'region:', region);
 
   if (!items?.length) {
     return new Response('No items to price', { status: 400 });
@@ -43,6 +45,7 @@ export default async function handler(req: Request): Promise<Response> {
   const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
   const itemsText = items.map(i => `- ${i.item} (per ${i.unit})`).join('\n');
 
+  console.log('[price-lookup] calling anthropic...');
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -58,6 +61,7 @@ export default async function handler(req: Request): Promise<Response> {
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),
   });
+  console.log('[price-lookup] anthropic responded, status:', anthropicRes.status);
 
   if (!anthropicRes.ok) {
     const body = await anthropicRes.text();
@@ -65,6 +69,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const data = (await anthropicRes.json()) as { content: { type: string; text?: string }[] };
+  console.log('[price-lookup] parsed anthropic json, blocks:', data.content?.length);
   const textBlocks = data.content.filter(b => b.type === 'text' && b.text);
   const finalText = textBlocks[textBlocks.length - 1]?.text;
   if (!finalText) {

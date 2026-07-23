@@ -19,12 +19,10 @@ markdown code fences, no commentary before or after:
 
 {"materials":[{"item":"<exact item name as given>","price":<number>,"source":"<retailer name>"}]}`;
 
-export default async function handler(req: Request): Promise<Response> {
-  console.log('[price-lookup] invoked', req.method);
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
+// Node runtime here only honors returned Response objects from a NAMED HTTP-method export
+// (e.g. POST) — a default export with this signature silently discards the response and hangs
+// until maxDuration, which is what caused every request to this endpoint to time out.
+export async function POST(req: Request): Promise<Response> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response('API key not configured', { status: 500 });

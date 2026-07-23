@@ -54,7 +54,7 @@ export async function POST(req: Request): Promise<Response> {
     body: JSON.stringify({
       model: 'claude-opus-4-8',
       max_tokens: 4096,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 10) }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 6, 20) }],
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),
@@ -81,7 +81,19 @@ export async function POST(req: Request): Promise<Response> {
   try {
     JSON.parse(jsonText);
   } catch {
-    return new Response('Could not parse prices', { status: 502 });
+    // The model sometimes prefixes the JSON with a line of commentary (e.g. "search limit
+    // reached, so...") despite instructions — fall back to the outermost {...} substring.
+    const start = jsonText.indexOf('{');
+    const end = jsonText.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) {
+      return new Response('Could not parse prices', { status: 502 });
+    }
+    jsonText = jsonText.slice(start, end + 1);
+    try {
+      JSON.parse(jsonText);
+    } catch {
+      return new Response('Could not parse prices', { status: 502 });
+    }
   }
 
   return new Response(jsonText, {

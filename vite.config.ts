@@ -253,7 +253,7 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
             body: JSON.stringify({
               model: 'claude-opus-4-8',
               max_tokens: 4096,
-              tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 10) }],
+              tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 6, 20) }],
               system: PRICE_LOOKUP_SYSTEM_PROMPT,
               messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
             }),
@@ -277,9 +277,21 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
             try {
               JSON.parse(jsonText);
             } catch {
-              res.statusCode = 502;
-              res.end('Could not parse prices');
-              return;
+              const start = jsonText.indexOf('{');
+              const end = jsonText.lastIndexOf('}');
+              if (start === -1 || end === -1 || end <= start) {
+                res.statusCode = 502;
+                res.end('Could not parse prices');
+                return;
+              }
+              jsonText = jsonText.slice(start, end + 1);
+              try {
+                JSON.parse(jsonText);
+              } catch {
+                res.statusCode = 502;
+                res.end('Could not parse prices');
+                return;
+              }
             }
             res.setHeader('Content-Type', 'application/json');
             res.end(jsonText);

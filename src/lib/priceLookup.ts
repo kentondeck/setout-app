@@ -15,10 +15,14 @@ export interface PricedMaterial {
 }
 
 const CHUNK_SIZE = 3;
-// Firing every chunk at once causes real contention against the API (observed: 3 of 5 fully
-// concurrent chunks stalled past 2 minutes instead of finishing faster) — likely account-level
-// rate limits on concurrent requests. Cap how many chunks run at once instead.
-const MAX_CONCURRENT_CHUNKS = 2;
+// Testing showed real contention on this account when firing multiple chunks concurrently — even
+// 2 at once stalled past 180s in one test (5 at once: 3 of 5 stalled past 2 minutes). Couldn't
+// fully isolate whether that was genuine rate-limit contention or leftover load from a prior test
+// still running server-side (functions here have up to 300s to finish) without spending more API
+// budget on further test cycles. Running sequentially is the safe default until that's confirmed —
+// still simpler per-call than the original one-giant-batch bug, just without a parallelism claim
+// that testing couldn't actually validate as safe.
+const MAX_CONCURRENT_CHUNKS = 1;
 
 // The model is asked to echo the item name back verbatim but sometimes appends the "(per unit)"
 // hint from the request — strip any trailing parenthetical before matching.

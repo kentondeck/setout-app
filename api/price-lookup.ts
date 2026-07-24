@@ -60,7 +60,11 @@ export async function POST(req: Request): Promise<Response> {
     body: JSON.stringify({
       model: 'claude-sonnet-5',
       max_tokens: 4096,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 6) }],
+      // A much tighter budget (2 per item) was tried and reverted — one test stalled well past
+      // 60s instead of finishing faster, suggesting too-tight a budget can cause more retrying
+      // rather than quicker convergence. This is a moderate cut from the original (6/item), not
+      // the aggressive one.
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 4, 10) }],
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),

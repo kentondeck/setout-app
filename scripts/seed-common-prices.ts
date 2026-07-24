@@ -31,11 +31,19 @@ async function writeToCache(region: Region, entries: { key: string; price: numbe
   if (!res.ok) console.error(`  ! cache write failed: ${res.status} ${await res.text()}`);
 }
 
+async function alreadyCachedKeys(region: Region, keys: string[]): Promise<Set<string>> {
+  if (keys.length === 0) return new Set();
+  const res = await fetch(`${BASE_URL}/api/price-cache?region=${region}&keys=${encodeURIComponent(keys.join(','))}`);
+  if (!res.ok) return new Set();
+  const { results } = (await res.json()) as { results: Record<string, unknown> };
+  return new Set(Object.keys(results));
+}
+
 async function seedRegion(region: Region) {
   console.log(`\n=== Seeding ${region} ===`);
 
   const bookItems = COMMON_MATERIALS.filter(m => !needsLiveSearch(m.item));
-  const searchItems = COMMON_MATERIALS.filter(m => needsLiveSearch(m.item));
+  const allSearchItems = COMMON_MATERIALS.filter(m => needsLiveSearch(m.item));
 
   console.log(`${bookItems.length} fixings/consumables — pricing from the static book (free)`);
   const bookEntries = bookItems
@@ -43,6 +51,13 @@ async function seedRegion(region: Region) {
     .filter(e => e.price > 0);
   await writeToCache(region, bookEntries);
   console.log(`  wrote ${bookEntries.length} entries`);
+
+  // Skip anything a previous (possibly interrupted) run already got into the cache — a re-run
+  // after topping up credits should only pay for what's actually still missing.
+  const alreadyCached = await alreadyCachedKeys(region, allSearchItems.map(m => fuzzyMaterialKey(m.item)));
+  const searchItems = allSearchItems.filter(m => !alreadyCached.has(fuzzyMaterialKey(m.item)));
+  const skipped = allSearchItems.length - searchItems.length;
+  if (skipped > 0) console.log(`${skipped} structural items already cached from a previous run — skipping`);
 
   console.log(`${searchItems.length} structural/higher-value items — live web search (costs credits)`);
   let searched = 0;
@@ -67,7 +82,8 @@ async function seedRegion(region: Region) {
       console.log(`ERROR: ${err instanceof Error ? err.message : err}`);
     }
   }
-  console.log(`${region} done: ${bookEntries.length} from book + ${searched} from search = ${bookEntries.length + searched}/${COMMON_MATERIALS.length} total`);
+  const total = bookEntries.length + searched + skipped;
+  console.log(`${region} done: ${bookEntries.length} from book + ${searched} from search + ${skipped} already cached = ${total}/${COMMON_MATERIALS.length} total`);
 }
 
 async function main() {

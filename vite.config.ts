@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import type { Plugin } from 'vite'
+import { createClient } from 'redis'
 
 // System prompts duplicated here for local dev — canonical copy lives in api/code-check.ts
 const DEV_SYSTEM_PROMPTS: Record<string, string> = {
@@ -339,6 +340,81 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
   };
 }
 
+// Mirrors api/price-cache.ts for local dev — shared Redis cache of confirmed material prices,
+// keyed by fuzzy material identity + region so wording variance across quotes still hits.
+const PRICE_CACHE_TTL_SECONDS = 60 * 60 * 24 * 60
+const PRICE_CACHE_MAX_KEYS = 30
+const PRICE_CACHE_MAX_PRICE = 100_000
+
+function priceCacheDevPlugin(redisUrl: string): Plugin {
+  let redisClient: ReturnType<typeof createClient> | null = null
+  async function getRedis() {
+    if (!redisClient) {
+      redisClient = createClient({ url: redisUrl })
+      redisClient.on('error', () => {})
+      await redisClient.connect()
+    }
+    return redisClient
+  }
+
+  return {
+    name: 'price-cache-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api/price-cache', (req, res) => {
+        if (!redisUrl) {
+          res.setHeader('Content-Type', 'application/json')
+          res.end(req.method === 'GET' ? '{"results":{}}' : '{"ok":false}')
+          return
+        }
+
+        if (req.method === 'GET') {
+          const url = new URL(req.url ?? '', 'http://localhost')
+          const region = url.searchParams.get('region') === 'NZ' ? 'NZ' : 'AU'
+          const keys = (url.searchParams.get('keys') ?? '').split(',').map(k => k.trim()).filter(Boolean).slice(0, PRICE_CACHE_MAX_KEYS)
+          if (keys.length === 0) { res.setHeader('Content-Type', 'application/json'); res.end('{"results":{}}'); return }
+          getRedis().then(async redis => {
+            const values = await redis.mGet(keys.map(k => `price:${region}:${k}`))
+            const results: Record<string, unknown> = {}
+            keys.forEach((k, i) => {
+              const raw = values[i]
+              if (raw) { try { results[k] = JSON.parse(raw) } catch { /* skip corrupt entry */ } }
+            })
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ results }))
+          }).catch(() => { res.setHeader('Content-Type', 'application/json'); res.end('{"results":{}}') })
+          return
+        }
+
+        if (req.method === 'POST') {
+          const chunks: Buffer[] = []
+          req.on('data', (c: Buffer) => chunks.push(c))
+          req.on('end', () => {
+            let body: { region: string; entries: { key: string; price: number; source?: string }[] }
+            try { body = JSON.parse(Buffer.concat(chunks).toString()) } catch { res.statusCode = 400; res.end('Invalid body'); return }
+            const region = body.region === 'NZ' ? 'NZ' : 'AU'
+            const entries = (body.entries ?? [])
+              .filter(e => e.key?.trim() && typeof e.price === 'number' && e.price > 0 && e.price < PRICE_CACHE_MAX_PRICE)
+              .slice(0, PRICE_CACHE_MAX_KEYS)
+            if (entries.length === 0) { res.statusCode = 400; res.end('No valid entries'); return }
+            getRedis().then(async redis => {
+              await Promise.all(entries.map(e =>
+                redis.set(`price:${region}:${e.key.slice(0, 200)}`, JSON.stringify({ price: e.price, source: e.source?.slice(0, 80), updatedAt: Date.now() }), { EX: PRICE_CACHE_TTL_SECONDS })
+              ))
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ ok: true, written: entries.length }))
+            }).catch(() => { res.setHeader('Content-Type', 'application/json'); res.end('{"ok":false}') })
+          })
+          return
+        }
+
+        res.statusCode = 405
+        res.end()
+      })
+    },
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
@@ -348,6 +424,7 @@ export default defineConfig(({ mode }) => {
       codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       quoteDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceLookupDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      priceCacheDevPlugin(env.REDIS_URL ?? ''),
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],

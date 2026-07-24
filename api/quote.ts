@@ -1,4 +1,7 @@
-export const config = { runtime: 'edge' };
+// Node runtime, not Edge — Opus + adaptive thinking on this prompt now regularly takes ~25s,
+// right at (and sometimes past) Edge's hard execution cap, which was causing every generate to
+// time out. Pinned to Sydney to keep AU/NZ latency low without Edge's stricter duration limit.
+export const config = { runtime: 'nodejs', regions: ['syd1'], maxDuration: 60 };
 
 const QUOTE_SCHEMA = {
   type: 'object',
@@ -60,11 +63,9 @@ Rules:
 - scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
 - List every material or dimension assumption you made so the tradie can correct it before ordering.`;
 
-export default async function handler(req: Request): Promise<Response> {
-  if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
-  }
-
+// Node runtime here only honors a returned Response from a NAMED HTTP-method export (e.g. POST) —
+// a default export with this signature silently discards the response and hangs until maxDuration.
+export async function POST(req: Request): Promise<Response> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return new Response('API key not configured', { status: 500 });

@@ -75,6 +75,9 @@ function codeCheckDevPlugin(apiKey: string): Plugin {
 const QUOTE_SCHEMA = {
   type: 'object',
   properties: {
+    error: { type: 'string' },
+    errorReason: { type: 'string' },
+    confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
     dimensions: {
       type: 'object',
       properties: {
@@ -91,11 +94,12 @@ const QUOTE_SCHEMA = {
         type: 'object',
         properties: {
           item: { type: 'string' },
-          quantity: { type: 'number' },
+          quantity: { type: ['number', 'null'] },
           unit: { type: 'string' },
           note: { type: 'string' },
+          confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
         },
-        required: ['item', 'quantity', 'unit', 'note'],
+        required: ['item', 'quantity', 'unit', 'note', 'confidence'],
         additionalProperties: false,
       },
     },
@@ -113,24 +117,49 @@ const QUOTE_SCHEMA = {
     },
     scopeSummary: { type: 'string' },
     assumptions: { type: 'array', items: { type: 'string' } },
+    clarificationsNeeded: { type: 'array', items: { type: 'string' } },
+    exclusions: { type: 'array', items: { type: 'string' } },
+    wasteFactorApplied: { type: 'string' },
   },
-  required: ['dimensions', 'materials', 'labour', 'scopeSummary', 'assumptions'],
+  required: [
+    'error', 'errorReason', 'confidence', 'dimensions', 'materials', 'labour', 'scopeSummary',
+    'assumptions', 'clarificationsNeeded', 'exclusions', 'wasteFactorApplied',
+  ],
   additionalProperties: false,
 }
 
-const QUOTE_SYSTEM_PROMPT = `You are a construction estimator helping a tradie scope a job from a short description of what the client wants, optionally with a site photo.
+const QUOTE_MATERIAL_CONVENTIONS: Record<string, string> = {
+  AU: `Use Australian material conventions: metric units, AU timber sizes and grades (90x45, 140x45, 190x45 MGP10/MGP12, LVL, H3/H4 treated pine), Colorbond roofing/cladding profiles, standard sheet sizes (2400x1200), 20kg bag concrete premix. Reference AS 1684 framing practice.`,
+  NZ: `Use New Zealand material conventions: metric units, NZ timber sizes and grades (90x45, 140x45, 190x45 MSG8/MSG10/MSG12, LVL, H3.2/H4 treated pine to NZS 3640), Coloursteel roofing/cladding profiles, standard sheet sizes (2400x1200), 20kg bag concrete premix. Reference NZS 3604 framing practice.`,
+}
+
+function buildQuoteSystemPrompt(region: string): string {
+  const conventions = QUOTE_MATERIAL_CONVENTIONS[region] ?? QUOTE_MATERIAL_CONVENTIONS.AU
+  return `You are a quantity surveyor's assistant for Setout, a construction app for Australian and New Zealand tradespeople. Your job is to analyse a photo and/or written description of a construction job and produce a structured material takeoff for a tradie to review before ordering.
 
 If a photo is included, look at it to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description. If no photo is included, base your estimate on the description alone.
+
+${conventions}
 
 Rules:
 - Dimensions are your best estimate from the photo (if provided) and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo. If there is no photo and no explicit dimension in the description, make a reasonable assumption for a typical job of this kind and list it under assumptions.
 - Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved. Do not price materials — pricing is applied separately from the tradie's own price list, so just get the item, quantity and unit right.
+- Include consumables and fixings a tradie would actually need (nails, screws, joist hangers, brackets, adhesive, flashing) as their own line items — these are commonly forgotten in quotes and quietly eat into a job's margin when left out.
+- Round quantities up to purchasable units — you buy 6 lengths, not 5.3; round bags, sheets, and boxes up to whole units.
+- If you cannot justify a quantity for an item you know the job needs, set that item's quantity to null and explain why in its note — never invent a number you can't justify from the input.
+- Set each material's confidence (high/medium/low) based on how directly the photo/description support its size and quantity.
+- Apply a waste factor to cut and measured materials (e.g. ~10% on timber for offcuts, ~5% on sheet goods) and summarise what you applied in wasteFactorApplied.
 - Deck and floor joists are structural — 140mm deep (e.g. 140x45) is the typical default, going up to 190mm for longer spans. Never default to 90mm for a structural joist — reserve 90mm for non-structural framing (e.g. fascia, screening battens).
 - Bearers are structural and usually built by doubling up two 140x45 boards bolted/nailed together, forming a 90mm-wide x 140mm-deep member. Bearers normally sit ON TOP of the posts (post continues up to bearer height). Only bolt/cheek-fix the bearer to the SIDE of the posts for a low-set deck close to the ground, where height clearance rules it out. List the bearer item as 140x45 and double the lineal-metre quantity to account for both boards, noting in the material's note field that it's a doubled/laminated bearer sitting on top of the posts (or side-fixed only if this is a low-set deck).
 - Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix. Do not estimate hourly rates.
 - A standard work day is 9 hours — use that when reasoning about how many days a job will take. Labour hours must cover the full scope: prep, cutting/fitting, sealing, and clean-up, not just the core install step. Real jobs consistently run longer than a bare best-case estimate — if your hours imply a day count that would surprise an experienced tradie as too fast for the scope described, revise the hours up rather than shipping an optimistic number.
 - scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
-- List every material or dimension assumption you made so the tradie can correct it before ordering.`
+- assumptions: list every material or dimension assumption you made so the tradie can correct it before ordering.
+- clarificationsNeeded: questions whose answer would materially change the takeoff (e.g. exact height above ground affecting post embedment, whether existing structure needs demolishing first). Leave empty if the input is clear enough that nothing would materially change the result.
+- exclusions: things visible or implied by the input but not part of this takeoff (e.g. council permit, demolition of existing structure, electrical/plumbing rough-in).
+- confidence: your overall confidence in the whole takeoff, based on how much you had to assume.
+- If the input is unusable — a photo too blurry or unrelated to a construction job, or a description with virtually nothing to work from and no usable photo — set error to "unusable_input" and fill errorReason with why. Still return the full JSON shape: dimensions all zero, empty materials/labour/assumptions/clarificationsNeeded/exclusions arrays, wasteFactorApplied as an empty string, confidence "low". Otherwise leave error and errorReason as empty strings.`
+}
 
 function quoteDevPlugin(apiKey: string): Plugin {
   return {
@@ -152,13 +181,13 @@ function quoteDevPlugin(apiKey: string): Plugin {
           const { imageBase64, mediaType, description, region } = JSON.parse(Buffer.concat(chunks).toString()) as {
             imageBase64: string | null; mediaType: string | null; description: string; region: string;
           };
-          const regionLabel = region === 'NZ' ? 'NZ (price in NZD)' : 'AU (price in AUD)';
+          const regionCode = region === 'NZ' ? 'NZ' : 'AU';
 
           const content: Record<string, unknown>[] = [];
           if (imageBase64 && mediaType) {
             content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
           }
-          content.push({ type: 'text', text: `${description}\n\nRegion: ${regionLabel}` });
+          content.push({ type: 'text', text: `${description}\n\nRegion: ${regionCode}` });
 
           fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -175,7 +204,7 @@ function quoteDevPlugin(apiKey: string): Plugin {
                 effort: 'medium',
                 format: { type: 'json_schema', schema: QUOTE_SCHEMA },
               },
-              system: QUOTE_SYSTEM_PROMPT,
+              system: buildQuoteSystemPrompt(regionCode),
               messages: [{ role: 'user', content }],
             }),
           }).then(async upstream => {

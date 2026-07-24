@@ -26,11 +26,14 @@ function currencyFmt(region: 'AU' | 'NZ') {
   });
 }
 
+type Confidence = 'high' | 'medium' | 'low';
+
 interface ApiMaterial {
   item: string;
-  quantity: number;
+  quantity: number | null;
   unit: string;
   note: string;
+  confidence: Confidence;
 }
 
 interface ApiLabour {
@@ -39,11 +42,17 @@ interface ApiLabour {
 }
 
 interface QuoteResult {
+  error: string;
+  errorReason: string;
+  confidence: Confidence;
   dimensions: { lengthM: number; widthM: number; areaM2: number };
   materials: ApiMaterial[];
   labour: ApiLabour[];
   scopeSummary: string;
   assumptions: string[];
+  clarificationsNeeded: string[];
+  exclusions: string[];
+  wasteFactorApplied: string;
 }
 
 interface EditableMaterial {
@@ -53,6 +62,7 @@ interface EditableMaterial {
   unit: string;
   unitPrice: string;
   note?: string;
+  confidence?: Confidence;
   sellOverride?: string; // manual client price per unit — undefined means use the material margin
   priceKind?: 'memory' | 'book' | 'search' | 'manual'; // where unitPrice (cost) came from, for trust display
   priceSourceName?: string; // retailer name, when priceKind is 'search'
@@ -217,6 +227,10 @@ export function PhotoQuoteCalc() {
       }
 
       const quote = (await res.json()) as QuoteResult;
+      if (quote.error) {
+        setError(quote.errorReason || "Couldn't make sense of that photo/description — try a clearer photo or more detail.");
+        return;
+      }
       setResult(quote);
       // Price priority: remembered (your own confirmed price) → AI web search (below, cached after).
       // The static price book is a rough guess, not real data — it's only used if the web search
@@ -226,10 +240,11 @@ export function PhotoQuoteCalc() {
         return {
           id: crypto.randomUUID(),
           item: m.item,
-          quantity: String(m.quantity),
+          quantity: m.quantity === null ? '' : String(m.quantity),
           unit: m.unit,
           unitPrice: remembered,
           note: m.note,
+          confidence: m.confidence,
           priceKind: remembered ? ('memory' as const) : undefined,
           priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
         };
@@ -629,9 +644,19 @@ export function PhotoQuoteCalc() {
               <ResultCard label="Area" value={result.dimensions.areaM2} unit="m²" accent />
               <ResultCard label="Labour" value={totalLabourHours} unit="hrs" />
             </div>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-              {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated {photo ? 'from photo' : 'from description'}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+                {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated {photo ? 'from photo' : 'from description'}
+              </p>
+              <span style={{
+                fontSize: 10.5, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase',
+                padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap',
+                color: result.confidence === 'high' ? '#2f9e44' : result.confidence === 'low' ? '#e8590c' : '#9c6f00',
+                background: result.confidence === 'high' ? 'rgba(47,158,68,0.1)' : result.confidence === 'low' ? 'rgba(232,89,12,0.1)' : 'rgba(156,111,0,0.1)',
+              }}>
+                {result.confidence} confidence
+              </span>
+            </div>
 
             <div style={{
               background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
@@ -659,6 +684,14 @@ export function PhotoQuoteCalc() {
                         fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
                       }}
                     />
+                    {m.confidence === 'low' && (
+                      <span style={{
+                        flexShrink: 0, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase',
+                        padding: '2px 6px', borderRadius: 999, color: '#e8590c', background: 'rgba(232,89,12,0.1)', whiteSpace: 'nowrap',
+                      }}>
+                        Check this
+                      </span>
+                    )}
                     <button
                       onClick={() => removeMaterialRow(m.id)}
                       aria-label="Remove material"
@@ -1099,6 +1132,32 @@ export function PhotoQuoteCalc() {
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>ASSUMPTIONS — FOR YOUR REVIEW, NOT SENT TO CLIENT</p>
                 {result.assumptions.map((a, i) => (
                   <p key={i} style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)', lineHeight: 1.5 }}>• {a}</p>
+                ))}
+              </div>
+            )}
+
+            {result.clarificationsNeeded.length > 0 && (
+              <div style={{
+                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)', padding: '18px 16px',
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WORTH CONFIRMING — FOR YOUR REVIEW, NOT SENT TO CLIENT</p>
+                {result.clarificationsNeeded.map((c, i) => (
+                  <p key={i} style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)', lineHeight: 1.5 }}>• {c}</p>
+                ))}
+              </div>
+            )}
+
+            {result.exclusions.length > 0 && (
+              <div style={{
+                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)', padding: '18px 16px',
+                display: 'flex', flexDirection: 'column', gap: 8,
+              }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>NOT INCLUDED IN THIS TAKEOFF</p>
+                {result.exclusions.map((ex, i) => (
+                  <p key={i} style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)', lineHeight: 1.5 }}>• {ex}</p>
                 ))}
               </div>
             )}

@@ -707,7 +707,7 @@ export function PhotoQuoteCalc() {
                           Use margin
                         </button>
                       </>
-                    ) : (
+                    ) : m.unitPrice ? (
                       <>
                         <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
                           Client price: {currencyFmt(settings.region).format(autoSellPrice)}/{m.unit || 'unit'}
@@ -719,6 +719,8 @@ export function PhotoQuoteCalc() {
                           Edit
                         </button>
                       </>
+                    ) : (
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontStyle: 'italic' }}>Looking up price…</span>
                     )}
                   </div>
                 </div>

@@ -259,7 +259,7 @@ function priceLookupDevPlugin(apiKey: string): Plugin {
               'content-type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'claude-opus-4-8',
+              model: 'claude-sonnet-5',
               max_tokens: 4096,
               tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 6, 20) }],
               system: PRICE_LOOKUP_SYSTEM_PROMPT,

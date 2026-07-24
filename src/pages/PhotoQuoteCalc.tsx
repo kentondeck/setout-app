@@ -267,44 +267,56 @@ export function PhotoQuoteCalc() {
   // for anything not already remembered, then remembers it so it's never looked up again. The
   // static price book only fills in whatever the search couldn't find, as a last resort — it's a
   // rough guess, not real data, so it never gets to compete with a search-confirmed price.
+  //
+  // Split into small chunks fired in parallel rather than one big sequential call — the model
+  // works through a batch one item at a time, so wait time scales with item count unless the
+  // items are spread across concurrent requests. Chunks also apply their own results as soon as
+  // they land, so prices trickle in progressively instead of all-or-nothing.
   async function fillMissingMaterialPrices(materials: EditableMaterial[], region: 'AU' | 'NZ') {
     const missing = materials.filter(m => !m.unitPrice && m.item.trim());
     if (missing.length === 0) return;
 
-    const applyBookFallback = () => {
+    const normalizeItemKey = (s: string) => s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
+
+    const applyBookFallback = (chunk: EditableMaterial[]) => {
       setMaterialsList(prev => prev.map(m => {
-        if (m.unitPrice) return m;
+        if (m.unitPrice || !chunk.some(c => c.id === m.id)) return m;
         const fromBook = lookupMaterialPrice(m.item, region);
         if (!fromBook) return m;
         return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
       }));
     };
 
-    try {
-      const res = await fetch('/api/price-lookup', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          items: missing.map(m => ({ item: m.item, unit: m.unit || 'each' })),
-          region,
-        }),
-      });
-      if (!res.ok) { applyBookFallback(); return; }
-      const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
-      // The model is asked to echo the item name back verbatim but sometimes appends the "(per
-      // unit)" hint from the request — strip any trailing parenthetical before matching.
-      const normalizeItemKey = (s: string) => s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
-      setMaterialsList(prev => prev.map(m => {
-        if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
-        const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
-        if (!found) return m;
-        rememberMaterialPrice(m.item, region, String(found.price), found.source);
-        return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
-      }));
-      applyBookFallback(); // anything the search genuinely couldn't find still gets a rough estimate rather than staying blank
-    } catch {
-      applyBookFallback();
-    }
+    const CHUNK_SIZE = 3;
+    const chunks: EditableMaterial[][] = [];
+    for (let i = 0; i < missing.length; i += CHUNK_SIZE) chunks.push(missing.slice(i, i + CHUNK_SIZE));
+
+    await Promise.allSettled(chunks.map(async chunk => {
+      try {
+        const res = await fetch('/api/price-lookup', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            items: chunk.map(m => ({ item: m.item, unit: m.unit || 'each' })),
+            region,
+          }),
+        });
+        if (!res.ok) { applyBookFallback(chunk); return; }
+        const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
+        // The model is asked to echo the item name back verbatim but sometimes appends the "(per
+        // unit)" hint from the request — strip any trailing parenthetical before matching.
+        setMaterialsList(prev => prev.map(m => {
+          if (m.unitPrice || !chunk.some(c => c.id === m.id)) return m;
+          const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
+          if (!found) return m;
+          rememberMaterialPrice(m.item, region, String(found.price), found.source);
+          return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
+        }));
+        applyBookFallback(chunk); // anything this chunk's search genuinely couldn't find still gets a rough estimate
+      } catch {
+        applyBookFallback(chunk);
+      }
+    }));
   }
 
   function handleMaterialMarginChange(v: string) {

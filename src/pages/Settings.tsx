@@ -1,6 +1,10 @@
 import { useContext, useState } from 'react';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
+import { lookupMaterialPrice } from '../lib/materialPricing';
+import { getRememberedMaterialPrice, rememberMaterialPrice } from '../lib/priceMemory';
+import { lookupPrices, needsLiveSearch } from '../lib/priceLookup';
+import { COMMON_MATERIALS } from '../lib/commonMaterials';
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -24,11 +28,39 @@ export function Settings() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const [nameInput, setNameInput] = useState(settings.userName);
   const [nameSaved, setNameSaved] = useState(false);
+  const [updatingPriceList, setUpdatingPriceList] = useState(false);
+  const [priceListStatus, setPriceListStatus] = useState(() => localStorage.getItem('setout_photoquote_pricelist_updated') ?? '');
 
   function handleSaveName() {
     updateSettings({ userName: nameInput.trim() });
     setNameSaved(true);
     setTimeout(() => setNameSaved(false), 2000);
+  }
+
+  async function handleUpdatePriceList() {
+    if (updatingPriceList) return;
+    setUpdatingPriceList(true);
+    try {
+      // Fixings/consumables come straight from the price book (fast, free) — only structural/
+      // higher-value materials are worth a live search's time and cost.
+      for (const m of COMMON_MATERIALS) {
+        if (needsLiveSearch(m.item)) continue;
+        const price = lookupMaterialPrice(m.item, settings.region);
+        if (price) rememberMaterialPrice(m.item, settings.region, price);
+      }
+      await lookupPrices(COMMON_MATERIALS.filter(m => needsLiveSearch(m.item)), settings.region);
+      // Chunk failures (e.g. running out of credits mid-run) don't throw — count what actually
+      // landed instead of claiming a full update happened when it might have stopped partway.
+      const pricedCount = COMMON_MATERIALS.filter(m => getRememberedMaterialPrice(m.item, settings.region)).length;
+      const today = new Date().toISOString().slice(0, 10);
+      const label = pricedCount === COMMON_MATERIALS.length
+        ? `Common prices updated ${today}`
+        : `${pricedCount}/${COMMON_MATERIALS.length} priced — stopped partway (ran out of credits?), tap Update to finish`;
+      setPriceListStatus(label);
+      localStorage.setItem('setout_photoquote_pricelist_updated', label);
+    } finally {
+      setUpdatingPriceList(false);
+    }
   }
 
   return (
@@ -179,6 +211,30 @@ export function Settings() {
             }}
           >
             {nameSaved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Photo Quote pricing</SectionLabel>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+          borderRadius: 'var(--radius-card)', padding: '14px 16px',
+        }}>
+          <span style={{ fontSize: 12.5, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+            {priceListStatus || 'Common material prices not set up yet'}
+          </span>
+          <button
+            onClick={handleUpdatePriceList}
+            disabled={updatingPriceList}
+            style={{
+              fontSize: 13, fontWeight: 500, color: updatingPriceList ? 'var(--color-muted)' : 'var(--color-orange)',
+              background: 'none', border: 'none', fontFamily: 'inherit', cursor: updatingPriceList ? 'default' : 'pointer',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}
+          >
+            {updatingPriceList ? 'Updating…' : priceListStatus ? 'Update' : 'Set up'}
           </button>
         </div>
       </div>

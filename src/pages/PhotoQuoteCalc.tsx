@@ -10,7 +10,6 @@ import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
 import { lookupPrices, normalizeItemKey, needsLiveSearch } from '../lib/priceLookup';
-import { COMMON_MATERIALS } from '../lib/commonMaterials';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -150,8 +149,6 @@ export function PhotoQuoteCalc() {
   const [travelQty, setTravelQty] = useState('');
   const [materialMarginPct, setMaterialMarginPct] = useState(() => localStorage.getItem('setout_photoquote_material_margin') ?? '20');
   const [labourMarginPct, setLabourMarginPct] = useState(() => localStorage.getItem('setout_photoquote_labour_margin') ?? '20');
-  const [updatingPriceList, setUpdatingPriceList] = useState(false);
-  const [priceListUpdatedAt, setPriceListUpdatedAt] = useState(() => localStorage.getItem('setout_photoquote_pricelist_updated') ?? '');
   const [logo, setLogo] = useState<PdfLogo | null>(() => {
     const stored = localStorage.getItem('setout_photoquote_logo');
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
@@ -307,26 +304,6 @@ export function PhotoQuoteCalc() {
       if (!fromBook) return m;
       return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
     }));
-  }
-
-  async function handleUpdatePriceList() {
-    if (updatingPriceList) return;
-    setUpdatingPriceList(true);
-    try {
-      // Fixings/consumables come straight from the price book (fast, free) — only structural/
-      // higher-value materials are worth a live search's time and cost.
-      for (const m of COMMON_MATERIALS) {
-        if (needsLiveSearch(m.item)) continue;
-        const price = lookupMaterialPrice(m.item, settings.region);
-        if (price) rememberMaterialPrice(m.item, settings.region, price);
-      }
-      await lookupPrices(COMMON_MATERIALS.filter(m => needsLiveSearch(m.item)), settings.region);
-      const today = new Date().toISOString().slice(0, 10);
-      setPriceListUpdatedAt(today);
-      localStorage.setItem('setout_photoquote_pricelist_updated', today);
-    } finally {
-      setUpdatingPriceList(false);
-    }
   }
 
   function handleMaterialMarginChange(v: string) {
@@ -521,30 +498,6 @@ export function PhotoQuoteCalc() {
       <CalcHeader title="Photo Quote" />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Common material price list — pre-seeds pricing for ~20 typical materials via web search,
-            so they're already priced the first time they show up in a quote instead of triggering
-            an individual lookup */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-          background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-          borderRadius: 12, padding: '10px 14px',
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-            {priceListUpdatedAt ? `Common prices updated ${priceListUpdatedAt}` : 'Common material prices not set up yet'}
-          </span>
-          <button
-            onClick={handleUpdatePriceList}
-            disabled={updatingPriceList}
-            style={{
-              fontSize: 12.5, fontWeight: 500, color: updatingPriceList ? 'var(--color-muted)' : 'var(--color-orange)',
-              background: 'none', border: 'none', fontFamily: 'inherit', cursor: updatingPriceList ? 'default' : 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {updatingPriceList ? 'Updating…' : priceListUpdatedAt ? 'Update' : 'Set up'}
-          </button>
-        </div>
 
         {/* Photo capture */}
         <div>

@@ -1,7 +1,9 @@
-// Node runtime, not Edge — Opus + adaptive thinking on this prompt now regularly takes ~25s,
-// right at (and sometimes past) Edge's hard execution cap, which was causing every generate to
-// time out. Pinned to Sydney to keep AU/NZ latency low without Edge's stricter duration limit.
-export const config = { runtime: 'nodejs', regions: ['syd1'], maxDuration: 60 };
+// Node runtime, not Edge — Opus + adaptive thinking on this prompt regularly takes 25s+ and grew
+// slower again after the QS-assistant rewrite (more rules to reason through: nullable quantities,
+// per-item confidence, waste factors, clarifications, exclusions, region conventions) — confirmed
+// via production logs timing out at the old 60s cap. Pinned to Sydney to keep AU/NZ latency low
+// without Edge's stricter duration limit.
+export const config = { runtime: 'nodejs', regions: ['syd1'], maxDuration: 120 };
 
 const QUOTE_SCHEMA = {
   type: 'object',

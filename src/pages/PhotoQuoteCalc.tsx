@@ -637,6 +637,11 @@ export function PhotoQuoteCalc() {
         >
           {loading ? 'Estimating…' : docType === 'quote' ? 'Generate quote' : 'Generate estimate'}
         </button>
+        {loading && (
+          <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
+            Working through a full takeoff — this can take up to a minute
+          </p>
+        )}
 
         {result && (
           <>

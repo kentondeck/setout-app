@@ -7,7 +7,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
-import { lookupMaterialPrice, lookupLabourRate, PRICE_BOOK_UPDATED } from '../lib/materialPricing';
+import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
@@ -214,18 +214,19 @@ export function PhotoQuoteCalc() {
 
       const quote = (await res.json()) as QuoteResult;
       setResult(quote);
-      // Price priority: remembered (your own past edits/lookups) → static price book → AI web search (below, cached after).
+      // Price priority: remembered (your own confirmed price) → AI web search (below, cached after).
+      // The static price book is a rough guess, not real data — it's only used if the web search
+      // call itself fails, not as a default ahead of it.
       const newMaterials = quote.materials.map(m => {
         const remembered = getRememberedMaterialPrice(m.item, settings.region);
-        const fromBook = remembered ? '' : lookupMaterialPrice(m.item, settings.region);
         return {
           id: crypto.randomUUID(),
           item: m.item,
           quantity: String(m.quantity),
           unit: m.unit,
-          unitPrice: remembered || fromBook,
+          unitPrice: remembered,
           note: m.note,
-          priceKind: remembered ? ('memory' as const) : fromBook ? ('book' as const) : undefined,
+          priceKind: remembered ? ('memory' as const) : undefined,
           priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
         };
       });
@@ -262,11 +263,23 @@ export function PhotoQuoteCalc() {
     }
   }
 
-  // Runs in the background after results are already shown — looks up a price for anything the
-  // remembered list and static price book both missed, then remembers it so it's never looked up again.
+  // Runs in the background after results are already shown — looks up a real price (web search)
+  // for anything not already remembered, then remembers it so it's never looked up again. The
+  // static price book only fills in whatever the search couldn't find, as a last resort — it's a
+  // rough guess, not real data, so it never gets to compete with a search-confirmed price.
   async function fillMissingMaterialPrices(materials: EditableMaterial[], region: 'AU' | 'NZ') {
     const missing = materials.filter(m => !m.unitPrice && m.item.trim());
     if (missing.length === 0) return;
+
+    const applyBookFallback = () => {
+      setMaterialsList(prev => prev.map(m => {
+        if (m.unitPrice) return m;
+        const fromBook = lookupMaterialPrice(m.item, region);
+        if (!fromBook) return m;
+        return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
+      }));
+    };
+
     try {
       const res = await fetch('/api/price-lookup', {
         method: 'POST',
@@ -276,7 +289,7 @@ export function PhotoQuoteCalc() {
           region,
         }),
       });
-      if (!res.ok) return;
+      if (!res.ok) { applyBookFallback(); return; }
       const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
       // The model is asked to echo the item name back verbatim but sometimes appends the "(per
       // unit)" hint from the request — strip any trailing parenthetical before matching.
@@ -288,7 +301,10 @@ export function PhotoQuoteCalc() {
         rememberMaterialPrice(m.item, region, String(found.price), found.source);
         return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
       }));
-    } catch { /* leave blank — tradie fills in manually */ }
+      applyBookFallback(); // anything the search genuinely couldn't find still gets a rough estimate rather than staying blank
+    } catch {
+      applyBookFallback();
+    }
   }
 
   function handleMaterialMarginChange(v: string) {
@@ -601,7 +617,7 @@ export function PhotoQuoteCalc() {
             }}>
               <div>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — WHAT YOU PAY</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Starting cost prices from your price book (updated {PRICE_BOOK_UPDATED}) — material margin below sets the client price</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Prices are your saved history or a live web search — check before sending. Material margin below sets the client price</p>
               </div>
               {materialsList.map(m => {
                 const matMarginNum = parseFloat(materialMarginPct) || 0;

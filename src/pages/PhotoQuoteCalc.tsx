@@ -9,6 +9,8 @@ import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
+import { lookupPrices, normalizeItemKey } from '../lib/priceLookup';
+import { COMMON_MATERIALS } from '../lib/commonMaterials';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -138,6 +140,8 @@ export function PhotoQuoteCalc() {
   const [travelQty, setTravelQty] = useState('');
   const [materialMarginPct, setMaterialMarginPct] = useState(() => localStorage.getItem('setout_photoquote_material_margin') ?? '20');
   const [labourMarginPct, setLabourMarginPct] = useState(() => localStorage.getItem('setout_photoquote_labour_margin') ?? '20');
+  const [updatingPriceList, setUpdatingPriceList] = useState(false);
+  const [priceListUpdatedAt, setPriceListUpdatedAt] = useState(() => localStorage.getItem('setout_photoquote_pricelist_updated') ?? '');
   const [logo, setLogo] = useState<PdfLogo | null>(() => {
     const stored = localStorage.getItem('setout_photoquote_logo');
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
@@ -267,56 +271,39 @@ export function PhotoQuoteCalc() {
   // for anything not already remembered, then remembers it so it's never looked up again. The
   // static price book only fills in whatever the search couldn't find, as a last resort — it's a
   // rough guess, not real data, so it never gets to compete with a search-confirmed price.
-  //
-  // Split into small chunks fired in parallel rather than one big sequential call — the model
-  // works through a batch one item at a time, so wait time scales with item count unless the
-  // items are spread across concurrent requests. Chunks also apply their own results as soon as
-  // they land, so prices trickle in progressively instead of all-or-nothing.
   async function fillMissingMaterialPrices(materials: EditableMaterial[], region: 'AU' | 'NZ') {
     const missing = materials.filter(m => !m.unitPrice && m.item.trim());
     if (missing.length === 0) return;
 
-    const normalizeItemKey = (s: string) => s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
-
-    const applyBookFallback = (chunk: EditableMaterial[]) => {
+    await lookupPrices(missing.map(m => ({ item: m.item, unit: m.unit || 'each' })), region, priced => {
       setMaterialsList(prev => prev.map(m => {
-        if (m.unitPrice || !chunk.some(c => c.id === m.id)) return m;
-        const fromBook = lookupMaterialPrice(m.item, region);
-        if (!fromBook) return m;
-        return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
+        if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
+        const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
+        if (!found) return m;
+        return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
       }));
-    };
+    });
 
-    const CHUNK_SIZE = 3;
-    const chunks: EditableMaterial[][] = [];
-    for (let i = 0; i < missing.length; i += CHUNK_SIZE) chunks.push(missing.slice(i, i + CHUNK_SIZE));
-
-    await Promise.allSettled(chunks.map(async chunk => {
-      try {
-        const res = await fetch('/api/price-lookup', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            items: chunk.map(m => ({ item: m.item, unit: m.unit || 'each' })),
-            region,
-          }),
-        });
-        if (!res.ok) { applyBookFallback(chunk); return; }
-        const { materials: priced } = (await res.json()) as { materials: { item: string; price: number; source?: string }[] };
-        // The model is asked to echo the item name back verbatim but sometimes appends the "(per
-        // unit)" hint from the request — strip any trailing parenthetical before matching.
-        setMaterialsList(prev => prev.map(m => {
-          if (m.unitPrice || !chunk.some(c => c.id === m.id)) return m;
-          const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
-          if (!found) return m;
-          rememberMaterialPrice(m.item, region, String(found.price), found.source);
-          return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
-        }));
-        applyBookFallback(chunk); // anything this chunk's search genuinely couldn't find still gets a rough estimate
-      } catch {
-        applyBookFallback(chunk);
-      }
+    // Anything the search genuinely couldn't find still gets a rough estimate rather than staying blank
+    setMaterialsList(prev => prev.map(m => {
+      if (m.unitPrice) return m;
+      const fromBook = lookupMaterialPrice(m.item, region);
+      if (!fromBook) return m;
+      return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
     }));
+  }
+
+  async function handleUpdatePriceList() {
+    if (updatingPriceList) return;
+    setUpdatingPriceList(true);
+    try {
+      await lookupPrices(COMMON_MATERIALS, settings.region);
+      const today = new Date().toISOString().slice(0, 10);
+      setPriceListUpdatedAt(today);
+      localStorage.setItem('setout_photoquote_pricelist_updated', today);
+    } finally {
+      setUpdatingPriceList(false);
+    }
   }
 
   function handleMaterialMarginChange(v: string) {
@@ -511,6 +498,30 @@ export function PhotoQuoteCalc() {
       <CalcHeader title="Photo Quote" />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Common material price list — pre-seeds pricing for ~20 typical materials via web search,
+            so they're already priced the first time they show up in a quote instead of triggering
+            an individual lookup */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+          background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+          borderRadius: 12, padding: '10px 14px',
+        }}>
+          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+            {priceListUpdatedAt ? `Common prices updated ${priceListUpdatedAt}` : 'Common material prices not set up yet'}
+          </span>
+          <button
+            onClick={handleUpdatePriceList}
+            disabled={updatingPriceList}
+            style={{
+              fontSize: 12.5, fontWeight: 500, color: updatingPriceList ? 'var(--color-muted)' : 'var(--color-orange)',
+              background: 'none', border: 'none', fontFamily: 'inherit', cursor: updatingPriceList ? 'default' : 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {updatingPriceList ? 'Updating…' : priceListUpdatedAt ? 'Update' : 'Set up'}
+          </button>
+        </div>
 
         {/* Photo capture */}
         <div>

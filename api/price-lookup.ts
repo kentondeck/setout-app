@@ -60,7 +60,7 @@ export async function POST(req: Request): Promise<Response> {
     body: JSON.stringify({
       model: 'claude-sonnet-5',
       max_tokens: 4096,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 6, 20) }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: Math.min(items.length * 2, 6) }],
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Region: ${regionLabel}\n\nItems to price:\n${itemsText}` }],
     }),

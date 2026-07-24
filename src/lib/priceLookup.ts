@@ -30,6 +30,20 @@ export function normalizeItemKey(s: string): string {
   return s.trim().toLowerCase().replace(/\s*\([^)]*\)\s*$/, '').trim();
 }
 
+const LOW_VALUE_KEYWORDS = [
+  'screw', 'nail', 'bolt', 'bracket', 'hanger', 'sealant', 'silicone', 'foam',
+  'packer', 'shim', 'adhesive', 'tape', 'paint', 'primer', 'stain',
+];
+
+// Fixings and consumables are cheap and low-variance — being a bit off on a box of screws barely
+// moves the total, so it's not worth a live web search's time or cost. Only structural/higher-
+// value materials (timber, sheet goods, concrete...) go through search; these use the price book
+// directly instead.
+export function needsLiveSearch(item: string): boolean {
+  const s = item.toLowerCase();
+  return !LOW_VALUE_KEYWORDS.some(k => s.includes(k));
+}
+
 async function lookupChunk(
   chunk: PriceLookupItem[],
   region: Region,

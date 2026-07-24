@@ -9,7 +9,7 @@ import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
-import { lookupPrices, normalizeItemKey } from '../lib/priceLookup';
+import { lookupPrices, normalizeItemKey, needsLiveSearch } from '../lib/priceLookup';
 import { COMMON_MATERIALS } from '../lib/commonMaterials';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
@@ -232,20 +232,21 @@ export function PhotoQuoteCalc() {
         return;
       }
       setResult(quote);
-      // Price priority: remembered (your own confirmed price) → AI web search (below, cached after).
-      // The static price book is a rough guess, not real data — it's only used if the web search
-      // call itself fails, not as a default ahead of it.
+      // Price priority: remembered (your own confirmed price) → AI web search (below, cached after)
+      // for structural/higher-value items → price book directly for cheap, low-variance fixings
+      // and consumables, which aren't worth a live search's time or cost.
       const newMaterials = quote.materials.map(m => {
         const remembered = getRememberedMaterialPrice(m.item, settings.region);
+        const bookNow = !remembered && !needsLiveSearch(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
         return {
           id: crypto.randomUUID(),
           item: m.item,
           quantity: m.quantity === null ? '' : String(m.quantity),
           unit: m.unit,
-          unitPrice: remembered,
+          unitPrice: remembered || bookNow,
           note: m.note,
           confidence: m.confidence,
-          priceKind: remembered ? ('memory' as const) : undefined,
+          priceKind: remembered ? ('memory' as const) : bookNow ? ('book' as const) : undefined,
           priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
         };
       });
@@ -312,7 +313,14 @@ export function PhotoQuoteCalc() {
     if (updatingPriceList) return;
     setUpdatingPriceList(true);
     try {
-      await lookupPrices(COMMON_MATERIALS, settings.region);
+      // Fixings/consumables come straight from the price book (fast, free) — only structural/
+      // higher-value materials are worth a live search's time and cost.
+      for (const m of COMMON_MATERIALS) {
+        if (needsLiveSearch(m.item)) continue;
+        const price = lookupMaterialPrice(m.item, settings.region);
+        if (price) rememberMaterialPrice(m.item, settings.region, price);
+      }
+      await lookupPrices(COMMON_MATERIALS.filter(m => needsLiveSearch(m.item)), settings.region);
       const today = new Date().toISOString().slice(0, 10);
       setPriceListUpdatedAt(today);
       localStorage.setItem('setout_photoquote_pricelist_updated', today);
@@ -670,7 +678,7 @@ export function PhotoQuoteCalc() {
             }}>
               <div>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — WHAT YOU PAY</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Prices are your saved history or a live web search — check before sending. Material margin below sets the client price</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Structural materials get a live price search; fixings/consumables use a standard estimate — check before sending. Material margin below sets the client price</p>
               </div>
               {materialsList.map(m => {
                 const matMarginNum = parseFloat(materialMarginPct) || 0;

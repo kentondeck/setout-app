@@ -3,8 +3,10 @@
 // (either by AI web-search lookup or by hand) before it's remembered for every future quote.
 import type { Region } from '../types';
 
-const MATERIAL_KEY = 'setout_photoquote_material_memory';
-const LABOUR_KEY = 'setout_photoquote_labour_memory';
+// v2: bumped so devices that saved prices under the old (wrong) static-book-first logic don't
+// keep reusing those stale/incorrect numbers forever now that web search is the real source.
+const MATERIAL_KEY = 'setout_photoquote_material_memory_v2';
+const LABOUR_KEY = 'setout_photoquote_labour_memory_v2';
 
 interface MemoryEntry {
   price: string;

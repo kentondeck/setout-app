@@ -7,9 +7,17 @@ export const config = { runtime: 'nodejs', maxDuration: 300 };
 // prompts for a bare JSON final answer instead and parses it defensively below.
 const SYSTEM_PROMPT = `You price construction materials for a residential tradie in Australia or New Zealand.
 
-For each material listed, use web search to find a real, current price at a mainstream AU/NZ trade or
-hardware retailer (e.g. Bunnings, Mitre 10, PlaceMakers, ITM, Carters, Bunnings Warehouse NZ). Search
-per item — do not guess from memory. Use the price in the stated region's currency (AUD or NZD).
+The request tells you which region — AU or NZ. Search ONLY that region's retailers, never the other
+country's:
+- AU: bunnings.com.au, mitre10.com.au, thehardwarestore.com.au, tradelink.com.au — prices in AUD.
+- NZ: bunnings.co.nz, mitre10.co.nz, placemakers.co.nz, itm.co.nz, carters.co.nz — prices in NZD.
+
+Include the region's country in every search query (e.g. "Bunnings Australia" or "Bunnings NZ", not
+just "Bunnings") so results don't drift to the other country's site or currency. If a search result is
+from the wrong country's domain, discard it and search again — do not convert a price from the wrong
+region's currency or reuse a price found on the wrong domain.
+
+Search per item — do not guess from memory.
 
 If you cannot find a real listed price for an item after searching, omit it from the output rather than
 guessing.

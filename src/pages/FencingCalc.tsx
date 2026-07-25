@@ -458,7 +458,7 @@ export function FencingCalc() {
                   {row(rails, 'lm rails', `${resolvedRailCount} rails × ${parseFloat(runLength) || 0} m`, false)}
                   {fenceType === 'paling' && row(palings, `${resolvedHeight * 1000} mm palings`, `${resolvedPalingWidth} mm wide`)}
                   {o.recommendTruck
-                    ? row(bufferedConcreteVolM3, 'm³ ready-mix', `truck delivery, ~$${truckCost}`, false)
+                    ? row(bufferedConcreteVolM3, 'm³ ready-mix', `~$${truckCost} @ $${TRUCK_RATE_PER_M3}/m³`, false)
                     : row(concrete, '20 kg concrete bags', `${o.concretePerHoleBags} per hole`)}
                   {row(o.framingNailBoxes, `box${o.framingNailBoxes !== 1 ? 'es' : ''} framing nails`, `${o.framingNailCount} nails`, false)}
                   {fenceType === 'paling' && row(o.palingNailBoxes, `box${o.palingNailBoxes !== 1 ? 'es' : ''} paling nails`, `${o.palingNailCount} nails`, false)}

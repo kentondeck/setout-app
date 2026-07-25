@@ -1317,10 +1317,16 @@ export function PhotoQuoteCalc() {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                     paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>
+                    <span style={{
+                      fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase',
+                      color: totals.profit > 0 ? '#2f9e44' : '#e53e3e',
+                    }}>
                       Profit ({totals.profitPct.toFixed(0)}%)
                     </span>
-                    <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px' }}>
+                    <span style={{
+                      fontSize: 22, fontWeight: 600, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px',
+                      color: totals.profit > 0 ? '#2f9e44' : '#e53e3e',
+                    }}>
                       {fmt.format(totals.profit)}
                     </span>
                   </div>

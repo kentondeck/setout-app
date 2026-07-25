@@ -1203,6 +1203,7 @@ export function PhotoQuoteCalc() {
               const fmt = currencyFmt(totals.region);
               const materialMarginAmount = totals.materialsSubtotal - totals.materialsCost;
               const selfLabourAmount = totals.labourLines.filter(l => l.isSelf).reduce((s, l) => s + l.lineTotal, 0);
+              const selfHours = totals.labourLines.filter(l => l.isSelf).reduce((s, l) => s + l.hours, 0);
               const labourMarginAmount = totals.labourLines.filter(l => !l.isSelf).reduce((s, l) => s + (l.lineTotal - l.costTotal), 0);
               return (
                 <div style={{
@@ -1242,10 +1243,10 @@ export function PhotoQuoteCalc() {
                       {fmt.format(totals.profit)}
                     </span>
                   </div>
-                  {totalLabourHours > 0 && (
+                  {selfHours > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span style={{ color: 'var(--color-muted)' }}>Profit per hour ({totalLabourHours} hrs total)</span>
-                      <span style={{ color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.profit / totalLabourHours)}/hr</span>
+                      <span style={{ color: 'var(--color-muted)' }}>Profit per hour of your own time ({selfHours} hrs)</span>
+                      <span style={{ color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.profit / selfHours)}/hr</span>
                     </div>
                   )}
                 </div>

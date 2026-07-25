@@ -16,6 +16,7 @@ const SPACINGS_PALING = [1.8, 2.4] as const;
 const SPACINGS_RAIL = [2.4, 3.0] as const;
 const PALING_WIDTHS = [75, 100] as const;
 const HOLE_DIAMETERS = [250, 300, 450] as const;
+const POST_WIDTHS = [90, 100, 125] as const;
 // Rough small-load truck rate for topping up post holes — distinct from a full slab pour's per-m³
 // price, since a small delivery usually carries a minimum-load fee. Confirm with your supplier.
 const TRUCK_RATE_PER_M3 = 300;
@@ -39,6 +40,8 @@ export function FencingCalc() {
   const [customOverlap, setCustomOverlap] = useState('15');
   const [holeDiameter, setHoleDiameter] = useState<number | 'custom'>(250);
   const [customHoleDiameter, setCustomHoleDiameter] = useState('');
+  const [postWidth, setPostWidth] = useState<number | 'custom'>(90);
+  const [customPostWidth, setCustomPostWidth] = useState('');
 
   const [wasteBuffer, setWasteBuffer] = useState(0);
 
@@ -52,6 +55,7 @@ export function FencingCalc() {
   const resolvedRailCount = railCount === 'custom' ? parseInt(customRailCount) || 0 : railCount;
   const resolvedPalingWidth = palingWidth === 'custom' ? parseFloat(customPalingWidth) || 0 : palingWidth;
   const resolvedHoleDiameter = holeDiameter === 'custom' ? parseFloat(customHoleDiameter) || 0 : holeDiameter;
+  const resolvedPostWidth = postWidth === 'custom' ? parseFloat(customPostWidth) || 0 : postWidth;
 
   function handleFenceTypeChange(t: FenceType) {
     setFenceType(t);
@@ -81,6 +85,7 @@ export function FencingCalc() {
       setError('Enter a paling width.'); return;
     }
     if (!resolvedHoleDiameter || resolvedHoleDiameter <= 0) { setError('Enter a post hole diameter.'); return; }
+    if (!resolvedPostWidth || resolvedPostWidth <= 0) { setError('Enter a post size.'); return; }
 
     setError('');
 
@@ -95,6 +100,7 @@ export function FencingCalc() {
       palingOverlapMm: parseFloat(customOverlap) || 15,
       palingGapMm: parseFloat(customGap) || 10,
       postHoleDiameterMm: resolvedHoleDiameter,
+      postWidthMm: resolvedPostWidth,
     });
 
     setResult(calc);
@@ -148,7 +154,7 @@ export function FencingCalc() {
   const truckCost = Math.round(bufferedConcreteVolM3 * TRUCK_RATE_PER_M3);
 
   const quoteMaterials = o ? [
-    { item: `${o.postTotalLengthMm}mm treated pine post`, quantity: bufferedPosts, unit: 'each', note: `${o.embedmentMm}mm embedment` },
+    { item: `${o.postWidthMm}x${o.postWidthMm} treated pine post`, quantity: bufferedPosts, unit: 'each', note: `${o.postTotalLengthMm}mm long, ${o.embedmentMm}mm embedment` },
     { item: 'Fence rail (treated pine)', quantity: bufferedRails, unit: 'lineal metre', note: `${resolvedRailCount} rails × ${parseFloat(runLength) || 0}m run` },
     ...(fenceType === 'paling' ? [{ item: `${resolvedPalingWidth}mm treated pine fence paling`, quantity: bufferedPalings, unit: 'each', note: `${resolvedHeight * 1000}mm height, ${palingStyle}` }] : []),
     ...(o.recommendTruck
@@ -251,6 +257,30 @@ export function FencingCalc() {
                   onChange={v => { setCustomRailCount(v); setResult(null); }}
                   units={[]}
                   placeholder="e.g. 4"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Post size */}
+          <div>
+            <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>POST SIZE</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {POST_WIDTHS.map(w => (
+                <button key={w} style={btn(postWidth === w)} onClick={() => { setPostWidth(w); setCustomPostWidth(''); setResult(null); }}>
+                  {w}×{w}mm
+                </button>
+              ))}
+              <button style={btn(postWidth === 'custom')} onClick={() => { setPostWidth('custom'); setResult(null); }}>Custom</button>
+            </div>
+            {postWidth === 'custom' && (
+              <div style={{ marginTop: 10 }}>
+                <NumberInput
+                  label=""
+                  value={customPostWidth}
+                  onChange={v => { setCustomPostWidth(v); setResult(null); }}
+                  unit="mm"
+                  placeholder="e.g. 150"
                 />
               </div>
             )}
@@ -424,7 +454,7 @@ export function FencingCalc() {
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
                     ORDER{wasteBuffer > 0 ? ` · +${wasteBuffer}% buffer` : ''}
                   </p>
-                  {row(posts, `${o.postTotalLengthMm} mm posts`, `${o.embedmentMm} mm in ground`)}
+                  {row(posts, `${o.postWidthMm}×${o.postWidthMm} × ${o.postTotalLengthMm} mm posts`, `${o.embedmentMm} mm in ground`)}
                   {row(rails, 'lm rails', `${resolvedRailCount} rails × ${parseFloat(runLength) || 0} m`, false)}
                   {fenceType === 'paling' && row(palings, `${resolvedHeight * 1000} mm palings`, `${resolvedPalingWidth} mm wide`)}
                   {o.recommendTruck
@@ -444,7 +474,7 @@ export function FencingCalc() {
               padding: '12px 14px',
             }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep.
+                Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep. Concrete volume allows 50 mm rubble at the base for drainage and deducts the {o.postWidthMm}×{o.postWidthMm} mm post.
                 {fenceType === 'paling' && palingStyle !== 'tight'
                   ? ` Paling count based on ${palingStyle === 'lapped' ? `${customOverlap || 15} mm overlap` : `${customGap || 10} mm gap`}.`
                   : ''}
@@ -464,6 +494,7 @@ export function FencingCalc() {
                 { term: 'Lapped paling', definition: 'Traditional paling fence where each paling slightly overlaps the next (typically 15 mm). Gives a solid look and allows for slight movement without gaps appearing.' },
                 { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of cross-section. Rail timber is ordered in lineal metres — total length regardless of how many pieces.' },
                 { term: 'Post hole concrete', definition: 'Premix concrete used to set fence posts. Pour around the post after setting to plumb, let cure 24–48 hours before attaching rails.' },
+                { term: 'Rubble base', definition: 'A ~50 mm layer of compacted gravel left at the bottom of the hole before setting the post. Lets water drain away from the post base instead of pooling under it, which is what rots a post from the bottom up. Not filled with concrete.' },
                 { term: 'Ready-mix vs bags', definition: 'Below roughly 30 bags, hand-mixing 20 kg premix on site is usually quicker and cheaper. Past that, a small truck load of ready-mix concrete works out faster overall despite the delivery cost.' },
               ]}
             />

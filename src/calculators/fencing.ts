@@ -14,6 +14,7 @@ export interface FencingInputs {
   palingOverlapMm: number;   // mm — lapped style
   palingGapMm: number;       // mm — open style
   postHoleDiameterMm: number; // mm — auger size
+  postWidthMm: number;        // mm — post cross-section (square)
 }
 
 export interface FencingOutputs extends Record<string, number> {
@@ -24,6 +25,7 @@ export interface FencingOutputs extends Record<string, number> {
   palingCount: number;
   postHoleDiameterMm: number;
   postHoleDepthMm: number;
+  postWidthMm: number;
   postHoleVolM3: number;
   totalConcreteVolM3: number;
   concretePerHoleBags: number;
@@ -44,9 +46,10 @@ const CONCRETE_BAG_M3 = 0.009;   // 20 kg premix bag yield — matches concrete.
 const TRUCK_BAG_THRESHOLD = 30;  // past this many bags, hand-mixing on site stops being worth it — order ready-mix by the m³ instead
 const FRAMING_NAILS_PER_BOX = 500;  // typical trade box of 75-90mm bullet/framing nails for skew-nailing rails to posts
 const PALING_NAILS_PER_BOX = 1000;  // typical trade box of 30-40mm flat-head nails for fixing palings to rails
+const RUBBLE_BASE_MM = 50; // compactable rubble/blinding layer left at the bottom of the hole for drainage — post sits on it, not filled with concrete
 
 export function calculateFencing(inputs: FencingInputs): FencingResult {
-  const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm } = inputs;
+  const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm, postWidthMm } = inputs;
   const steps: WorkingStep[] = [];
 
   // Posts
@@ -99,19 +102,26 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
     });
   }
 
-  // Post holes
+  // Post holes — concrete fills from the top of the rubble base up to grade, around the post
   const postHoleDepthMm = embedmentMm;
-  const postHoleVolM3 = parseFloat(
-    (Math.PI * Math.pow(postHoleDiameterMm / 2000, 2) * (postHoleDepthMm / 1000)).toFixed(3)
-  );
+  const concreteFillDepthMm = Math.max(0, postHoleDepthMm - RUBBLE_BASE_MM);
+  const grossHoleVolM3 = Math.PI * Math.pow(postHoleDiameterMm / 2000, 2) * (concreteFillDepthMm / 1000);
+  const postVolM3 = Math.pow(postWidthMm / 1000, 2) * (concreteFillDepthMm / 1000);
+  const postHoleVolM3 = parseFloat(Math.max(0, grossHoleVolM3 - postVolM3).toFixed(3));
   const totalConcreteVolM3 = parseFloat((postHoleVolM3 * postCount).toFixed(3));
   const concretePerHoleBags = Math.ceil(postHoleVolM3 / CONCRETE_BAG_M3);
   const totalConcreteBags = concretePerHoleBags * postCount;
   const recommendTruck = totalConcreteBags > TRUCK_BAG_THRESHOLD ? 1 : 0;
   steps.push({
+    label: 'Concrete fill depth',
+    explanation: `${RUBBLE_BASE_MM} mm rubble/blinding left at the bottom of the hole for drainage — post sits on it, concrete doesn't fill it`,
+    calculation: `${postHoleDepthMm} mm hole − ${RUBBLE_BASE_MM} mm rubble`,
+    result: `${concreteFillDepthMm} mm concrete fill depth`,
+  });
+  steps.push({
     label: 'Concrete per post hole',
-    explanation: `Cylindrical hole — ${postHoleDiameterMm} mm diameter × ${postHoleDepthMm} mm deep`,
-    calculation: `π × (${postHoleDiameterMm / 2} mm)² × ${postHoleDepthMm} mm`,
+    explanation: `Cylindrical hole (${postHoleDiameterMm} mm diameter) minus the ${postWidthMm}×${postWidthMm} mm post displacing it, over the fill depth`,
+    calculation: `[π × (${postHoleDiameterMm / 2} mm)² − ${postWidthMm}×${postWidthMm} mm] × ${concreteFillDepthMm} mm`,
     result: `${postHoleVolM3} m³ × ${postCount} holes = ${totalConcreteVolM3} m³ total`,
   });
   steps.push(
@@ -163,6 +173,7 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
       palingCount,
       postHoleDiameterMm,
       postHoleDepthMm,
+      postWidthMm,
       postHoleVolM3,
       totalConcreteVolM3,
       concretePerHoleBags,

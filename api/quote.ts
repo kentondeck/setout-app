@@ -94,6 +94,28 @@ Rules:
 - If the input is unusable — a photo too blurry or unrelated to a construction job, or a description with virtually nothing to work from and no usable photo — set error to "unusable_input" and fill errorReason with why. Still return the full JSON shape: dimensions all zero, empty materials/labour/assumptions/clarificationsNeeded/exclusions arrays, wasteFactorApplied as an empty string, confidence "low". Otherwise leave error and errorReason as empty strings.`;
 }
 
+interface LearnedPreferences {
+  alwaysOmit: string[];
+  alwaysAdd: { item: string; unit: string; note: string }[];
+}
+
+// Folds in what this tradie's device has learned about how they build — items they consistently
+// strip out of an AI takeoff (e.g. protective tape) or add back in by hand — as a personal layer on
+// top of the region's standard conventions. Empty when nothing's been learned yet.
+function buildPreferencesBlock(preferences?: LearnedPreferences): string {
+  if (!preferences) return '';
+  const lines: string[] = [];
+  if (preferences.alwaysOmit.length > 0) {
+    lines.push(`- Do NOT include these items — this tradie has consistently removed them from past takeoffs, so they don't use them or handle them separately: ${preferences.alwaysOmit.join(', ')}.`);
+  }
+  if (preferences.alwaysAdd.length > 0) {
+    const items = preferences.alwaysAdd.map(a => `${a.item} (${a.unit}${a.note ? `, ${a.note}` : ''})`).join('; ');
+    lines.push(`- Always include these items even if not obviously implied by the input — this tradie has consistently added them by hand on past takeoffs: ${items}.`);
+  }
+  if (lines.length === 0) return '';
+  return `\n\nThis tradie's personal build preferences, learned from their past jobs — apply on top of the standard rules above:\n${lines.join('\n')}`;
+}
+
 // Node runtime here only honors a returned Response from a NAMED HTTP-method export (e.g. POST) —
 // a default export with this signature silently discards the response and hangs until maxDuration.
 export async function POST(req: Request): Promise<Response> {
@@ -102,13 +124,14 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('API key not configured', { status: 500 });
   }
 
-  let imageBase64: string | null, mediaType: string | null, description: string, region: string;
+  let imageBase64: string | null, mediaType: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
   try {
-    ({ imageBase64, mediaType, description, region } = (await req.json()) as {
+    ({ imageBase64, mediaType, description, region, preferences } = (await req.json()) as {
       imageBase64: string | null;
       mediaType: string | null;
       description: string;
       region: string;
+      preferences?: LearnedPreferences;
     });
   } catch {
     return new Response('Invalid request body', { status: 400 });
@@ -141,7 +164,7 @@ export async function POST(req: Request): Promise<Response> {
         effort: 'medium',
         format: { type: 'json_schema', schema: QUOTE_SCHEMA },
       },
-      system: buildSystemPrompt(regionCode),
+      system: buildSystemPrompt(regionCode) + buildPreferencesBlock(preferences),
       messages: [{ role: 'user', content }],
     }),
   });

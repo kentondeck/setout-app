@@ -9,8 +9,9 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
-import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate } from '../lib/priceMemory';
+import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey } from '../lib/priceMemory';
 import { lookupPrices, normalizeItemKey, needsLiveSearch } from '../lib/priceLookup';
+import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -170,6 +171,11 @@ export function PhotoQuoteCalc() {
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  // What the AI actually proposed for the current takeoff, captured right after a generate — diffed
+  // against materialsList when the tradie finalizes (download/share) to learn their build habits.
+  // Only set for AI-generated quotes, not calculator handoffs (those are exact math, nothing to learn).
+  const aiBaselineRef = useRef<{ item: string; unit: string; note: string }[]>([]);
+  const habitsCapturedRef = useRef(true);
 
   // Keep the job-order snapshot in sync as the tradie edits materials/labour after generating
   useEffect(() => {
@@ -234,6 +240,27 @@ export function PhotoQuoteCalc() {
     });
   }
 
+  // Diffs the current materials list against what the AI originally proposed and remembers any
+  // items the tradie consistently strips out or adds by hand — e.g. always dropping protective tape,
+  // or always adding a material the AI keeps missing. Runs once per generation, triggered by a
+  // finalize action (download/share) or the next generate, so ad-hoc mid-edit states aren't recorded.
+  function captureBuildHabits() {
+    if (habitsCapturedRef.current || aiBaselineRef.current.length === 0) return;
+    habitsCapturedRef.current = true;
+
+    const currentKeys = new Set(materialsList.filter(m => m.item.trim()).map(m => fuzzyMaterialKey(m.item)));
+    const baselineKeys = new Set(aiBaselineRef.current.map(m => fuzzyMaterialKey(m.item)));
+
+    for (const b of aiBaselineRef.current) {
+      if (!currentKeys.has(fuzzyMaterialKey(b.item))) recordMaterialRemoved(b.item);
+    }
+    for (const m of materialsList) {
+      if (m.item.trim() && !baselineKeys.has(fuzzyMaterialKey(m.item))) {
+        recordMaterialAdded(m.item, m.unit, m.note ?? '');
+      }
+    }
+  }
+
   // A calculator (e.g. Fencing) can hand off its exact-math materials via navigate('/calc/photoquote',
   // { state }) to jump straight into pricing/editing/PDF — no AI takeoff step needed, the calculator
   // already computed real quantities.
@@ -241,6 +268,8 @@ export function PhotoQuoteCalc() {
     const state = location.state as CalcQuoteHandoff | null;
     if (!state?.fromCalculator) return;
 
+    aiBaselineRef.current = [];
+    habitsCapturedRef.current = true;
     setFromCalculator(true);
     setDocType('quote');
     const quote: QuoteResult = {
@@ -279,6 +308,8 @@ export function PhotoQuoteCalc() {
   async function handleGenerate() {
     if (!description.trim() || loading) return;
 
+    captureBuildHabits(); // in case a prior AI takeoff this session was never downloaded/shared
+
     setLoading(true);
     setError('');
     setResult(null);
@@ -294,6 +325,7 @@ export function PhotoQuoteCalc() {
           mediaType: imageBase64 ? 'image/jpeg' : null,
           description: description.trim(),
           region: settings.region,
+          preferences: getLearnedPreferences(),
         }),
       });
 
@@ -308,6 +340,8 @@ export function PhotoQuoteCalc() {
         return;
       }
       setResult(quote);
+      aiBaselineRef.current = quote.materials.map(m => ({ item: m.item, unit: m.unit, note: m.note }));
+      habitsCapturedRef.current = false;
       const newMaterials = priceMaterialsList(quote.materials);
       setMaterialsList(newMaterials);
       setLabourList(quote.labour.map(l => ({
@@ -484,12 +518,14 @@ export function PhotoQuoteCalc() {
   function handleDownloadPdf() {
     const doc = buildPdfDoc();
     if (!doc) return;
+    captureBuildHabits();
     doc.save(`${(jobName || docType).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
   }
 
   async function handleSharePdf() {
     const doc = buildPdfDoc();
     if (!doc) return;
+    captureBuildHabits();
     const fileName = `${(jobName || docType).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
     const blob = doc.output('blob') as Blob;
     const file = new File([blob], fileName, { type: 'application/pdf' });
@@ -531,6 +567,7 @@ export function PhotoQuoteCalc() {
   }
 
   async function handleShare() {
+    captureBuildHabits();
     const text = buildShareText();
     if (typeof navigator.share === 'function') {
       try {

@@ -1293,7 +1293,7 @@ export function PhotoQuoteCalc() {
             )}
 
             <div>
-              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>COMPANY LOGO <span style={{ textTransform: 'none', fontWeight: 400 }}>(small, bottom of PDF)</span></p>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>COMPANY LOGO <span style={{ textTransform: 'none', fontWeight: 400 }}>(small, top of PDF)</span></p>
               <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
               {logo ? (
                 <div style={{

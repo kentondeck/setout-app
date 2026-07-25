@@ -45,7 +45,7 @@ export async function GET(req: Request): Promise<Response> {
     keys.forEach((k, i) => {
       const raw = values[i];
       if (!raw) return;
-      try { results[k] = JSON.parse(raw) as CacheEntry; } catch { /* skip corrupt entry */ }
+      try { results[k] = JSON.parse(raw.toString()) as CacheEntry; } catch { /* skip corrupt entry */ }
     });
     return new Response(JSON.stringify({ results }), { headers: { 'content-type': 'application/json' } });
   } catch {

@@ -75,6 +75,7 @@ interface EditableLabour {
   hours: string;
   rate: string;
   rateOverride?: string; // manual client rate per hour — undefined means use the labour margin
+  isSelf?: boolean; // the builder's own time — what's charged for it is profit, not a real cash cost
 }
 
 // Shape any calculator can pass via navigate('/calc/photoquote', { state }) to jump straight into
@@ -468,7 +469,11 @@ export function PhotoQuoteCalc() {
       const autoRate = payRate * (1 + labourMargin / 100);
       const overridden = l.rateOverride !== undefined && l.rateOverride !== '';
       const rate = overridden ? (parseFloat(l.rateOverride!) || 0) : autoRate;
-      return { role: l.role.trim() || 'Labour', hours, payRate, rate, overridden, costTotal: hours * payRate, lineTotal: hours * rate };
+      const isSelf = l.isSelf ?? false;
+      // The builder's own time isn't a real cash cost — everything charged for it is profit, not
+      // cost recovery, so it doesn't count toward costTotal even though payRate/rate still display.
+      const costTotal = isSelf ? 0 : hours * payRate;
+      return { role: l.role.trim() || 'Labour', hours, payRate, rate, overridden, isSelf, costTotal, lineTotal: hours * rate };
     });
     const labourCost = labourLines.reduce((s, l) => s + l.costTotal, 0);
     const labourSubtotal = labourLines.reduce((s, l) => s + l.lineTotal, 0);
@@ -928,6 +933,22 @@ export function PhotoQuoteCalc() {
                       ×
                     </button>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <button
+                      onClick={() => updateLabour(l.id, { isSelf: !l.isSelf })}
+                      style={{
+                        padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                        border: l.isSelf ? '1px solid var(--color-orange)' : '0.5px solid var(--color-border)',
+                        background: l.isSelf ? 'rgba(255,90,31,0.08)' : 'var(--color-bg)',
+                        color: l.isSelf ? 'var(--color-orange)' : 'var(--color-muted)',
+                      }}
+                    >
+                      {l.isSelf ? '✓ Your own time' : 'Your own time?'}
+                    </button>
+                    {l.isSelf && (
+                      <span style={{ fontSize: 10.5, color: 'var(--color-muted)' }}>Counts as profit, not a cost</span>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: '0 0 88px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 9, padding: '0 8px' }}>
                       <input
@@ -1181,7 +1202,8 @@ export function PhotoQuoteCalc() {
               if (!totals) return null;
               const fmt = currencyFmt(totals.region);
               const materialMarginAmount = totals.materialsSubtotal - totals.materialsCost;
-              const labourMarginAmount = totals.labourSubtotal - totals.labourCost;
+              const selfLabourAmount = totals.labourLines.filter(l => l.isSelf).reduce((s, l) => s + l.lineTotal, 0);
+              const labourMarginAmount = totals.labourLines.filter(l => !l.isSelf).reduce((s, l) => s + (l.lineTotal - l.costTotal), 0);
               return (
                 <div style={{
                   background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
@@ -1198,6 +1220,12 @@ export function PhotoQuoteCalc() {
                       <span style={{ color: 'var(--color-muted)' }}>Labour margin</span>
                       <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(labourMarginAmount)}</span>
                     </div>
+                    {selfLabourAmount > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                        <span style={{ color: 'var(--color-muted)' }}>Your own time (all profit)</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(selfLabourAmount)}</span>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Total cost (materials + team + travel)</span>
                       <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.totalCost)}</span>

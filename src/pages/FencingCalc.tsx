@@ -35,7 +35,7 @@ export function FencingCalc() {
   const [customRailCount, setCustomRailCount] = useState('');
   const [palingWidth, setPalingWidth] = useState<number | 'custom'>(100);
   const [customPalingWidth, setCustomPalingWidth] = useState('');
-  const [palingStyle, setPalingStyle] = useState<PalingStyle>('lapped');
+  const [palingStyle, setPalingStyle] = useState<PalingStyle>('tight');
   const [customGap, setCustomGap] = useState('10');
   const [customOverlap, setCustomOverlap] = useState('15');
   const [holeDiameter, setHoleDiameter] = useState<number | 'custom'>(250);

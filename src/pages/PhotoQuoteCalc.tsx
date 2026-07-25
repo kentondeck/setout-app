@@ -12,6 +12,7 @@ import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey } from '../lib/priceMemory';
 import { lookupPrices, normalizeItemKey, needsLiveSearch } from '../lib/priceLookup';
 import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
+import type { Employee } from '../types';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -158,6 +159,8 @@ export function PhotoQuoteCalc() {
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
   const [labourList, setLabourList] = useState<EditableLabour[]>([]);
+  const [showTeamPicker, setShowTeamPicker] = useState(false);
+  const [teamSearch, setTeamSearch] = useState('');
   const [travelMode, setTravelMode] = useState<TravelMode>(() => {
     const stored = localStorage.getItem('setout_photoquote_travel_mode');
     return (TRAVEL_MODES as readonly string[]).includes(stored ?? '') ? (stored as TravelMode) : 'flat';
@@ -440,6 +443,22 @@ export function PhotoQuoteCalc() {
 
   function removeLabourRow(id: string) {
     setLabourList(prev => prev.filter(l => l.id !== id));
+  }
+
+  // Adds a role pre-filled from a saved teammate (Settings → Your team) — pay rate and charge-out
+  // rate come straight from their profile instead of the margin slider, since a business owner
+  // usually prices different team members differently (e.g. an apprentice near cost, a lead tradie
+  // with a bigger markup).
+  function addEmployeeToLabour(emp: Employee) {
+    setLabourList(prev => [...prev, {
+      id: crypto.randomUUID(),
+      role: emp.role ? `${emp.name} — ${emp.role}` : emp.name,
+      hours: '1',
+      rate: String(emp.payRate),
+      rateOverride: String(emp.chargeRate),
+    }]);
+    setShowTeamPicker(false);
+    setTeamSearch('');
   }
 
   function computeTotals() {
@@ -1010,17 +1029,79 @@ export function PhotoQuoteCalc() {
                 </div>
                 );
               })}
-              <button
-                onClick={addLabourRow}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                  padding: '10px 0', borderRadius: 10, border: '0.5px dashed rgba(0,0,0,0.18)',
-                  background: 'none', color: 'var(--color-orange)', fontSize: 13.5, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
-                }}
-              >
-                + Add labour role
-              </button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={addLabourRow}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: '10px 0', borderRadius: 10, border: '0.5px dashed rgba(0,0,0,0.18)',
+                    background: 'none', color: 'var(--color-orange)', fontSize: 13.5, fontWeight: 500,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  + Add labour role
+                </button>
+                <button
+                  onClick={() => setShowTeamPicker(v => !v)}
+                  style={{
+                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    padding: '10px 0', borderRadius: 10,
+                    border: showTeamPicker ? '1.5px solid var(--color-orange)' : '0.5px dashed rgba(0,0,0,0.18)',
+                    background: showTeamPicker ? 'rgba(255,90,31,0.06)' : 'none',
+                    color: 'var(--color-orange)', fontSize: 13.5, fontWeight: 500,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                  }}
+                >
+                  + From your team
+                </button>
+              </div>
+
+              {showTeamPicker && (
+                <div style={{
+                  display: 'flex', flexDirection: 'column', gap: 8,
+                  padding: '12px', borderRadius: 10, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)',
+                }}>
+                  {settings.employees.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 12.5, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                      No team saved yet. Add employees once in <a href="#/settings" style={{ color: 'var(--color-orange)' }}>Settings → Your team</a>, then pick them here on every future quote.
+                    </p>
+                  ) : (
+                    <>
+                      {settings.employees.length > 4 && (
+                        <input
+                          type="text"
+                          placeholder="Search your team"
+                          value={teamSearch}
+                          onChange={e => setTeamSearch(e.target.value)}
+                          style={{
+                            padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+                            background: 'var(--color-card)', fontSize: 13, fontFamily: 'inherit',
+                            color: 'var(--color-text)', outline: 'none',
+                          }}
+                        />
+                      )}
+                      {settings.employees
+                        .filter(emp => `${emp.name} ${emp.role}`.toLowerCase().includes(teamSearch.trim().toLowerCase()))
+                        .map(emp => (
+                          <button
+                            key={emp.id}
+                            onClick={() => addEmployeeToLabour(emp)}
+                            style={{
+                              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
+                              padding: '10px 12px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+                              background: 'var(--color-card)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                            }}
+                          >
+                            <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--color-text)' }}>{emp.name}</span>
+                            <span style={{ fontSize: 11.5, color: 'var(--color-muted)' }}>
+                              {emp.role || 'No role set'} · {currencyFmt(settings.region).format(emp.payRate)}/hr pay · {currencyFmt(settings.region).format(emp.chargeRate)}/hr charge
+                            </span>
+                          </button>
+                        ))}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {(() => {

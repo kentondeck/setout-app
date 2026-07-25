@@ -19,12 +19,21 @@ export type CalculatorId =
 
 export type Region = 'AU' | 'NZ';
 
+export interface Employee {
+  id: string;
+  name: string;
+  role: string;       // e.g. "2nd year apprentice", "Carpenter"
+  payRate: number;    // $/hr — what you pay them
+  chargeRate: number; // $/hr — what you charge the client for them
+}
+
 export interface Settings {
   unit: 'metric' | 'imperial';
   apprenticeMode: boolean;
   userName: string;
   region: Region;
   pinnedCalcs: CalculatorId[];
+  employees: Employee[];
 }
 
 export interface HistoryEntry {

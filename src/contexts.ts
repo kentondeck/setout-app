@@ -21,6 +21,7 @@ export const SettingsContext = createContext<SettingsCtx>({
     userName: '',
     region: 'AU',
     pinnedCalcs: [],
+    employees: [],
   },
   updateSettings: () => {},
 });

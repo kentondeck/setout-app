@@ -9,6 +9,7 @@ const defaults: Settings = {
   userName: '',
   region: 'AU',
   pinnedCalcs: [],
+  employees: [],
 };
 
 function load(): Settings {

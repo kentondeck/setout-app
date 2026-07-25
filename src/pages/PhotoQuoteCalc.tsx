@@ -1242,6 +1242,12 @@ export function PhotoQuoteCalc() {
                       {fmt.format(totals.profit)}
                     </span>
                   </div>
+                  {totalLabourHours > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                      <span style={{ color: 'var(--color-muted)' }}>Profit per hour ({totalLabourHours} hrs total)</span>
+                      <span style={{ color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.profit / totalLabourHours)}/hr</span>
+                    </div>
+                  )}
                 </div>
               );
             })()}

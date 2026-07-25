@@ -1245,7 +1245,7 @@ export function PhotoQuoteCalc() {
                   </div>
                   {selfHours > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                      <span style={{ color: 'var(--color-muted)' }}>Profit per hour of your own time ({selfHours} hrs)</span>
+                      <span style={{ color: 'var(--color-muted)' }}>Profit per hour</span>
                       <span style={{ color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.profit / selfHours)}/hr</span>
                     </div>
                   )}

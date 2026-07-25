@@ -819,6 +819,16 @@ export function PhotoQuoteCalc() {
                       />
                     </div>
                   </div>
+                  {(() => {
+                    const qtyNum = parseFloat(m.quantity) || 0;
+                    const costNum = parseFloat(m.unitPrice) || 0;
+                    if (qtyNum <= 0 || costNum <= 0) return null;
+                    return (
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', textAlign: 'right' }}>
+                        {qtyNum} {m.unit || 'unit'} × {currencyFmt(settings.region).format(costNum)} = {currencyFmt(settings.region).format(qtyNum * costNum)}
+                      </p>
+                    );
+                  })()}
                   {m.priceKind && m.priceKind !== 'manual' && (
                     <p style={{ margin: 0, fontSize: 10.5, color: m.priceKind === 'memory' ? '#2f9e44' : 'var(--color-muted)' }}>
                       {m.priceKind === 'memory' && 'Your saved price'}
@@ -851,7 +861,7 @@ export function PhotoQuoteCalc() {
                     ) : m.unitPrice ? (
                       <>
                         <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                          Client price: {currencyFmt(settings.region).format(autoSellPrice)}/{m.unit || 'unit'}
+                          Client price: {currencyFmt(settings.region).format(autoSellPrice)}/{m.unit || 'unit'} · {currencyFmt(settings.region).format(autoSellPrice * (parseFloat(m.quantity) || 0))} total
                         </span>
                         <button
                           onClick={() => updateMaterial(m.id, { sellOverride: autoSellPrice.toFixed(2) })}

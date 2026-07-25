@@ -4,6 +4,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { AddToQuoteButton } from '../components/AddToQuoteButton';
 import { calculateFencing } from '../calculators/fencing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { FenceType, PalingStyle, FencingResult } from '../calculators/fencing';
@@ -127,6 +128,20 @@ export function FencingCalc() {
 
   const o = result?.outputs;
   const spacings = fenceType === 'paling' ? SPACINGS_PALING : SPACINGS_RAIL;
+
+  // Buffered order quantities — shared between the ORDER display and the "Add to Quote" handoff.
+  const buf = wasteBuffer > 0 ? 1 + wasteBuffer / 100 : 1;
+  const bufferedPosts = o ? (wasteBuffer > 0 ? Math.ceil(o.postCount * buf) : o.postCount) : 0;
+  const bufferedRails = o ? (wasteBuffer > 0 ? parseFloat((o.railLinealM * buf).toFixed(1)) : o.railLinealM) : 0;
+  const bufferedPalings = o ? (wasteBuffer > 0 ? Math.ceil(o.palingCount * buf) : o.palingCount) : 0;
+  const bufferedConcrete = o ? (wasteBuffer > 0 ? Math.ceil(o.totalConcreteBags * buf) : o.totalConcreteBags) : 0;
+
+  const quoteMaterials = o ? [
+    { item: `${o.postTotalLengthMm}mm treated pine post`, quantity: bufferedPosts, unit: 'each', note: `${o.embedmentMm}mm embedment` },
+    { item: 'Fence rail (treated pine)', quantity: bufferedRails, unit: 'lineal metre', note: `${resolvedRailCount} rails × ${parseFloat(runLength) || 0}m run` },
+    ...(fenceType === 'paling' ? [{ item: `${resolvedPalingWidth}mm treated pine fence paling`, quantity: bufferedPalings, unit: 'each', note: `${resolvedHeight * 1000}mm height, ${palingStyle}` }] : []),
+    { item: '20kg concrete premix bag', quantity: bufferedConcrete, unit: 'bag', note: `${o.concretePerHoleBags} per hole` },
+  ] : [];
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -341,11 +356,10 @@ export function FencingCalc() {
 
             {/* Materials list */}
             {(() => {
-              const buf = wasteBuffer > 0 ? 1 + wasteBuffer / 100 : 1;
-              const posts    = wasteBuffer > 0 ? Math.ceil(o.postCount * buf) : o.postCount;
-              const rails    = wasteBuffer > 0 ? parseFloat((o.railLinealM * buf).toFixed(1)) : o.railLinealM;
-              const palings  = wasteBuffer > 0 ? Math.ceil(o.palingCount * buf) : o.palingCount;
-              const concrete = wasteBuffer > 0 ? Math.ceil(o.totalConcreteBags * buf) : o.totalConcreteBags;
+              const posts = bufferedPosts;
+              const rails = bufferedRails;
+              const palings = bufferedPalings;
+              const concrete = bufferedConcrete;
               const row = (qty: number | string, unit: string, detail: string, showX = true) => (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                   <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
@@ -412,6 +426,11 @@ export function FencingCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
+            <AddToQuoteButton
+              scopeSummary={`${fenceType === 'paling' ? 'Paling' : 'Post & rail'} fence, ${parseFloat(runLength) || 0}m run, ${resolvedHeight}m high`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
             <ShareCalcButton calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

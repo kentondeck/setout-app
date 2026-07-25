@@ -103,8 +103,12 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   if (q.clientName) { doc.text(`For: ${q.clientName}`, marginX, y); y += 14; }
   doc.text(`Date: ${new Date().toLocaleDateString(q.region === 'AU' ? 'en-AU' : 'en-NZ')}`, marginX, y);
   y += 14;
-  doc.text(`Area: ${q.lengthM}m x ${q.widthM}m (${q.areaM2}m2)`, marginX, y);
-  y += 20;
+  if (q.areaM2 > 0) {
+    doc.text(`Area: ${q.lengthM}m x ${q.widthM}m (${q.areaM2}m2)`, marginX, y);
+    y += 20;
+  } else {
+    y += 6;
+  }
 
   // Job description
   if (q.jobDescription.trim()) {

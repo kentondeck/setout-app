@@ -1,4 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CalcHeader } from '../components/CalcHeader';
 import { ResultCard } from '../components/ResultCard';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
@@ -75,6 +76,17 @@ interface EditableLabour {
   rateOverride?: string; // manual client rate per hour — undefined means use the labour margin
 }
 
+// Shape any calculator can pass via navigate('/calc/photoquote', { state }) to jump straight into
+// the pricing/editing/PDF flow with its own exact-math materials — no AI takeoff step needed, since
+// the calculator already computed real quantities. See src/lib/calcToQuote.ts for the "Add to
+// Quote" button helper that builds this.
+export interface CalcQuoteHandoff {
+  fromCalculator: true;
+  scopeSummary: string;
+  materials: { item: string; quantity: number; unit: string; note?: string }[];
+  jobName?: string;
+}
+
 const MAX_DIMENSION = 1568;
 
 // Re-encodes to JPEG via canvas — handles iPhone camera photos (image/heic),
@@ -127,12 +139,15 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 export function PhotoQuoteCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [description, setDescription] = useState('');
   const [docType, setDocType] = useState<QuoteDocType>('estimate');
   const [result, setResult] = useState<QuoteResult | null>(null);
+  const [fromCalculator, setFromCalculator] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -198,12 +213,76 @@ export function PhotoQuoteCalc() {
     setError('');
   }
 
+  // Price priority: remembered (your own confirmed price) → AI web search (background, cached
+  // after) for structural/higher-value items → price book directly for cheap, low-variance
+  // fixings and consumables, which aren't worth a live search's time or cost.
+  function priceMaterialsList(materials: { item: string; quantity: number | null; unit: string; note?: string; confidence?: Confidence }[]): EditableMaterial[] {
+    return materials.map(m => {
+      const remembered = getRememberedMaterialPrice(m.item, settings.region);
+      const bookNow = !remembered && !needsLiveSearch(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
+      return {
+        id: crypto.randomUUID(),
+        item: m.item,
+        quantity: m.quantity === null ? '' : String(m.quantity),
+        unit: m.unit,
+        unitPrice: remembered || bookNow,
+        note: m.note,
+        confidence: m.confidence,
+        priceKind: remembered ? ('memory' as const) : bookNow ? ('book' as const) : undefined,
+        priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
+      };
+    });
+  }
+
+  // A calculator (e.g. Fencing) can hand off its exact-math materials via navigate('/calc/photoquote',
+  // { state }) to jump straight into pricing/editing/PDF — no AI takeoff step needed, the calculator
+  // already computed real quantities.
+  useEffect(() => {
+    const state = location.state as CalcQuoteHandoff | null;
+    if (!state?.fromCalculator) return;
+
+    setFromCalculator(true);
+    setDocType('quote');
+    const quote: QuoteResult = {
+      error: '', errorReason: '', confidence: 'high',
+      dimensions: { lengthM: 0, widthM: 0, areaM2: 0 },
+      materials: state.materials.map(m => ({ ...m, note: m.note ?? '', confidence: 'high' as const })),
+      labour: [],
+      scopeSummary: state.scopeSummary,
+      assumptions: [], clarificationsNeeded: [], exclusions: [], wasteFactorApplied: '',
+    };
+    setResult(quote);
+    const newMaterials = priceMaterialsList(quote.materials);
+    setMaterialsList(newMaterials);
+    setLabourList([]);
+    if (state.jobName) setJobName(state.jobName);
+    fillMissingMaterialPrices(newMaterials, settings.region);
+
+    const id = crypto.randomUUID();
+    setLastEntryId(id);
+    addEntry({
+      id,
+      calculatorId: 'photoquote',
+      timestamp: Date.now(),
+      inputs: { description: state.scopeSummary },
+      outputs: {
+        areaM2: 0,
+        labourHours: 0,
+        materialCount: state.materials.length,
+        materialsJson: JSON.stringify(state.materials.map(m => ({ item: m.item, quantity: m.quantity, unit: m.unit }))),
+      },
+    });
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleGenerate() {
     if (!description.trim() || loading) return;
 
     setLoading(true);
     setError('');
     setResult(null);
+    setFromCalculator(false);
 
     try {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
@@ -229,24 +308,7 @@ export function PhotoQuoteCalc() {
         return;
       }
       setResult(quote);
-      // Price priority: remembered (your own confirmed price) → AI web search (below, cached after)
-      // for structural/higher-value items → price book directly for cheap, low-variance fixings
-      // and consumables, which aren't worth a live search's time or cost.
-      const newMaterials = quote.materials.map(m => {
-        const remembered = getRememberedMaterialPrice(m.item, settings.region);
-        const bookNow = !remembered && !needsLiveSearch(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
-        return {
-          id: crypto.randomUUID(),
-          item: m.item,
-          quantity: m.quantity === null ? '' : String(m.quantity),
-          unit: m.unit,
-          unitPrice: remembered || bookNow,
-          note: m.note,
-          confidence: m.confidence,
-          priceKind: remembered ? ('memory' as const) : bookNow ? ('book' as const) : undefined,
-          priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
-        };
-      });
+      const newMaterials = priceMaterialsList(quote.materials);
       setMaterialsList(newMaterials);
       setLabourList(quote.labour.map(l => ({
         id: crypto.randomUUID(),
@@ -495,67 +557,71 @@ export function PhotoQuoteCalc() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader title="Photo Quote" />
+      <CalcHeader title={fromCalculator ? 'Quote' : 'Photo Quote'} />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* Photo capture */}
-        <div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChange}
-            style={{ display: 'none' }}
-          />
-          {photoPreview ? (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: '100%', padding: 0, border: '0.5px solid var(--color-border)',
-                borderRadius: 'var(--radius-card)', overflow: 'hidden', cursor: 'pointer',
-                background: 'none', display: 'block',
-              }}
-            >
-              <img src={photoPreview} alt="Job site" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', display: 'block' }} />
-            </button>
-          ) : (
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              style={{
-                width: '100%', padding: '40px 20px', background: 'var(--color-card)',
-                border: '0.5px dashed rgba(0,0,0,0.18)', borderRadius: 'var(--radius-card)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,90,31,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                  <circle cx="12" cy="13" r="4" />
-                </svg>
-              </div>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>Take or upload a photo <span style={{ fontWeight: 400, color: 'var(--color-muted)' }}>(optional)</span></p>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>The area you're quoting — or skip and describe the job below</p>
-            </button>
-          )}
-        </div>
+        {!fromCalculator && (
+          <>
+            {/* Photo capture */}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                style={{ display: 'none' }}
+              />
+              {photoPreview ? (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100%', padding: 0, border: '0.5px solid var(--color-border)',
+                    borderRadius: 'var(--radius-card)', overflow: 'hidden', cursor: 'pointer',
+                    background: 'none', display: 'block',
+                  }}
+                >
+                  <img src={photoPreview} alt="Job site" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', display: 'block' }} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    width: '100%', padding: '40px 20px', background: 'var(--color-card)',
+                    border: '0.5px dashed rgba(0,0,0,0.18)', borderRadius: 'var(--radius-card)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,90,31,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>Take or upload a photo <span style={{ fontWeight: 400, color: 'var(--color-muted)' }}>(optional)</span></p>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>The area you're quoting — or skip and describe the job below</p>
+                </button>
+              )}
+            </div>
 
-        {/* Description */}
-        <div>
-          <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WHAT'S THE JOB</p>
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            placeholder="e.g. Treated pine deck, 4x4 posts, privacy screen one side, approx 6x4 metres"
-            rows={3}
-            style={{
-              width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-              borderRadius: 12, padding: '12px 14px', fontSize: 15, fontFamily: 'inherit',
-              color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
-            }}
-          />
-        </div>
+            {/* Description */}
+            <div>
+              <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WHAT'S THE JOB</p>
+              <textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="e.g. Treated pine deck, 4x4 posts, privacy screen one side, approx 6x4 metres"
+                rows={3}
+                style={{
+                  width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 12, padding: '12px 14px', fontSize: 15, fontFamily: 'inherit',
+                  color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
+                }}
+              />
+            </div>
+          </>
+        )}
 
         {/* Quote / Estimate toggle */}
         <div>
@@ -583,46 +649,62 @@ export function PhotoQuoteCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e', lineHeight: 1.5 }}>{error}</p>}
 
-        <button
-          onClick={handleGenerate}
-          disabled={!canGenerate}
-          style={{
-            background: canGenerate ? 'var(--color-orange)' : 'var(--color-border)',
-            color: '#fff', border: 'none', borderRadius: 14, padding: '16px',
-            fontSize: 16, fontWeight: 500, fontFamily: 'inherit',
-            cursor: canGenerate ? 'pointer' : 'default', letterSpacing: '-0.3px',
-          }}
-          onPointerDown={e => { if (canGenerate) e.currentTarget.style.opacity = '0.85'; }}
-          onPointerUp={e => (e.currentTarget.style.opacity = '1')}
-          onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          {loading ? 'Estimating…' : docType === 'quote' ? 'Generate quote' : 'Generate estimate'}
-        </button>
-        {loading && (
-          <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
-            Working through a full takeoff — this can take up to a minute
-          </p>
+        {!fromCalculator && (
+          <>
+            <button
+              onClick={handleGenerate}
+              disabled={!canGenerate}
+              style={{
+                background: canGenerate ? 'var(--color-orange)' : 'var(--color-border)',
+                color: '#fff', border: 'none', borderRadius: 14, padding: '16px',
+                fontSize: 16, fontWeight: 500, fontFamily: 'inherit',
+                cursor: canGenerate ? 'pointer' : 'default', letterSpacing: '-0.3px',
+              }}
+              onPointerDown={e => { if (canGenerate) e.currentTarget.style.opacity = '0.85'; }}
+              onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+              onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+            >
+              {loading ? 'Estimating…' : docType === 'quote' ? 'Generate quote' : 'Generate estimate'}
+            </button>
+            {loading && (
+              <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
+                Working through a full takeoff — this can take up to a minute
+              </p>
+            )}
+          </>
         )}
 
         {result && (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <ResultCard label="Area" value={result.dimensions.areaM2} unit="m²" accent />
-              <ResultCard label="Labour" value={totalLabourHours} unit="hrs" />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-                {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated {photo ? 'from photo' : 'from description'}
-              </p>
-              <span style={{
-                fontSize: 10.5, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase',
-                padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap',
-                color: result.confidence === 'high' ? '#2f9e44' : result.confidence === 'low' ? '#e8590c' : '#9c6f00',
-                background: result.confidence === 'high' ? 'rgba(47,158,68,0.1)' : result.confidence === 'low' ? 'rgba(232,89,12,0.1)' : 'rgba(156,111,0,0.1)',
+            {fromCalculator ? (
+              <div style={{
+                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)', padding: '14px 16px',
               }}>
-                {result.confidence} confidence
-              </span>
-            </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>FROM CALCULATOR</p>
+                <p style={{ margin: '4px 0 0', fontSize: 14.5, color: 'var(--color-text)', lineHeight: 1.4 }}>{result.scopeSummary}</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <ResultCard label="Area" value={result.dimensions.areaM2} unit="m²" accent />
+                  <ResultCard label="Labour" value={totalLabourHours} unit="hrs" />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+                    {result.dimensions.lengthM}m × {result.dimensions.widthM}m estimated {photo ? 'from photo' : 'from description'}
+                  </p>
+                  <span style={{
+                    fontSize: 10.5, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase',
+                    padding: '3px 8px', borderRadius: 999, whiteSpace: 'nowrap',
+                    color: result.confidence === 'high' ? '#2f9e44' : result.confidence === 'low' ? '#e8590c' : '#9c6f00',
+                    background: result.confidence === 'high' ? 'rgba(47,158,68,0.1)' : result.confidence === 'low' ? 'rgba(232,89,12,0.1)' : 'rgba(156,111,0,0.1)',
+                  }}>
+                    {result.confidence} confidence
+                  </span>
+                </div>
+              </>
+            )}
 
             <div style={{
               background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
@@ -1225,7 +1307,9 @@ export function PhotoQuoteCalc() {
             </div>
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-              {COMPLIANCE_NOTES.photoquote[settings.region]}
+              {fromCalculator
+                ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
+                : COMPLIANCE_NOTES.photoquote[settings.region]}
             </p>
           </>
         )}

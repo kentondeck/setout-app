@@ -34,6 +34,11 @@ export interface Settings {
   region: Region;
   pinnedCalcs: CalculatorId[];
   employees: Employee[];
+  businessName: string;
+  businessNumber: string; // ABN (AU) or GST number (NZ) — label follows region
+  businessPhone: string;
+  businessEmail: string;
+  businessAddress: string;
 }
 
 export interface HistoryEntry {

@@ -22,6 +22,11 @@ export const SettingsContext = createContext<SettingsCtx>({
     region: 'AU',
     pinnedCalcs: [],
     employees: [],
+    businessName: '',
+    businessNumber: '',
+    businessPhone: '',
+    businessEmail: '',
+    businessAddress: '',
   },
   updateSettings: () => {},
 });

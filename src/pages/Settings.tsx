@@ -84,6 +84,25 @@ export function Settings() {
     if (editingEmployeeId === id) resetEmployeeForm();
   }
 
+  const [businessNameInput, setBusinessNameInput] = useState(settings.businessName);
+  const [businessNumberInput, setBusinessNumberInput] = useState(settings.businessNumber);
+  const [businessPhoneInput, setBusinessPhoneInput] = useState(settings.businessPhone);
+  const [businessEmailInput, setBusinessEmailInput] = useState(settings.businessEmail);
+  const [businessAddressInput, setBusinessAddressInput] = useState(settings.businessAddress);
+  const [businessSaved, setBusinessSaved] = useState(false);
+
+  function handleSaveBusiness() {
+    updateSettings({
+      businessName: businessNameInput.trim(),
+      businessNumber: businessNumberInput.trim(),
+      businessPhone: businessPhoneInput.trim(),
+      businessEmail: businessEmailInput.trim(),
+      businessAddress: businessAddressInput.trim(),
+    });
+    setBusinessSaved(true);
+    setTimeout(() => setBusinessSaved(false), 2000);
+  }
+
   return (
     <div
       style={{
@@ -232,6 +251,70 @@ export function Settings() {
             }}
           >
             {nameSaved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <SectionLabel>Business details</SectionLabel>
+        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+          Printed on every quote/estimate PDF — {settings.region === 'AU' ? 'your ABN is required for a valid tax invoice' : 'your GST number is required if you\'re GST-registered'}.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            type="text"
+            placeholder="Business name"
+            value={businessNameInput}
+            onChange={e => { setBusinessNameInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <input
+            type="text"
+            placeholder={settings.region === 'AU' ? 'ABN — e.g. 12 345 678 901' : 'GST number — e.g. 123-456-789'}
+            value={businessNumberInput}
+            onChange={e => { setBusinessNumberInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="text"
+              placeholder="Phone"
+              value={businessPhoneInput}
+              onChange={e => { setBusinessPhoneInput(e.target.value); setBusinessSaved(false); }}
+              style={{ ...textInputStyle, flex: 1, minWidth: 0 }}
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={businessEmailInput}
+              onChange={e => { setBusinessEmailInput(e.target.value); setBusinessSaved(false); }}
+              style={{ ...textInputStyle, flex: 1, minWidth: 0 }}
+            />
+          </div>
+          <input
+            type="text"
+            placeholder="Business address (optional)"
+            value={businessAddressInput}
+            onChange={e => { setBusinessAddressInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <button
+            onClick={handleSaveBusiness}
+            disabled={businessSaved}
+            style={{
+              padding: '12px 0',
+              borderRadius: 'var(--radius-card)',
+              border: 'none',
+              background: businessSaved ? '#22c55e' : 'var(--color-orange)',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              cursor: businessSaved ? 'default' : 'pointer',
+              transition: 'background 0.2s',
+            }}
+          >
+            {businessSaved ? '✓ Saved' : 'Save business details'}
           </button>
         </div>
       </div>

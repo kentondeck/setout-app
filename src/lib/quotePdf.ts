@@ -23,6 +23,11 @@ export interface PdfQuoteInput {
   jobDescription: string;
   logo?: PdfLogo | null;
   region: Region;
+  businessName: string;
+  businessNumber: string; // ABN (AU) or GST number (NZ)
+  businessPhone: string;
+  businessEmail: string;
+  businessAddress: string;
   areaM2: number;
   lengthM: number;
   widthM: number;
@@ -90,6 +95,26 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.setLineWidth(2);
   doc.line(marginX, y, pageWidth - marginX, y);
   y += 30;
+
+  // Business identity — ABN (AU) or GST number (NZ), required for a valid tax invoice
+  const businessLines: string[] = [];
+  if (q.businessName) businessLines.push(q.businessName);
+  const businessNumberLabel = q.region === 'AU' ? 'ABN' : 'GST';
+  if (q.businessNumber) businessLines.push(`${businessNumberLabel}: ${q.businessNumber}`);
+  const businessContact = [q.businessPhone, q.businessEmail].filter(Boolean).join('   ·   ');
+  if (businessContact) businessLines.push(businessContact);
+  if (q.businessAddress) businessLines.push(q.businessAddress);
+
+  if (businessLines.length > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(100, 100, 100);
+    for (const line of businessLines) {
+      doc.text(line, pageWidth / 2, y, { align: 'center' });
+      y += 13;
+    }
+    y += 12;
+  }
 
   // Job / client
   doc.setFont('helvetica', 'bold');

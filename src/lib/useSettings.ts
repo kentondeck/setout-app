@@ -10,6 +10,11 @@ const defaults: Settings = {
   region: 'AU',
   pinnedCalcs: [],
   employees: [],
+  businessName: '',
+  businessNumber: '',
+  businessPhone: '',
+  businessEmail: '',
+  businessAddress: '',
 };
 
 function load(): Settings {

@@ -4,15 +4,16 @@ export type FenceType = 'paling' | 'rail';
 export type PalingStyle = 'lapped' | 'tight' | 'open';
 
 export interface FencingInputs {
-  runLength: number;       // m
-  height: number;          // m above ground
-  postSpacing: number;     // m centre to centre
+  runLength: number;         // m
+  height: number;            // m above ground
+  postSpacing: number;       // m centre to centre
   fenceType: FenceType;
   railCount: number;
-  palingWidthMm: number;   // mm
+  palingWidthMm: number;     // mm
   palingStyle: PalingStyle;
-  palingOverlapMm: number; // mm — lapped style
-  palingGapMm: number;     // mm — open style
+  palingOverlapMm: number;   // mm — lapped style
+  palingGapMm: number;       // mm — open style
+  postHoleDiameterMm: number; // mm — auger size
 }
 
 export interface FencingOutputs extends Record<string, number> {
@@ -24,8 +25,14 @@ export interface FencingOutputs extends Record<string, number> {
   postHoleDiameterMm: number;
   postHoleDepthMm: number;
   postHoleVolM3: number;
+  totalConcreteVolM3: number;
   concretePerHoleBags: number;
   totalConcreteBags: number;
+  recommendTruck: number; // 1 = order ready-mix by the m³ instead of bags, 0 = bag mix
+  framingNailCount: number;
+  framingNailBoxes: number;
+  palingNailCount: number;
+  palingNailBoxes: number;
 }
 
 export interface FencingResult {
@@ -33,11 +40,13 @@ export interface FencingResult {
   steps: WorkingStep[];
 }
 
-const CONCRETE_BAG_M3 = 0.009; // 20 kg premix bag yield — matches concrete.ts; slightly conservative so bag counts round up rather than fall short
-const HOLE_DIAMETER_MM = 250;  // standard auger for 90×90 posts
+const CONCRETE_BAG_M3 = 0.009;   // 20 kg premix bag yield — matches concrete.ts; slightly conservative so bag counts round up rather than fall short
+const TRUCK_BAG_THRESHOLD = 30;  // past this many bags, hand-mixing on site stops being worth it — order ready-mix by the m³ instead
+const FRAMING_NAILS_PER_BOX = 500;  // typical trade box of 75-90mm bullet/framing nails for skew-nailing rails to posts
+const PALING_NAILS_PER_BOX = 1000;  // typical trade box of 30-40mm flat-head nails for fixing palings to rails
 
 export function calculateFencing(inputs: FencingInputs): FencingResult {
-  const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm } = inputs;
+  const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm } = inputs;
   const steps: WorkingStep[] = [];
 
   // Posts
@@ -93,16 +102,57 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
   // Post holes
   const postHoleDepthMm = embedmentMm;
   const postHoleVolM3 = parseFloat(
-    (Math.PI * Math.pow(HOLE_DIAMETER_MM / 2000, 2) * (postHoleDepthMm / 1000)).toFixed(3)
+    (Math.PI * Math.pow(postHoleDiameterMm / 2000, 2) * (postHoleDepthMm / 1000)).toFixed(3)
   );
+  const totalConcreteVolM3 = parseFloat((postHoleVolM3 * postCount).toFixed(3));
   const concretePerHoleBags = Math.ceil(postHoleVolM3 / CONCRETE_BAG_M3);
   const totalConcreteBags = concretePerHoleBags * postCount;
+  const recommendTruck = totalConcreteBags > TRUCK_BAG_THRESHOLD ? 1 : 0;
   steps.push({
     label: 'Concrete per post hole',
-    explanation: `Cylindrical hole — ${HOLE_DIAMETER_MM} mm diameter × ${postHoleDepthMm} mm deep`,
-    calculation: `π × (${HOLE_DIAMETER_MM / 2} mm)² × ${postHoleDepthMm} mm`,
-    result: `${postHoleVolM3} m³ → ${concretePerHoleBags} × 20 kg bags per hole`,
+    explanation: `Cylindrical hole — ${postHoleDiameterMm} mm diameter × ${postHoleDepthMm} mm deep`,
+    calculation: `π × (${postHoleDiameterMm / 2} mm)² × ${postHoleDepthMm} mm`,
+    result: `${postHoleVolM3} m³ × ${postCount} holes = ${totalConcreteVolM3} m³ total`,
   });
+  steps.push(
+    recommendTruck
+      ? {
+          label: 'Order method',
+          explanation: `${totalConcreteBags} bags exceeds the ${TRUCK_BAG_THRESHOLD}-bag hand-mix threshold`,
+          calculation: `${totalConcreteBags} bags > ${TRUCK_BAG_THRESHOLD}`,
+          result: `Order ${totalConcreteVolM3} m³ ready-mix by truck instead of bags`,
+        }
+      : {
+          label: 'Order method',
+          explanation: `${totalConcreteBags} bags is within the ${TRUCK_BAG_THRESHOLD}-bag hand-mix threshold`,
+          calculation: `${postHoleVolM3} m³ ÷ ${CONCRETE_BAG_M3} m³/bag = ${concretePerHoleBags} per hole`,
+          result: `${concretePerHoleBags} × 20 kg bags per hole → ${totalConcreteBags} bags total`,
+        }
+  );
+
+  // Fixings — nails
+  // Rails are skew-nailed to each post, 2 nails per rail per post (both faces, standard practice)
+  const framingNailCount = railCount * postCount * 2;
+  const framingNailBoxes = Math.ceil(framingNailCount / FRAMING_NAILS_PER_BOX);
+  steps.push({
+    label: 'Framing nails',
+    explanation: `${railCount} rails skew-nailed at each of ${postCount} posts, 2 nails per connection`,
+    calculation: `${railCount} × ${postCount} × 2`,
+    result: `${framingNailCount} nails → ${framingNailBoxes} box${framingNailBoxes !== 1 ? 'es' : ''}`,
+  });
+
+  let palingNailCount = 0;
+  let palingNailBoxes = 0;
+  if (fenceType === 'paling') {
+    palingNailCount = palingCount * railCount * 2;
+    palingNailBoxes = Math.ceil(palingNailCount / PALING_NAILS_PER_BOX);
+    steps.push({
+      label: 'Paling nails',
+      explanation: '2 nails per paling per rail it crosses',
+      calculation: `${palingCount} × ${railCount} × 2`,
+      result: `${palingNailCount} nails → ${palingNailBoxes} box${palingNailBoxes !== 1 ? 'es' : ''}`,
+    });
+  }
 
   return {
     outputs: {
@@ -111,11 +161,17 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
       postTotalLengthMm,
       railLinealM,
       palingCount,
-      postHoleDiameterMm: HOLE_DIAMETER_MM,
+      postHoleDiameterMm,
       postHoleDepthMm,
       postHoleVolM3,
+      totalConcreteVolM3,
       concretePerHoleBags,
       totalConcreteBags,
+      recommendTruck,
+      framingNailCount,
+      framingNailBoxes,
+      palingNailCount,
+      palingNailBoxes,
     },
     steps,
   };

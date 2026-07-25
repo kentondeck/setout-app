@@ -46,7 +46,7 @@ const CONCRETE_BAG_M3 = 0.009;   // 20 kg premix bag yield — matches concrete.
 const TRUCK_BAG_THRESHOLD = 30;  // past this many bags, hand-mixing on site stops being worth it — order ready-mix by the m³ instead
 const FRAMING_NAILS_PER_BOX = 500;  // typical trade box of 75-90mm bullet/framing nails for skew-nailing rails to posts
 const PALING_NAILS_PER_BOX = 1000;  // typical trade box of 30-40mm flat-head nails for fixing palings to rails
-const RUBBLE_BASE_MM = 50; // compactable rubble/blinding layer left at the bottom of the hole for drainage — post sits on it, not filled with concrete
+const POST_STANDOFF_MM = 50; // post sits this far up off the bottom of the hole — that gap is poured solid with concrete, not left as rubble
 
 export function calculateFencing(inputs: FencingInputs): FencingResult {
   const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm, postWidthMm } = inputs;
@@ -102,26 +102,28 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
     });
   }
 
-  // Post holes — concrete fills from the top of the rubble base up to grade, around the post
+  // Post holes — concrete fills the full hole depth. The post stands 50 mm proud of the bottom
+  // (so its end isn't sitting directly on damp soil), and that gap is poured solid too — the post
+  // only displaces concrete over the depth it actually occupies, not the full hole.
   const postHoleDepthMm = embedmentMm;
-  const concreteFillDepthMm = Math.max(0, postHoleDepthMm - RUBBLE_BASE_MM);
-  const grossHoleVolM3 = Math.PI * Math.pow(postHoleDiameterMm / 2000, 2) * (concreteFillDepthMm / 1000);
-  const postVolM3 = Math.pow(postWidthMm / 1000, 2) * (concreteFillDepthMm / 1000);
+  const postEmbeddedDepthMm = Math.max(0, postHoleDepthMm - POST_STANDOFF_MM);
+  const grossHoleVolM3 = Math.PI * Math.pow(postHoleDiameterMm / 2000, 2) * (postHoleDepthMm / 1000);
+  const postVolM3 = Math.pow(postWidthMm / 1000, 2) * (postEmbeddedDepthMm / 1000);
   const postHoleVolM3 = parseFloat(Math.max(0, grossHoleVolM3 - postVolM3).toFixed(3));
   const totalConcreteVolM3 = parseFloat((postHoleVolM3 * postCount).toFixed(3));
   const concretePerHoleBags = Math.ceil(postHoleVolM3 / CONCRETE_BAG_M3);
   const totalConcreteBags = concretePerHoleBags * postCount;
   const recommendTruck = totalConcreteBags > TRUCK_BAG_THRESHOLD ? 1 : 0;
   steps.push({
-    label: 'Concrete fill depth',
-    explanation: `${RUBBLE_BASE_MM} mm rubble/blinding left at the bottom of the hole for drainage — post sits on it, concrete doesn't fill it`,
-    calculation: `${postHoleDepthMm} mm hole − ${RUBBLE_BASE_MM} mm rubble`,
-    result: `${concreteFillDepthMm} mm concrete fill depth`,
+    label: 'Post standoff',
+    explanation: `Post sits ${POST_STANDOFF_MM} mm up off the bottom of the hole — that gap is poured solid with concrete, no rubble`,
+    calculation: `${postHoleDepthMm} mm hole − ${POST_STANDOFF_MM} mm standoff`,
+    result: `Post occupies ${postEmbeddedDepthMm} mm of the ${postHoleDepthMm} mm hole`,
   });
   steps.push({
     label: 'Concrete per post hole',
-    explanation: `Cylindrical hole (${postHoleDiameterMm} mm diameter) minus the ${postWidthMm}×${postWidthMm} mm post displacing it, over the fill depth`,
-    calculation: `[π × (${postHoleDiameterMm / 2} mm)² − ${postWidthMm}×${postWidthMm} mm] × ${concreteFillDepthMm} mm`,
+    explanation: `Full-depth cylindrical hole (${postHoleDiameterMm} mm diameter × ${postHoleDepthMm} mm deep) minus the ${postWidthMm}×${postWidthMm} mm post over the ${postEmbeddedDepthMm} mm it actually occupies`,
+    calculation: `[π × (${postHoleDiameterMm / 2} mm)² × ${postHoleDepthMm} mm] − [${postWidthMm}×${postWidthMm} mm × ${postEmbeddedDepthMm} mm]`,
     result: `${postHoleVolM3} m³ × ${postCount} holes = ${totalConcreteVolM3} m³ total`,
   });
   steps.push(

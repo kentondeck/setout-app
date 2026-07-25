@@ -474,7 +474,7 @@ export function FencingCalc() {
               padding: '12px 14px',
             }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep. Concrete volume allows 50 mm rubble at the base for drainage and deducts the {o.postWidthMm}×{o.postWidthMm} mm post.
+                Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep. Post stands 50 mm proud of the bottom (poured solid, no rubble) and its {o.postWidthMm}×{o.postWidthMm} mm cross-section is deducted from the concrete.
                 {fenceType === 'paling' && palingStyle !== 'tight'
                   ? ` Paling count based on ${palingStyle === 'lapped' ? `${customOverlap || 15} mm overlap` : `${customGap || 10} mm gap`}.`
                   : ''}
@@ -494,7 +494,7 @@ export function FencingCalc() {
                 { term: 'Lapped paling', definition: 'Traditional paling fence where each paling slightly overlaps the next (typically 15 mm). Gives a solid look and allows for slight movement without gaps appearing.' },
                 { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of cross-section. Rail timber is ordered in lineal metres — total length regardless of how many pieces.' },
                 { term: 'Post hole concrete', definition: 'Premix concrete used to set fence posts. Pour around the post after setting to plumb, let cure 24–48 hours before attaching rails.' },
-                { term: 'Rubble base', definition: 'A ~50 mm layer of compacted gravel left at the bottom of the hole before setting the post. Lets water drain away from the post base instead of pooling under it, which is what rots a post from the bottom up. Not filled with concrete.' },
+                { term: 'Post standoff', definition: 'The post is set 50 mm up off the very bottom of the hole rather than resting on bare soil, so it doesn’t sit in trapped moisture. That gap is poured solid with concrete along with the rest of the hole — not left open or packed with rubble.' },
                 { term: 'Ready-mix vs bags', definition: 'Below roughly 30 bags, hand-mixing 20 kg premix on site is usually quicker and cheaper. Past that, a small truck load of ready-mix concrete works out faster overall despite the delivery cost.' },
               ]}
             />

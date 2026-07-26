@@ -117,8 +117,8 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'photoquote',
-    label: 'Photo Quote',
-    subtitle: 'AI job estimate from a photo',
+    label: 'QuoteAi',
+    subtitle: 'AI job estimation tool',
     number: '17',
     svgPath: 'M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h4l2 3h3a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   },

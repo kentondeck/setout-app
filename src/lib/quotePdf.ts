@@ -26,6 +26,7 @@ export interface PdfQuoteInput {
   siteAddress: string;
   jobName: string;
   jobDescription: string;
+  notes: string;
   logo?: PdfLogo | null;
   region: Region;
   businessName: string;
@@ -275,6 +276,28 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
       doc.text(bankParts, marginX, y);
       y += 18;
     }
+  }
+
+  // Notes — freeform, shown once as its own block
+  if (q.notes.trim()) {
+    ensureSpace(50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(140, 140, 140);
+    doc.text('NOTES', marginX, y);
+    y += 6;
+    doc.setDrawColor(225, 225, 225);
+    doc.setLineWidth(0.75);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 16;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    const notesLines: string[] = doc.splitTextToSize(q.notes.trim(), pageWidth - marginX * 2);
+    ensureSpace(notesLines.length * 13 + 10);
+    doc.text(notesLines, marginX, y);
+    y += notesLines.length * 13 + 4;
   }
 
   // Footer — disclaimer, with a small Setout credit line below it

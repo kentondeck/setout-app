@@ -160,6 +160,7 @@ export function PhotoQuoteCalc() {
   const [clientAddress, setClientAddress] = useState('');
   const [siteAddress, setSiteAddress] = useState('');
   const [quoteNumber, setQuoteNumber] = useState('');
+  const [notes, setNotes] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
@@ -542,6 +543,7 @@ export function PhotoQuoteCalc() {
       siteAddress: siteAddress.trim(),
       jobName: jobName.trim(),
       jobDescription: result.scopeSummary,
+      notes: notes.trim(),
       logo,
       region: totals.region,
       businessName: settings.businessName,
@@ -1500,6 +1502,21 @@ export function PhotoQuoteCalc() {
                   style={quoteDetailInputStyle}
                 />
               </div>
+            </div>
+
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>NOTES <span style={{ textTransform: 'none', fontWeight: 400 }}>(shown on PDF)</span></p>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="e.g. Client to arrange council permit. Excludes removal of existing structure."
+                rows={3}
+                style={{
+                  width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 12, padding: '12px 14px', fontSize: 14, fontFamily: 'inherit',
+                  color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
+                }}
+              />
             </div>
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />

@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { RoofDiagram } from '../components/RoofDiagram';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
 
 type PairKey = 'span' | 'rise' | 'rafterLength' | 'pitchDegrees';
@@ -67,6 +68,7 @@ export function RoofCalc() {
   const [mode, setMode] = useState<Mode>('span-pitch');
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: RoofOutputs; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -298,7 +300,7 @@ export function RoofCalc() {
         </button>
 
         {result && out && (
-          <>
+          <div ref={resultRef}>
             <RoofDiagram
               buildingWidthMm={out.span * 1000}
               pitchDegrees={out.pitchDegrees}
@@ -406,7 +408,7 @@ export function RoofCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.roof[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

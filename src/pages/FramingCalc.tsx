@@ -10,6 +10,7 @@ import type { FramingOutputs } from '../calculators/framing';
 import { calculateCutlist } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
@@ -40,6 +41,7 @@ export function FramingCalc() {
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [calcNogginRows, setCalcNogginRows] = useState(0);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
@@ -342,7 +344,7 @@ export function FramingCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Studs" value={result.outputs.studCount} accent />
@@ -483,7 +485,7 @@ export function FramingCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.framing[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

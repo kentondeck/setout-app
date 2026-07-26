@@ -11,6 +11,7 @@ import type { EqualSpacingOutputs } from '../calculators/equalspacing';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useScrollToResult } from '../lib/useScrollToResult';
 
 interface Inputs {
   totalSpan: string;
@@ -32,6 +33,7 @@ export function EqualSpacingCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: EqualSpacingOutputs; steps: WorkingStep[]; countDerived: boolean } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -177,7 +179,7 @@ export function EqualSpacingCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {result.countDerived && (
               <div style={{
                 background: 'var(--color-card)',
@@ -229,7 +231,7 @@ export function EqualSpacingCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.equalspacing[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

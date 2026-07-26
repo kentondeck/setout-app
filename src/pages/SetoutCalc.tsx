@@ -10,6 +10,7 @@ import { JobNameInput } from '../components/JobNameInput';
 import type { SetoutOutputs } from '../calculators/setout';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 
 type InputMode = 'find' | 'check';
@@ -29,6 +30,7 @@ export function SetoutCalc() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('find');
   const [result, setResult] = useState<{ outputs: SetoutOutputs; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -164,7 +166,7 @@ export function SetoutCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {/* Diagonal result */}
             <div style={{ display: 'grid', gridTemplateColumns: mode === 'check' ? '1fr 1fr' : '1fr', gap: 10 }}>
               <ResultCard label="Diagonal" value={result.outputs.diagonal} unit="mm" accent />
@@ -223,7 +225,7 @@ export function SetoutCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.setout[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

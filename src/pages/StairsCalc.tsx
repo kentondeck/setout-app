@@ -11,6 +11,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, STAIR_LIMITS } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { StairDiagram } from '../components/StairDiagram';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
 
 interface Inputs {
@@ -33,6 +34,7 @@ export function StairsCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: StairsOutputs; steps: WorkingStep[]; warnings: StairsWarnings } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -157,7 +159,7 @@ export function StairsCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {/* Auto riser callout */}
             {result.warnings.riserAutoSelected && (
               <div style={{
@@ -281,7 +283,7 @@ export function StairsCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.stairs[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

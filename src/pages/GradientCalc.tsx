@@ -13,6 +13,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 
 import type { Region } from '../types';
 
+import { useScrollToResult } from '../lib/useScrollToResult';
 function getDrainPresets(region: Region) {
   return [
     { label: '1:40',  ratio: 40,  note: 'Downpipes, steep runs' },
@@ -48,6 +49,7 @@ export function GradientCalc() {
   const [fall, setFall] = useState('');
 
   const [result, setResult] = useState<GradientResult | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -270,7 +272,7 @@ export function GradientCalc() {
         </button>
 
         {result && o && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {!reverse ? (
                 <>
@@ -307,7 +309,7 @@ export function GradientCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.gradient[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

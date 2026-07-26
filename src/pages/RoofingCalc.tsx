@@ -10,6 +10,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateRoofing, ROOFING_PROFILES } from '../calculators/roofing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { RoofType, RoofProfile, RoofingResult } from '../calculators/roofing';
+import { useScrollToResult } from '../lib/useScrollToResult';
 
 interface Fields {
   planLength: string;
@@ -54,6 +55,7 @@ export function RoofingCalc() {
   const [profile, setProfile] = useState<RoofProfile>('corrugate');
   const [fields, setFields] = useState<Fields>(DEFAULTS);
   const [result, setResult] = useState<RoofingResult | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastId, setLastId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -239,7 +241,7 @@ export function RoofingCalc() {
         </button>
 
         {result && o && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
               {/* Sheets + length */}
@@ -314,7 +316,7 @@ export function RoofingCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.roofing[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 
+import { useScrollToResult } from '../lib/useScrollToResult';
 type InputMode = 'heights' | 'pitch';
 
 interface Inputs {
@@ -41,6 +42,7 @@ export function RakedWallCalc() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('heights');
   const [result, setResult] = useState<{ outputs: RakedWallOutputs; studHeights: number[]; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -212,7 +214,7 @@ export function RakedWallCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {/* Summary results */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -295,7 +297,7 @@ export function RakedWallCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.raked[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
+import { useScrollToResult } from '../lib/useScrollToResult';
 
 interface Inputs {
   totalLength: string;
@@ -29,6 +30,7 @@ export function BalusterCalc() {
     maxGap: '',
   }));
   const [result, setResult] = useState<{ outputs: BalusterOutputs; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -169,7 +171,7 @@ export function BalusterCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <ResultCard label="Balusters" value={result.outputs.balusters} accent />
               <ResultCard label="Actual gap" value={result.outputs.actualGap} unit="mm" />
@@ -273,7 +275,7 @@ export function BalusterCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.balusters[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

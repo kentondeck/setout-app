@@ -10,6 +10,7 @@ import type { DeckingResult, GapSuggestion } from '../calculators/decking';
 import { calculateCutlist } from '../calculators/cutlist';
 import type { CutlistResult } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckingDiagram } from '../components/DeckingDiagram';
@@ -43,6 +44,7 @@ export function DeckingCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<DeckingResult | null>(null);
+  const resultRef = useScrollToResult(result);
   const [joistStock, setJoistStock] = useState(4800);
   const [bearerStock, setBearerStock] = useState(4800);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -238,7 +240,7 @@ export function DeckingCalc() {
 
         {/* Results */}
         {result && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
@@ -478,7 +480,7 @@ export function DeckingCalc() {
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
             <ShareCalcButton calculationId={lastEntryId} />
-          </>
+          </div>
         )}
       </div>
     </div>

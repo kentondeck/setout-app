@@ -10,6 +10,7 @@ import { JobNameInput } from '../components/JobNameInput';
 import type { FenceType, PalingStyle, FencingResult } from '../calculators/fencing';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useScrollToResult } from '../lib/useScrollToResult';
 
 const HEIGHTS = [1.2, 1.5, 1.8] as const;
 const SPACINGS_PALING = [1.8, 2.4] as const;
@@ -46,6 +47,7 @@ export function FencingCalc() {
   const [wasteBuffer, setWasteBuffer] = useState(0);
 
   const [result, setResult] = useState<FencingResult | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -398,7 +400,7 @@ export function FencingCalc() {
         </button>
 
         {result && o && (
-          <>
+          <div ref={resultRef}>
             {/* Waste buffer toggle */}
             <div style={{ display: 'flex', gap: 8 }}>
               {[0, 5, 10, 15].map(pct => (
@@ -511,7 +513,7 @@ export function FencingCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.fencing[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

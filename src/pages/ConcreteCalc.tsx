@@ -9,6 +9,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
 import { JobNameInput } from '../components/JobNameInput';
+import { useScrollToResult } from '../lib/useScrollToResult';
 import type { SlabOutputs, PostHoleOutputs } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
@@ -47,6 +48,7 @@ export function ConcreteCalc() {
   const [lastPostId, setLastPostId] = useState('');
 
   const [error, setError] = useState('');
+  const resultRef = useScrollToResult(tab === 'slab' ? slabResult : postResult);
 
   function setSlab(field: keyof SlabFields) {
     return (value: string) => setSlabFields(prev => ({ ...prev, [field]: value }));
@@ -417,7 +419,7 @@ export function ConcreteCalc() {
 
         {/* Slab results */}
         {tab === 'slab' && slabResult && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Volume" value={slabResult.outputs.exactVolume} unit="m³" accent />
@@ -453,12 +455,12 @@ export function ConcreteCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
             </p>
-          </>
+          </div>
         )}
 
         {/* Post hole results */}
         {tab === 'postholes' && postResult && (
-          <>
+          <div ref={resultRef}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Per hole" value={postResult.outputs.volumePerHole} unit="m³" accent />
@@ -513,7 +515,7 @@ export function ConcreteCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

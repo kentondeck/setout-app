@@ -11,6 +11,7 @@ import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/c
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
 
+import { useScrollToResult } from '../lib/useScrollToResult';
 interface CutRow {
   id: string;
   length: string;
@@ -43,6 +44,7 @@ export function CutlistCalc() {
   const [wasteBuffer, setWasteBuffer] = useState('');
   const [rows, setRows] = useState<CutRow[]>([newRow(), newRow()]);
   const [result, setResult] = useState<Result | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -271,7 +273,7 @@ export function CutlistCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {/* ORDER card — vertical list */}
             <div
               style={{
@@ -386,7 +388,7 @@ export function CutlistCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Optimised across standard NZ/AU stock lengths (2.4–6.0m) using best-fit decreasing with lookahead scoring, 3mm saw kerf per cut. Order 5–10% extra for splits and defects.
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 
+import { useScrollToResult } from '../lib/useScrollToResult';
 interface Inputs {
   wallHeight: string;
   wallWidth: string;
@@ -36,6 +37,7 @@ export function CladdingCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: CladdingOutputs; rodMarks: number[]; steps: WorkingStep[] } | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -151,7 +153,7 @@ export function CladdingCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             {/* Summary */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -223,7 +225,7 @@ export function CladdingCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.cladding[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

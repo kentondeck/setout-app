@@ -11,6 +11,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { JobNameInput } from '../components/JobNameInput';
 
+import { useScrollToResult } from '../lib/useScrollToResult';
 const SWELL_PRESETS = [
   { label: 'None', sublabel: 'Rock / fill', value: 0 },
   { label: 'Sandy', sublabel: '~15% swell', value: 0.15 },
@@ -143,6 +144,7 @@ export function ExcavationCalc() {
   const [truckSize, setTruckSize] = useState(8);
   const [customTruck, setCustomTruck] = useState('');
   const [result, setResult] = useState<ExcavationResult | null>(null);
+  const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -386,7 +388,7 @@ export function ExcavationCalc() {
         </button>
 
         {result && (
-          <>
+          <div ref={resultRef}>
             <ExcavationDiagram
               length={parseFloat(inputs.length)}
               width={parseFloat(inputs.width)}
@@ -427,7 +429,7 @@ export function ExcavationCalc() {
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.excavation[settings.region]}
             </p>
-          </>
+          </div>
         )}
       </div>
     </div>

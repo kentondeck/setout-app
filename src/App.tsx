@@ -15,6 +15,7 @@ import { Home } from './pages/Home';
 import { History } from './pages/History';
 import { SavedJobs } from './pages/SavedJobs';
 import { JobsPage } from './pages/JobsPage';
+import { QuotesPage } from './pages/QuotesPage';
 import { JobDetailPage } from './pages/JobDetailPage';
 import { Settings as SettingsPage } from './pages/Settings';
 import { CalcPlaceholder } from './pages/CalcPlaceholder';
@@ -44,6 +45,7 @@ function AppShell() {
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%' }}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/quotes" element={<QuotesPage />} />
           <Route path="/history" element={<History />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />

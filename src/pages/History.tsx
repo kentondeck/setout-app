@@ -180,7 +180,9 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
               Results
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {Object.entries(entry.outputs).map(([key, val]) => (
+              {Object.entries(entry.outputs)
+                .filter(([key]) => key !== 'materialsJson' && key !== 'quoteStateJson')
+                .map(([key, val]) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
                   <span style={{ color: 'var(--color-muted)' }}>{key}</span>
                   <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
@@ -188,6 +190,20 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
               ))}
             </div>
           </div>
+
+          {/* Edit quote */}
+          {entry.calculatorId === 'photoquote' && typeof entry.outputs.quoteStateJson === 'string' && (
+            <button
+              onClick={() => navigate('/calc/photoquote', { state: { resumeEntryId: entry.id } })}
+              style={{
+                background: 'var(--color-orange)', border: 'none', borderRadius: 10,
+                padding: '10px 14px', fontSize: 13, color: '#fff', fontFamily: 'inherit',
+                cursor: 'pointer', fontWeight: 500,
+              }}
+            >
+              Edit quote
+            </button>
+          )}
 
           {/* Notes */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

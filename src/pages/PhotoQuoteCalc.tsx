@@ -91,6 +91,34 @@ export interface CalcQuoteHandoff {
   jobName?: string;
 }
 
+// Navigate to /calc/photoquote with this state (e.g. from History, Jobs, or the Quotes tab) to
+// reopen a previously saved quote fully editable, instead of starting a new one.
+export interface ResumeQuoteRequest {
+  resumeEntryId: string;
+}
+
+// Full editable state of a quote, snapshotted into the history entry's outputs on every edit
+// (as quoteStateJson) so it can be reloaded exactly as left — not just the summary shown in lists.
+interface QuoteStateSnapshot {
+  fromCalculator: boolean;
+  docType: QuoteDocType;
+  result: QuoteResult;
+  materialsList: EditableMaterial[];
+  labourList: EditableLabour[];
+  clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  clientAddress: string;
+  siteAddress: string;
+  quoteNumber: string;
+  notes: string;
+  travelMode: TravelMode;
+  travelRate: string;
+  travelQty: string;
+  materialMarginPct: string;
+  labourMarginPct: string;
+}
+
 const MAX_DIMENSION = 1568;
 
 // Re-encodes to JPEG via canvas — handles iPhone camera photos (image/heic),
@@ -142,7 +170,7 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 
 export function PhotoQuoteCalc() {
   const { settings, updateSettings } = useContext(SettingsContext);
-  const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { history, addEntry, updateEntry } = useContext(HistoryContext);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -188,23 +216,36 @@ export function PhotoQuoteCalc() {
   const aiBaselineRef = useRef<{ item: string; unit: string; note: string }[]>([]);
   const habitsCapturedRef = useRef(true);
 
-  // Keep the job-order snapshot in sync as the tradie edits materials/labour after generating
+  // Keep the job-order snapshot AND the full editable quote state in sync as the tradie edits
+  // anything, so reopening this entry later (from History, Jobs, or the Quotes tab) restores it
+  // exactly as left, not just the summary shown in lists.
   useEffect(() => {
     if (!lastEntryId || !result) return;
     const totalHours = labourList.reduce((s, l) => s + (parseFloat(l.hours) || 0), 0);
     const materialsSnapshot = materialsList
       .map(m => ({ item: m.item.trim(), quantity: parseFloat(m.quantity) || 0, unit: m.unit.trim() || 'each' }))
       .filter(m => m.item && m.quantity > 0);
+    const snapshot: QuoteStateSnapshot = {
+      fromCalculator, docType, result, materialsList, labourList,
+      clientName, clientPhone, clientEmail, clientAddress, siteAddress,
+      quoteNumber, notes, travelMode, travelRate, travelQty,
+      materialMarginPct, labourMarginPct,
+    };
     updateEntry(lastEntryId, {
       outputs: {
         areaM2: result.dimensions.areaM2,
         labourHours: totalHours,
         materialCount: materialsList.length,
         materialsJson: JSON.stringify(materialsSnapshot),
+        quoteStateJson: JSON.stringify(snapshot),
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [materialsList, labourList, lastEntryId]);
+  }, [
+    materialsList, labourList, lastEntryId, fromCalculator, docType, result,
+    clientName, clientPhone, clientEmail, clientAddress, siteAddress,
+    quoteNumber, notes, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+  ]);
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -321,6 +362,45 @@ export function PhotoQuoteCalc() {
         materialsJson: JSON.stringify(state.materials.map(m => ({ item: m.item, quantity: m.quantity, unit: m.unit }))),
       },
     });
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reopening a saved quote from History, Jobs, or the Quotes tab — navigate('/calc/photoquote',
+  // { state: { resumeEntryId } }). Restores the full editable state from that entry's snapshot and
+  // keeps editing the SAME history entry (via lastEntryId) instead of creating a new one.
+  useEffect(() => {
+    const state = location.state as ResumeQuoteRequest | null;
+    if (!state?.resumeEntryId) return;
+
+    const entry = history.find(e => e.id === state.resumeEntryId);
+    const raw = entry?.outputs.quoteStateJson;
+    if (typeof raw !== 'string') { navigate(location.pathname, { replace: true, state: null }); return; }
+
+    try {
+      const snap = JSON.parse(raw) as QuoteStateSnapshot;
+      setFromCalculator(snap.fromCalculator);
+      setDocType(snap.docType);
+      setResult(snap.result);
+      setMaterialsList(snap.materialsList);
+      setLabourList(snap.labourList);
+      setClientName(snap.clientName);
+      setClientPhone(snap.clientPhone);
+      setClientEmail(snap.clientEmail);
+      setClientAddress(snap.clientAddress);
+      setSiteAddress(snap.siteAddress);
+      setQuoteNumber(snap.quoteNumber);
+      setNotes(snap.notes);
+      setTravelMode(snap.travelMode);
+      setTravelRate(snap.travelRate);
+      setTravelQty(snap.travelQty);
+      setMaterialMarginPct(snap.materialMarginPct);
+      setLabourMarginPct(snap.labourMarginPct);
+      setJobName(entry?.jobName ?? '');
+      setLastEntryId(state.resumeEntryId);
+      habitsCapturedRef.current = true; // don't re-learn build habits from a quote that's just being reopened, not freshly generated
+    } catch { /* corrupt snapshot — fall through to a blank quote rather than crash */ }
+
     navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

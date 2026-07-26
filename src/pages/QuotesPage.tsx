@@ -19,8 +19,10 @@ function parseMaterials(json: string): QuoteMaterial[] {
 }
 
 function QuoteRow({ entry, onDelete }: { entry: HistoryEntry; onDelete: (id: string) => void }) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const label = entry.jobName || 'Untitled quote';
+  const canEdit = typeof entry.outputs.quoteStateJson === 'string';
   const dateStr = new Date(entry.timestamp).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
   const timeStr = new Date(entry.timestamp).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -101,16 +103,30 @@ function QuoteRow({ entry, onDelete }: { entry: HistoryEntry; onDelete: (id: str
               </div>
             </div>
           )}
-          <button
-            onClick={() => onDelete(entry.id)}
-            style={{
-              alignSelf: 'flex-end', padding: '8px 14px', borderRadius: 10, border: 'none',
-              background: 'rgba(0,0,0,0.05)', color: 'var(--color-muted)', fontSize: 13,
-              fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-            }}
-          >
-            Delete
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <button
+              onClick={() => onDelete(entry.id)}
+              style={{
+                padding: '8px 14px', borderRadius: 10, border: 'none',
+                background: 'rgba(0,0,0,0.05)', color: 'var(--color-muted)', fontSize: 13,
+                fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Delete
+            </button>
+            {canEdit && (
+              <button
+                onClick={() => navigate('/calc/photoquote', { state: { resumeEntryId: entry.id } })}
+                style={{
+                  padding: '8px 14px', borderRadius: 10, border: 'none',
+                  background: 'var(--color-orange)', color: '#fff', fontSize: 13,
+                  fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                Edit
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -562,6 +562,7 @@ function GroupHeader({ label, count }: { label: string; count: number }) {
 const SWIPE_THRESHOLD = 88;
 
 function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id: string) => void }) {
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -613,7 +614,10 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleCardClick(); }}
         style={{
           background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-          borderRadius: 14, overflow: 'hidden',
+          borderTopLeftRadius: 14, borderTopRightRadius: 14,
+          borderBottomLeftRadius: expanded ? 0 : 14, borderBottomRightRadius: expanded ? 0 : 14,
+          borderBottom: expanded ? 'none' : '0.5px solid var(--color-border)',
+          overflow: 'hidden',
           transform: `translateX(${swipeX}px)`,
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
           position: 'relative', zIndex: 1, cursor: 'pointer', userSelect: 'none',
@@ -653,35 +657,54 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
+      </div>
 
-        {expanded && (
-          <div style={{ borderTop: '0.5px solid var(--color-border)', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <MaterialsForCalc entry={entry} />
-            <div>
-              <SectionLabel>Inputs</SectionLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {Object.entries(entry.inputs).map(([key, val]) => (
-                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--color-muted)' }}>{cleanKey(key)}</span>
-                    <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <SectionLabel>Results</SectionLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {Object.entries(entry.outputs).map(([key, val]) => (
-                  <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                    <span style={{ color: 'var(--color-muted)' }}>{cleanKey(key)}</span>
-                    <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
-                  </div>
-                ))}
-              </div>
+      {expanded && (
+        <div style={{
+          background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderTop: 'none',
+          borderBottomLeftRadius: 14, borderBottomRightRadius: 14, marginTop: -1,
+          padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 12,
+          position: 'relative', zIndex: 1,
+        }}>
+          <MaterialsForCalc entry={entry} />
+          <div>
+            <SectionLabel>Inputs</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {Object.entries(entry.inputs).map(([key, val]) => (
+                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--color-muted)' }}>{cleanKey(key)}</span>
+                  <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
+                </div>
+              ))}
             </div>
           </div>
-        )}
-      </div>
+          <div>
+            <SectionLabel>Results</SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {Object.entries(entry.outputs)
+                .filter(([key]) => key !== 'materialsJson' && key !== 'quoteStateJson')
+                .map(([key, val]) => (
+                <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                  <span style={{ color: 'var(--color-muted)' }}>{cleanKey(key)}</span>
+                  <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {entry.calculatorId === 'photoquote' && typeof entry.outputs.quoteStateJson === 'string' && (
+            <button
+              onClick={() => navigate('/calc/photoquote', { state: { resumeEntryId: entry.id } })}
+              style={{
+                background: 'var(--color-orange)', border: 'none', borderRadius: 10,
+                padding: '10px 14px', fontSize: 13, color: '#fff', fontFamily: 'inherit',
+                cursor: 'pointer', fontWeight: 500,
+              }}
+            >
+              Edit quote
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

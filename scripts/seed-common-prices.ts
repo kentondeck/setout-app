@@ -12,7 +12,7 @@
 //   npx tsx scripts/seed-common-prices.ts NZ        # NZ only
 
 import { COMMON_MATERIALS } from '../src/lib/commonMaterials';
-import { needsLiveSearch } from '../src/lib/priceLookup';
+import { isCheapFixing } from '../src/lib/priceLookup';
 import { fuzzyMaterialKey } from '../src/lib/priceMemory';
 import { lookupMaterialPrice } from '../src/lib/materialPricing';
 
@@ -42,8 +42,8 @@ async function alreadyCachedKeys(region: Region, keys: string[]): Promise<Set<st
 async function seedRegion(region: Region) {
   console.log(`\n=== Seeding ${region} ===`);
 
-  const bookItems = COMMON_MATERIALS.filter(m => !needsLiveSearch(m.item));
-  const allSearchItems = COMMON_MATERIALS.filter(m => needsLiveSearch(m.item));
+  const bookItems = COMMON_MATERIALS.filter(m => isCheapFixing(m.item));
+  const allSearchItems = COMMON_MATERIALS.filter(m => !isCheapFixing(m.item));
 
   console.log(`${bookItems.length} fixings/consumables — pricing from the static book (free)`);
   const bookEntries = bookItems

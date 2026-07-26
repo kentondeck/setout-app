@@ -10,7 +10,7 @@ import { buildQuotePdf } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey } from '../lib/priceMemory';
-import { lookupPrices, normalizeItemKey, needsLiveSearch } from '../lib/priceLookup';
+import { lookupCachedPrices, normalizeItemKey, isCheapFixing } from '../lib/priceLookup';
 import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
 import type { Employee } from '../types';
 
@@ -66,8 +66,9 @@ interface EditableMaterial {
   note?: string;
   confidence?: Confidence;
   sellOverride?: string; // manual client price per unit — undefined means use the material margin
-  priceKind?: 'memory' | 'book' | 'search' | 'manual'; // where unitPrice (cost) came from, for trust display
-  priceSourceName?: string; // retailer name, when priceKind is 'search'
+  priceKind?: 'memory' | 'book' | 'shared' | 'manual'; // where unitPrice (cost) came from, for trust display
+  priceSourceName?: string; // retailer name, when priceKind is 'shared'
+  priceChecked?: boolean; // true once the shared-cache check has resolved (found or not) — gates the "enter manually" prompt
 }
 
 interface EditableLabour {
@@ -229,13 +230,13 @@ export function PhotoQuoteCalc() {
     setError('');
   }
 
-  // Price priority: remembered (your own confirmed price) → AI web search (background, cached
-  // after) for structural/higher-value items → price book directly for cheap, low-variance
-  // fixings and consumables, which aren't worth a live search's time or cost.
+  // Price priority: remembered (your own confirmed price) → price book directly for cheap,
+  // low-variance fixings and consumables → shared cache check for everything else (free, instant,
+  // no live search) → if still unknown, left blank for the tradie to type in themselves.
   function priceMaterialsList(materials: { item: string; quantity: number | null; unit: string; note?: string; confidence?: Confidence }[]): EditableMaterial[] {
     return materials.map(m => {
       const remembered = getRememberedMaterialPrice(m.item, settings.region);
-      const bookNow = !remembered && !needsLiveSearch(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
+      const bookNow = !remembered && isCheapFixing(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
       return {
         id: crypto.randomUUID(),
         item: m.item,
@@ -246,6 +247,7 @@ export function PhotoQuoteCalc() {
         confidence: m.confidence,
         priceKind: remembered ? ('memory' as const) : bookNow ? ('book' as const) : undefined,
         priceSourceName: remembered ? getRememberedMaterialSource(m.item, settings.region) : undefined,
+        priceChecked: !!(remembered || bookNow),
       };
     });
   }
@@ -395,29 +397,20 @@ export function PhotoQuoteCalc() {
     }
   }
 
-  // Runs in the background after results are already shown — looks up a real price (web search)
-  // for anything not already remembered, then remembers it so it's never looked up again. The
-  // static price book only fills in whatever the search couldn't find, as a last resort — it's a
-  // rough guess, not real data, so it never gets to compete with a search-confirmed price.
+  // Runs in the background after results are already shown — checks the shared cache (free,
+  // instant) for anything not already remembered or book-priced. No live web search: that cost
+  // real credits and took up to a few minutes per quote. Anything still unpriced after the cache
+  // check just stays blank with a prompt to type it in — better than a guess that might be wrong.
   async function fillMissingMaterialPrices(materials: EditableMaterial[], region: 'AU' | 'NZ') {
     const missing = materials.filter(m => !m.unitPrice && m.item.trim());
     if (missing.length === 0) return;
 
-    await lookupPrices(missing.map(m => ({ item: m.item, unit: m.unit || 'each' })), region, priced => {
-      setMaterialsList(prev => prev.map(m => {
-        if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
-        const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
-        if (!found) return m;
-        return { ...m, unitPrice: String(found.price), priceKind: 'search' as const, priceSourceName: found.source };
-      }));
-    });
-
-    // Anything the search genuinely couldn't find still gets a rough estimate rather than staying blank
+    const priced = await lookupCachedPrices(missing.map(m => ({ item: m.item, unit: m.unit || 'each' })), region);
     setMaterialsList(prev => prev.map(m => {
-      if (m.unitPrice) return m;
-      const fromBook = lookupMaterialPrice(m.item, region);
-      if (!fromBook) return m;
-      return { ...m, unitPrice: fromBook, priceKind: 'book' as const, priceSourceName: undefined };
+      if (m.unitPrice) return m; // already priced, or the tradie already edited it while this was in flight
+      const found = priced.find(p => normalizeItemKey(p.item) === normalizeItemKey(m.item));
+      if (found) return { ...m, unitPrice: String(found.price), priceKind: 'shared' as const, priceSourceName: found.source, priceChecked: true };
+      return { ...m, priceChecked: true };
     }));
   }
 
@@ -810,7 +803,7 @@ export function PhotoQuoteCalc() {
             }}>
               <div>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS — WHAT YOU PAY</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Structural materials get a live price search; fixings/consumables use a standard estimate — check before sending. Material margin below sets the client price</p>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Fixings/consumables use a standard estimate; other materials use a remembered or shared price if known, otherwise enter it yourself — check before sending. Material margin below sets the client price</p>
               </div>
               {materialsList.map(m => {
                 const matMarginNum = parseFloat(materialMarginPct) || 0;
@@ -893,7 +886,7 @@ export function PhotoQuoteCalc() {
                     <p style={{ margin: 0, fontSize: 10.5, color: m.priceKind === 'memory' ? '#2f9e44' : 'var(--color-muted)' }}>
                       {m.priceKind === 'memory' && 'Your saved price'}
                       {m.priceKind === 'book' && 'Estimate — please confirm'}
-                      {m.priceKind === 'search' && `Web search${m.priceSourceName ? ` — ${m.priceSourceName}` : ''} — please confirm`}
+                      {m.priceKind === 'shared' && `Shared price list${m.priceSourceName ? ` — ${m.priceSourceName}` : ''} — please confirm`}
                     </p>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
@@ -930,8 +923,10 @@ export function PhotoQuoteCalc() {
                           Edit
                         </button>
                       </>
+                    ) : m.priceChecked ? (
+                      <span style={{ fontSize: 11, color: 'var(--color-orange)' }}>Price not known — enter it above</span>
                     ) : (
-                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontStyle: 'italic' }}>Looking up price…</span>
+                      <span style={{ fontSize: 11, color: 'var(--color-muted)', fontStyle: 'italic' }}>Checking price list…</span>
                     )}
                   </div>
                 </div>

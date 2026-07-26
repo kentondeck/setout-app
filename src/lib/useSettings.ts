@@ -15,6 +15,12 @@ const defaults: Settings = {
   businessPhone: '',
   businessEmail: '',
   businessAddress: '',
+  licenceNumber: '',
+  paymentTerms: '',
+  bankAccountName: '',
+  bankBSB: '',
+  bankAccountNumber: '',
+  nextQuoteNumber: 1,
 };
 
 function load(): Settings {

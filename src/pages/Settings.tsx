@@ -89,6 +89,11 @@ export function Settings() {
   const [businessPhoneInput, setBusinessPhoneInput] = useState(settings.businessPhone);
   const [businessEmailInput, setBusinessEmailInput] = useState(settings.businessEmail);
   const [businessAddressInput, setBusinessAddressInput] = useState(settings.businessAddress);
+  const [licenceNumberInput, setLicenceNumberInput] = useState(settings.licenceNumber);
+  const [paymentTermsInput, setPaymentTermsInput] = useState(settings.paymentTerms);
+  const [bankAccountNameInput, setBankAccountNameInput] = useState(settings.bankAccountName);
+  const [bankBSBInput, setBankBSBInput] = useState(settings.bankBSB);
+  const [bankAccountNumberInput, setBankAccountNumberInput] = useState(settings.bankAccountNumber);
   const [businessSaved, setBusinessSaved] = useState(false);
 
   function handleSaveBusiness() {
@@ -98,10 +103,17 @@ export function Settings() {
       businessPhone: businessPhoneInput.trim(),
       businessEmail: businessEmailInput.trim(),
       businessAddress: businessAddressInput.trim(),
+      licenceNumber: licenceNumberInput.trim(),
+      paymentTerms: paymentTermsInput.trim(),
+      bankAccountName: bankAccountNameInput.trim(),
+      bankBSB: bankBSBInput.trim(),
+      bankAccountNumber: bankAccountNumberInput.trim(),
     });
     setBusinessSaved(true);
     setTimeout(() => setBusinessSaved(false), 2000);
   }
+
+  const [nextQuoteNumberInput, setNextQuoteNumberInput] = useState(String(settings.nextQuoteNumber));
 
   return (
     <div
@@ -298,6 +310,46 @@ export function Settings() {
             onChange={e => { setBusinessAddressInput(e.target.value); setBusinessSaved(false); }}
             style={textInputStyle}
           />
+          <input
+            type="text"
+            placeholder={settings.region === 'AU' ? "Builder's licence number (e.g. QBCC)" : 'LBP number'}
+            value={licenceNumberInput}
+            onChange={e => { setLicenceNumberInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <input
+            type="text"
+            placeholder="Payment terms — e.g. 50% deposit, balance on completion"
+            value={paymentTermsInput}
+            onChange={e => { setPaymentTermsInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <p style={{ margin: '4px 0 -2px', fontSize: 11, color: 'var(--color-muted)' }}>Bank details (for bank transfer on the PDF, optional)</p>
+          <input
+            type="text"
+            placeholder="Account name"
+            value={bankAccountNameInput}
+            onChange={e => { setBankAccountNameInput(e.target.value); setBusinessSaved(false); }}
+            style={textInputStyle}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            {settings.region === 'AU' && (
+              <input
+                type="text"
+                placeholder="BSB"
+                value={bankBSBInput}
+                onChange={e => { setBankBSBInput(e.target.value); setBusinessSaved(false); }}
+                style={{ ...textInputStyle, flex: '0 0 100px' }}
+              />
+            )}
+            <input
+              type="text"
+              placeholder="Account number"
+              value={bankAccountNumberInput}
+              onChange={e => { setBankAccountNumberInput(e.target.value); setBusinessSaved(false); }}
+              style={{ ...textInputStyle, flex: 1, minWidth: 0 }}
+            />
+          </div>
           <button
             onClick={handleSaveBusiness}
             disabled={businessSaved}
@@ -317,6 +369,22 @@ export function Settings() {
             {businessSaved ? '✓ Saved' : 'Save business details'}
           </button>
         </div>
+      </div>
+
+      <div>
+        <SectionLabel>Invoice numbering</SectionLabel>
+        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+          The next quote you produce will be numbered from this — it goes up automatically each time, but you can always overwrite the number on the quote screen itself.
+        </p>
+        <input
+          type="number"
+          inputMode="numeric"
+          min="1"
+          value={nextQuoteNumberInput}
+          onChange={e => setNextQuoteNumberInput(e.target.value)}
+          onBlur={e => updateSettings({ nextQuoteNumber: parseInt(e.target.value) || 1 })}
+          style={textInputStyle}
+        />
       </div>
 
       <div>

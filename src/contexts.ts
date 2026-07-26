@@ -27,6 +27,12 @@ export const SettingsContext = createContext<SettingsCtx>({
     businessPhone: '',
     businessEmail: '',
     businessAddress: '',
+    licenceNumber: '',
+    paymentTerms: '',
+    bankAccountName: '',
+    bankBSB: '',
+    bankAccountNumber: '',
+    nextQuoteNumber: 1,
   },
   updateSettings: () => {},
 });

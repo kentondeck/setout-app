@@ -140,7 +140,7 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 }
 
 export function PhotoQuoteCalc() {
-  const { settings } = useContext(SettingsContext);
+  const { settings, updateSettings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -155,6 +155,11 @@ export function PhotoQuoteCalc() {
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
   const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [siteAddress, setSiteAddress] = useState('');
+  const [quoteNumber, setQuoteNumber] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
@@ -265,6 +270,13 @@ export function PhotoQuoteCalc() {
     }
   }
 
+  // Reserves the next quote number from Settings and advances the counter — called once per new
+  // quote (not on every render) so numbers are never reused, even if this one never gets downloaded.
+  function reserveQuoteNumber() {
+    setQuoteNumber(String(settings.nextQuoteNumber));
+    updateSettings({ nextQuoteNumber: settings.nextQuoteNumber + 1 });
+  }
+
   // A calculator (e.g. Fencing) can hand off its exact-math materials via navigate('/calc/photoquote',
   // { state }) to jump straight into pricing/editing/PDF — no AI takeoff step needed, the calculator
   // already computed real quantities.
@@ -285,6 +297,7 @@ export function PhotoQuoteCalc() {
       assumptions: [], clarificationsNeeded: [], exclusions: [], wasteFactorApplied: '',
     };
     setResult(quote);
+    reserveQuoteNumber();
     const newMaterials = priceMaterialsList(quote.materials);
     setMaterialsList(newMaterials);
     setLabourList([]);
@@ -344,6 +357,7 @@ export function PhotoQuoteCalc() {
         return;
       }
       setResult(quote);
+      reserveQuoteNumber();
       aiBaselineRef.current = quote.materials.map(m => ({ item: m.item, unit: m.unit, note: m.note }));
       habitsCapturedRef.current = false;
       const newMaterials = priceMaterialsList(quote.materials);
@@ -520,7 +534,12 @@ export function PhotoQuoteCalc() {
     if (!result || !totals) return null;
     return buildQuotePdf({
       docType,
+      quoteNumber: quoteNumber.trim(),
       clientName: clientName.trim(),
+      clientPhone: clientPhone.trim(),
+      clientEmail: clientEmail.trim(),
+      clientAddress: clientAddress.trim(),
+      siteAddress: siteAddress.trim(),
       jobName: jobName.trim(),
       jobDescription: result.scopeSummary,
       logo,
@@ -530,6 +549,11 @@ export function PhotoQuoteCalc() {
       businessPhone: settings.businessPhone,
       businessEmail: settings.businessEmail,
       businessAddress: settings.businessAddress,
+      licenceNumber: settings.licenceNumber,
+      paymentTerms: settings.paymentTerms,
+      bankAccountName: settings.bankAccountName,
+      bankBSB: settings.bankBSB,
+      bankAccountNumber: settings.bankAccountNumber,
       areaM2: result.dimensions.areaM2,
       lengthM: result.dimensions.lengthM,
       widthM: result.dimensions.widthM,
@@ -614,6 +638,11 @@ export function PhotoQuoteCalc() {
   }
 
   const canGenerate = description.trim().length > 0 && !loading;
+  const quoteDetailInputStyle: React.CSSProperties = {
+    width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
+    background: 'var(--color-card)', fontSize: 15, fontFamily: 'inherit', color: 'var(--color-text)',
+    outline: 'none', boxSizing: 'border-box',
+  };
   const smallInputStyle: React.CSSProperties = {
     padding: '8px 0', border: 'none', background: 'transparent',
     fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
@@ -1422,18 +1451,55 @@ export function PhotoQuoteCalc() {
             </div>
 
             <div>
-              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CLIENT NAME <span style={{ textTransform: 'none', fontWeight: 400 }}>(shown on PDF)</span></p>
-              <input
-                type="text"
-                value={clientName}
-                onChange={e => setClientName(e.target.value)}
-                placeholder="e.g. Sarah Thompson"
-                style={{
-                  width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
-                  background: 'var(--color-card)', fontSize: 15, fontFamily: 'inherit', color: 'var(--color-text)',
-                  outline: 'none', boxSizing: 'border-box',
-                }}
-              />
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>QUOTE DETAILS <span style={{ textTransform: 'none', fontWeight: 400 }}>(shown on PDF)</span></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={quoteNumber}
+                    onChange={e => setQuoteNumber(e.target.value)}
+                    placeholder="Quote #"
+                    style={{ ...quoteDetailInputStyle, flex: '0 0 90px' }}
+                  />
+                  <input
+                    type="text"
+                    value={clientName}
+                    onChange={e => setClientName(e.target.value)}
+                    placeholder="Client name"
+                    style={{ ...quoteDetailInputStyle, flex: 1, minWidth: 0 }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={clientPhone}
+                    onChange={e => setClientPhone(e.target.value)}
+                    placeholder="Client phone"
+                    style={{ ...quoteDetailInputStyle, flex: 1, minWidth: 0 }}
+                  />
+                  <input
+                    type="email"
+                    value={clientEmail}
+                    onChange={e => setClientEmail(e.target.value)}
+                    placeholder="Client email"
+                    style={{ ...quoteDetailInputStyle, flex: 1, minWidth: 0 }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  value={clientAddress}
+                  onChange={e => setClientAddress(e.target.value)}
+                  placeholder="Client address (optional)"
+                  style={quoteDetailInputStyle}
+                />
+                <input
+                  type="text"
+                  value={siteAddress}
+                  onChange={e => setSiteAddress(e.target.value)}
+                  placeholder="Site address (if different, optional)"
+                  style={quoteDetailInputStyle}
+                />
+              </div>
             </div>
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />

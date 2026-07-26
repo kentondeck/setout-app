@@ -18,7 +18,12 @@ export interface PdfLogo {
 
 export interface PdfQuoteInput {
   docType: QuoteDocType;
+  quoteNumber: string;
   clientName: string;
+  clientPhone: string;
+  clientEmail: string;
+  clientAddress: string;
+  siteAddress: string;
   jobName: string;
   jobDescription: string;
   logo?: PdfLogo | null;
@@ -28,6 +33,11 @@ export interface PdfQuoteInput {
   businessPhone: string;
   businessEmail: string;
   businessAddress: string;
+  licenceNumber: string; // builder's licence (AU) or LBP number (NZ)
+  paymentTerms: string;
+  bankAccountName: string;
+  bankBSB: string; // AU only
+  bankAccountNumber: string;
   areaM2: number;
   lengthM: number;
   widthM: number;
@@ -100,7 +110,12 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   const businessLines: string[] = [];
   if (q.businessName) businessLines.push(q.businessName);
   const businessNumberLabel = q.region === 'AU' ? 'ABN' : 'GST';
-  if (q.businessNumber) businessLines.push(`${businessNumberLabel}: ${q.businessNumber}`);
+  const licenceLabel = q.region === 'AU' ? 'Licence' : 'LBP';
+  const identityParts = [
+    q.businessNumber ? `${businessNumberLabel}: ${q.businessNumber}` : '',
+    q.licenceNumber ? `${licenceLabel}: ${q.licenceNumber}` : '',
+  ].filter(Boolean).join('   ·   ');
+  if (identityParts) businessLines.push(identityParts);
   const businessContact = [q.businessPhone, q.businessEmail].filter(Boolean).join('   ·   ');
   if (businessContact) businessLines.push(businessContact);
   if (q.businessAddress) businessLines.push(q.businessAddress);
@@ -121,13 +136,26 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.setFontSize(15);
   doc.setTextColor(10, 10, 10);
   doc.text(q.jobName || `Job ${docTitle.toLowerCase()}`, marginX, y);
+  if (q.quoteNumber.trim()) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10.5);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`#${q.quoteNumber.trim()}`, pageWidth - marginX, y, { align: 'right' });
+  }
   y += 18;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10.5);
   doc.setTextColor(100, 100, 100);
   if (q.clientName) { doc.text(`For: ${q.clientName}`, marginX, y); y += 14; }
+  const clientContact = [q.clientPhone, q.clientEmail].filter(Boolean).join('   ·   ');
+  if (clientContact) { doc.text(clientContact, marginX, y); y += 14; }
+  if (q.clientAddress) { doc.text(q.clientAddress, marginX, y); y += 14; }
   doc.text(`Date: ${new Date().toLocaleDateString(q.region === 'AU' ? 'en-AU' : 'en-NZ')}`, marginX, y);
   y += 14;
+  if (q.siteAddress.trim()) {
+    doc.text(`Site: ${q.siteAddress.trim()}`, marginX, y);
+    y += 14;
+  }
   if (q.areaM2 > 0) {
     doc.text(`Area: ${q.lengthM}m x ${q.widthM}m (${q.areaM2}m2)`, marginX, y);
     y += 20;
@@ -215,6 +243,39 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.line(col.price - 10, y - 14, pageWidth - marginX, y - 14);
   totalRow('Total inc. GST', money(q.total), { bold: true, accent: true });
   y += 20;
+
+  // Payment details — terms and bank transfer info, shown once as its own block
+  const bankParts = [
+    q.bankAccountName ? `Acc name: ${q.bankAccountName}` : '',
+    q.bankBSB ? `BSB: ${q.bankBSB}` : '',
+    q.bankAccountNumber ? `Acc: ${q.bankAccountNumber}` : '',
+  ].filter(Boolean).join('   ·   ');
+
+  if (q.paymentTerms.trim() || bankParts) {
+    ensureSpace(50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(140, 140, 140);
+    doc.text('PAYMENT', marginX, y);
+    y += 6;
+    doc.setDrawColor(225, 225, 225);
+    doc.setLineWidth(0.75);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 16;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(60, 60, 60);
+    if (q.paymentTerms.trim()) {
+      const termsLines: string[] = doc.splitTextToSize(q.paymentTerms.trim(), pageWidth - marginX * 2);
+      doc.text(termsLines, marginX, y);
+      y += termsLines.length * 13 + 4;
+    }
+    if (bankParts) {
+      doc.text(bankParts, marginX, y);
+      y += 18;
+    }
+  }
 
   // Footer — disclaimer, with a small Setout credit line below it
   const disclaimerLines: string[] = doc.splitTextToSize(DISCLAIMERS[q.docType], pageWidth - marginX * 2);

@@ -39,6 +39,12 @@ export interface Settings {
   businessPhone: string;
   businessEmail: string;
   businessAddress: string;
+  licenceNumber: string; // builder's licence (AU, e.g. QBCC) or LBP number (NZ)
+  paymentTerms: string;
+  bankAccountName: string;
+  bankBSB: string; // AU only
+  bankAccountNumber: string;
+  nextQuoteNumber: number;
 }
 
 export interface HistoryEntry {

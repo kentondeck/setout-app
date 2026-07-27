@@ -106,6 +106,7 @@ export interface ResumeQuoteRequest {
 // (as quoteStateJson) so it can be reloaded exactly as left — not just the summary shown in lists.
 interface QuoteStateSnapshot {
   fromCalculator: boolean;
+  isManual: boolean;
   docType: QuoteDocType;
   result: QuoteResult;
   materialsList: EditableMaterial[];
@@ -187,6 +188,7 @@ export function PhotoQuoteCalc() {
   const [docType, setDocType] = useState<QuoteDocType>('estimate');
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [fromCalculator, setFromCalculator] = useState(false);
+  const [isManual, setIsManual] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -235,7 +237,7 @@ export function PhotoQuoteCalc() {
       .map(m => ({ item: m.item.trim(), quantity: parseFloat(m.quantity) || 0, unit: m.unit.trim() || 'each' }))
       .filter(m => m.item && m.quantity > 0);
     const snapshot: QuoteStateSnapshot = {
-      fromCalculator, docType, result, materialsList, labourList,
+      fromCalculator, isManual, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
       quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
@@ -251,7 +253,7 @@ export function PhotoQuoteCalc() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    materialsList, labourList, lastEntryId, fromCalculator, docType, result,
+    materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
     quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
   ]);
@@ -389,6 +391,7 @@ export function PhotoQuoteCalc() {
     try {
       const snap = JSON.parse(raw) as QuoteStateSnapshot;
       setFromCalculator(snap.fromCalculator);
+      setIsManual(snap.isManual ?? false);
       setDocType(snap.docType);
       setResult(snap.result);
       setMaterialsList(snap.materialsList);
@@ -415,6 +418,44 @@ export function PhotoQuoteCalc() {
     navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Starts a completely blank quote/estimate/invoice with no AI call — the tradie types the
+  // description and every material/labour line by hand. Reuses the same hidden-photo/no-Generate
+  // layout as a calculator handoff, but with an editable scope description instead of a read-only one.
+  function startManual(type: QuoteDocType) {
+    captureBuildHabits();
+    aiBaselineRef.current = [];
+    habitsCapturedRef.current = true;
+    setIsManual(true);
+    setFromCalculator(false);
+    setDocType(type);
+    setPhoto(null);
+    setPhotoPreview('');
+    setDescription('');
+    setError('');
+    const blank: QuoteResult = {
+      error: '', errorReason: '', confidence: 'high',
+      dimensions: { lengthM: 0, widthM: 0, areaM2: 0 },
+      materials: [], labour: [],
+      scopeSummary: '',
+      assumptions: [], clarificationsNeeded: [], exclusions: [], wasteFactorApplied: '',
+    };
+    setResult(blank);
+    reserveQuoteNumber();
+    setMaterialsList([]);
+    setLabourList([]);
+    setJobName('');
+
+    const id = crypto.randomUUID();
+    setLastEntryId(id);
+    addEntry({
+      id,
+      calculatorId: 'photoquote',
+      timestamp: Date.now(),
+      inputs: { description: '' },
+      outputs: { areaM2: 0, labourHours: 0, materialCount: 0, materialsJson: '[]' },
+    });
+  }
 
   async function handleGenerate() {
     if (!description.trim() || loading) return;
@@ -525,7 +566,9 @@ export function PhotoQuoteCalc() {
   }
 
   function addMaterialRow() {
-    setMaterialsList(prev => [...prev, { id: crypto.randomUUID(), item: '', quantity: '1', unit: 'each', unitPrice: '' }]);
+    // priceChecked: true — a hand-added row never goes through fillMissingMaterialPrices, so
+    // leaving it false would show "Checking price list…" forever instead of prompting for a price.
+    setMaterialsList(prev => [...prev, { id: crypto.randomUUID(), item: '', quantity: '1', unit: 'each', unitPrice: '', priceChecked: true }]);
   }
 
   function removeMaterialRow(id: string) {
@@ -746,11 +789,29 @@ export function PhotoQuoteCalc() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader title={fromCalculator ? docTypeLabel(docType) : 'SmartQuote'} />
+      <CalcHeader title={(fromCalculator || isManual) ? docTypeLabel(docType) : 'SmartQuote'} />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {!fromCalculator && (
+        {!fromCalculator && !isManual && !result && !loading && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['estimate', 'quote', 'invoice'] as QuoteDocType[]).map(t => (
+              <button
+                key={t}
+                onClick={() => startManual(t)}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                  border: '0.5px dashed rgba(0,0,0,0.18)', background: 'none', color: 'var(--color-muted)',
+                }}
+              >
+                + New {docTypeLabel(t)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!fromCalculator && !isManual && (
           <>
             {/* Photo capture */}
             <div>
@@ -868,7 +929,7 @@ export function PhotoQuoteCalc() {
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e', lineHeight: 1.5 }}>{error}</p>}
 
-        {!fromCalculator && (
+        {!fromCalculator && !isManual && (
           <>
             <button
               onClick={handleGenerate}
@@ -905,6 +966,21 @@ export function PhotoQuoteCalc() {
                   <p style={{ margin: '4px 0 0', fontSize: 14.5, color: 'var(--color-text)', lineHeight: 1.4 }}>{result.scopeSummary}</p>
                 </div>
               )
+            ) : isManual ? (
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>JOB DESCRIPTION</p>
+                <textarea
+                  value={result.scopeSummary}
+                  onChange={e => setResult(r => (r ? { ...r, scopeSummary: e.target.value } : r))}
+                  placeholder="Describe the job — this prints on the client-facing document"
+                  rows={3}
+                  style={{
+                    width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                    borderRadius: 12, padding: '12px 14px', fontSize: 15, fontFamily: 'inherit',
+                    color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
+                  }}
+                />
+              </div>
             ) : (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -1691,9 +1767,9 @@ export function PhotoQuoteCalc() {
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {fromCalculator
-                ? result.scopeSummary.trim()
-                  ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
-                  : 'Entered manually — check all materials, hours, and prices before sending.'
+                ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
+                : isManual
+                ? 'Entered manually — check all materials, hours, and prices before sending.'
                 : COMPLIANCE_NOTES.photoquote[settings.region]}
             </p>
           </>

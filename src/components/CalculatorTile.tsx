@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import type { CalcMeta } from '../lib/calculators';
 
 interface CalculatorTileProps {
@@ -6,11 +5,12 @@ interface CalculatorTileProps {
   highlighted: boolean;
   pinned?: boolean;
   onPinToggle?: (id: string) => void;
+  dragging?: boolean;
 }
 
-export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle }: CalculatorTileProps) {
-  const navigate = useNavigate();
-
+// Purely presentational — tap/hold/drag handling lives in the wrapper (ReorderableCalcGrid)
+// so this component has no opinion on navigation vs. drag-to-reorder.
+export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle, dragging = false }: CalculatorTileProps) {
   const bg = highlighted ? 'var(--color-orange)' : 'var(--color-card)';
   const iconBg = highlighted ? '#ffffff' : '#f5f5f3';
   const iconStroke = highlighted ? 'var(--color-orange)' : 'var(--color-text)';
@@ -18,8 +18,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle 
   const subtitleColor = highlighted ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)';
 
   return (
-    <button
-      onClick={() => navigate(`/calc/${calc.id}`)}
+    <div
       style={{
         background: bg,
         borderRadius: 'var(--radius-tile)',
@@ -29,14 +28,14 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle 
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        cursor: 'pointer',
         width: '100%',
-        textAlign: 'left',
+        height: '100%',
+        boxSizing: 'border-box',
         position: 'relative',
+        boxShadow: dragging ? '0 12px 28px rgba(0,0,0,0.22)' : 'none',
+        transform: dragging ? 'scale(1.04)' : 'scale(1)',
+        transition: dragging ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
       }}
-      onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
-      onPointerUp={e => (e.currentTarget.style.opacity = '1')}
-      onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
     >
       <div>
         <div
@@ -63,6 +62,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle 
       {onPinToggle && (
         <button
           onClick={e => { e.stopPropagation(); onPinToggle(calc.id); }}
+          onPointerDown={e => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: 10,
@@ -91,6 +91,6 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle 
           {calc.subtitle}
         </p>
       </div>
-    </button>
+    </div>
   );
 }

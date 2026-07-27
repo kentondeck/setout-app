@@ -9,6 +9,7 @@ const defaults: Settings = {
   userName: '',
   region: 'AU',
   pinnedCalcs: [],
+  calcOrder: [],
   employees: [],
   businessName: '',
   businessNumber: '',

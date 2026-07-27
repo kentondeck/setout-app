@@ -1,11 +1,25 @@
 import { useContext } from 'react';
 import { SettingsContext, HistoryContext, JobsContext } from '../contexts';
 import { TopBar } from '../components/TopBar';
-import { CalculatorTile } from '../components/CalculatorTile';
+import { ReorderableCalcGrid } from '../components/ReorderableCalcGrid';
+import { QuoteAiTile } from '../components/QuoteAiTile';
 import { ContinueCard } from '../components/ContinueCard';
 import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
 import type { CalculatorId } from '../types';
+
+// QuoteAi gets pulled out into its own wide tile up top (see QuoteAiTile) — everything else is
+// the reorderable measuring-calculator grid.
+const GRID_CALCULATORS = CALCULATORS.filter(c => c.id !== 'photoquote');
+const QUOTE_AI = CALCULATORS.find(c => c.id === 'photoquote')!;
+
+// Replaces just the members of `groupIds` within `fullOrder` with `newGroupOrder`, keeping every
+// other id's slot untouched — lets each grid section (Pinned / All) reorder independently while
+// both stay merged into one persisted Settings.calcOrder array.
+function replaceGroupOrder(fullOrder: CalculatorId[], groupIds: Set<CalculatorId>, newGroupOrder: CalculatorId[]): CalculatorId[] {
+  let i = 0;
+  return fullOrder.map(id => (groupIds.has(id) ? newGroupOrder[i++] : id));
+}
 
 export function Home() {
   const { settings, updateSettings } = useContext(SettingsContext);
@@ -33,8 +47,24 @@ export function Home() {
     updateSettings({ pinnedCalcs: next });
   }
 
-  const pinnedCalcs = CALCULATORS.filter(c => pinned.includes(c.id));
-  const restCalcs   = CALCULATORS.filter(c => !pinned.includes(c.id));
+  // Merge the tradie's saved drag order with the canonical calculator list — anything not yet in
+  // their stored order (first run, or a calculator added since) is appended in its default position.
+  const allIds = GRID_CALCULATORS.map(c => c.id);
+  const storedOrder = (settings.calcOrder ?? []).filter(id => allIds.includes(id));
+  const fullOrder = [...storedOrder, ...allIds.filter(id => !storedOrder.includes(id))];
+
+  const pinnedSet = new Set(pinned);
+  const pinnedIds = fullOrder.filter(id => pinnedSet.has(id));
+  const restIds = fullOrder.filter(id => !pinnedSet.has(id));
+  const pinnedCalcs = pinnedIds.map(id => GRID_CALCULATORS.find(c => c.id === id)!);
+  const restCalcs = restIds.map(id => GRID_CALCULATORS.find(c => c.id === id)!);
+
+  function handleReorderPinned(newOrder: CalculatorId[]) {
+    updateSettings({ calcOrder: replaceGroupOrder(fullOrder, pinnedSet, newOrder) });
+  }
+  function handleReorderRest(newOrder: CalculatorId[]) {
+    updateSettings({ calcOrder: replaceGroupOrder(fullOrder, new Set(restIds), newOrder) });
+  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -59,23 +89,23 @@ export function Home() {
         </div>
       )}
 
+      <div style={{ padding: '0 20px 12px' }}>
+        <QuoteAiTile calc={QUOTE_AI} />
+      </div>
+
       <div style={{ padding: '8px 20px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {pinnedCalcs.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <p style={{ margin: 0, fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.4px', textTransform: 'uppercase' }}>
               Pinned
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {pinnedCalcs.map(calc => (
-                <CalculatorTile
-                  key={calc.id}
-                  calc={calc}
-                  highlighted={calc.id === highlightedId}
-                  pinned
-                  onPinToggle={handlePinToggle}
-                />
-              ))}
-            </div>
+            <ReorderableCalcGrid
+              calcs={pinnedCalcs}
+              highlightedId={highlightedId}
+              pinnedIds={pinnedSet}
+              onPinToggle={handlePinToggle}
+              onReorder={handleReorderPinned}
+            />
           </div>
         )}
 
@@ -85,17 +115,13 @@ export function Home() {
               All calculators
             </p>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {restCalcs.map(calc => (
-              <CalculatorTile
-                key={calc.id}
-                calc={calc}
-                highlighted={calc.id === highlightedId}
-                pinned={false}
-                onPinToggle={handlePinToggle}
-              />
-            ))}
-          </div>
+          <ReorderableCalcGrid
+            calcs={restCalcs}
+            highlightedId={highlightedId}
+            pinnedIds={pinnedSet}
+            onPinToggle={handlePinToggle}
+            onReorder={handleReorderRest}
+          />
         </div>
       </div>
     </div>

@@ -33,6 +33,7 @@ export interface Settings {
   userName: string;
   region: Region;
   pinnedCalcs: CalculatorId[];
+  calcOrder: CalculatorId[]; // tradie's custom drag-reordered tile order; missing/unknown ids fall back to CALCULATORS order
   employees: Employee[];
   businessName: string;
   businessNumber: string; // ABN (AU) or GST number (NZ) — label follows region

@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { AddToQuoteButton } from '../components/AddToQuoteButton';
 import { calculateDecking } from '../calculators/decking';
 import type { DeckingResult, GapSuggestion } from '../calculators/decking';
 import { calculateCutlist } from '../calculators/cutlist';
@@ -26,6 +27,7 @@ interface Inputs {
 }
 
 const MILL_ALLOWANCE = 10;
+const DECKING_SCREWS_PER_BOX = 500; // typical trade box of decking screws
 
 const DEFAULTS: Inputs = {
   deckLength: '',
@@ -166,6 +168,17 @@ export function DeckingCalc() {
     { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${fmt(bw)} + ${fmt(bg)}`, result: `${fmt(coverage)} mm per board` },
     { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${fmt(deckLengthMm)} ÷ ${fmt(coverage)} = ${coverageDiv}`, result: `Round up to ${fmt(result.outputs.boardCount)} boards` },
     { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${fmt(deckWidthMm)} ÷ ${fmt(js)} = ${joistDiv}, then + 1`, result: `${fmt(result.outputs.joistCount)} joists` },
+  ] : [];
+
+  const joistLinealM = result ? parseFloat((result.outputs.joistCount * (joistLengthMm / 1000)).toFixed(1)) : 0;
+  const bearerLinealM = result ? parseFloat((result.outputs.bearerCount * (bearerLengthMm / 1000)).toFixed(1)) : 0;
+  const screwBoxes = result ? Math.ceil(result.outputs.fixingsCount / DECKING_SCREWS_PER_BOX) : 0;
+
+  const quoteMaterials = result ? [
+    { item: `${bw}mm decking board`, quantity: result.outputs.totalLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
+    { item: 'Joist (treated pine)', quantity: joistLinealM, unit: 'lineal metre', note: `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m` },
+    { item: 'Bearer (treated pine)', quantity: bearerLinealM, unit: 'lineal metre', note: `${result.outputs.bearerCount} × ${(bearerLengthMm / 1000).toFixed(1)}m` },
+    { item: 'Decking screws', quantity: screwBoxes, unit: 'box', note: `${result.outputs.fixingsCount} screws` },
   ] : [];
 
   return (
@@ -479,6 +492,11 @@ export function DeckingCalc() {
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
+            <AddToQuoteButton
+              scopeSummary={`Deck, ${inputs.deckLength}m × ${inputs.deckWidth}m`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
             <ShareCalcButton calculationId={lastEntryId} />
           </div>
         )}

@@ -7,7 +7,7 @@ import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
 import type { CalculatorId } from '../types';
 
-// Quote gets pulled out into its own wide tile up top (see QuoteTile) — everything else is
+// SmartQuote gets pulled out into its own wide tile up top (see QuoteTile) — everything else is
 // the reorderable measuring-calculator grid.
 const GRID_CALCULATORS = CALCULATORS.filter(c => c.id !== 'photoquote');
 const QUOTE_AI = CALCULATORS.find(c => c.id === 'photoquote')!;

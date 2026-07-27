@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import type { CalcMeta } from '../lib/calculators';
 
-// Quote isn't a measuring calculator like the rest of the grid — it's an AI estimation tool,
+// SmartQuote isn't a measuring calculator like the rest of the grid — it's an AI estimation tool,
 // so it gets its own full-width tile up top rather than sitting in the reorderable grid.
 export function QuoteTile({ calc }: { calc: CalcMeta }) {
   const navigate = useNavigate();

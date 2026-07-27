@@ -155,7 +155,7 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
         try { items = JSON.parse(raw); } catch { break; }
         for (const m of items) {
           if (!m.item?.trim() || !(m.quantity > 0)) continue;
-          other.push({ id: `photoquote-${e.id}-${m.item}`, name: m.item.trim(), qty: m.quantity, unit: m.unit?.trim() || 'each', sources: ['Quote'] });
+          other.push({ id: `photoquote-${e.id}-${m.item}`, name: m.item.trim(), qty: m.quantity, unit: m.unit?.trim() || 'each', sources: ['SmartQuote'] });
         }
         break;
       }
@@ -183,7 +183,7 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
     });
 
   // Merge identical lines by name + unit (e.g. bags from fencing + bags from concrete calc,
-  // or the same material appearing across multiple Quote estimates in one job)
+  // or the same material appearing across multiple SmartQuote estimates in one job)
   function mergeByNameAndUnit(lines: OrderLine[]): OrderLine[] {
     const merged: OrderLine[] = [];
     for (const line of lines) {

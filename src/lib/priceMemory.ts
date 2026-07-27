@@ -1,4 +1,4 @@
-// Per-device memory of prices the tradie has confirmed or corrected in Quote —
+// Per-device memory of prices the tradie has confirmed or corrected in SmartQuote —
 // checked before the static price book so a material/role only ever needs pricing once
 // (either by AI web-search lookup or by hand) before it's remembered for every future quote.
 import type { Region } from '../types';

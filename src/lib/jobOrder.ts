@@ -107,12 +107,37 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
         break;
       }
       case 'concrete': {
-        if (num(o.useBagMix) === 1) {
-          const bags = num(o.bagCount);
-          if (bags > 0) concrete.push({ id: `conc-bags-${e.id}`, name: '20 kg bags', qty: bags, unit: 'bags', sources: ['Concrete'] });
+        const type = String(i.type ?? '');
+        if (type === 'mix') {
+          const cementBags = num(o.cementBags);
+          if (cementBags > 0) concrete.push({ id: `conc-cement-${e.id}`, name: 'GP cement bags', qty: cementBags, unit: 'bags', sources: ['Concrete'] });
+          const sandM3 = num(o.sandM3);
+          if (sandM3 > 0) other.push({ id: `conc-sand-${e.id}`, name: 'Sand', qty: sandM3, unit: 'm³', sources: ['Concrete'] });
+          const aggM3 = num(o.aggregateM3);
+          if (aggM3 > 0) other.push({ id: `conc-agg-${e.id}`, name: 'Aggregate', qty: aggM3, unit: 'm³', sources: ['Concrete'] });
+        } else if (type === 'postholes') {
+          if (num(o.useBagMix) === 1) {
+            const bags = num(o.bagCount);
+            if (bags > 0) concrete.push({ id: `conc-bags-${e.id}`, name: '20 kg bags', qty: bags, unit: 'bags', sources: ['Concrete'] });
+          } else {
+            const vol = num(o.orderVolume);
+            if (vol > 0) concrete.push({ id: `conc-mix-${e.id}`, name: 'Ready-mix', qty: vol, unit: 'm³', sources: ['Concrete'] });
+          }
         } else {
+          // Slab (also the default for older saved entries with no `type` set)
           const vol = num(o.orderVolume);
           if (vol > 0) concrete.push({ id: `conc-mix-${e.id}`, name: 'Ready-mix', qty: vol, unit: 'm³', sources: ['Concrete'] });
+
+          const meshSheets = num(o.meshSheets);
+          if (meshSheets > 0) other.push({ id: `conc-mesh-${e.id}`, name: 'Reinforcing mesh sheet', qty: meshSheets, unit: 'sheets', sources: ['Concrete'] });
+          const barChairPacks = num(o.barChairPacks);
+          if (barChairPacks > 0) fixings.push({ id: `conc-chairs-${e.id}`, name: 'Bar chairs (50-pack)', qty: barChairPacks, unit: 'packs', sources: ['Concrete'] });
+          const plasticM2 = num(o.plasticAreaM2);
+          if (plasticM2 > 0) other.push({ id: `conc-dpm-${e.id}`, name: 'Plastic DPM sheeting', qty: plasticM2, unit: 'm²', sources: ['Concrete'] });
+          const tieRolls = num(o.tieWireRolls);
+          if (tieRolls > 0) fixings.push({ id: `conc-ties-${e.id}`, name: 'Tie wire', qty: tieRolls, unit: 'rolls', sources: ['Concrete'] });
+          const tapeRolls = num(o.tapeRolls);
+          if (tapeRolls > 0) fixings.push({ id: `conc-tape-${e.id}`, name: 'DPM join tape', qty: tapeRolls, unit: 'rolls', sources: ['Concrete'] });
         }
         break;
       }

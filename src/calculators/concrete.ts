@@ -174,6 +174,10 @@ export interface SlabReoOutputs extends Record<string, number> {
   barChairPacks: number;
   plasticAreaM2: number;
   plasticRolls: number;
+  tieWireCount: number;
+  tieWireRolls: number;
+  tapeLengthM: number;
+  tapeRolls: number;
 }
 
 export interface SlabReoInputs {
@@ -194,6 +198,15 @@ const BAR_CHAIRS_PER_PACK = 50; // typical trade pack size
 // upturn at the slab edge.
 const DPM_OVERLAP_ALLOWANCE = 0.15;
 const DPM_ROLL_M2 = 100; // common 4m x 25m roll
+const DPM_ROLL_WIDTH_M = 4.0;
+// Mesh sheets are tied to each other at the lap seams and to every bar chair — a tie roughly every
+// 300mm along each lap seam, plus one tie per chair, is standard trade practice.
+const TIE_SPACING_ALONG_LAP_M = 0.3;
+const TIES_PER_ROLL = 300; // typical small trade coil/pack of pre-cut tie wire
+// Tape seals the joins between DPM strips so the membrane stays continuous — one length of tape
+// per join, plus a little extra for starting a new roll and off-cuts.
+const TAPE_WASTAGE = 0.10;
+const TAPE_ROLL_LENGTH_M = 50; // common builders' tape roll length
 
 export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutputs; steps: WorkingStep[] } {
   const lengthM = inputs.length / 1000;
@@ -211,6 +224,19 @@ export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutpu
 
   const plasticAreaM2 = parseFloat((areaM2 * (1 + DPM_OVERLAP_ALLOWANCE)).toFixed(1));
   const plasticRolls = Math.ceil(plasticAreaM2 / DPM_ROLL_M2);
+
+  // Steel tie wire — ties along every mesh lap seam plus one per bar chair
+  const meshLapLengthM = (sheetsLengthwise - 1) * widthM + (sheetsWidthwise - 1) * lengthM;
+  const tiesAlongLaps = Math.ceil(meshLapLengthM / TIE_SPACING_ALONG_LAP_M);
+  const tieWireCount = tiesAlongLaps + barChairs;
+  const tieWireRolls = Math.ceil(tieWireCount / TIES_PER_ROLL);
+
+  // DPM join tape — strips run the length, laid side by side across the width
+  const dpmStrips = Math.ceil(widthM / DPM_ROLL_WIDTH_M);
+  const dpmJoins = Math.max(0, dpmStrips - 1);
+  const dpmJoinLengthM = dpmJoins * lengthM;
+  const tapeLengthM = parseFloat((dpmJoinLengthM * (1 + TAPE_WASTAGE)).toFixed(1));
+  const tapeRolls = tapeLengthM > 0 ? Math.ceil(tapeLengthM / TAPE_ROLL_LENGTH_M) : 0;
 
   const steps: WorkingStep[] = [
     {
@@ -237,9 +263,27 @@ export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutpu
       calculation: `${areaM2} × ${(1 + DPM_OVERLAP_ALLOWANCE).toFixed(2)}`,
       result: `${plasticAreaM2} m² (~${plasticRolls} × ${DPM_ROLL_M2}m² roll${plasticRolls !== 1 ? 's' : ''})`,
     },
+    {
+      label: 'Steel tie wire',
+      explanation: `A tie roughly every ${TIE_SPACING_ALONG_LAP_M * 1000}mm along each mesh lap seam, plus one per bar chair`,
+      calculation: `⌈${meshLapLengthM.toFixed(1)}m ÷ ${TIE_SPACING_ALONG_LAP_M}⌉ + ${barChairs} chairs`,
+      result: `${tieWireCount} ties → ${tieWireRolls} × ${TIES_PER_ROLL}-tie roll${tieWireRolls !== 1 ? 's' : ''}`,
+    },
+    {
+      label: 'DPM join tape',
+      explanation: `${DPM_ROLL_WIDTH_M}m wide DPM strips laid side by side — tape seals the join between each pair, +${Math.round(TAPE_WASTAGE * 100)}% for off-cuts`,
+      calculation: `(⌈${widthM} ÷ ${DPM_ROLL_WIDTH_M}⌉ − 1) × ${lengthM}m × ${(1 + TAPE_WASTAGE).toFixed(2)}`,
+      result: tapeRolls > 0 ? `${tapeLengthM} m → ${tapeRolls} × ${TAPE_ROLL_LENGTH_M}m roll${tapeRolls !== 1 ? 's' : ''}` : 'No joins — slab fits within one DPM roll width',
+    },
   ];
 
-  return { outputs: { areaM2, meshSheets, barChairs, barChairPacks, plasticAreaM2, plasticRolls }, steps };
+  return {
+    outputs: {
+      areaM2, meshSheets, barChairs, barChairPacks, plasticAreaM2, plasticRolls,
+      tieWireCount, tieWireRolls, tapeLengthM, tapeRolls,
+    },
+    steps,
+  };
 }
 
 export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleOutputs; steps: WorkingStep[] } {

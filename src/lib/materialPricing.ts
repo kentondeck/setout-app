@@ -36,6 +36,8 @@ const MATERIAL_PRICES: MaterialPriceEntry[] = [
   { match: ['reinforcing mesh', 'mesh sheet', 'sl62', 'sl72', 'sl82', 'sl92'], unit: 'sheet', priceAUD: 95, priceNZD: 100 },
   { match: ['bar chair', 'mesh chair'], unit: 'pack', priceAUD: 18, priceNZD: 20 },
   { match: ['dpm', 'damp-proof', 'damp proof', 'builders plastic', "builder's plastic", 'vapour barrier'], unit: 'm2', priceAUD: 2, priceNZD: 2.2 },
+  { match: ['tie wire', 'reo tie', 'rebar tie'], unit: 'roll', priceAUD: 15, priceNZD: 16 },
+  { match: ['join tape', 'dpm tape', 'jointing tape'], unit: 'roll', priceAUD: 22, priceNZD: 24 },
   // Sheet/roll goods
   { match: ['fibre cement', 'fc sheet', 'compressed sheet'], unit: 'sheet', priceAUD: 65, priceNZD: 70 },
   { match: ['colorbond', 'roofing sheet', 'roof sheet'], unit: 'lm', priceAUD: 22, priceNZD: 24 },

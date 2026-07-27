@@ -58,6 +58,13 @@ export interface HistoryEntry {
   jobId?: string;
 }
 
+export interface CustomOrderLine {
+  id: string;
+  name: string;
+  qty: number;
+  unit: string;
+}
+
 export type SavedJob = {
   id: string;
   name: string;
@@ -65,4 +72,7 @@ export type SavedJob = {
   createdAt: string;
   updatedAt: string;
   calculationIds: string[];
+  orderQtyOverrides?: Record<string, number>; // auto-generated order line id -> tradie-edited qty
+  orderRemovedIds?: string[];                 // auto-generated order line ids the tradie removed
+  orderExtraLines?: CustomOrderLine[];        // materials the tradie added manually
 };

@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { JobsContext, HistoryContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
-import type { OrderLine } from '../lib/jobOrder';
-import type { HistoryEntry, CalculatorId } from '../types';
+import type { OrderLine, JobOrder } from '../lib/jobOrder';
+import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
@@ -380,37 +380,189 @@ function MaterialsForCalc({ entry }: { entry: HistoryEntry }) {
 
 const BUFFER_OPTIONS = [0, 5, 10, 15];
 
-function OrderRow({ line, bufferPct }: { line: OrderLine; bufferPct: number }) {
+function OrderRow({ line, bufferPct, onQtyChange, onRemove }: {
+  line: OrderLine;
+  bufferPct: number;
+  onQtyChange: (id: string, qty: number) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draftQty, setDraftQty] = useState(String(line.qty));
   const noBuffer = line.unit === 'm³';
   const buffed = noBuffer ? line.qty : applyBuffer(line.qty, bufferPct);
   const showOriginal = !noBuffer && bufferPct > 0 && buffed !== line.qty;
+
+  function commitQty() {
+    const n = parseFloat(draftQty);
+    if (Number.isFinite(n) && n >= 0) onQtyChange(line.id, n);
+    setEditing(false);
+  }
+
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderTop: '0.5px solid var(--color-border)' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
-          {line.name}
-        </p>
-        <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
-          {line.sources.map(s => (
-            <span key={s} style={{ fontSize: 9.5, fontWeight: 500, color: 'var(--color-muted)', background: 'rgba(0,0,0,0.045)', borderRadius: 5, padding: '2px 6px' }}>
-              {s}
-            </span>
-          ))}
+    <div style={{ borderTop: '0.5px solid var(--color-border)' }}>
+      <button
+        onClick={() => { setDraftQty(String(line.qty)); setEditing(e => !e); }}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
+          background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
+            {line.name}
+          </p>
+          <div style={{ display: 'flex', gap: 4, marginTop: 3, flexWrap: 'wrap' }}>
+            {line.sources.map(s => (
+              <span key={s} style={{ fontSize: 9.5, fontWeight: 500, color: 'var(--color-muted)', background: 'rgba(0,0,0,0.045)', borderRadius: 5, padding: '2px 6px' }}>
+                {s}
+              </span>
+            ))}
+          </div>
         </div>
+        <div style={{ textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
+            {showOriginal && (
+              <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, textDecoration: 'line-through', marginRight: 5 }}>
+                {line.qty.toLocaleString()}
+              </span>
+            )}
+            {line.approx ? '~' : ''}{buffed.toLocaleString()}
+          </p>
+          <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'var(--color-muted)' }}>{line.unit}</p>
+        </div>
+      </button>
+
+      {editing && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '0 14px 10px' }}>
+          <input
+            type="number" inputMode="decimal" value={draftQty}
+            onChange={e => setDraftQty(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commitQty(); }}
+            style={{
+              flex: 1, padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+              background: 'var(--color-bg)', fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
+            }}
+          />
+          <button
+            onClick={commitQty}
+            style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--color-orange)', color: '#fff', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+          >
+            Save
+          </button>
+          <button
+            onClick={() => { onRemove(line.id); setEditing(false); }}
+            style={{ padding: '8px 14px', borderRadius: 8, border: '0.5px solid var(--color-border)', background: 'none', color: '#e53e3e', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+          >
+            Remove
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddMaterialForm({ onAdd }: { onAdd: (name: string, qty: number, unit: string) => void }) {
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [qty, setQty] = useState('');
+  const [unit, setUnit] = useState('each');
+
+  function handleAdd() {
+    const q = parseFloat(qty);
+    if (!name.trim() || !Number.isFinite(q) || q <= 0) return;
+    onAdd(name.trim(), q, unit.trim() || 'each');
+    setName(''); setQty(''); setUnit('each');
+    setShowForm(false);
+  }
+
+  if (!showForm) {
+    return (
+      <button
+        onClick={() => setShowForm(true)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: '100%', padding: '11px 0', borderRadius: 10, border: '0.5px dashed rgba(0,0,0,0.18)',
+          background: 'none', color: 'var(--color-orange)', fontSize: 13, fontWeight: 500,
+          fontFamily: 'inherit', cursor: 'pointer', marginTop: 10,
+        }}
+      >
+        + Add material
+      </button>
+    );
+  }
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10,
+      padding: '12px', borderRadius: 12, border: '0.5px solid var(--color-border)', background: 'var(--color-card)',
+    }}>
+      <input
+        type="text" placeholder="Material name" value={name}
+        onChange={e => setName(e.target.value)}
+        style={{ padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+      />
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="number" inputMode="decimal" placeholder="Qty" value={qty}
+          onChange={e => setQty(e.target.value)}
+          style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+        />
+        <input
+          type="text" placeholder="Unit" value={unit}
+          onChange={e => setUnit(e.target.value)}
+          style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+        />
       </div>
-      <div style={{ textAlign: 'right', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-        <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-          {showOriginal && (
-            <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, textDecoration: 'line-through', marginRight: 5 }}>
-              {line.qty.toLocaleString()}
-            </span>
-          )}
-          {line.approx ? '~' : ''}{buffed.toLocaleString()}
-        </p>
-        <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'var(--color-muted)' }}>{line.unit}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => setShowForm(false)}
+          style={{ flex: 1, padding: '10px 0', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-muted)', fontSize: 13.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleAdd}
+          disabled={!name.trim() || !qty.trim()}
+          style={{
+            flex: 1, padding: '10px 0', borderRadius: 9, border: 'none',
+            background: name.trim() && qty.trim() ? 'var(--color-orange)' : 'var(--color-border)',
+            color: name.trim() && qty.trim() ? '#fff' : 'var(--color-muted)',
+            fontSize: 13.5, fontWeight: 500, fontFamily: 'inherit',
+            cursor: name.trim() && qty.trim() ? 'pointer' : 'default',
+          }}
+        >
+          Add
+        </button>
       </div>
     </div>
   );
+}
+
+// Applies the tradie's manual qty overrides / removals / added lines on top of the auto-built
+// order from calculations — so Copy/Send always reflects what's actually on screen, not just
+// whatever the linked calculators computed.
+function applyManualEdits(order: JobOrder, job: SavedJob): JobOrder {
+  const removed = new Set(job.orderRemovedIds ?? []);
+  const overrides = job.orderQtyOverrides ?? {};
+
+  function adjust(lines: OrderLine[]): OrderLine[] {
+    return lines
+      .filter(l => !removed.has(l.id))
+      .map(l => overrides[l.id] !== undefined ? { ...l, qty: overrides[l.id] } : l);
+  }
+
+  const timber = adjust(order.timber);
+  const concrete = adjust(order.concrete);
+  const fixings = adjust(order.fixings);
+  const extras: OrderLine[] = (job.orderExtraLines ?? []).map(x => ({ id: x.id, name: x.name, qty: x.qty, unit: x.unit, sources: ['Manual'] }));
+  const other = [...adjust(order.other), ...extras];
+
+  // Keep the loose-timber (e.g. fence rail) contribution intact — only re-sum the grouped timber
+  // lines, which are the only part of the total an edit could actually touch.
+  const lm = (lines: OrderLine[]) => lines.reduce((s, l) => s + ((l.lengthMm ?? 0) / 1000) * l.qty, 0);
+  const timberLinealM = parseFloat((order.timberLinealM - lm(order.timber) + lm(timber)).toFixed(1));
+
+  return { timber, concrete, fixings, other, timberLinealM };
 }
 
 function OrderGroupLabel({ children }: { children: React.ReactNode }) {
@@ -421,15 +573,41 @@ function OrderGroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function OrderCard({ entries, jobName }: { entries: HistoryEntry[]; jobName: string }) {
+function OrderCard({ entries, job, updateJob }: {
+  entries: HistoryEntry[];
+  job: SavedJob;
+  updateJob: (id: string, updates: Partial<SavedJob>) => void;
+}) {
   const [bufferPct, setBufferPct] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  const order = buildJobOrder(entries);
+  const order = applyManualEdits(buildJobOrder(entries), job);
   const hasLines = order.timber.length + order.concrete.length + order.fixings.length + order.other.length > 0;
-  if (!hasLines) return null;
 
-  const orderText = formatOrderText(order, jobName, bufferPct);
+  function handleQtyChange(id: string, qty: number) {
+    updateJob(job.id, { orderQtyOverrides: { ...(job.orderQtyOverrides ?? {}), [id]: qty } });
+  }
+
+  function handleRemove(id: string) {
+    const removed = job.orderRemovedIds ?? [];
+    if (removed.includes(id)) return;
+    updateJob(job.id, { orderRemovedIds: [...removed, id] });
+  }
+
+  function handleAddMaterial(name: string, qty: number, unit: string) {
+    const extras = job.orderExtraLines ?? [];
+    updateJob(job.id, { orderExtraLines: [...extras, { id: crypto.randomUUID(), name, qty, unit }] });
+  }
+
+  if (!hasLines) {
+    return (
+      <div style={{ padding: '0 18px 4px' }}>
+        <AddMaterialForm onAdd={handleAddMaterial} />
+      </div>
+    );
+  }
+
+  const orderText = formatOrderText(order, job.name, bufferPct);
 
   async function handleShare() {
     if (navigator.share) {
@@ -482,25 +660,25 @@ function OrderCard({ entries, jobName }: { entries: HistoryEntry[]; jobName: str
         {order.timber.length > 0 && (
           <>
             <OrderGroupLabel>Timber</OrderGroupLabel>
-            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.concrete.length > 0 && (
           <>
             <OrderGroupLabel>Concrete</OrderGroupLabel>
-            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.fixings.length > 0 && (
           <>
             <OrderGroupLabel>Fixings</OrderGroupLabel>
-            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.other.length > 0 && (
           <>
             <OrderGroupLabel>Other</OrderGroupLabel>
-            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} />)}
+            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
           </>
         )}
 
@@ -512,6 +690,10 @@ function OrderCard({ entries, jobName }: { entries: HistoryEntry[]; jobName: str
             </span>
           </div>
         )}
+      </div>
+
+      <div style={{ marginTop: 10 }}>
+        <AddMaterialForm onAdd={handleAddMaterial} />
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
@@ -906,7 +1088,7 @@ export function JobDetailPage() {
 
 
       {/* Consolidated order */}
-      {calculations.length > 0 && <OrderCard entries={calculations} jobName={job.name} />}
+      {calculations.length > 0 && <OrderCard entries={calculations} job={job} updateJob={updateJob} />}
 
       {/* Calc list */}
       <div style={{ flex: 1, padding: '14px 18px 100px', display: 'flex', flexDirection: 'column' }}>

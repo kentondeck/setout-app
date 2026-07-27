@@ -99,8 +99,9 @@ export function ConcreteCalc() {
       if (!thickness || thickness <= 0) { setError('Enter a thickness to calculate.'); return; }
 
       const calc = calculateSlab({ length, width, thickness, wastage });
+      const reoCalc = calculateSlabReo({ length, width });
       setSlabResult(calc);
-      setSlabReoResult(calculateSlabReo({ length, width }));
+      setSlabReoResult(reoCalc);
       const id = crypto.randomUUID();
       setLastSlabId(id);
       addEntry({
@@ -108,7 +109,9 @@ export function ConcreteCalc() {
         calculatorId: 'concrete',
         timestamp: Date.now(),
         inputs: { type: 'slab', length, width, thickness, wastage },
-        outputs: calc.outputs,
+        // Merge in the reinforcement outputs too (mesh/chairs/tape/ties/plastic), not just volume —
+        // otherwise they're only ever in local state and never reach Share, Job order, or resuming.
+        outputs: { ...calc.outputs, ...reoCalc.outputs },
       });
     } else if (tab === 'postholes') {
       const depth = parseFloat(postFields.depth);
@@ -224,6 +227,8 @@ export function ConcreteCalc() {
       { item: 'Reinforcing mesh sheet', quantity: slabReoResult.outputs.meshSheets, unit: 'sheet', note: '6.0m × 2.4m sheets, 225mm lap' },
       { item: 'Bar chairs', quantity: slabReoResult.outputs.barChairPacks, unit: 'pack', note: `${slabReoResult.outputs.barChairs} chairs, ~1m centres` },
       { item: 'Plastic DPM sheeting', quantity: slabReoResult.outputs.plasticAreaM2, unit: 'm2', note: 'under-slab membrane' },
+      { item: 'Tie wire', quantity: slabReoResult.outputs.tieWireRolls, unit: 'roll', note: `${slabReoResult.outputs.tieWireCount} ties — mesh laps + chairs` },
+      ...(slabReoResult.outputs.tapeRolls > 0 ? [{ item: 'DPM join tape', quantity: slabReoResult.outputs.tapeRolls, unit: 'roll', note: `${slabReoResult.outputs.tapeLengthM}m of joins` }] : []),
     ] : []),
   ] : [];
 
@@ -588,6 +593,10 @@ export function ConcreteCalc() {
                   <ResultCard label="Mesh sheets" value={slabReoResult.outputs.meshSheets} accent />
                   <ResultCard label="Bar chairs" value={slabReoResult.outputs.barChairs} />
                 </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <ResultCard label="Tie wire" value={slabReoResult.outputs.tieWireRolls} unit="rolls" />
+                  <ResultCard label="Join tape" value={slabReoResult.outputs.tapeRolls} unit="rolls" />
+                </div>
                 <ResultCard label="Plastic (DPM)" value={slabReoResult.outputs.plasticAreaM2} unit="m²" />
               </div>
             )}
@@ -595,7 +604,7 @@ export function ConcreteCalc() {
             <ApprenticeWorking
               steps={slabWorkingSteps}
               finalAnswer={slabReoResult
-                ? `${slabResult.outputs.orderVolume} m³, ${slabReoResult.outputs.meshSheets} mesh sheets, ${slabReoResult.outputs.barChairs} chairs`
+                ? `${slabResult.outputs.orderVolume} m³, ${slabReoResult.outputs.meshSheets} mesh sheets, ${slabReoResult.outputs.barChairs} chairs, ${slabReoResult.outputs.tieWireRolls} tie wire, ${slabReoResult.outputs.tapeRolls} tape`
                 : `${slabResult.outputs.orderVolume} m³`}
               finalLabel="Concrete & reinforcement to order"
               visible={settings.apprenticeMode}
@@ -609,6 +618,8 @@ export function ConcreteCalc() {
                 { term: 'Reinforcing mesh', definition: 'Welded steel mesh laid in the slab to control cracking and add tensile strength. Sheets overlap (lap) at joins so the reinforcement stays structurally continuous.' },
                 { term: 'Bar chair', definition: 'A small plastic or wire support that holds the mesh up off the ground/plastic at the correct height, so it ends up in the middle (or correct position) of the finished slab instead of sitting on the bottom.' },
                 { term: 'DPM (damp-proof membrane)', definition: 'Plastic sheeting laid under the slab before the pour to stop ground moisture rising up through the concrete.' },
+                { term: 'Tie wire', definition: 'Wire used to tie mesh sheets together at the lap seams and to tie the mesh to the bar chairs, so it stays in place during the pour.' },
+                { term: 'Join tape', definition: 'Tape used to seal the joins between strips of DPM plastic, keeping the membrane continuous and waterproof.' },
               ]}
             />
 

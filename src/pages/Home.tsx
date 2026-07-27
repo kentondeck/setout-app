@@ -1,9 +1,8 @@
 import { useContext } from 'react';
-import { SettingsContext, HistoryContext, JobsContext } from '../contexts';
+import { SettingsContext, HistoryContext } from '../contexts';
 import { TopBar } from '../components/TopBar';
 import { ReorderableCalcGrid } from '../components/ReorderableCalcGrid';
 import { QuoteAiTile } from '../components/QuoteAiTile';
-import { ContinueCard } from '../components/ContinueCard';
 import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
 import type { CalculatorId } from '../types';
@@ -24,19 +23,10 @@ function replaceGroupOrder(fullOrder: CalculatorId[], groupIds: Set<CalculatorId
 export function Home() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const { history } = useContext(HistoryContext);
-  const { jobs, getJobCalculations } = useContext(JobsContext);
 
   const { greeting, sub } = getGreeting(settings.userName);
   const lastEntry = history[0] ?? null;
   const highlightedId = lastEntry?.calculatorId ?? 'decking';
-
-  const mostRecentJob = jobs.length > 0
-    ? [...jobs].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())[0]
-    : null;
-
-  const lastJobCalcEntry = mostRecentJob
-    ? getJobCalculations(mostRecentJob.id).sort((a, b) => b.timestamp - a.timestamp)[0]
-    : undefined;
   const pinned = settings.pinnedCalcs ?? [];
 
   function handlePinToggle(id: string) {
@@ -78,16 +68,6 @@ export function Home() {
           {sub}
         </p>
       </div>
-
-      {(mostRecentJob || lastEntry) && (
-        <div style={{ padding: '0 20px 12px' }}>
-          {mostRecentJob ? (
-            <ContinueCard job={mostRecentJob} lastCalcEntry={lastJobCalcEntry} />
-          ) : (
-            <ContinueCard entry={lastEntry!} />
-          )}
-        </div>
-      )}
 
       <div style={{ padding: '0 20px 12px' }}>
         <QuoteAiTile calc={QUOTE_AI} />

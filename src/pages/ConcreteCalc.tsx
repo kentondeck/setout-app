@@ -5,15 +5,16 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { AddToQuoteButton } from '../components/AddToQuoteButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { calculateSlab, calculatePostHoles } from '../calculators/concrete';
+import { calculateSlab, calculatePostHoles, calculateConcreteMix } from '../calculators/concrete';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
-import type { SlabOutputs, PostHoleOutputs } from '../calculators/concrete';
+import type { SlabOutputs, PostHoleOutputs, MixOutputs, MixRatio } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
-type Tab = 'slab' | 'postholes';
+type Tab = 'slab' | 'postholes' | 'mix';
 type HoleType = 'round' | 'square';
 
 interface SlabFields { length: string; width: string; thickness: string; }
@@ -23,6 +24,12 @@ const WASTAGE_OPTIONS = [0.05, 0.10, 0.15];
 
 const SLAB_DEFAULTS: SlabFields = { length: '', width: '', thickness: '' };
 const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numHoles: '', postSize: '' };
+
+const MIX_PRESETS: { label: string; ratio: MixRatio; hint: string }[] = [
+  { label: '1:2:4', ratio: { cement: 1, sand: 2, aggregate: 4 }, hint: 'General purpose, ~20 MPa' },
+  { label: '1:2:3', ratio: { cement: 1, sand: 2, aggregate: 3 }, hint: 'Slabs & paths, ~25 MPa' },
+  { label: '1:1.5:3', ratio: { cement: 1, sand: 1.5, aggregate: 3 }, hint: 'Structural, ~32 MPa' },
+];
 
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
@@ -47,8 +54,24 @@ export function ConcreteCalc() {
   const [postResult, setPostResult] = useState<{ outputs: PostHoleOutputs; steps: WorkingStep[] } | null>(null);
   const [lastPostId, setLastPostId] = useState('');
 
+  const [mixVolume, setMixVolume] = useState('');
+  const [mixPreset, setMixPreset] = useState<string>('1:2:4');
+  const [customCement, setCustomCement] = useState('');
+  const [customSand, setCustomSand] = useState('');
+  const [customAggregate, setCustomAggregate] = useState('');
+  const [mixResult, setMixResult] = useState<{ outputs: MixOutputs; steps: WorkingStep[] } | null>(null);
+  const [lastMixId, setLastMixId] = useState('');
+
   const [error, setError] = useState('');
-  const resultRef = useScrollToResult(tab === 'slab' ? slabResult : postResult);
+  const resultRef = useScrollToResult(tab === 'slab' ? slabResult : tab === 'postholes' ? postResult : mixResult);
+
+  const resolvedMixRatio: MixRatio = mixPreset === 'custom'
+    ? {
+        cement: parseFloat(customCement) || 1,
+        sand: parseFloat(customSand) || 2,
+        aggregate: parseFloat(customAggregate) || 4,
+      }
+    : (MIX_PRESETS.find(p => p.label === mixPreset)?.ratio ?? MIX_PRESETS[0].ratio);
 
   function setSlab(field: keyof SlabFields) {
     return (value: string) => setSlabFields(prev => ({ ...prev, [field]: value }));
@@ -85,7 +108,7 @@ export function ConcreteCalc() {
         inputs: { type: 'slab', length, width, thickness, wastage },
         outputs: calc.outputs,
       });
-    } else {
+    } else if (tab === 'postholes') {
       const depth = parseFloat(postFields.depth);
       const numHoles = parseInt(postFields.numHoles);
       if (!depth || depth <= 0) { setError('Enter a depth to calculate.'); return; }
@@ -121,6 +144,25 @@ export function ConcreteCalc() {
           depth,
           numHoles,
           wastage,
+        },
+        outputs: calc.outputs,
+      });
+    } else {
+      const volume = parseFloat(mixVolume);
+      if (!volume || volume <= 0) { setError('Enter a concrete volume to calculate.'); return; }
+
+      const calc = calculateConcreteMix({ volumeM3: volume, ratio: resolvedMixRatio });
+      setMixResult(calc);
+      const id = crypto.randomUUID();
+      setLastMixId(id);
+      addEntry({
+        id,
+        calculatorId: 'concrete',
+        timestamp: Date.now(),
+        inputs: {
+          type: 'mix',
+          volumeM3: volume,
+          ratio: `${resolvedMixRatio.cement}:${resolvedMixRatio.sand}:${resolvedMixRatio.aggregate}`,
         },
         outputs: calc.outputs,
       });
@@ -167,6 +209,12 @@ export function ConcreteCalc() {
     ...(postResult.outputs.useBagMix ? [{ label: 'Bags needed', explanation: 'Each 20kg bag yields about 0.009 m³ of mixed concrete', calculation: `${postTotalVol.toFixed(3)} ÷ 0.009`, result: `${postResult.outputs.bagCount} bags` }] : [{ label: 'Order ready-mix', explanation: 'Volume is over 0.2 m³ — order ready-mix concrete instead of bags', result: `${postResult.outputs.orderVolume} m³` }]) as WorkingStep[],
   ]) : [];
 
+  const mixQuoteMaterials = mixResult ? [
+    { item: 'GP cement', quantity: mixResult.outputs.cementBags, unit: 'bag', note: `${mixResult.outputs.cementKg} kg` },
+    { item: 'Sand', quantity: mixResult.outputs.sandM3, unit: 'm3', note: `${mixResult.outputs.sandKg} kg` },
+    { item: 'Aggregate', quantity: mixResult.outputs.aggregateM3, unit: 'm3', note: `${mixResult.outputs.aggregateKg} kg` },
+  ] : [];
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader
@@ -183,7 +231,7 @@ export function ConcreteCalc() {
           padding: 4,
           border: '0.5px solid var(--color-border)',
         }}>
-          {(['slab', 'postholes'] as const).map(t => (
+          {(['slab', 'postholes', 'mix'] as const).map(t => (
             <button
               key={t}
               onClick={() => switchTab(t)}
@@ -201,7 +249,7 @@ export function ConcreteCalc() {
                 transition: 'background 0.15s',
               }}
             >
-              {t === 'slab' ? 'Slab' : 'Post holes'}
+              {t === 'slab' ? 'Slab' : t === 'postholes' ? 'Post holes' : 'Mix'}
             </button>
           ))}
         </div>
@@ -233,7 +281,7 @@ export function ConcreteCalc() {
                 <div style={{ flex: 1, minWidth: 0 }} />
               </div>
             </>
-          ) : (
+          ) : tab === 'postholes' ? (
             <>
               <div>
                 <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>HOLE TYPE</p>
@@ -333,9 +381,92 @@ export function ConcreteCalc() {
                 </div>
               )}
             </>
+          ) : (
+            <>
+              <NumberInput
+                label="Concrete volume"
+                value={mixVolume}
+                onChange={setMixVolume}
+                units={['m3']}
+                placeholder="e.g. 1.2"
+                hint="the volume you need to mix, wastage included"
+              />
+
+              {(slabResult || postResult) && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {slabResult && (
+                    <button
+                      onClick={() => setMixVolume(String(slabResult.outputs.orderVolume))}
+                      style={{
+                        padding: '8px 12px', borderRadius: 10, border: '0.5px solid var(--color-border)',
+                        background: 'var(--color-bg)', color: 'var(--color-text)', fontSize: 12.5,
+                        fontFamily: 'inherit', cursor: 'pointer',
+                      }}
+                    >
+                      Use slab volume ({slabResult.outputs.orderVolume} m³)
+                    </button>
+                  )}
+                  {postResult && (
+                    <button
+                      onClick={() => setMixVolume(String(postResult.outputs.orderVolume))}
+                      style={{
+                        padding: '8px 12px', borderRadius: 10, border: '0.5px solid var(--color-border)',
+                        background: 'var(--color-bg)', color: 'var(--color-text)', fontSize: 12.5,
+                        fontFamily: 'inherit', cursor: 'pointer',
+                      }}
+                    >
+                      Use post hole volume ({postResult.outputs.orderVolume} m³)
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MIX RATIO (CEMENT : SAND : AGGREGATE)</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {MIX_PRESETS.map(p => (
+                    <button
+                      key={p.label}
+                      onClick={() => setMixPreset(p.label)}
+                      style={{
+                        flex: '1 0 30%', padding: '8px 0', borderRadius: 10,
+                        border: '0.5px solid var(--color-border)',
+                        background: mixPreset === p.label ? 'var(--color-orange)' : 'var(--color-bg)',
+                        color: mixPreset === p.label ? '#fff' : 'var(--color-text)',
+                        fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                      }}
+                    >
+                      <span>{p.label}</span>
+                      <span style={{ fontSize: 10.5, color: mixPreset === p.label ? 'rgba(255,255,255,0.8)' : 'var(--color-muted)' }}>{p.hint}</span>
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setMixPreset('custom')}
+                    style={{
+                      flex: '1 0 30%', padding: '8px 0', borderRadius: 10,
+                      border: '0.5px solid var(--color-border)',
+                      background: mixPreset === 'custom' ? 'var(--color-orange)' : 'var(--color-bg)',
+                      color: mixPreset === 'custom' ? '#fff' : 'var(--color-text)',
+                      fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    }}
+                  >
+                    Custom
+                  </button>
+                </div>
+                {mixPreset === 'custom' && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <NumberInput label="Cement" value={customCement} onChange={setCustomCement} unit="" placeholder="1" />
+                    <NumberInput label="Sand" value={customSand} onChange={setCustomSand} unit="" placeholder="2" />
+                    <NumberInput label="Aggregate" value={customAggregate} onChange={setCustomAggregate} unit="" placeholder="4" />
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {/* Wastage selector */}
+          {tab !== 'mix' && (
           <div>
             <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WASTAGE</p>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -392,6 +523,7 @@ export function ConcreteCalc() {
               </div>
             )}
           </div>
+          )}
         </div>
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
@@ -511,6 +643,62 @@ export function ConcreteCalc() {
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastPostId} />
             <ShareCalcButton calculationId={lastPostId} />
+
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {COMPLIANCE_NOTES.concrete[settings.region]}
+            </p>
+          </div>
+        )}
+
+        {/* Mix results */}
+        {tab === 'mix' && mixResult && (
+          <div ref={resultRef}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <ResultCard label="Cement" value={mixResult.outputs.cementBags} unit="bags" accent />
+                <ResultCard label="Cement" value={mixResult.outputs.cementKg} unit="kg" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <ResultCard label="Sand" value={mixResult.outputs.sandM3} unit="m³" />
+                <ResultCard label="Aggregate" value={mixResult.outputs.aggregateM3} unit="m³" />
+              </div>
+              <ResultCard label="Water" value={mixResult.outputs.waterLitres} unit="L" />
+            </div>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 10, padding: '12px 14px',
+            }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                {mixResult.outputs.wetVolume} m³ of concrete, mixed at a {mixPreset === 'custom'
+                  ? `${resolvedMixRatio.cement}:${resolvedMixRatio.sand}:${resolvedMixRatio.aggregate}`
+                  : mixPreset} ratio. Rule-of-thumb batching, not a certified mix design — for structural
+                work needing a specific MPa rating, use certified ready-mix.
+              </p>
+            </div>
+
+            <ApprenticeWorking
+              steps={mixResult.steps}
+              finalAnswer={`${mixResult.outputs.cementBags} cement, ${mixResult.outputs.sandM3} m³ sand, ${mixResult.outputs.aggregateM3} m³ aggregate`}
+              finalLabel="Raw materials to order"
+              visible={settings.apprenticeMode}
+              id="concrete-mix"
+              glossary={[
+                { term: 'Mix ratio', definition: 'Parts by volume of cement : sand : aggregate. A 1:2:4 mix means 1 part cement to 2 parts sand to 4 parts aggregate.' },
+                { term: 'Dry volume', definition: 'The loose volume of cement, sand and aggregate needed before mixing — larger than the wet (finished) concrete volume because dry materials have air gaps that close up once mixed and wetted.' },
+                { term: 'Water-cement ratio', definition: 'The weight of water used per weight of cement. Too much water weakens the cured concrete; too little makes it unworkable.' },
+                { term: 'MPa (megapascal)', definition: 'The strength rating of concrete. 20 MPa is standard residential, 25–32 MPa for structural or exposed work.' },
+              ]}
+            />
+
+            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastMixId, { jobName: name })} />
+            <AddToJobPrompt calculationId={lastMixId} />
+            <AddToQuoteButton
+              scopeSummary={`Concrete mix, ${mixResult.outputs.wetVolume} m³`}
+              materials={mixQuoteMaterials}
+              jobName={jobName}
+            />
+            <ShareCalcButton calculationId={lastMixId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}

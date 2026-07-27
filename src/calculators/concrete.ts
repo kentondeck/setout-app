@@ -39,6 +39,99 @@ function ceilToTenth(value: number): number {
   return Math.ceil(Math.round(value * 100) / 10) / 10;
 }
 
+export interface MixRatio {
+  cement: number;
+  sand: number;
+  aggregate: number;
+}
+
+export interface MixInputs {
+  volumeM3: number; // wet concrete volume required — enter however much you actually need, wastage included
+  ratio: MixRatio;  // parts by volume, e.g. 1:2:4
+}
+
+export interface MixOutputs extends Record<string, number> {
+  wetVolume: number;
+  dryVolume: number;
+  cementM3: number;
+  cementKg: number;
+  cementBags: number;
+  sandM3: number;
+  sandKg: number;
+  aggregateM3: number;
+  aggregateKg: number;
+  waterLitres: number;
+}
+
+// Dry loose cement/sand/aggregate compact down once mixed and wetted — the standard trade allowance
+// is to batch 1.54x the wet (finished) volume as dry material. Densities are typical values used for
+// batching by volume; real bag/quarry material varies, so this is a solid starting point, not a
+// certified mix design — for structural work requiring a specific MPa rating, use certified ready-mix.
+const DRY_VOLUME_FACTOR = 1.54;
+const CEMENT_DENSITY_KG_M3 = 1440;
+const SAND_DENSITY_KG_M3 = 1600;
+const AGGREGATE_DENSITY_KG_M3 = 1550;
+const CEMENT_BAG_KG = 20;
+const WATER_CEMENT_RATIO = 0.5; // litres of water per kg of cement — general-purpose rule of thumb
+
+export function calculateConcreteMix(inputs: MixInputs): { outputs: MixOutputs; steps: WorkingStep[] } {
+  const { volumeM3, ratio } = inputs;
+  const totalParts = ratio.cement + ratio.sand + ratio.aggregate;
+
+  const dryVolume = parseFloat((volumeM3 * DRY_VOLUME_FACTOR).toFixed(3));
+
+  const cementM3 = parseFloat((dryVolume * (ratio.cement / totalParts)).toFixed(3));
+  const sandM3 = parseFloat((dryVolume * (ratio.sand / totalParts)).toFixed(3));
+  const aggregateM3 = parseFloat((dryVolume * (ratio.aggregate / totalParts)).toFixed(3));
+
+  const cementKg = parseFloat((cementM3 * CEMENT_DENSITY_KG_M3).toFixed(1));
+  const sandKg = parseFloat((sandM3 * SAND_DENSITY_KG_M3).toFixed(1));
+  const aggregateKg = parseFloat((aggregateM3 * AGGREGATE_DENSITY_KG_M3).toFixed(1));
+
+  const cementBags = Math.ceil(cementKg / CEMENT_BAG_KG);
+  const waterLitres = Math.round(cementKg * WATER_CEMENT_RATIO);
+
+  const ratioLabel = `${ratio.cement}:${ratio.sand}:${ratio.aggregate}`;
+
+  const steps: WorkingStep[] = [
+    {
+      label: 'Dry volume',
+      explanation: `Dry loose materials compact once mixed and wetted — allow ${DRY_VOLUME_FACTOR}× the wet concrete volume`,
+      calculation: `${volumeM3} × ${DRY_VOLUME_FACTOR}`,
+      result: `${dryVolume} m³ dry materials`,
+    },
+    {
+      label: 'Cement',
+      explanation: `${ratio.cement} part${ratio.cement !== 1 ? 's' : ''} of ${totalParts} in a ${ratioLabel} mix`,
+      calculation: `${dryVolume} × (${ratio.cement} ÷ ${totalParts}) × ${CEMENT_DENSITY_KG_M3} kg/m³`,
+      result: `${cementKg} kg → ${cementBags} × 20kg bags`,
+    },
+    {
+      label: 'Sand',
+      explanation: `${ratio.sand} part${ratio.sand !== 1 ? 's' : ''} of ${totalParts}`,
+      calculation: `${dryVolume} × (${ratio.sand} ÷ ${totalParts}) × ${SAND_DENSITY_KG_M3} kg/m³`,
+      result: `${sandM3} m³ (${sandKg} kg)`,
+    },
+    {
+      label: 'Aggregate',
+      explanation: `${ratio.aggregate} part${ratio.aggregate !== 1 ? 's' : ''} of ${totalParts}`,
+      calculation: `${dryVolume} × (${ratio.aggregate} ÷ ${totalParts}) × ${AGGREGATE_DENSITY_KG_M3} kg/m³`,
+      result: `${aggregateM3} m³ (${aggregateKg} kg)`,
+    },
+    {
+      label: 'Water',
+      explanation: `Rule-of-thumb ${WATER_CEMENT_RATIO} water-cement ratio — adjust for aggregate moisture and site conditions`,
+      calculation: `${cementKg} kg × ${WATER_CEMENT_RATIO}`,
+      result: `${waterLitres} L`,
+    },
+  ];
+
+  return {
+    outputs: { wetVolume: volumeM3, dryVolume, cementM3, cementKg, cementBags, sandM3, sandKg, aggregateM3, aggregateKg, waterLitres },
+    steps,
+  };
+}
+
 export function calculateSlab(inputs: SlabInputs): { outputs: SlabOutputs; steps: WorkingStep[] } {
   const { length, width, thickness, wastage } = inputs;
 

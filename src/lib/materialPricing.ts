@@ -51,6 +51,7 @@ const MATERIAL_PRICES: MaterialPriceEntry[] = [
   { match: ['packer', 'shim'], unit: 'pack', priceAUD: 8, priceNZD: 9 },
   // Concrete and aggregate
   { match: ['concrete premix', 'premix bag', '20kg bag', 'concrete bag'], unit: 'bag', priceAUD: 9, priceNZD: 10 },
+  { match: ['cement'], unit: 'bag', priceAUD: 12, priceNZD: 13 },
   { match: ['ready mix concrete', 'concrete m3', 'concrete m³'], unit: 'm3', priceAUD: 250, priceNZD: 260 },
   { match: ['gravel', 'aggregate', 'blue metal', 'road base'], unit: 'm3', priceAUD: 65, priceNZD: 70 },
   { match: ['sand'], unit: 'm3', priceAUD: 55, priceNZD: 60 },

@@ -167,6 +167,81 @@ export function calculateSlab(inputs: SlabInputs): { outputs: SlabOutputs; steps
   return { outputs: { exactVolume, orderVolume, litres, weightTonnes }, steps };
 }
 
+export interface SlabReoOutputs extends Record<string, number> {
+  areaM2: number;
+  meshSheets: number;
+  barChairs: number;
+  barChairPacks: number;
+  plasticAreaM2: number;
+  plasticRolls: number;
+}
+
+export interface SlabReoInputs {
+  length: number; // mm
+  width: number;  // mm
+}
+
+// Standard structural mesh sheet size (AU/NZ) — 6.0m x 2.4m, with a 225mm lap required each way
+// between adjacent sheets for structural continuity (AS3600 / typical trade practice).
+const MESH_SHEET_LENGTH_M = 6.0;
+const MESH_SHEET_WIDTH_M = 2.4;
+const MESH_LAP_M = 0.225;
+// Bar chairs support the mesh at the correct cover height — roughly 1m centres each way is a
+// standard rule-of-thumb spacing for residential slab-on-ground.
+const BAR_CHAIR_SPACING_M = 1.0;
+const BAR_CHAIRS_PER_PACK = 50; // typical trade pack size
+// Plastic (DPM) under-slab membrane — extra allowance for overlaps between sheets/rolls and the
+// upturn at the slab edge.
+const DPM_OVERLAP_ALLOWANCE = 0.15;
+const DPM_ROLL_M2 = 100; // common 4m x 25m roll
+
+export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutputs; steps: WorkingStep[] } {
+  const lengthM = inputs.length / 1000;
+  const widthM = inputs.width / 1000;
+  const areaM2 = parseFloat((lengthM * widthM).toFixed(2));
+
+  const sheetsLengthwise = Math.ceil(lengthM / (MESH_SHEET_LENGTH_M - MESH_LAP_M));
+  const sheetsWidthwise = Math.ceil(widthM / (MESH_SHEET_WIDTH_M - MESH_LAP_M));
+  const meshSheets = sheetsLengthwise * sheetsWidthwise;
+
+  const chairsLengthwise = Math.floor(lengthM / BAR_CHAIR_SPACING_M) + 1;
+  const chairsWidthwise = Math.floor(widthM / BAR_CHAIR_SPACING_M) + 1;
+  const barChairs = chairsLengthwise * chairsWidthwise;
+  const barChairPacks = Math.ceil(barChairs / BAR_CHAIRS_PER_PACK);
+
+  const plasticAreaM2 = parseFloat((areaM2 * (1 + DPM_OVERLAP_ALLOWANCE)).toFixed(1));
+  const plasticRolls = Math.ceil(plasticAreaM2 / DPM_ROLL_M2);
+
+  const steps: WorkingStep[] = [
+    {
+      label: 'Slab area',
+      explanation: 'Length × width',
+      calculation: `${lengthM}m × ${widthM}m`,
+      result: `${areaM2} m²`,
+    },
+    {
+      label: 'Mesh sheets',
+      explanation: `${MESH_SHEET_LENGTH_M}m × ${MESH_SHEET_WIDTH_M}m sheets, ${Math.round(MESH_LAP_M * 1000)}mm lap each way for structural continuity`,
+      calculation: `⌈${lengthM} ÷ ${(MESH_SHEET_LENGTH_M - MESH_LAP_M).toFixed(3)}⌉ × ⌈${widthM} ÷ ${(MESH_SHEET_WIDTH_M - MESH_LAP_M).toFixed(3)}⌉`,
+      result: `${sheetsLengthwise} × ${sheetsWidthwise} = ${meshSheets} sheets`,
+    },
+    {
+      label: 'Bar chairs',
+      explanation: `Support the mesh at the correct cover height — roughly ${BAR_CHAIR_SPACING_M}m centres each way`,
+      calculation: `(⌊${lengthM} ÷ ${BAR_CHAIR_SPACING_M}⌋ + 1) × (⌊${widthM} ÷ ${BAR_CHAIR_SPACING_M}⌋ + 1)`,
+      result: `${chairsLengthwise} × ${chairsWidthwise} = ${barChairs} chairs → ${barChairPacks} × ${BAR_CHAIRS_PER_PACK}-pack${barChairPacks !== 1 ? 's' : ''}`,
+    },
+    {
+      label: 'Plastic membrane (DPM)',
+      explanation: `Adds ${Math.round(DPM_OVERLAP_ALLOWANCE * 100)}% for overlaps between sheets/rolls and the upturn at the slab edge`,
+      calculation: `${areaM2} × ${(1 + DPM_OVERLAP_ALLOWANCE).toFixed(2)}`,
+      result: `${plasticAreaM2} m² (~${plasticRolls} × ${DPM_ROLL_M2}m² roll${plasticRolls !== 1 ? 's' : ''})`,
+    },
+  ];
+
+  return { outputs: { areaM2, meshSheets, barChairs, barChairPacks, plasticAreaM2, plasticRolls }, steps };
+}
+
 export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleOutputs; steps: WorkingStep[] } {
   const { holeType, diameter, sideWidth, depth, numHoles, wastage, postShape, postSize } = inputs;
 

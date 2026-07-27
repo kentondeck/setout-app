@@ -8,10 +8,10 @@ import { ShareCalcButton } from '../components/ShareCalcButton';
 import { AddToQuoteButton } from '../components/AddToQuoteButton';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { calculateSlab, calculatePostHoles, calculateConcreteMix } from '../calculators/concrete';
+import { calculateSlab, calculatePostHoles, calculateConcreteMix, calculateSlabReo } from '../calculators/concrete';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
-import type { SlabOutputs, PostHoleOutputs, MixOutputs, MixRatio } from '../calculators/concrete';
+import type { SlabOutputs, PostHoleOutputs, MixOutputs, MixRatio, SlabReoOutputs } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
 type Tab = 'slab' | 'postholes' | 'mix';
@@ -45,6 +45,7 @@ export function ConcreteCalc() {
 
   const [slabFields, setSlabFields] = useState<SlabFields>(SLAB_DEFAULTS);
   const [slabResult, setSlabResult] = useState<{ outputs: SlabOutputs; steps: WorkingStep[] } | null>(null);
+  const [slabReoResult, setSlabReoResult] = useState<{ outputs: SlabReoOutputs; steps: WorkingStep[] } | null>(null);
   const [lastSlabId, setLastSlabId] = useState('');
 
   const [holeType, setHoleType] = useState<HoleType>('round');
@@ -99,6 +100,7 @@ export function ConcreteCalc() {
 
       const calc = calculateSlab({ length, width, thickness, wastage });
       setSlabResult(calc);
+      setSlabReoResult(calculateSlabReo({ length, width }));
       const id = crypto.randomUUID();
       setLastSlabId(id);
       addEntry({
@@ -182,6 +184,7 @@ export function ConcreteCalc() {
     { label: 'Convert to metres', explanation: 'Divide each measurement by 1000 to get metres', calculation: `${slabL / 1000} × ${slabW / 1000} × ${slabT / 1000}`, result: `${slabL / 1000} m × ${slabW / 1000} m × ${slabT / 1000} m` },
     { label: 'Volume', explanation: 'Multiply the three dimensions together', calculation: `${slabL / 1000} × ${slabW / 1000} × ${slabT / 1000}`, result: `${slabVol.toFixed(2)} m³` },
     { label: 'Add wastage', explanation: `Add ${Math.round(wastage * 100)}% so you don't run short on the pour`, calculation: `${slabVol.toFixed(2)} × ${(1 + wastage).toFixed(2)}`, result: `${slabResult.outputs.orderVolume} m³ to order` },
+    ...(slabReoResult ? slabReoResult.steps : []),
   ] : [];
 
   // Post hole working steps
@@ -213,6 +216,15 @@ export function ConcreteCalc() {
     { item: 'GP cement', quantity: mixResult.outputs.cementBags, unit: 'bag', note: `${mixResult.outputs.cementKg} kg` },
     { item: 'Sand', quantity: mixResult.outputs.sandM3, unit: 'm3', note: `${mixResult.outputs.sandKg} kg` },
     { item: 'Aggregate', quantity: mixResult.outputs.aggregateM3, unit: 'm3', note: `${mixResult.outputs.aggregateKg} kg` },
+  ] : [];
+
+  const slabQuoteMaterials = slabResult ? [
+    { item: 'Ready-mix concrete', quantity: slabResult.outputs.orderVolume, unit: 'm3', note: 'slab pour' },
+    ...(slabReoResult ? [
+      { item: 'Reinforcing mesh sheet', quantity: slabReoResult.outputs.meshSheets, unit: 'sheet', note: '6.0m × 2.4m sheets, 225mm lap' },
+      { item: 'Bar chairs', quantity: slabReoResult.outputs.barChairPacks, unit: 'pack', note: `${slabReoResult.outputs.barChairs} chairs, ~1m centres` },
+      { item: 'Plastic DPM sheeting', quantity: slabReoResult.outputs.plasticAreaM2, unit: 'm2', note: 'under-slab membrane' },
+    ] : []),
   ] : [];
 
   return (
@@ -565,10 +577,27 @@ export function ConcreteCalc() {
               </div>
             </div>
 
+            {slabReoResult && (
+              <div style={{
+                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)', padding: '18px 16px',
+                display: 'flex', flexDirection: 'column', gap: 14,
+              }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>REINFORCEMENT</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <ResultCard label="Mesh sheets" value={slabReoResult.outputs.meshSheets} accent />
+                  <ResultCard label="Bar chairs" value={slabReoResult.outputs.barChairs} />
+                </div>
+                <ResultCard label="Plastic (DPM)" value={slabReoResult.outputs.plasticAreaM2} unit="m²" />
+              </div>
+            )}
+
             <ApprenticeWorking
               steps={slabWorkingSteps}
-              finalAnswer={`${slabResult.outputs.orderVolume} m³`}
-              finalLabel="Concrete to order"
+              finalAnswer={slabReoResult
+                ? `${slabResult.outputs.orderVolume} m³, ${slabReoResult.outputs.meshSheets} mesh sheets, ${slabReoResult.outputs.barChairs} chairs`
+                : `${slabResult.outputs.orderVolume} m³`}
+              finalLabel="Concrete & reinforcement to order"
               visible={settings.apprenticeMode}
               id="concrete-slab"
               glossary={[
@@ -577,11 +606,19 @@ export function ConcreteCalc() {
                 { term: 'Slab', definition: 'A flat, horizontal concrete pour — the floor or base. Thickness is determined by load and ground conditions.' },
                 { term: 'MPa (megapascal)', definition: 'The strength rating of concrete mix. 20 MPa is standard residential, 25–32 MPa for structural or exposed slabs.' },
                 { term: 'Ready-mix', definition: 'Concrete delivered pre-mixed by truck. More consistent than site-batched; required when volume exceeds about 0.2 m³.' },
+                { term: 'Reinforcing mesh', definition: 'Welded steel mesh laid in the slab to control cracking and add tensile strength. Sheets overlap (lap) at joins so the reinforcement stays structurally continuous.' },
+                { term: 'Bar chair', definition: 'A small plastic or wire support that holds the mesh up off the ground/plastic at the correct height, so it ends up in the middle (or correct position) of the finished slab instead of sitting on the bottom.' },
+                { term: 'DPM (damp-proof membrane)', definition: 'Plastic sheeting laid under the slab before the pour to stop ground moisture rising up through the concrete.' },
               ]}
             />
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastSlabId} />
+            <AddToQuoteButton
+              scopeSummary={`Concrete slab, ${slabFields.length}mm × ${slabFields.width}mm × ${slabFields.thickness}mm`}
+              materials={slabQuoteMaterials}
+              jobName={jobName}
+            />
             <ShareCalcButton calculationId={lastSlabId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

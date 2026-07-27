@@ -32,6 +32,10 @@ const MATERIAL_PRICES: MaterialPriceEntry[] = [
   { match: ['weatherboard', 'cladding board'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
   { match: ['architrave'], unit: 'lm', priceAUD: 6, priceNZD: 6.5 },
   { match: ['reveal', 'jamb liner', 'jamb'], unit: 'lm', priceAUD: 12, priceNZD: 13 },
+  // Slab reinforcement
+  { match: ['reinforcing mesh', 'mesh sheet', 'sl62', 'sl72', 'sl82', 'sl92'], unit: 'sheet', priceAUD: 95, priceNZD: 100 },
+  { match: ['bar chair', 'mesh chair'], unit: 'pack', priceAUD: 18, priceNZD: 20 },
+  { match: ['dpm', 'damp-proof', 'damp proof', 'builders plastic', "builder's plastic", 'vapour barrier'], unit: 'm2', priceAUD: 2, priceNZD: 2.2 },
   // Sheet/roll goods
   { match: ['fibre cement', 'fc sheet', 'compressed sheet'], unit: 'sheet', priceAUD: 65, priceNZD: 70 },
   { match: ['colorbond', 'roofing sheet', 'roof sheet'], unit: 'lm', priceAUD: 22, priceNZD: 24 },

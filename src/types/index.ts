@@ -75,4 +75,5 @@ export type SavedJob = {
   orderQtyOverrides?: Record<string, number>; // auto-generated order line id -> tradie-edited qty
   orderRemovedIds?: string[];                 // auto-generated order line ids the tradie removed
   orderExtraLines?: CustomOrderLine[];        // materials the tradie added manually
+  orderLineOverrides?: Record<string, { name?: string; unit?: string }>; // auto-generated order line id -> tradie-edited name/unit
 };

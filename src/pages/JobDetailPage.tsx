@@ -380,28 +380,34 @@ function MaterialsForCalc({ entry }: { entry: HistoryEntry }) {
 
 const BUFFER_OPTIONS = [0, 5, 10, 15];
 
-function OrderRow({ line, bufferPct, onQtyChange, onRemove }: {
+function OrderRow({ line, bufferPct, onLineChange, onRemove }: {
   line: OrderLine;
   bufferPct: number;
-  onQtyChange: (id: string, qty: number) => void;
+  onLineChange: (id: string, changes: { name?: string; unit?: string; qty?: number }) => void;
   onRemove: (id: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(line.name);
   const [draftQty, setDraftQty] = useState(String(line.qty));
+  const [draftUnit, setDraftUnit] = useState(line.unit);
   const noBuffer = line.unit === 'm³';
   const buffed = noBuffer ? line.qty : applyBuffer(line.qty, bufferPct);
   const showOriginal = !noBuffer && bufferPct > 0 && buffed !== line.qty;
 
-  function commitQty() {
+  function commit() {
     const n = parseFloat(draftQty);
-    if (Number.isFinite(n) && n >= 0) onQtyChange(line.id, n);
+    onLineChange(line.id, {
+      name: draftName.trim() || line.name,
+      unit: draftUnit.trim() || line.unit,
+      qty: Number.isFinite(n) && n >= 0 ? n : line.qty,
+    });
     setEditing(false);
   }
 
   return (
     <div style={{ borderTop: '0.5px solid var(--color-border)' }}>
       <button
-        onClick={() => { setDraftQty(String(line.qty)); setEditing(e => !e); }}
+        onClick={() => { setDraftName(line.name); setDraftQty(String(line.qty)); setDraftUnit(line.unit); setEditing(e => !e); }}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px',
           background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
@@ -433,28 +439,52 @@ function OrderRow({ line, bufferPct, onQtyChange, onRemove }: {
       </button>
 
       {editing && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '0 14px 10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 14px 10px' }}>
           <input
-            type="number" inputMode="decimal" value={draftQty}
-            onChange={e => setDraftQty(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') commitQty(); }}
+            type="text" value={draftName}
+            onChange={e => setDraftName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+            placeholder="Material name"
             style={{
-              flex: 1, padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+              padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
               background: 'var(--color-bg)', fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
             }}
           />
-          <button
-            onClick={commitQty}
-            style={{ padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--color-orange)', color: '#fff', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
-          >
-            Save
-          </button>
-          <button
-            onClick={() => { onRemove(line.id); setEditing(false); }}
-            style={{ padding: '8px 14px', borderRadius: 8, border: '0.5px solid var(--color-border)', background: 'none', color: '#e53e3e', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
-          >
-            Remove
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              type="number" inputMode="decimal" value={draftQty}
+              onChange={e => setDraftQty(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+              style={{
+                flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+                background: 'var(--color-bg)', fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
+              }}
+            />
+            <input
+              type="text" value={draftUnit}
+              onChange={e => setDraftUnit(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+              placeholder="Unit"
+              style={{
+                flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: '0.5px solid var(--color-border)',
+                background: 'var(--color-bg)', fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={commit}
+              style={{ flex: 1, padding: '8px 14px', borderRadius: 8, border: 'none', background: 'var(--color-orange)', color: '#fff', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+            >
+              Save
+            </button>
+            <button
+              onClick={() => { onRemove(line.id); setEditing(false); }}
+              style={{ flex: 1, padding: '8px 14px', borderRadius: 8, border: '0.5px solid var(--color-border)', background: 'none', color: '#e53e3e', fontSize: 12.5, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
+            >
+              Remove
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -543,12 +573,18 @@ function AddMaterialForm({ onAdd }: { onAdd: (name: string, qty: number, unit: s
 // whatever the linked calculators computed.
 function applyManualEdits(order: JobOrder, job: SavedJob): JobOrder {
   const removed = new Set(job.orderRemovedIds ?? []);
-  const overrides = job.orderQtyOverrides ?? {};
+  const qtyOverrides = job.orderQtyOverrides ?? {};
+  const lineOverrides = job.orderLineOverrides ?? {};
 
   function adjust(lines: OrderLine[]): OrderLine[] {
     return lines
       .filter(l => !removed.has(l.id))
-      .map(l => overrides[l.id] !== undefined ? { ...l, qty: overrides[l.id] } : l);
+      .map(l => {
+        const lineOverride = lineOverrides[l.id];
+        const qty = qtyOverrides[l.id] !== undefined ? qtyOverrides[l.id] : l.qty;
+        if (qty === l.qty && !lineOverride) return l;
+        return { ...l, qty, name: lineOverride?.name ?? l.name, unit: lineOverride?.unit ?? l.unit };
+      });
   }
 
   const timber = adjust(order.timber);
@@ -584,8 +620,19 @@ function OrderCard({ entries, job, updateJob }: {
   const order = applyManualEdits(buildJobOrder(entries), job);
   const hasLines = order.timber.length + order.concrete.length + order.fixings.length + order.other.length > 0;
 
-  function handleQtyChange(id: string, qty: number) {
-    updateJob(job.id, { orderQtyOverrides: { ...(job.orderQtyOverrides ?? {}), [id]: qty } });
+  function handleLineChange(id: string, changes: { name?: string; unit?: string; qty?: number }) {
+    const updates: Partial<SavedJob> = {};
+    if (changes.qty !== undefined) {
+      updates.orderQtyOverrides = { ...(job.orderQtyOverrides ?? {}), [id]: changes.qty };
+    }
+    if (changes.name !== undefined || changes.unit !== undefined) {
+      const existing = job.orderLineOverrides ?? {};
+      updates.orderLineOverrides = {
+        ...existing,
+        [id]: { ...existing[id], ...(changes.name !== undefined ? { name: changes.name } : {}), ...(changes.unit !== undefined ? { unit: changes.unit } : {}) },
+      };
+    }
+    updateJob(job.id, updates);
   }
 
   function handleRemove(id: string) {
@@ -660,25 +707,25 @@ function OrderCard({ entries, job, updateJob }: {
         {order.timber.length > 0 && (
           <>
             <OrderGroupLabel>Timber</OrderGroupLabel>
-            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
+            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.concrete.length > 0 && (
           <>
             <OrderGroupLabel>Concrete</OrderGroupLabel>
-            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
+            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.fixings.length > 0 && (
           <>
             <OrderGroupLabel>Fixings</OrderGroupLabel>
-            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
+            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
           </>
         )}
         {order.other.length > 0 && (
           <>
             <OrderGroupLabel>Other</OrderGroupLabel>
-            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onQtyChange={handleQtyChange} onRemove={handleRemove} />)}
+            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
           </>
         )}
 

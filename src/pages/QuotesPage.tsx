@@ -149,21 +149,40 @@ export function QuotesPage() {
         </h1>
       </div>
 
-      <button
-        onClick={() => navigate('/calc/photoquote')}
-        style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          width: '100%', padding: '16px', borderRadius: 14, border: 'none',
-          background: 'var(--color-orange)', color: '#fff', fontSize: 16, fontWeight: 500,
-          fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '-0.3px',
-        }}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        New quote
-      </button>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => navigate('/calc/photoquote')}
+          style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '16px', borderRadius: 14, border: 'none',
+            background: 'var(--color-orange)', color: '#fff', fontSize: 15, fontWeight: 500,
+            fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '-0.3px',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New quote
+        </button>
+        <button
+          onClick={() => navigate('/calc/photoquote', {
+            state: { fromCalculator: true, scopeSummary: '', materials: [], docType: 'invoice' },
+          })}
+          style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '16px', borderRadius: 14, border: '1.5px solid var(--color-orange)',
+            background: 'none', color: 'var(--color-orange)', fontSize: 15, fontWeight: 500,
+            fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '-0.3px',
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          New invoice
+        </button>
+      </div>
 
       {quotes.length === 0 ? (
         <div style={{

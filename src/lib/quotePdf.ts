@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf';
 import type { Region } from '../types';
 
-export type QuoteDocType = 'quote' | 'estimate';
+export type QuoteDocType = 'quote' | 'estimate' | 'invoice';
 
 export interface PdfLabourLine {
   role: string;
@@ -19,6 +19,8 @@ export interface PdfLogo {
 export interface PdfQuoteInput {
   docType: QuoteDocType;
   quoteNumber: string;
+  dueDate: string; // invoice only
+  paid: boolean; // invoice only
   clientName: string;
   clientPhone: string;
   clientEmail: string;
@@ -55,6 +57,7 @@ export interface PdfQuoteInput {
 const DISCLAIMERS: Record<QuoteDocType, string> = {
   quote: 'Final price may vary if actual site conditions differ from those assessed. Valid for 30 days from the date above.',
   estimate: 'This is a preliminary estimate, not a fixed price. A formal quote will be provided following an on-site assessment.',
+  invoice: 'Please arrange payment by the due date above. Contact us if you have any questions about this invoice.',
 };
 
 function fmtCurrency(amount: number, region: Region): string {
@@ -65,6 +68,14 @@ function fmtCurrency(amount: number, region: Region): string {
   }).format(amount);
 }
 
+// Formats a <input type="date"> value ("YYYY-MM-DD") for display. Parses the components as a local
+// date rather than `new Date(dateStr)`, which reads bare date strings as UTC midnight — in any
+// timezone behind UTC that rolls back to the previous day once formatted in local time.
+export function formatDateInput(dateStr: string, region: Region): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(region === 'AU' ? 'en-AU' : 'en-NZ');
+}
+
 export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const marginX = 48;
@@ -73,7 +84,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   let y = 56;
 
   const money = (n: number) => fmtCurrency(n, q.region);
-  const docTitle = q.docType === 'quote' ? 'Quote' : 'Estimate';
+  const docTitle = q.docType === 'quote' ? 'Quote' : q.docType === 'invoice' ? 'Invoice' : 'Estimate';
 
   function ensureSpace(next: number) {
     if (y + next > pageHeight - 90) {
@@ -152,6 +163,10 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   if (clientContact) { doc.text(clientContact, marginX, y); y += 14; }
   if (q.clientAddress) { doc.text(q.clientAddress, marginX, y); y += 14; }
   doc.text(`Date: ${new Date().toLocaleDateString(q.region === 'AU' ? 'en-AU' : 'en-NZ')}`, marginX, y);
+  if (q.docType === 'invoice' && q.dueDate.trim()) {
+    const dueDateStr = formatDateInput(q.dueDate, q.region);
+    doc.text(`Due: ${dueDateStr}`, marginX + 160, y);
+  }
   y += 14;
   if (q.siteAddress.trim()) {
     doc.text(`Site: ${q.siteAddress.trim()}`, marginX, y);
@@ -242,8 +257,18 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.setDrawColor(10, 10, 10);
   doc.setLineWidth(1);
   doc.line(col.price - 10, y - 14, pageWidth - marginX, y - 14);
-  totalRow('Total inc. GST', money(q.total), { bold: true, accent: true });
+  totalRow(q.docType === 'invoice' ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: true });
   y += 20;
+
+  // Paid stamp — invoice only
+  if (q.docType === 'invoice' && q.paid) {
+    ensureSpace(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(34, 197, 94);
+    doc.text('PAID IN FULL', col.total, y, { align: 'right' });
+    y += 20;
+  }
 
   // Payment details — terms and bank transfer info, shown once as its own block
   const bankParts = [

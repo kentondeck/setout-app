@@ -6,7 +6,7 @@ import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { JobNameInput } from '../components/JobNameInput';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { buildQuotePdf } from '../lib/quotePdf';
+import { buildQuotePdf, formatDateInput } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey } from '../lib/priceMemory';
@@ -26,6 +26,10 @@ function currencyFmt(region: 'AU' | 'NZ') {
     currency: region === 'AU' ? 'AUD' : 'NZD',
     maximumFractionDigits: 2,
   });
+}
+
+function docTypeLabel(t: QuoteDocType): string {
+  return t === 'quote' ? 'Quote' : t === 'invoice' ? 'Invoice' : 'Estimate';
 }
 
 type Confidence = 'high' | 'medium' | 'low';
@@ -89,6 +93,7 @@ export interface CalcQuoteHandoff {
   scopeSummary: string;
   materials: { item: string; quantity: number; unit: string; note?: string }[];
   jobName?: string;
+  docType?: QuoteDocType; // defaults to 'quote' when omitted (existing calculator "Add to Quote" buttons)
 }
 
 // Navigate to /calc/photoquote with this state (e.g. from History, Jobs, or the Quotes tab) to
@@ -112,6 +117,8 @@ interface QuoteStateSnapshot {
   siteAddress: string;
   quoteNumber: string;
   notes: string;
+  dueDate: string;
+  paid: boolean;
   travelMode: TravelMode;
   travelRate: string;
   travelQty: string;
@@ -190,6 +197,8 @@ export function PhotoQuoteCalc() {
   const [siteAddress, setSiteAddress] = useState('');
   const [quoteNumber, setQuoteNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [paid, setPaid] = useState(false);
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
@@ -228,7 +237,7 @@ export function PhotoQuoteCalc() {
     const snapshot: QuoteStateSnapshot = {
       fromCalculator, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-      quoteNumber, notes, travelMode, travelRate, travelQty,
+      quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
     };
     updateEntry(lastEntryId, {
@@ -244,7 +253,7 @@ export function PhotoQuoteCalc() {
   }, [
     materialsList, labourList, lastEntryId, fromCalculator, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-    quoteNumber, notes, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
   ]);
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -331,7 +340,7 @@ export function PhotoQuoteCalc() {
     aiBaselineRef.current = [];
     habitsCapturedRef.current = true;
     setFromCalculator(true);
-    setDocType('quote');
+    setDocType(state.docType ?? 'quote');
     const quote: QuoteResult = {
       error: '', errorReason: '', confidence: 'high',
       dimensions: { lengthM: 0, widthM: 0, areaM2: 0 },
@@ -391,6 +400,8 @@ export function PhotoQuoteCalc() {
       setSiteAddress(snap.siteAddress);
       setQuoteNumber(snap.quoteNumber);
       setNotes(snap.notes);
+      setDueDate(snap.dueDate ?? '');
+      setPaid(snap.paid ?? false);
       setTravelMode(snap.travelMode);
       setTravelRate(snap.travelRate);
       setTravelQty(snap.travelQty);
@@ -609,6 +620,8 @@ export function PhotoQuoteCalc() {
     return buildQuotePdf({
       docType,
       quoteNumber: quoteNumber.trim(),
+      dueDate,
+      paid,
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientEmail: clientEmail.trim(),
@@ -660,7 +673,7 @@ export function PhotoQuoteCalc() {
 
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: `Setout ${docType === 'quote' ? 'Quote' : 'Estimate'}` });
+        await navigator.share({ files: [file], title: `Setout ${docTypeLabel(docType)}` });
         return;
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') return;
@@ -672,7 +685,7 @@ export function PhotoQuoteCalc() {
   function buildShareText(): string {
     if (!result) return '';
     const totals = computeTotals();
-    const docLabel = docType === 'quote' ? 'Quote' : 'Estimate';
+    const docLabel = docTypeLabel(docType);
     const lines: string[] = [`${docLabel}${jobName ? ` — ${jobName}` : ''}`, ''];
     if (result.scopeSummary) { lines.push(result.scopeSummary); lines.push(''); }
     lines.push(`Area: ${result.dimensions.lengthM}m × ${result.dimensions.widthM}m = ${result.dimensions.areaM2}m²`);
@@ -685,12 +698,18 @@ export function PhotoQuoteCalc() {
       }
       if (totals.travel > 0) lines.push(`Travel: ${fmt.format(totals.travel)}`);
       lines.push('');
-      lines.push(`Total inc. GST: ${fmt.format(totals.total)}`);
+      lines.push(`${docType === 'invoice' ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);
+      if (docType === 'invoice' && dueDate.trim()) {
+        lines.push(`Due: ${formatDateInput(dueDate, totals.region)}`);
+      }
+      if (docType === 'invoice' && paid) lines.push('PAID IN FULL');
     }
     lines.push('');
-    lines.push(docType === 'quote'
-      ? 'Final price may vary if site conditions differ. Valid for 30 days.'
-      : 'This is a preliminary estimate, not a fixed price. A formal quote follows a site visit.');
+    lines.push(
+      docType === 'quote' ? 'Final price may vary if site conditions differ. Valid for 30 days.' :
+      docType === 'invoice' ? 'Please arrange payment by the due date above.' :
+      'This is a preliminary estimate, not a fixed price. A formal quote follows a site visit.'
+    );
     return lines.join('\n');
   }
 
@@ -699,7 +718,7 @@ export function PhotoQuoteCalc() {
     const text = buildShareText();
     if (typeof navigator.share === 'function') {
       try {
-        await navigator.share({ title: `Setout — ${docType === 'quote' ? 'Quote' : 'Estimate'}`, text });
+        await navigator.share({ title: `Setout — ${docTypeLabel(docType)}`, text });
         return;
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') return;
@@ -727,7 +746,7 @@ export function PhotoQuoteCalc() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader title={fromCalculator ? 'Quote' : 'QuoteAi'} />
+      <CalcHeader title={fromCalculator ? docTypeLabel(docType) : 'QuoteAi'} />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
@@ -793,11 +812,11 @@ export function PhotoQuoteCalc() {
           </>
         )}
 
-        {/* Quote / Estimate toggle */}
+        {/* Quote / Estimate / Invoice toggle */}
         <div>
           <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DOCUMENT TYPE</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            {(['estimate', 'quote'] as QuoteDocType[]).map(t => {
+            {(['estimate', 'quote', 'invoice'] as QuoteDocType[]).map(t => {
               const active = docType === t;
               return (
                 <button
@@ -810,12 +829,42 @@ export function PhotoQuoteCalc() {
                     color: active ? 'var(--color-orange)' : 'var(--color-text)',
                   }}
                 >
-                  {t === 'quote' ? 'Firm quote' : 'Estimate'}
+                  {t === 'quote' ? 'Firm quote' : t === 'invoice' ? 'Invoice' : 'Estimate'}
                 </button>
               );
             })}
           </div>
         </div>
+
+        {docType === 'invoice' && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DUE DATE</p>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+                style={{
+                  width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
+                  background: 'var(--color-card)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)',
+                  outline: 'none', boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            <button
+              onClick={() => setPaid(p => !p)}
+              style={{
+                padding: '12px 16px', borderRadius: 12, fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                border: paid ? '1.5px solid #22c55e' : '0.5px solid var(--color-border)',
+                background: paid ? 'rgba(34,197,94,0.08)' : 'var(--color-card)',
+                color: paid ? '#16a34a' : 'var(--color-text)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {paid ? '✓ Paid' : 'Mark as paid'}
+            </button>
+          </div>
+        )}
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e', lineHeight: 1.5 }}>{error}</p>}
 
@@ -834,7 +883,7 @@ export function PhotoQuoteCalc() {
               onPointerUp={e => (e.currentTarget.style.opacity = '1')}
               onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              {loading ? 'Estimating…' : docType === 'quote' ? 'Generate quote' : 'Generate estimate'}
+              {loading ? 'Estimating…' : `Generate ${docTypeLabel(docType).toLowerCase()}`}
             </button>
             {loading && (
               <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
@@ -847,13 +896,15 @@ export function PhotoQuoteCalc() {
         {result && (
           <>
             {fromCalculator ? (
-              <div style={{
-                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-                borderRadius: 'var(--radius-card)', padding: '14px 16px',
-              }}>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>FROM CALCULATOR</p>
-                <p style={{ margin: '4px 0 0', fontSize: 14.5, color: 'var(--color-text)', lineHeight: 1.4 }}>{result.scopeSummary}</p>
-              </div>
+              result.scopeSummary.trim() && (
+                <div style={{
+                  background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 'var(--radius-card)', padding: '14px 16px',
+                }}>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>FROM CALCULATOR</p>
+                  <p style={{ margin: '4px 0 0', fontSize: 14.5, color: 'var(--color-text)', lineHeight: 1.4 }}>{result.scopeSummary}</p>
+                </div>
+              )
             ) : (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -1380,7 +1431,7 @@ export function PhotoQuoteCalc() {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                     paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>Total inc. GST</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>{docType === 'invoice' ? 'Total due' : 'Total inc. GST'}</span>
                     <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px' }}>
                       {fmt.format(totals.total)}
                     </span>
@@ -1610,7 +1661,7 @@ export function PhotoQuoteCalc() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
-                {docType === 'quote' ? 'Send quote PDF' : 'Send estimate PDF'}
+                {`Send ${docTypeLabel(docType).toLowerCase()} PDF`}
               </button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -1640,7 +1691,9 @@ export function PhotoQuoteCalc() {
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {fromCalculator
-                ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
+                ? result.scopeSummary.trim()
+                  ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
+                  : 'Entered manually — check all materials, hours, and prices before sending.'
                 : COMPLIANCE_NOTES.photoquote[settings.region]}
             </p>
           </>

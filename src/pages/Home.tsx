@@ -2,12 +2,12 @@ import { useContext } from 'react';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { TopBar } from '../components/TopBar';
 import { ReorderableCalcGrid } from '../components/ReorderableCalcGrid';
-import { QuoteAiTile } from '../components/QuoteAiTile';
+import { QuoteTile } from '../components/QuoteTile';
 import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
 import type { CalculatorId } from '../types';
 
-// QuoteAi gets pulled out into its own wide tile up top (see QuoteAiTile) — everything else is
+// Quote gets pulled out into its own wide tile up top (see QuoteTile) — everything else is
 // the reorderable measuring-calculator grid.
 const GRID_CALCULATORS = CALCULATORS.filter(c => c.id !== 'photoquote');
 const QUOTE_AI = CALCULATORS.find(c => c.id === 'photoquote')!;
@@ -70,7 +70,7 @@ export function Home() {
       </div>
 
       <div style={{ padding: '0 20px 12px' }}>
-        <QuoteAiTile calc={QUOTE_AI} />
+        <QuoteTile calc={QUOTE_AI} />
       </div>
 
       <div style={{ padding: '8px 20px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>

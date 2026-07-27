@@ -1,4 +1,4 @@
-// Manually maintained reference pricing for QuoteAi. The AI only returns materials/labour
+// Manually maintained reference pricing for Quote. The AI only returns materials/labour
 // (no prices) — prices are looked up from this file so pricing doesn't cost API tokens.
 // Update the figures below monthly against current trade/merchant pricing. Unmatched items are
 // left blank for the tradie to fill in.

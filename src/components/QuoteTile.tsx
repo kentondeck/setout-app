@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import type { CalcMeta } from '../lib/calculators';
 
-// QuoteAi isn't a measuring calculator like the rest of the grid — it's an AI estimation tool,
+// Quote isn't a measuring calculator like the rest of the grid — it's an AI estimation tool,
 // so it gets its own full-width tile up top rather than sitting in the reorderable grid.
-export function QuoteAiTile({ calc }: { calc: CalcMeta }) {
+export function QuoteTile({ calc }: { calc: CalcMeta }) {
   const navigate = useNavigate();
 
   return (

@@ -62,7 +62,7 @@ export const CALCULATORS: CalcMeta[] = [
   {
     id: 'concrete',
     label: 'Concrete',
-    subtitle: 'Slabs, post holes',
+    subtitle: 'Slabs, materials',
     number: '08',
     svgPath: 'M2 10a5 5 0 1 0 10 0a5 5 0 1 0-10 0M13 9h8v9h-8zM2 18h20M5 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 18a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
   },

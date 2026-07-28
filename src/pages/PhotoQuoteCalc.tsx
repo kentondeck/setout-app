@@ -808,7 +808,7 @@ export function PhotoQuoteCalc() {
                 style={{
                   flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
                   fontFamily: 'inherit', cursor: 'pointer',
-                  border: '0.5px dashed rgba(0,0,0,0.18)', background: 'none', color: 'var(--color-muted)',
+                  border: '1px dashed var(--color-orange)', background: 'none', color: 'var(--color-orange)',
                 }}
               >
                 + New {docTypeLabel(t)}

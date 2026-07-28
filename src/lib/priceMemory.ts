@@ -9,6 +9,7 @@ import type { Region } from '../types';
 // exact-string entries under v2 would never match the new scheme anyway, so they're abandoned.
 const MATERIAL_KEY = 'setout_photoquote_material_memory_v3';
 const LABOUR_KEY = 'setout_photoquote_labour_memory_v2';
+const SELF_KEY = 'setout_photoquote_self_memory_v1';
 
 interface MemoryEntry {
   price: string;
@@ -90,4 +91,28 @@ export function getRememberedLabourRate(role: string, region: Region): string {
 export function rememberLabourRate(role: string, region: Region, rate: string) {
   if (!role.trim() || !rate.trim()) return;
   writeEntry(LABOUR_KEY, `${region}:${normalize(role)}`, rate);
+}
+
+// Whether a given person (matched by employee name if the row came from Settings → Your team,
+// else by the typed role) has been marked "Your own time" before — not region-scoped, since who
+// the tradie is doesn't change with the job's location.
+function readSelfStore(): Record<string, boolean> {
+  try {
+    const raw = localStorage.getItem(SELF_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getRememberedIsSelf(key: string): boolean {
+  if (!key.trim()) return false;
+  return !!readSelfStore()[normalize(key)];
+}
+
+export function rememberIsSelf(key: string, value: boolean) {
+  if (!key.trim()) return;
+  const store = readSelfStore();
+  store[normalize(key)] = value;
+  localStorage.setItem(SELF_KEY, JSON.stringify(store));
 }

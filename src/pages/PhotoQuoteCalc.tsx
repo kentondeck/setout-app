@@ -9,7 +9,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf, formatDateInput } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
-import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey } from '../lib/priceMemory';
+import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey, getRememberedIsSelf, rememberIsSelf } from '../lib/priceMemory';
 import { lookupCachedPrices, normalizeItemKey, isCheapFixing } from '../lib/priceLookup';
 import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
 import type { Employee } from '../types';
@@ -603,6 +603,7 @@ export function PhotoQuoteCalc() {
       hours: '1',
       rate: String(emp.payRate),
       employeeName: emp.name,
+      isSelf: getRememberedIsSelf(emp.name),
     }]);
     setShowTeamPicker(false);
     setTeamSearch('');
@@ -1177,6 +1178,9 @@ export function PhotoQuoteCalc() {
                       type="text"
                       value={l.role}
                       onChange={e => updateLabour(l.id, { role: e.target.value })}
+                      onBlur={e => {
+                        if (!l.employeeName && getRememberedIsSelf(e.target.value)) updateLabour(l.id, { isSelf: true });
+                      }}
                       placeholder="Role — e.g. Carpenter"
                       style={{
                         flex: 1, minWidth: 0, padding: '6px 0', border: 'none', background: 'transparent',
@@ -1205,7 +1209,11 @@ export function PhotoQuoteCalc() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button
-                      onClick={() => updateLabour(l.id, { isSelf: !l.isSelf })}
+                      onClick={() => {
+                        const next = !l.isSelf;
+                        updateLabour(l.id, { isSelf: next });
+                        rememberIsSelf(l.employeeName || l.role, next);
+                      }}
                       style={{
                         padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
                         border: l.isSelf ? '1px solid var(--color-orange)' : '0.5px solid var(--color-border)',

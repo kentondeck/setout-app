@@ -82,6 +82,7 @@ interface EditableLabour {
   rate: string;
   rateOverride?: string; // manual client rate per hour — undefined means use the labour margin
   isSelf?: boolean; // the builder's own time — what's charged for it is profit, not a real cash cost
+  employeeName?: string; // for the tradie's own reference only — never printed on the client-facing quote
 }
 
 // Shape any calculator can pass via navigate('/calc/photoquote', { state }) to jump straight into
@@ -214,7 +215,10 @@ export function PhotoQuoteCalc() {
   const [travelRate, setTravelRate] = useState('');
   const [travelQty, setTravelQty] = useState('');
   const [materialMarginPct, setMaterialMarginPct] = useState(() => localStorage.getItem('setout_photoquote_material_margin') ?? '20');
-  const [labourMarginPct, setLabourMarginPct] = useState(() => localStorage.getItem('setout_photoquote_labour_margin') ?? '20');
+  // Not persisted to localStorage like materialMarginPct — labour margin is scoped to this quote
+  // only, so dragging it here never changes the default the next quote starts with, and never
+  // touches a team member's saved charge-out rate back in Settings.
+  const [labourMarginPct, setLabourMarginPct] = useState('20');
   const [logo, setLogo] = useState<PdfLogo | null>(() => {
     const stored = localStorage.getItem('setout_photoquote_logo');
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
@@ -553,7 +557,6 @@ export function PhotoQuoteCalc() {
 
   function handleLabourMarginChange(v: string) {
     setLabourMarginPct(v);
-    localStorage.setItem('setout_photoquote_labour_margin', v);
   }
 
   function handleTravelModeChange(mode: TravelMode) {
@@ -590,14 +593,16 @@ export function PhotoQuoteCalc() {
   // Adds a role pre-filled from a saved teammate (Settings → Your team) — pay rate and charge-out
   // rate come straight from their profile instead of the margin slider, since a business owner
   // usually prices different team members differently (e.g. an apprentice near cost, a lead tradie
-  // with a bigger markup).
+  // with a bigger markup). Only the role/trade is printed on the client-facing quote — the
+  // employee's name is kept as employeeName, shown in-app only, never in the PDF or share text.
   function addEmployeeToLabour(emp: Employee) {
     setLabourList(prev => [...prev, {
       id: crypto.randomUUID(),
-      role: emp.role ? `${emp.name} — ${emp.role}` : emp.name,
+      role: emp.role || 'Labour',
       hours: '1',
       rate: String(emp.payRate),
       rateOverride: String(emp.chargeRate),
+      employeeName: emp.name,
     }]);
     setShowTeamPicker(false);
     setTeamSearch('');
@@ -1178,6 +1183,14 @@ export function PhotoQuoteCalc() {
                         fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none',
                       }}
                     />
+                    {l.employeeName && (
+                      <span style={{
+                        flexShrink: 0, fontSize: 10.5, fontWeight: 500, color: 'var(--color-muted)',
+                        background: 'rgba(0,0,0,0.045)', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap',
+                      }}>
+                        {l.employeeName}
+                      </span>
+                    )}
                     <button
                       onClick={() => removeLabourRow(l.id)}
                       aria-label="Remove labour role"

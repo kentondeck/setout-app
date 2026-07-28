@@ -590,18 +590,18 @@ export function PhotoQuoteCalc() {
     setLabourList(prev => prev.filter(l => l.id !== id));
   }
 
-  // Adds a role pre-filled from a saved teammate (Settings → Your team) — pay rate and charge-out
-  // rate come straight from their profile instead of the margin slider, since a business owner
-  // usually prices different team members differently (e.g. an apprentice near cost, a lead tradie
-  // with a bigger markup). Only the role/trade is printed on the client-facing quote — the
-  // employee's name is kept as employeeName, shown in-app only, never in the PDF or share text.
+  // Adds a role pre-filled from a saved teammate (Settings → Your team) — only pay rate comes
+  // straight from their profile; the client rate is left to the labour margin slider, same as a
+  // manually-typed role, so it moves with the margin just like materials do. (Their saved charge-out
+  // rate is still there in Settings if the tradie wants to "Edit" this row to that fixed number.)
+  // Only the role/trade is printed on the client-facing quote — the employee's name is kept as
+  // employeeName, shown in-app only, never in the PDF or share text.
   function addEmployeeToLabour(emp: Employee) {
     setLabourList(prev => [...prev, {
       id: crypto.randomUUID(),
       role: emp.role || 'Labour',
       hours: '1',
       rate: String(emp.payRate),
-      rateOverride: String(emp.chargeRate),
       employeeName: emp.name,
     }]);
     setShowTeamPicker(false);

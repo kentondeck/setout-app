@@ -1788,7 +1788,7 @@ export function PhotoQuoteCalc() {
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {fromCalculator
-                ? 'Materials and quantities came from the calculator, not an AI estimate. Prices are starting figures — check before ordering or quoting a client.'
+                ? 'Materials and quantities came from the calculator, not a SmartQuote estimate. Prices are starting figures — check before ordering or quoting a client.'
                 : isManual
                 ? 'Entered manually — check all materials, hours, and prices before sending.'
                 : COMPLIANCE_NOTES.photoquote[settings.region]}

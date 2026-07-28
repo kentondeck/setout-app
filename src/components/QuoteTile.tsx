@@ -36,17 +36,9 @@ export function QuoteTile({ calc }: { calc: CalcMeta }) {
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <p style={{ margin: 0, fontSize: 16.5, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
-            {calc.label}
-          </p>
-          <span style={{
-            fontSize: 9.5, fontWeight: 700, letterSpacing: '0.4px', color: '#fff',
-            background: 'rgba(255,255,255,0.25)', borderRadius: 5, padding: '2px 6px',
-          }}>
-            AI
-          </span>
-        </div>
+        <p style={{ margin: 0, fontSize: 16.5, fontWeight: 600, color: '#fff', letterSpacing: '-0.3px' }}>
+          {calc.label}
+        </p>
         <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.88)' }}>
           {calc.subtitle}
         </p>

@@ -1185,8 +1185,8 @@ export function PhotoQuoteCalc() {
                     />
                     {l.employeeName && (
                       <span style={{
-                        flexShrink: 0, fontSize: 10.5, fontWeight: 500, color: 'var(--color-muted)',
-                        background: 'rgba(0,0,0,0.045)', borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap',
+                        flexShrink: 0, fontSize: 13, fontWeight: 700, color: '#fff',
+                        background: 'var(--color-orange)', borderRadius: 8, padding: '5px 12px', whiteSpace: 'nowrap',
                       }}>
                         {l.employeeName}
                       </span>

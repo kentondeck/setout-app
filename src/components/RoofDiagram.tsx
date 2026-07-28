@@ -26,7 +26,7 @@ const FLOOR_Y = 380;
 
 // Fixed birdsmouth / top plate anchor — these never move
 const PLATE_OUTER_X = 264;   // left edge of plate rect
-const PLATE_W       = 90;    // plate width in px
+const PLATE_W       = 76;    // plate width in px — narrower than a naive 1:1 with rafter depth so the wall doesn't dwarf the rafter
 const HEEL_X        = PLATE_OUTER_X;             // outer face of top plate = heel cut x (= 264)
 const PLATE_Y_TOP   = 236;   // top of plate = seat cut y
 const SEAT_W        = PLATE_W;                   // seat spans the full plate width
@@ -140,8 +140,8 @@ export const RoofDiagram = memo(function RoofDiagram({
   // Label dropped below the midpoint of the bottom face, clear of anatomy labels
   const rsMidX = r((ridgeBotX + SEAT_INNER_X) / 2);
   const rsMidY = r((ridgeBotY + PLATE_Y_TOP)  / 2);
-  const rsLblX = r(rsMidX + sinP * 30);
-  const rsLblY = r(rsMidY + cosP * 30);
+  const rsLblX = r(rsMidX + sinP * 55);
+  const rsLblY = r(rsMidY + cosP * 55);
 
   // ── Anatomy label leader endpoints ─────────────────────────────────────────
   const tailMidY  = r((tailBotY  + tailTopY)  / 2);

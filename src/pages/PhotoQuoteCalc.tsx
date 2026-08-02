@@ -153,6 +153,26 @@ function fileToJpegBase64(file: File): Promise<string> {
   });
 }
 
+// Anthropic's PDF limit is 32MB once base64-encoded (~33% inflation) — cap the raw file well
+// under that so the rest of the request body (description, preferences) always has headroom.
+const MAX_PLANS_FILE_BYTES = 20 * 1024 * 1024;
+
+function fileToPdfBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (file.size > MAX_PLANS_FILE_BYTES) {
+      reject(new Error('Plans PDF is too large (max 20MB) — try exporting a smaller/compressed version'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(new Error('Could not read the plans file — try again'));
+    reader.readAsDataURL(file);
+  });
+}
+
 const MAX_LOGO_DIMENSION = 320;
 
 function fileToLogo(file: File): Promise<PdfLogo> {
@@ -185,6 +205,7 @@ export function PhotoQuoteCalc() {
 
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [plansFile, setPlansFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [docType, setDocType] = useState<QuoteDocType>('estimate');
   const [result, setResult] = useState<QuoteResult | null>(null);
@@ -224,6 +245,7 @@ export function PhotoQuoteCalc() {
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const plansInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   // What the AI actually proposed for the current takeoff, captured right after a generate — diffed
   // against materialsList when the tradie finalizes (download/share) to learn their build habits.
@@ -284,6 +306,23 @@ export function PhotoQuoteCalc() {
     setPhotoPreview(URL.createObjectURL(file));
     setResult(null);
     setError('');
+  }
+
+  function handlePlansChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > MAX_PLANS_FILE_BYTES) {
+      setError('Plans PDF is too large (max 20MB) — try exporting a smaller/compressed version');
+      return;
+    }
+    setPlansFile(file);
+    setResult(null);
+    setError('');
+  }
+
+  function handleRemovePlans() {
+    setPlansFile(null);
+    if (plansInputRef.current) plansInputRef.current.value = '';
   }
 
   // Price priority: remembered (your own confirmed price) → price book directly for cheap,
@@ -435,6 +474,7 @@ export function PhotoQuoteCalc() {
     setDocType(type);
     setPhoto(null);
     setPhotoPreview('');
+    setPlansFile(null);
     setDescription('');
     setError('');
     const blank: QuoteResult = {
@@ -473,12 +513,14 @@ export function PhotoQuoteCalc() {
 
     try {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
+      const pdfBase64 = plansFile ? await fileToPdfBase64(plansFile) : null;
       const res = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           imageBase64,
           mediaType: imageBase64 ? 'image/jpeg' : null,
+          pdfBase64,
           description: description.trim(),
           region: settings.region,
           preferences: getLearnedPreferences(),
@@ -861,6 +903,66 @@ export function PhotoQuoteCalc() {
               )}
             </div>
 
+            {/* Construction plans (PDF) */}
+            <div>
+              <input
+                ref={plansInputRef}
+                type="file"
+                accept="application/pdf"
+                onChange={handlePlansChange}
+                style={{ display: 'none' }}
+              />
+              {plansFile ? (
+                <div style={{
+                  width: '100%', padding: '14px 16px', background: 'var(--color-card)',
+                  border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)',
+                  display: 'flex', alignItems: 'center', gap: 12,
+                }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,90,31,0.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                    </svg>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {plansFile.name}
+                    </p>
+                    <p style={{ margin: '1px 0 0', fontSize: 11.5, color: 'var(--color-muted)' }}>
+                      {(plansFile.size / (1024 * 1024)).toFixed(1)} MB — construction plans
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleRemovePlans}
+                    aria-label="Remove plans"
+                    style={{
+                      flexShrink: 0, width: 26, height: 26, borderRadius: '50%', border: 'none',
+                      background: 'rgba(0,0,0,0.05)', color: 'var(--color-muted)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, lineHeight: 1,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => plansInputRef.current?.click()}
+                  style={{
+                    width: '100%', padding: '16px', background: 'none',
+                    border: '0.5px dashed rgba(0,0,0,0.18)', borderRadius: 'var(--radius-card)',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)' }}>
+                    Upload a full set of plans <span style={{ color: 'var(--color-muted)' }}>(PDF, optional)</span>
+                  </p>
+                </button>
+              )}
+            </div>
+
             {/* Description */}
             <div>
               <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>WHAT'S THE JOB</p>
@@ -954,7 +1056,9 @@ export function PhotoQuoteCalc() {
             </button>
             {loading && (
               <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>
-                Working through a full takeoff — this can take up to a minute
+                {plansFile
+                  ? 'Reading through the plan set — a full document can take a couple of minutes'
+                  : 'Working through a full takeoff — this can take up to a minute'}
               </p>
             )}
           </>

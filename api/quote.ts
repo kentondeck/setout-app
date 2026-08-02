@@ -66,16 +66,20 @@ const MATERIAL_CONVENTIONS: Record<string, string> = {
   NZ: `Use New Zealand material conventions: metric units, NZ timber sizes and grades (90x45, 140x45, 190x45 MSG8/MSG10/MSG12, LVL, H3.2/H4 treated pine to NZS 3640), Coloursteel roofing/cladding profiles, standard sheet sizes (2400x1200), 20kg bag concrete premix. Reference NZS 3604 framing practice.`,
 };
 
-function buildSystemPrompt(region: string): string {
+function buildSystemPrompt(region: string, hasPlans: boolean): string {
   const conventions = MATERIAL_CONVENTIONS[region] ?? MATERIAL_CONVENTIONS.AU;
-  return `You are a quantity surveyor's assistant for Setout, a construction app for Australian and New Zealand tradespeople. Your job is to analyse a photo and/or written description of a construction job and produce a structured material takeoff for a tradie to review before ordering.
+  const plansGuidance = hasPlans ? `
 
-If a photo is included, look at it to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description. If no photo is included, base your estimate on the description alone.
+A set of construction plans (PDF — site plan, floor plans, elevations, sections, schedules) is included. These are scaled technical drawings, not a photo — read dimension strings, grid lines, and schedules directly rather than estimating by eye, and cross-reference between pages (e.g. a floor plan dimension against a matching elevation or schedule entry). Note in assumptions where a dimension had to be inferred because it wasn't explicitly called out. Still treat the result as a takeoff to verify, not a certified quantity survey — flag anything illegible, contradictory between pages, or outside the plan set's scope (e.g. services, structural engineering not shown) under clarificationsNeeded or exclusions.` : '';
+  return `You are a quantity surveyor's assistant for Setout, a construction app for Australian and New Zealand tradespeople. Your job is to analyse a photo, construction plans, and/or written description of a construction job and produce a structured material takeoff for a tradie to review before ordering.
+
+If a photo is included, look at it to judge scale — fence lines, pavers, doorways, and other objects with typical known dimensions are useful references — and combine it with the description. If no photo or plans are included, base your estimate on the description alone.
+${plansGuidance}
 
 ${conventions}
 
 Rules:
-- Dimensions are your best estimate from the photo (if provided) and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo. If there is no photo and no explicit dimension in the description, make a reasonable assumption for a typical job of this kind and list it under assumptions.
+- Dimensions are your best estimate from the plans (if provided), photo (if provided), and description. If the description gives an explicit dimension (e.g. "6x4 metres"), use it — don't override it from the photo. If there is no photo, no plans, and no explicit dimension in the description, make a reasonable assumption for a typical job of this kind and list it under assumptions.
 - Materials list must be practical and buildable: correct timber and post sizes, fixings, concrete where posts are involved. Do not price materials — pricing is applied separately from the tradie's own price list, so just get the item, quantity and unit right.
 - Include consumables and fixings a tradie would actually need (nails, screws, joist hangers, brackets, adhesive, flashing) as their own line items — these are commonly forgotten in quotes and quietly eat into a job's margin when left out.
 - Round quantities up to purchasable units — you buy 6 lengths, not 5.3; round bags, sheets, and boxes up to whole units.
@@ -124,11 +128,12 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('API key not configured', { status: 500 });
   }
 
-  let imageBase64: string | null, mediaType: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
+  let imageBase64: string | null, mediaType: string | null, pdfBase64: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
   try {
-    ({ imageBase64, mediaType, description, region, preferences } = (await req.json()) as {
+    ({ imageBase64, mediaType, pdfBase64, description, region, preferences } = (await req.json()) as {
       imageBase64: string | null;
       mediaType: string | null;
+      pdfBase64?: string | null;
       description: string;
       region: string;
       preferences?: LearnedPreferences;
@@ -147,6 +152,9 @@ export async function POST(req: Request): Promise<Response> {
   if (imageBase64 && mediaType) {
     content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
   }
+  if (pdfBase64) {
+    content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } });
+  }
   content.push({ type: 'text', text: `${description.trim()}\n\nRegion: ${regionCode}` });
 
   const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -164,7 +172,7 @@ export async function POST(req: Request): Promise<Response> {
         effort: 'medium',
         format: { type: 'json_schema', schema: QUOTE_SCHEMA },
       },
-      system: buildSystemPrompt(regionCode) + buildPreferencesBlock(preferences),
+      system: buildSystemPrompt(regionCode, !!pdfBase64) + buildPreferencesBlock(preferences),
       messages: [{ role: 'user', content }],
     }),
   });

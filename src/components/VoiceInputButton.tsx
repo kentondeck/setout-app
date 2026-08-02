@@ -28,7 +28,6 @@ export function VoiceInputButton({ prompt, onValues }: VoiceInputButtonProps) {
     onError(err) {
       if (err !== 'not-allowed') {
         setIsOpen(false);
-        showToast('Mic error — try again');
       }
     },
   });

@@ -153,14 +153,17 @@ function fileToJpegBase64(file: File): Promise<string> {
   });
 }
 
-// Anthropic's PDF limit is 32MB once base64-encoded (~33% inflation) — cap the raw file well
-// under that so the rest of the request body (description, preferences) always has headroom.
-const MAX_PLANS_FILE_BYTES = 20 * 1024 * 1024;
+// Anthropic's own PDF limit is 32MB base64-encoded, but that's never the binding constraint here —
+// Vercel serverless functions hard-cap the WHOLE request body (this PDF + any attached photo +
+// description) at 4.5MB, rejected before our code even runs. Base64 inflates raw bytes by ~33%,
+// so cap the raw file well under that, leaving room for a photo attached alongside it.
+const MAX_REQUEST_BASE64_BYTES = 4 * 1024 * 1024; // ~0.5MB headroom under Vercel's 4.5MB body cap
+const MAX_PLANS_FILE_BYTES = 3 * 1024 * 1024;
 
 function fileToPdfBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     if (file.size > MAX_PLANS_FILE_BYTES) {
-      reject(new Error('Plans PDF is too large (max 20MB) — try exporting a smaller/compressed version'));
+      reject(new Error('Plans PDF is too large (max ~3MB) — try exporting a smaller/compressed version, or split it into fewer pages'));
       return;
     }
     const reader = new FileReader();
@@ -312,7 +315,7 @@ export function PhotoQuoteCalc() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_PLANS_FILE_BYTES) {
-      setError('Plans PDF is too large (max 20MB) — try exporting a smaller/compressed version');
+      setError('Plans PDF is too large (max ~3MB) — try exporting a smaller/compressed version, or split it into fewer pages');
       return;
     }
     setPlansFile(file);
@@ -514,6 +517,14 @@ export function PhotoQuoteCalc() {
     try {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
       const pdfBase64 = plansFile ? await fileToPdfBase64(plansFile) : null;
+
+      // Belt-and-braces: catch a photo + plans combo that individually pass but together would
+      // still blow Vercel's 4.5MB request body cap, before it becomes an opaque "Failed to fetch".
+      const combinedBase64Bytes = (imageBase64?.length ?? 0) + (pdfBase64?.length ?? 0);
+      if (combinedBase64Bytes > MAX_REQUEST_BASE64_BYTES) {
+        throw new Error('The photo and plans together are too large to send — try removing the photo or using a smaller plans file');
+      }
+
       const res = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -959,9 +970,12 @@ export function PhotoQuoteCalc() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
                   </svg>
-                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)' }}>
-                    Upload a full set of plans <span style={{ color: 'var(--color-muted)' }}>(PDF, optional)</span>
-                  </p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)' }}>
+                      Upload a full set of plans <span style={{ color: 'var(--color-muted)' }}>(PDF, optional)</span>
+                    </p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Max ~3MB — export/compress a lighter PDF if yours is bigger</p>
+                  </div>
                 </button>
               )}
             </div>

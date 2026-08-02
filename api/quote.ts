@@ -1,3 +1,5 @@
+import { del } from '@vercel/blob';
+
 // Node runtime, not Edge — Opus + adaptive thinking on this prompt regularly takes 25s+ and grew
 // slower again after the QS-assistant rewrite (more rules to reason through: nullable quantities,
 // per-item confidence, waste factors, clarifications, exclusions, region conventions) — confirmed
@@ -128,12 +130,12 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('API key not configured', { status: 500 });
   }
 
-  let imageBase64: string | null, mediaType: string | null, pdfBase64: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
+  let imageBase64: string | null, mediaType: string | null, pdfUrl: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
   try {
-    ({ imageBase64, mediaType, pdfBase64, description, region, preferences } = (await req.json()) as {
+    ({ imageBase64, mediaType, pdfUrl, description, region, preferences } = (await req.json()) as {
       imageBase64: string | null;
       mediaType: string | null;
-      pdfBase64?: string | null;
+      pdfUrl?: string | null;
       description: string;
       region: string;
       preferences?: LearnedPreferences;
@@ -152,8 +154,10 @@ export async function POST(req: Request): Promise<Response> {
   if (imageBase64 && mediaType) {
     content.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: imageBase64 } });
   }
-  if (pdfBase64) {
-    content.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } });
+  if (pdfUrl) {
+    // Uploaded client-side straight to Vercel Blob (see api/plans-upload.ts) to dodge Vercel
+    // Functions' 4.5MB request body cap — Claude fetches the PDF itself from this URL.
+    content.push({ type: 'document', source: { type: 'url', url: pdfUrl } });
   }
   content.push({ type: 'text', text: `${description.trim()}\n\nRegion: ${regionCode}` });
 
@@ -172,10 +176,17 @@ export async function POST(req: Request): Promise<Response> {
         effort: 'medium',
         format: { type: 'json_schema', schema: QUOTE_SCHEMA },
       },
-      system: buildSystemPrompt(regionCode, !!pdfBase64) + buildPreferencesBlock(preferences),
+      system: buildSystemPrompt(regionCode, !!pdfUrl) + buildPreferencesBlock(preferences),
       messages: [{ role: 'user', content }],
     }),
   });
+
+  // Claude has now fetched the PDF (or tried to) as part of the request above — clean up the blob
+  // straight away rather than leaving a tradie's plans (often carrying a client name/address)
+  // sitting in public storage. Best-effort: a cleanup failure shouldn't fail the whole quote.
+  if (pdfUrl) {
+    try { await del(pdfUrl); } catch { /* not worth failing the quote over */ }
+  }
 
   if (!anthropicRes.ok) {
     const body = await anthropicRes.text();

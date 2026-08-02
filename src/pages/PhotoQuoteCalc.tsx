@@ -1,5 +1,6 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { upload } from '@vercel/blob/client';
 import { CalcHeader } from '../components/CalcHeader';
 import { ResultCard } from '../components/ResultCard';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
@@ -153,27 +154,16 @@ function fileToJpegBase64(file: File): Promise<string> {
   });
 }
 
-// Anthropic's own PDF limit is 32MB base64-encoded, but that's never the binding constraint here —
-// Vercel serverless functions hard-cap the WHOLE request body (this PDF + any attached photo +
-// description) at 4.5MB, rejected before our code even runs. Base64 inflates raw bytes by ~33%,
-// so cap the raw file well under that, leaving room for a photo attached alongside it.
-const MAX_REQUEST_BASE64_BYTES = 4 * 1024 * 1024; // ~0.5MB headroom under Vercel's 4.5MB body cap
-const MAX_PLANS_FILE_BYTES = 3 * 1024 * 1024;
+// Uploaded straight from the browser to Vercel Blob (see uploadPlansFile) rather than through our
+// own request body — that sidesteps Vercel Functions' 4.5MB payload cap entirely. The real ceiling
+// here is Anthropic's own 32MB total request size, so this just needs headroom under that.
+const MAX_PLANS_FILE_BYTES = 25 * 1024 * 1024;
 
-function fileToPdfBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (file.size > MAX_PLANS_FILE_BYTES) {
-      reject(new Error('Plans PDF is too large (max ~3MB) — try exporting a smaller/compressed version, or split it into fewer pages'));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.slice(result.indexOf(',') + 1));
-    };
-    reader.onerror = () => reject(new Error('Could not read the plans file — try again'));
-    reader.readAsDataURL(file);
-  });
+// api/quote.ts reads the PDF straight from this URL server-side and deletes the blob once it has —
+// nothing is retained beyond that single request.
+function uploadPlansFile(file: File): Promise<string> {
+  return upload(file.name, file, { access: 'public', handleUploadUrl: '/api/plans-upload' })
+    .then(blob => blob.url);
 }
 
 const MAX_LOGO_DIMENSION = 320;
@@ -209,6 +199,8 @@ export function PhotoQuoteCalc() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [plansFile, setPlansFile] = useState<File | null>(null);
+  const [plansUrl, setPlansUrl] = useState('');
+  const [plansUploading, setPlansUploading] = useState(false);
   const [description, setDescription] = useState('');
   const [docType, setDocType] = useState<QuoteDocType>('estimate');
   const [result, setResult] = useState<QuoteResult | null>(null);
@@ -311,20 +303,36 @@ export function PhotoQuoteCalc() {
     setError('');
   }
 
-  function handlePlansChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePlansChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > MAX_PLANS_FILE_BYTES) {
-      setError('Plans PDF is too large (max ~3MB) — try exporting a smaller/compressed version, or split it into fewer pages');
+      setError('Plans PDF is too large (max ~25MB) — try exporting a smaller/compressed version, or split it into fewer pages');
       return;
     }
     setPlansFile(file);
+    setPlansUrl('');
     setResult(null);
     setError('');
+
+    // Upload straight away rather than waiting for Generate — by the time the tradie's filled in
+    // the description, the (often multi-MB) upload has usually already finished in the background.
+    setPlansUploading(true);
+    try {
+      const url = await uploadPlansFile(file);
+      setPlansUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not upload the plans file — try again');
+      setPlansFile(null);
+      if (plansInputRef.current) plansInputRef.current.value = '';
+    } finally {
+      setPlansUploading(false);
+    }
   }
 
   function handleRemovePlans() {
     setPlansFile(null);
+    setPlansUrl('');
     if (plansInputRef.current) plansInputRef.current.value = '';
   }
 
@@ -478,6 +486,7 @@ export function PhotoQuoteCalc() {
     setPhoto(null);
     setPhotoPreview('');
     setPlansFile(null);
+    setPlansUrl('');
     setDescription('');
     setError('');
     const blank: QuoteResult = {
@@ -506,6 +515,10 @@ export function PhotoQuoteCalc() {
 
   async function handleGenerate() {
     if (!description.trim() || loading) return;
+    if (plansFile && !plansUrl) {
+      setError(plansUploading ? 'Still uploading the plans — try again in a moment' : 'Plans upload failed — remove the file and try again');
+      return;
+    }
 
     captureBuildHabits(); // in case a prior AI takeoff this session was never downloaded/shared
 
@@ -516,22 +529,13 @@ export function PhotoQuoteCalc() {
 
     try {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
-      const pdfBase64 = plansFile ? await fileToPdfBase64(plansFile) : null;
-
-      // Belt-and-braces: catch a photo + plans combo that individually pass but together would
-      // still blow Vercel's 4.5MB request body cap, before it becomes an opaque "Failed to fetch".
-      const combinedBase64Bytes = (imageBase64?.length ?? 0) + (pdfBase64?.length ?? 0);
-      if (combinedBase64Bytes > MAX_REQUEST_BASE64_BYTES) {
-        throw new Error('The photo and plans together are too large to send — try removing the photo or using a smaller plans file');
-      }
-
       const res = await fetch('/api/quote', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           imageBase64,
           mediaType: imageBase64 ? 'image/jpeg' : null,
-          pdfBase64,
+          pdfUrl: plansUrl || null,
           description: description.trim(),
           region: settings.region,
           preferences: getLearnedPreferences(),
@@ -836,7 +840,7 @@ export function PhotoQuoteCalc() {
     } catch { /* ignore */ }
   }
 
-  const canGenerate = description.trim().length > 0 && !loading;
+  const canGenerate = description.trim().length > 0 && !loading && !plansUploading;
   const quoteDetailInputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
     background: 'var(--color-card)', fontSize: 15, fontFamily: 'inherit', color: 'var(--color-text)',
@@ -941,8 +945,10 @@ export function PhotoQuoteCalc() {
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {plansFile.name}
                     </p>
-                    <p style={{ margin: '1px 0 0', fontSize: 11.5, color: 'var(--color-muted)' }}>
-                      {(plansFile.size / (1024 * 1024)).toFixed(1)} MB — construction plans
+                    <p style={{ margin: '1px 0 0', fontSize: 11.5, color: plansUploading ? 'var(--color-orange)' : 'var(--color-muted)' }}>
+                      {plansUploading
+                        ? 'Uploading…'
+                        : `${(plansFile.size / (1024 * 1024)).toFixed(1)} MB — construction plans`}
                     </p>
                   </div>
                   <button
@@ -974,7 +980,7 @@ export function PhotoQuoteCalc() {
                     <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)' }}>
                       Upload a full set of plans <span style={{ color: 'var(--color-muted)' }}>(PDF, optional)</span>
                     </p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Max ~3MB — export/compress a lighter PDF if yours is bigger</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>Max ~25MB — a full scanned drawing set is fine</p>
                   </div>
                 </button>
               )}
@@ -1069,7 +1075,7 @@ export function PhotoQuoteCalc() {
               onPointerUp={e => (e.currentTarget.style.opacity = '1')}
               onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              {loading ? 'Estimating…' : `Generate ${docTypeLabel(docType).toLowerCase()}`}
+              {loading ? 'Estimating…' : plansUploading ? 'Uploading plans…' : `Generate ${docTypeLabel(docType).toLowerCase()}`}
             </button>
             {loading && (
               <p style={{ margin: '-10px 0 0', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center' }}>

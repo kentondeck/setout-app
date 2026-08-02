@@ -787,6 +787,9 @@ export function PhotoQuoteCalc() {
       for (const l of totals.labourLines) {
         lines.push(`Labour — ${l.role}: ${l.hours} hrs @ ${fmt.format(l.rate)}/hr = ${fmt.format(l.lineTotal)}`);
       }
+      if (totals.labourLines.length > 1) {
+        lines.push(`Labour total: ${fmt.format(totals.labourSubtotal)}`);
+      }
       if (totals.travel > 0) lines.push(`Travel: ${fmt.format(totals.travel)}`);
       lines.push('');
       lines.push(`${docType === 'invoice' ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);

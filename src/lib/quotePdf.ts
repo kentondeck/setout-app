@@ -215,7 +215,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.text(money(q.materialsSubtotal), col.total, y, { align: 'right' });
   y += 22;
 
-  // Labour — one row per role
+  // Labour — one row per role, plus a rolled-up total when there's more than one
   for (const l of q.labour) {
     ensureSpace(20);
     doc.setTextColor(10, 10, 10);
@@ -225,6 +225,15 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     doc.text(money(l.rate) + '/hr', col.price, y);
     doc.setTextColor(10, 10, 10);
     doc.text(money(l.lineTotal), col.total, y, { align: 'right' });
+    y += 20;
+  }
+  if (q.labour.length > 1) {
+    ensureSpace(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(10, 10, 10);
+    doc.text('Labour total', col.item, y);
+    doc.text(money(q.labourSubtotal), col.total, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
     y += 20;
   }
 

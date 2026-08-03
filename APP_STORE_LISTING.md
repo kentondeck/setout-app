@@ -20,7 +20,7 @@ Setout is the construction calculator built for tradies who need fast, accurate 
 
 Whether you're pricing a deck, cutting stairs, working out roof pitch, or planning a concrete pour, Setout gives you the answer in seconds. No internet required.
 
-**15 CALCULATORS ON SITE**
+**14 CALCULATORS ON SITE**
 • Decking — board count, lineal metres, waste factor
 • Wall Framing — studs, plates, noggins, full cut list
 • Stairs — rise, run, string length, AS 1657 compliance check
@@ -35,7 +35,6 @@ Whether you're pricing a deck, cutting stairs, working out roof pitch, or planni
 • Gradient — fall over run, drain and slab slopes
 • Raked Wall — variable stud heights for sloping top plates
 • Roofing — sheet count and lap allowances
-• Code Check — AS/NZS compliance notes on demand
 
 **JOBS AND QUOTES**
 Save calculations to a job, then build a quote or invoice with labour and materials. Export a professional PDF in seconds — client-ready, with your business name and ABN.
@@ -63,7 +62,7 @@ https://setoutapp.com.au/privacy
 ---
 
 ## Version Release Notes (What's New — for 1.0)
-First release. 15 construction calculators built for tradies on site — stairs, decking, framing, roof pitch, concrete and more. Save to jobs, build quotes, export PDFs. Works offline.
+First release. 14 construction calculators built for tradies on site — stairs, decking, framing, roof pitch, concrete and more. Save to jobs, build quotes, export PDFs. Works offline.
 
 ---
 
@@ -79,8 +78,7 @@ First release. 15 construction calculators built for tradies on site — stairs,
 - None
 
 > All data (name, region, jobs, settings) is stored locally on the device only.
-> The Code Check feature sends query text to the Claude API (Anthropic) but this
-> is not linked to any user identity and is not stored by Setout.
+> No data is transmitted to any server. The app works fully offline.
 
 ---
 

@@ -348,11 +348,11 @@ export function FencingCalc() {
               const concrete = wasteBuffer > 0 ? Math.ceil(o.totalConcreteBags * buf) : o.totalConcreteBags;
               const row = (qty: number | string, unit: string, detail: string, showX = true) => (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                  <span style={{ fontSize: 26, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                  <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
                     {qty}
                   </span>
-                  {showX && <span style={{ fontSize: 15, color: 'var(--color-muted)' }}>×</span>}
-                  <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
+                  {showX && <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>×</span>}
+                  <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
                     {unit}
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)', marginLeft: 'auto' }}>{detail}</span>

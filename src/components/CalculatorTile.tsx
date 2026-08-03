@@ -63,6 +63,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
         <button
           onClick={e => { e.stopPropagation(); onPinToggle(calc.id); }}
           onPointerDown={e => e.stopPropagation()}
+          onPointerUp={e => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: 10,

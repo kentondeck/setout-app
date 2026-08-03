@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setout — The Construction Calculator App</title>
+  <meta name="description" content="The ultimate construction calculator app for Australian and NZ tradies. Free to download.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF5A1F;
+      --dark: #0a0a0a;
+      --bg: #f5f5f3;
+      --card: #ffffff;
+      --muted: #787878;
+      --border: rgba(0,0,0,0.07);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--dark);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(245,245,243,0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+    }
+    .nav-logo { font-size: 22px; font-weight: 800; letter-spacing: -1.2px; text-decoration: none; }
+    .nav-logo .s { color: var(--dark); }
+    .nav-logo .o { color: var(--orange); }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); text-decoration: none; opacity: 0.5; }
+    .nav-links a:hover { opacity: 1; }
+    .nav-links .btn { background: var(--orange); color: white; opacity: 1; padding: 9px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; }
+
+    /* HERO */
+    .hero {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 80px 48px 72px;
+      display: flex;
+      align-items: center;
+      gap: clamp(40px, 6vw, 80px);
+    }
+    .hero-text { flex: 1; min-width: 0; }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--orange);
+      background: rgba(255,90,31,0.1);
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 800;
+      letter-spacing: -3px;
+      line-height: 1.04;
+      margin-bottom: 24px;
+    }
+    .hero h1 em { font-style: normal; color: var(--orange); }
+    .hero p {
+      font-size: 17px;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 44px;
+      max-width: 480px;
+    }
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .hero-img {
+      flex-shrink: 0;
+    }
+    .hero-img img {
+      width: 400px;
+      border-radius: 24px;
+      display: block;
+      box-shadow:
+        0 40px 100px rgba(0,0,0,0.2),
+        0 12px 32px rgba(0,0,0,0.1);
+    }
+    @media (max-width: 900px) {
+      .hero { flex-direction: column; padding: 60px 24px 48px; }
+      .hero-img img { width: 100%; max-width: 420px; }
+      .hero-btns { justify-content: flex-start; }
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--dark);
+      color: white;
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: -0.3px;
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      color: var(--dark);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      letter-spacing: -0.3px;
+    }
+    .hero-free { font-size: 13px; color: var(--muted); }
+    .hero-free strong { color: var(--dark); }
+
+    /* STATS BAR */
+    .stats-bar {
+      background: white;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 40px 48px;
+    }
+    .stats-inner {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      text-align: center;
+    }
+    .stat-item {}
+    .stat-num {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: var(--orange);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-label { font-size: 14px; color: var(--muted); font-weight: 500; }
+
+    /* HOW IT WORKS */
+    .section {
+      padding: 96px 48px;
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+    .section-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 16px;
+    }
+    .section h2 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 500px;
+      margin-bottom: 56px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .step-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 36px 32px;
+      text-align: center;
+    }
+    .step-num {
+      width: 48px;
+      height: 48px;
+      background: var(--orange);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      margin: 0 auto 20px;
+    }
+    .step-card h3 { font-size: 18px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 10px; }
+    .step-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    /* FEATURES */
+    #features { background: var(--dark); padding: 96px 48px; }
+    #features .section-inner { max-width: 1160px; margin: 0 auto; }
+    #features .section-eyebrow { color: var(--orange); }
+    #features h2 { color: white; }
+    #features .section-sub { color: rgba(255,255,255,0.45); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .feat-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 32px 28px;
+    }
+    .feat-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255,90,31,0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      color: var(--orange);
+    }
+    .feat-card h3 { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .feat-card p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; }
+
+    /* CALCULATORS */
+    #calculators { background: var(--bg); }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 8px;
+    }
+    .calc-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      border: 1px solid var(--border);
+    }
+    .calc-num { font-size: 10px; font-weight: 700; color: var(--orange); letter-spacing: 0.06em; margin-bottom: 10px; }
+    .calc-icon { width: 20px; height: 20px; color: var(--dark); display: block; margin-bottom: 9px; }
+    .calc-label { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 2px; }
+    .calc-sub { font-size: 11px; color: var(--muted); }
+
+    /* FAQ */
+    #faq { background: white; }
+    .faq-list { max-width: 700px; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+    }
+    .faq-q { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 10px; }
+    .faq-a { font-size: 14px; color: var(--muted); line-height: 1.75; }
+
+    /* ABOUT */
+    #about { background: var(--bg); }
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+    .about-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      padding: 32px 28px;
+    }
+    .about-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+    .about-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    /* DOWNLOAD CTA */
+    #download {
+      background: var(--orange);
+      padding: 100px 48px;
+      text-align: center;
+    }
+    #download h2 {
+      font-size: 52px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -2.5px;
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    #download p { font-size: 18px; color: rgba(255,255,255,0.75); margin-bottom: 44px; }
+    .dl-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      color: var(--dark);
+      border-radius: 14px;
+      padding: 14px 26px;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .dl-note { margin-top: 20px; font-size: 13px; color: rgba(255,255,255,0.6); }
+
+    /* FOOTER */
+    footer {
+      background: var(--dark);
+      padding: 40px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-logo { font-size: 20px; font-weight: 800; letter-spacing: -1px; }
+    .footer-logo .s { color: white; }
+    .footer-logo .o { color: var(--orange); }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,0.35); text-decoration: none; }
+    .footer-copy { font-size: 13px; color: rgba(255,255,255,0.22); }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 64px 20px 60px; }
+      .hero h1 { font-size: 40px; letter-spacing: -2px; }
+      .stats-inner { grid-template-columns: repeat(2, 1fr); padding: 0; }
+      .stats-bar { padding: 40px 24px; }
+      .section { padding: 64px 20px; }
+      .steps-grid, .features-grid, .about-grid { grid-template-columns: 1fr; }
+      #features { padding: 64px 20px; }
+      #download { padding: 64px 20px; }
+      #download h2 { font-size: 36px; }
+      footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo"><span class="s">set</span><span class="o">out</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#calculators">Calculators</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#download" class="btn">Download</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-text">
+    <span class="hero-eyebrow">For Australian &amp; NZ Tradies</span>
+    <h1>The construction calc app that <em>just works.</em></h1>
+    <p>Instant results for stairs, decking, framing, roofing and more — no page loads, no subscriptions, no friction. Built specifically for the Australian and New Zealand building industry.</p>
+    <div class="hero-btns">
+      <a href="#download" class="btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        App Store
+      </a>
+      <a href="#download" class="btn-secondary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/></svg>
+        Google Play
+      </a>
+    </div>
+    <p class="hero-free"><strong>Completely free</strong> to download — no account required</p>
+  </div>
+  <div class="hero-img">
+    <img src="images/hero-bench.jpg" alt="Setout app open on a workbench with construction plans">
+  </div>
+</div>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-num">15+</div>
+      <div class="stat-label">Calculators</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">$0</div>
+      <div class="stat-label">Completely Free</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">100%</div>
+      <div class="stat-label">Works Offline</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">AU&amp;NZ</div>
+      <div class="stat-label">Standards Built In</div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section">
+  <p class="section-eyebrow">How It Works</p>
+  <h2>Three steps.<br>That's it.</h2>
+  <p class="section-sub">No learning curve. Open the app, pick your calculator, enter your numbers. Setout does the rest.</p>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <h3>Choose a calculator</h3>
+      <p>Pick from 15+ trade-specific calculators. Stairs, decking, framing, roofing, concrete and more.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <h3>Enter your numbers</h3>
+      <p>Type in your measurements. Use voice input to keep your hands free while you're on the tools.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <h3>Get instant results</h3>
+      <p>Results appear instantly with full working shown. Save to a job for your records or hand to an apprentice.</p>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<div id="features">
+  <div class="section-inner" style="max-width:1160px;margin:0 auto;padding:96px 48px;">
+    <p class="section-eyebrow">Features</p>
+    <h2 style="color:white;font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:16px;">Everything you need.<br>Nothing you don't.</h2>
+    <p class="section-sub">Built by tradies, for tradies. Every feature exists because someone on site needed it.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+        </div>
+        <h3>Voice Input</h3>
+        <p>Speak your measurements hands-free. Setout converts your voice to numbers instantly — no typing required.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <h3>Apprentice Mode</h3>
+        <p>Every calculation shows its full working step by step. Perfect for training or double-checking your numbers.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <h3>AU &amp; NZ Standards</h3>
+        <p>Compliance notes built into every calculator. Stair limits, stud spacing, wind zones — all referenced automatically.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v16"/><path d="M16 6v16"/></svg>
+        </div>
+        <h3>Job Sheets</h3>
+        <p>Save any calculation to a named job. Pull it up on site, share with your team, or keep it for your records.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        </div>
+        <h3>Works Without Signal</h3>
+        <p>No internet required. Everything runs on your phone — remote sites, underground, anywhere.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>Diagram Output</h3>
+        <p>Key calculators generate visual diagrams — stair stringers, roof pitches, spacing layouts — that you can save and share.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALCULATORS -->
+<div class="section" id="calculators">
+  <p class="section-eyebrow">Calculators</p>
+  <h2>15+ tools.<br>All in one app.</h2>
+  <p class="section-sub">From rough-in to finish, every calculation you run on site is covered.</p>
+  <div class="calc-grid">
+    <div class="calc-card"><div class="calc-num">01</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 5L17 5M6 8L18 8M5 11L19 11M4 14L20 14M3 17L21 17"/></svg><div class="calc-label">Decking</div><div class="calc-sub">Boards, joists, bearers</div></div>
+    <div class="calc-card"><div class="calc-num">02</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v16M10 4v16M16 4v16M22 4v16"/></svg><div class="calc-label">Wall Framing</div><div class="calc-sub">Studs, plates, nogs</div></div>
+    <div class="calc-card"><div class="calc-num">03</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M7 6v12M12 6v12M17 6v12"/></svg><div class="calc-label">Equal Spacing</div><div class="calc-sub">Divide any span evenly</div></div>
+    <div class="calc-card"><div class="calc-num">04</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h4v-4h4v-4h4V8h4V4"/></svg><div class="calc-label">Stairs</div><div class="calc-sub">Rise, run, stringer</div></div>
+    <div class="calc-card"><div class="calc-num">05</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L12 6l9 12"/></svg><div class="calc-label">Roof Pitch</div><div class="calc-sub">Rafters, angles</div></div>
+    <div class="calc-card"><div class="calc-num">06</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg><div class="calc-label">Cut List</div><div class="calc-sub">Optimise waste</div></div>
+    <div class="calc-card"><div class="calc-num">07</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 4v16M11 4v16M17 4v16"/></svg><div class="calc-label">Balusters</div><div class="calc-sub">Spacing, quantity</div></div>
+    <div class="calc-card"><div class="calc-num">08</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="13" y="9" width="8" height="9"/><path d="M2 18h20"/></svg><div class="calc-label">Concrete</div><div class="calc-sub">Slabs, post holes</div></div>
+    <div class="calc-card"><div class="calc-num">09</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V6M9 18V9M14 18V12M19 18V15M4 6l15 9"/></svg><div class="calc-label">Raked Wall</div><div class="calc-sub">Varying stud heights</div></div>
+    <div class="calc-card"><div class="calc-num">10</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18M3 9h18M3 13h18M3 17h18M3 5v16M21 5v16"/></svg><div class="calc-label">Cladding</div><div class="calc-sub">Story rod, boards</div></div>
+    <div class="calc-card"><div class="calc-num">11</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V4M4 20h16M4 4l16 16"/></svg><div class="calc-label">Square Check</div><div class="calc-sub">Check for square</div></div>
+    <div class="calc-card"><div class="calc-num">12</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20L12 5L21 20M5 18h14M7 15h10M9 12h6"/></svg><div class="calc-label">Roofing</div><div class="calc-sub">Sheets, screws, flashing</div></div>
+    <div class="calc-card"><div class="calc-num">13</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10L8 10L8 22L16 22L16 10L22 10"/></svg><div class="calc-label">Excavation</div><div class="calc-sub">Volume, swell, loads</div></div>
+    <div class="calc-card"><div class="calc-num">15</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20L21 4M21 4h-6M21 4v6"/></svg><div class="calc-label">Gradient</div><div class="calc-sub">Fall, ratio, grade</div></div>
+    <div class="calc-card"><div class="calc-num">16</div><svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22"/></svg><div class="calc-label">Fencing</div><div class="calc-sub">Posts, rails, palings</div></div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="section" id="faq" style="background:white;max-width:100%;padding:96px 48px;">
+  <div style="max-width:1160px;margin:0 auto;">
+    <p class="section-eyebrow">FAQ</p>
+    <h2>Common questions.</h2>
+    <div class="faq-list" style="margin-top:40px;">
+      <div class="faq-item">
+        <div class="faq-q">Is Setout really free?</div>
+        <div class="faq-a">Yes — completely free to download and use. No subscription, no in-app purchases, no account required.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Does it work without internet?</div>
+        <div class="faq-a">Completely. All calculations run on your device. No data connection needed — works on remote sites, underground, anywhere.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Which standards does it follow?</div>
+        <div class="faq-a">Setout is built for Australian and New Zealand construction standards. Compliance notes are built into each calculator where relevant.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I save my calculations?</div>
+        <div class="faq-a">Yes. Save any result to a named job. Your history is stored locally on your phone — no account or cloud sync required.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is there an Android version?</div>
+        <div class="faq-a">Both iOS and Android versions are coming soon. Sign up to be notified when it launches.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<div class="section" id="about">
+  <p class="section-eyebrow">About</p>
+  <h2>Built for the tools,<br>not the office.</h2>
+  <p class="section-sub">Setout was built by people who've spent time on site and know what's missing from generic calculator apps.</p>
+  <div class="about-grid">
+    <div class="about-card">
+      <h3>Our mission</h3>
+      <p>To give every tradie access to fast, accurate, standards-compliant calculations — without needing a degree in engineering or a slow website.</p>
+    </div>
+    <div class="about-card">
+      <h3>Built in Australia</h3>
+      <p>We're based in Australia and build specifically for the AU and NZ construction industry. Every calculator reflects how the trade actually works here.</p>
+    </div>
+    <div class="about-card">
+      <h3>Always improving</h3>
+      <p>More calculators are in the pipeline. Got a calculation that's missing? We want to hear about it. Reach out at hello@setout.app</p>
+    </div>
+  </div>
+</div>
+
+<!-- DOWNLOAD CTA -->
+<div id="download">
+  <h2>Download Setout today.</h2>
+  <p>Free for iOS and Android. No account needed.</p>
+  <div class="dl-btns">
+    <a href="#" class="btn-white">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      App Store
+    </a>
+    <a href="#" class="btn-white">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/></svg>
+      Google Play
+    </a>
+  </div>
+  <p class="dl-note">Completely free — no subscription, no account required</p>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo"><span class="s">set</span><span class="o">out</span></div>
+  <ul class="footer-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#calculators">Calculators</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="mailto:hello@setout.app">Contact</a></li>
+  </ul>
+  <div class="footer-copy">&copy; 2026 Setout. Built in Australia.</div>
+</footer>
+
+</body>
+</html>

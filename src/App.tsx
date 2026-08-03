@@ -29,7 +29,6 @@ import { ConcreteCalc } from './pages/ConcreteCalc';
 import { RakedWallCalc } from './pages/RakedWallCalc';
 import { CladdingCalc } from './pages/CladdingCalc';
 import { SetoutCalc } from './pages/SetoutCalc';
-import { CodeCheckCalc } from './pages/CodeCheckCalc';
 import { RoofingCalc } from './pages/RoofingCalc';
 import { ExcavationCalc } from './pages/ExcavationCalc';
 import { GradientCalc } from './pages/GradientCalc';
@@ -61,7 +60,6 @@ function AppShell() {
           <Route path="/calc/raked" element={<RakedWallCalc />} />
           <Route path="/calc/cladding" element={<CladdingCalc />} />
           <Route path="/calc/setout" element={<SetoutCalc />} />
-          <Route path="/calc/codecheck" element={<CodeCheckCalc />} />
           <Route path="/calc/roofing" element={<RoofingCalc />} />
           <Route path="/calc/excavation" element={<ExcavationCalc />} />
           <Route path="/calc/gradient" element={<GradientCalc />} />

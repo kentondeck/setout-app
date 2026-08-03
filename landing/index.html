@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setout — Build Better</title>
+  <meta name="description" content="The construction calculator built for Australian and NZ tradies. Stairs, decking, framing, roof pitch and more — on site, offline.">
+  <meta property="og:title" content="Setout — Build Better">
+  <meta property="og:description" content="The calc app built for how you actually work on site.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --orange: #FF5A1F;
+      --dark: #0a0a0a;
+      --bg: #f5f5f3;
+      --card: #ffffff;
+      --muted: #787878;
+      --border: rgba(0,0,0,0.07);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--dark);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(245,245,243,0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(20px, 5vw, 48px);
+    }
+
+    .nav-logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -1.2px;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .nav-logo .s { color: var(--dark); }
+    .nav-logo .o { color: var(--orange); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--dark);
+      text-decoration: none;
+      opacity: 0.5;
+      transition: opacity 0.15s;
+    }
+    .nav-links a:hover { opacity: 1; }
+    .nav-links .btn-pill {
+      background: var(--dark);
+      color: white;
+      opacity: 1;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .nav-links .btn-pill:hover { background: var(--orange); }
+
+    @media (max-width: 640px) { .nav-hide { display: none; } }
+
+    /* ─── HERO ─── */
+    .hero-wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: clamp(20px, 3vh, 36px) clamp(20px, 5vw, 48px) clamp(40px, 6vh, 80px);
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(48px, 7vw, 96px);
+      min-height: calc(100svh - 62px);
+    }
+
+    .hero-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hero-kicker {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: fadeUp 0.5s ease 0.05s both;
+    }
+    .hero-kicker::before {
+      content: '';
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--orange);
+      flex-shrink: 0;
+    }
+
+    .hero-h1 {
+      font-size: clamp(40px, 5.5vw, 68px);
+      font-weight: 800;
+      line-height: 1.04;
+      letter-spacing: -3px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.55s ease 0.12s both;
+    }
+    .hero-h1 em { font-style: normal; color: var(--orange); }
+
+    .hero-p {
+      font-size: clamp(16px, 1.8vw, 17px);
+      line-height: 1.7;
+      color: var(--muted);
+      margin-bottom: 44px;
+      max-width: 440px;
+      animation: fadeUp 0.55s ease 0.2s both;
+    }
+
+    .store-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+      animation: fadeUp 0.55s ease 0.28s both;
+    }
+
+    .store-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      background: var(--dark);
+      color: white;
+      border-radius: 16px;
+      padding: 13px 22px;
+      text-decoration: none;
+      transition: transform 0.18s ease, background 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .store-btn:hover { background: #1c1c1c; transform: translateY(-2px); }
+    .store-btn-copy { display: flex; flex-direction: column; line-height: 1; gap: 3px; }
+    .store-btn-small { font-size: 10px; font-weight: 500; opacity: 0.5; letter-spacing: 0.03em; }
+    .store-btn-large { font-size: 16px; font-weight: 700; letter-spacing: -0.4px; }
+    .cs-tag {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--orange);
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 100px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-note {
+      font-size: 13px;
+      color: var(--muted);
+      animation: fadeUp 0.55s ease 0.36s both;
+    }
+
+    @media (max-width: 860px) {
+      .hero-wrap { flex-direction: column; min-height: auto; padding-top: 56px; }
+      .hero-photo { order: -1; }
+    }
+
+    /* ─── TICKER ─── */
+    .ticker {
+      background: var(--dark);
+      padding: 18px 0;
+      overflow: hidden;
+    }
+    .ticker-track {
+      display: flex;
+      gap: 0;
+      animation: ticker 36s linear infinite;
+      width: max-content;
+    }
+    .ticker-item {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      white-space: nowrap;
+    }
+    .ticker-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.01em;
+      padding: 0 28px;
+      transition: color 0.2s;
+    }
+    .ticker-sep {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--orange);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      padding: clamp(80px, 11vh, 120px) clamp(20px, 5vw, 48px);
+    }
+    .container { max-width: 1160px; margin: 0 auto; }
+
+    /* ─── JOB SHEETS FEATURE ─── */
+    #job-sheets {
+      background: white;
+    }
+
+    .js-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(48px, 7vw, 96px);
+      align-items: center;
+    }
+
+    .js-text h2 {
+      font-size: clamp(30px, 4vw, 46px);
+      font-weight: 800;
+      letter-spacing: -2.5px;
+      line-height: 1.08;
+      margin-bottom: 18px;
+    }
+    .js-text p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.75;
+      margin-bottom: 14px;
+    }
+    .js-text p:last-of-type { margin-bottom: 0; }
+
+    .js-visual {
+      background: var(--bg);
+      border-radius: 24px;
+      padding: 28px 24px;
+      border: 1px solid var(--border);
+    }
+
+    .job-card {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+    }
+    .job-card:last-child { margin-bottom: 0; }
+
+    .job-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .job-card-name { font-size: 14px; font-weight: 700; letter-spacing: -0.3px; }
+    .job-card-date { font-size: 11px; color: var(--muted); }
+
+    .job-card-items { display: flex; flex-direction: column; gap: 6px; }
+    .job-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .job-item-label { color: var(--muted); }
+    .job-item-val { font-weight: 600; letter-spacing: -0.2px; }
+    .job-item-val.orange { color: var(--orange); }
+
+    @media (max-width: 760px) {
+      .js-inner { grid-template-columns: 1fr; }
+    }
+
+    /* ─── FEATURES ─── */
+    #features {
+      background: var(--bg);
+    }
+
+    .feat-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .feat-card {
+      background: white;
+      border-radius: 22px;
+      padding: clamp(28px, 4vw, 40px);
+      border: 1px solid var(--border);
+    }
+
+    .feat-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .feat-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+    }
+    .feat-card p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+    @media (max-width: 720px) {
+      .feat-row { grid-template-columns: 1fr; }
+    }
+
+    /* ─── CALCULATORS ─── */
+    #calculators { background: white; }
+
+    .calc-intro {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .calc-intro h2 {
+      font-size: clamp(30px, 4vw, 46px);
+      font-weight: 800;
+      letter-spacing: -2.5px;
+      line-height: 1.08;
+    }
+
+    .calc-intro p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.65;
+      max-width: 340px;
+      text-align: right;
+    }
+
+    @media (max-width: 640px) {
+      .calc-intro { flex-direction: column; align-items: flex-start; }
+      .calc-intro p { text-align: left; }
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 8px;
+    }
+    .calc-card {
+      background: var(--bg);
+      border-radius: 18px;
+      padding: 18px 16px 16px;
+      border: 1px solid transparent;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+      cursor: default;
+    }
+    .calc-card:hover {
+      background: white;
+      border-color: var(--border);
+      transform: translateY(-2px);
+    }
+    .calc-num { font-size: 10px; font-weight: 700; color: var(--orange); letter-spacing: 0.06em; margin-bottom: 10px; }
+    .calc-icon { width: 20px; height: 20px; color: var(--dark); display: block; margin-bottom: 9px; }
+    .calc-label { font-size: 13px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 2px; }
+    .calc-sub { font-size: 11px; color: var(--muted); }
+
+    /* ─── ABOUT ─── */
+    #about { background: var(--bg); }
+
+    .about-inner {
+      max-width: 760px;
+    }
+
+    .about-inner h2 {
+      font-size: clamp(30px, 4vw, 46px);
+      font-weight: 800;
+      letter-spacing: -2.5px;
+      line-height: 1.08;
+      margin-bottom: 32px;
+    }
+
+    .about-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px 48px;
+    }
+
+    .about-body p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .about-rule {
+      grid-column: 1 / -1;
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 8px 0;
+    }
+
+    .about-contact {
+      grid-column: 1 / -1;
+      font-size: 15px;
+      color: var(--dark);
+      font-weight: 500;
+    }
+    .about-contact a {
+      color: var(--orange);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .about-contact a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .about-body { grid-template-columns: 1fr; }
+    }
+
+    /* ─── DOWNLOAD ─── */
+    #download {
+      background: var(--dark);
+      padding: clamp(80px, 12vh, 130px) clamp(20px, 5vw, 48px);
+    }
+    .download-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .download-text h2 {
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 800;
+      color: white;
+      letter-spacing: -3px;
+      line-height: 1.05;
+      margin-bottom: 14px;
+    }
+    .download-text h2 em { font-style: normal; color: var(--orange); }
+    .download-text p { font-size: 15px; color: rgba(255,255,255,0.4); line-height: 1.65; max-width: 360px; }
+
+    .download-btns {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .store-btn-light { background: white; }
+    .store-btn-light:hover { background: #ececec; transform: translateY(-2px); }
+    .store-btn-light .store-btn-large { color: var(--dark); }
+    .store-btn-light .store-btn-small { color: var(--muted); }
+
+    .store-btn-ghost {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .store-btn-ghost:hover { background: rgba(255,255,255,0.12); }
+
+    @media (max-width: 760px) {
+      .download-inner { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--dark);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 36px clamp(20px, 5vw, 48px);
+    }
+    .footer-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-logo {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .footer-logo .s { color: white; }
+    .footer-logo .o { color: var(--orange); }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 13px;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: white; }
+    .footer-copy { font-size: 13px; color: rgba(255,255,255,0.22); }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.08s; }
+    .reveal-delay-2 { transition-delay: 0.16s; }
+    .reveal-delay-3 { transition-delay: 0.24s; }
+
+    /* ─── PHOTOS ─── */
+    .hero-photo {
+      flex-shrink: 0;
+      animation: fadeUp 0.65s ease 0.18s both;
+    }
+    .hero-photo img {
+      width: 420px;
+      display: block;
+      -webkit-mask-image:
+        linear-gradient(to left,  black 50%, transparent 100%),
+        linear-gradient(to bottom, black 52%, transparent 100%);
+      mask-image:
+        linear-gradient(to left,  black 50%, transparent 100%),
+        linear-gradient(to bottom, black 52%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-composite: intersect;
+    }
+
+    .about-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(48px, 7vw, 96px);
+      align-items: center;
+    }
+    .about-photo img {
+      width: 100%;
+      border-radius: 24px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      object-position: center 12%;
+      display: block;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.12);
+    }
+
+    @media (max-width: 860px) {
+      .hero-photo img { width: 280px; }
+    }
+    @media (max-width: 760px) {
+      .about-split { grid-template-columns: 1fr; }
+      .about-photo { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <a href="#" class="nav-logo"><span class="s">set</span><span class="o">out</span></a>
+  <ul class="nav-links">
+    <li class="nav-hide"><a href="#calculators">Calculators</a></li>
+    <li class="nav-hide"><a href="#about">About</a></li>
+    <li><a href="#download" class="btn-pill">Download</a></li>
+  </ul>
+</nav>
+
+<!-- ─── HERO ─── -->
+<div class="hero-wrap">
+  <div class="hero-text">
+    <p class="hero-kicker">For Australian &amp; NZ tradies</p>
+    <h1 class="hero-h1">The calc app built for<br>how you work <em>on site.</em></h1>
+    <p class="hero-p">Stairs, decking, framing, roofing, concrete — the calculations you run every day, done right. Works offline, built for the Australian and NZ building industry.</p>
+    <div class="store-btns">
+      <a href="#download" class="store-btn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <div class="store-btn-copy">
+          <span class="store-btn-small">Download on the</span>
+          <span class="store-btn-large">App Store</span>
+        </div>
+        <span class="cs-tag">Coming Soon</span>
+      </a>
+      <a href="#download" class="store-btn">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+          <path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/>
+        </svg>
+        <div class="store-btn-copy">
+          <span class="store-btn-small">Get it on</span>
+          <span class="store-btn-large">Google Play</span>
+        </div>
+        <span class="cs-tag">Coming Soon</span>
+      </a>
+    </div>
+    <p class="hero-note">AU &amp; NZ standards included &nbsp;&middot;&nbsp; Works offline</p>
+  </div>
+
+  <div class="hero-photo">
+    <img src="images/hero-bench.jpg" alt="Setout app open on a workbench alongside construction plans" width="360">
+  </div>
+</div>
+
+<!-- ─── TICKER ─── -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="ticker-track">
+    <!-- items duplicated in JS for seamless loop -->
+  </div>
+</div>
+
+<!-- ─── JOB SHEETS ─── -->
+<section class="section" id="job-sheets">
+  <div class="container">
+    <div class="js-inner">
+      <div class="js-text reveal">
+        <h2>Your results,<br>saved to a job.</h2>
+        <p>Run a calc, name the job, save it. Every result you've ever done is there when you need it — pull it up on site, hand it to an apprentice, or use it for your records.</p>
+        <p>No cloud account needed. It all lives on your phone.</p>
+      </div>
+      <div class="js-visual reveal reveal-delay-1">
+        <div class="job-card">
+          <div class="job-card-top">
+            <span class="job-card-name">Morrison Deck — Rear</span>
+            <span class="job-card-date">Tue 15 Jul</span>
+          </div>
+          <div class="job-card-items">
+            <div class="job-item">
+              <span class="job-item-label">Decking boards</span>
+              <span class="job-item-val orange">47 boards</span>
+            </div>
+            <div class="job-item">
+              <span class="job-item-label">Joist spacing</span>
+              <span class="job-item-val">450 mm</span>
+            </div>
+            <div class="job-item">
+              <span class="job-item-label">Total lineal metres</span>
+              <span class="job-item-val">188.0 lm</span>
+            </div>
+          </div>
+        </div>
+        <div class="job-card">
+          <div class="job-card-top">
+            <span class="job-card-name">Unit 4 Stair Stringer</span>
+            <span class="job-card-date">Mon 14 Jul</span>
+          </div>
+          <div class="job-card-items">
+            <div class="job-item">
+              <span class="job-item-label">Number of risers</span>
+              <span class="job-item-val orange">14 risers</span>
+            </div>
+            <div class="job-item">
+              <span class="job-item-label">Rise per step</span>
+              <span class="job-item-val">178 mm</span>
+            </div>
+            <div class="job-item">
+              <span class="job-item-label">Stringer length</span>
+              <span class="job-item-val">4,310 mm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="feat-row">
+      <div class="feat-card reveal">
+        <div class="feat-num">01</div>
+        <h3>Apprentice Mode</h3>
+        <p>Every calculation shows its working — step by step. Good for training, good for checking your own numbers when something doesn't look right.</p>
+      </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-num">02</div>
+        <h3>AU &amp; NZ Standards</h3>
+        <p>Compliance notes built into every calculator that needs them. Stair rise/run limits, stud spacing, coastal wind zones — it's all there.</p>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-num">03</div>
+        <h3>Works Without Signal</h3>
+        <p>Everything runs on your phone. No data connection, no server, no waiting. Useful when you're on a remote site or underground.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── CALCULATORS ─── -->
+<section class="section" id="calculators" style="background: white;">
+  <div class="container">
+    <div class="calc-intro reveal">
+      <h2>15+ calculators.<br>All the ones<br>you actually use.</h2>
+      <p>From the rough-in to the finish, if you're measuring it on site, there's a calculator for it.</p>
+    </div>
+
+    <div class="calc-grid">
+      <div class="calc-card">
+        <div class="calc-num">01</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 5L17 5M6 8L18 8M5 11L19 11M4 14L20 14M3 17L21 17"/></svg>
+        <div class="calc-label">Decking</div>
+        <div class="calc-sub">Boards, joists, bearers</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">02</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v16M10 4v16M16 4v16M22 4v16"/></svg>
+        <div class="calc-label">Wall Framing</div>
+        <div class="calc-sub">Studs, plates, nogs</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">03</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12h18M7 6v12M12 6v12M17 6v12"/></svg>
+        <div class="calc-label">Equal Spacing</div>
+        <div class="calc-sub">Divide any span evenly</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">04</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h4v-4h4v-4h4V8h4V4"/></svg>
+        <div class="calc-label">Stairs</div>
+        <div class="calc-sub">Rise, run, stringer</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">05</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L12 6l9 12"/></svg>
+        <div class="calc-label">Roof Pitch</div>
+        <div class="calc-sub">Rafters, angles</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">06</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12h16M8 8l-4 4 4 4M16 8l4 4-4 4"/></svg>
+        <div class="calc-label">Cut List</div>
+        <div class="calc-sub">Optimise waste</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">07</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 4v16M11 4v16M17 4v16"/></svg>
+        <div class="calc-label">Balusters</div>
+        <div class="calc-sub">Spacing, quantity</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">08</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="13" y="9" width="8" height="9"/><path d="M2 18h20"/></svg>
+        <div class="calc-label">Concrete</div>
+        <div class="calc-sub">Slabs, post holes</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">09</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 18V6M9 18V9M14 18V12M19 18V15M4 6l15 9"/></svg>
+        <div class="calc-label">Raked Wall</div>
+        <div class="calc-sub">Varying stud heights</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">10</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 5h18M3 9h18M3 13h18M3 17h18M3 5v16M21 5v16"/></svg>
+        <div class="calc-label">Cladding</div>
+        <div class="calc-sub">Story rod, boards</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">11</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V4M4 20h16M4 4l16 16"/></svg>
+        <div class="calc-label">Square Check</div>
+        <div class="calc-sub">Check for square</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">12</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20L12 5L21 20M5 18h14M7 15h10M9 12h6"/></svg>
+        <div class="calc-label">Roofing</div>
+        <div class="calc-sub">Sheets, screws, flashing</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">13</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 10L8 10L8 22L16 22L16 10L22 10"/></svg>
+        <div class="calc-label">Excavation</div>
+        <div class="calc-sub">Volume, swell, loads</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">15</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20L21 4M21 4h-6M21 4v6"/></svg>
+        <div class="calc-label">Gradient</div>
+        <div class="calc-sub">Fall, ratio, grade</div>
+      </div>
+      <div class="calc-card">
+        <div class="calc-num">16</div>
+        <svg class="calc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22"/></svg>
+        <div class="calc-label">Fencing</div>
+        <div class="calc-sub">Posts, rails, palings</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section class="section" id="about">
+  <div class="container">
+    <div class="about-split">
+      <div class="about-inner reveal">
+        <h2>Built out of<br>frustration.</h2>
+        <div class="about-body">
+          <p>Generic calculator apps don't understand how building works. Wrong units, missing outputs, no compliance context. We built Setout because we kept running into the same gaps on site.</p>
+          <p>Every calculator in the app comes from a real problem. If it's in there, it's because someone needed it and nothing else did it properly.</p>
+          <hr class="about-rule">
+          <p>We're based in Australia and building specifically for the AU and NZ construction industry. More calculators are in the pipeline.</p>
+          <p class="about-contact">Got a calculation that's missing? Tell us. <a href="mailto:hello@setout.app">hello@setout.app</a></p>
+        </div>
+      </div>
+      <div class="about-photo reveal reveal-delay-1">
+        <img src="images/builder-site.jpg" alt="Carpenter using Setout on a framing site" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── DOWNLOAD ─── -->
+<section id="download">
+  <div class="download-inner">
+    <div class="download-text reveal">
+      <h2>Coming to<br><em>App Store</em> &amp;<br>Google Play.</h2>
+      <p>Setout is finishing up and launching soon. Check back here for the download link when it drops.</p>
+    </div>
+    <div class="download-btns reveal reveal-delay-1">
+      <a href="#" class="store-btn store-btn-light">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#0a0a0a" aria-hidden="true">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+        </svg>
+        <div class="store-btn-copy">
+          <span class="store-btn-small">Download on the</span>
+          <span class="store-btn-large">App Store</span>
+        </div>
+        <span class="cs-tag">Coming Soon</span>
+      </a>
+      <a href="#" class="store-btn store-btn-ghost">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+          <path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/>
+        </svg>
+        <div class="store-btn-copy">
+          <span class="store-btn-small">Get it on</span>
+          <span class="store-btn-large">Google Play</span>
+        </div>
+        <span class="cs-tag">Coming Soon</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo"><span class="s">set</span><span class="o">out</span></div>
+    <ul class="footer-links">
+      <li><a href="#calculators">Calculators</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="mailto:hello@setout.app">Contact</a></li>
+    </ul>
+    <div class="footer-copy">&copy; 2026 Setout. Built in Australia.</div>
+  </div>
+</footer>
+
+<script>
+  // Build ticker
+  const calcs = [
+    'Decking','Wall Framing','Equal Spacing','Stairs','Roof Pitch',
+    'Cut List','Balusters','Concrete','Raked Wall','Cladding',
+    'Square Check','Roofing','Excavation','Gradient','Fencing'
+  ];
+  const track = document.getElementById('ticker-track');
+  // Duplicate for seamless loop
+  [0,1].forEach(() => {
+    calcs.forEach((name, i) => {
+      const item = document.createElement('span');
+      item.className = 'ticker-item';
+      item.innerHTML = `<span class="ticker-name">${name}</span><span class="ticker-sep" aria-hidden="true"></span>`;
+      track.appendChild(item);
+    });
+  });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver(
+    entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    }),
+    { threshold: 0.07, rootMargin: '0px 0px -36px 0px' }
+  );
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

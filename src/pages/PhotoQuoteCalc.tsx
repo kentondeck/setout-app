@@ -121,7 +121,6 @@ interface QuoteStateSnapshot {
   quoteNumber: string;
   notes: string;
   dueDate: string;
-  paid: boolean;
   travelMode: TravelMode;
   travelRate: string;
   travelQty: string;
@@ -219,7 +218,6 @@ export function PhotoQuoteCalc() {
   const [quoteNumber, setQuoteNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [paid, setPaid] = useState(false);
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
@@ -262,7 +260,7 @@ export function PhotoQuoteCalc() {
     const snapshot: QuoteStateSnapshot = {
       fromCalculator, isManual, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-      quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty,
+      quoteNumber, notes, dueDate, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
     };
     updateEntry(lastEntryId, {
@@ -278,7 +276,7 @@ export function PhotoQuoteCalc() {
   }, [
     materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-    quoteNumber, notes, dueDate, paid, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    quoteNumber, notes, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
   ]);
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -460,7 +458,6 @@ export function PhotoQuoteCalc() {
       setQuoteNumber(snap.quoteNumber);
       setNotes(snap.notes);
       setDueDate(snap.dueDate ?? '');
-      setPaid(snap.paid ?? false);
       setTravelMode(snap.travelMode);
       setTravelRate(snap.travelRate);
       setTravelQty(snap.travelQty);
@@ -732,7 +729,6 @@ export function PhotoQuoteCalc() {
       docType,
       quoteNumber: quoteNumber.trim(),
       dueDate,
-      paid,
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientEmail: clientEmail.trim(),
@@ -816,7 +812,6 @@ export function PhotoQuoteCalc() {
       if (docType === 'invoice' && dueDate.trim()) {
         lines.push(`Due: ${formatDateInput(dueDate, totals.region)}`);
       }
-      if (docType === 'invoice' && paid) lines.push('PAID IN FULL');
     }
     lines.push('');
     lines.push(
@@ -1048,32 +1043,18 @@ export function PhotoQuoteCalc() {
         </div>
 
         {docType === 'invoice' && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1 }}>
-              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DUE DATE</p>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
-                  background: 'var(--color-card)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)',
-                  outline: 'none', boxSizing: 'border-box',
-                }}
-              />
-            </div>
-            <button
-              onClick={() => setPaid(p => !p)}
+          <div>
+            <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DUE DATE</p>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
               style={{
-                padding: '12px 16px', borderRadius: 12, fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                border: paid ? '1.5px solid #22c55e' : '0.5px solid var(--color-border)',
-                background: paid ? 'rgba(34,197,94,0.08)' : 'var(--color-card)',
-                color: paid ? '#16a34a' : 'var(--color-text)',
-                whiteSpace: 'nowrap',
+                width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
+                background: 'var(--color-card)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)',
+                outline: 'none', boxSizing: 'border-box',
               }}
-            >
-              {paid ? '✓ Paid' : 'Mark as paid'}
-            </button>
+            />
           </div>
         )}
 

@@ -20,7 +20,6 @@ export interface PdfQuoteInput {
   docType: QuoteDocType;
   quoteNumber: string;
   dueDate: string; // invoice only
-  paid: boolean; // invoice only
   clientName: string;
   clientPhone: string;
   clientEmail: string;
@@ -268,16 +267,6 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.line(col.price - 10, y - 14, pageWidth - marginX, y - 14);
   totalRow(q.docType === 'invoice' ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: true });
   y += 20;
-
-  // Paid stamp — invoice only
-  if (q.docType === 'invoice' && q.paid) {
-    ensureSpace(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(34, 197, 94);
-    doc.text('PAID IN FULL', col.total, y, { align: 'right' });
-    y += 20;
-  }
 
   // Payment details — terms and bank transfer info, shown once as its own block
   const bankParts = [

@@ -888,7 +888,7 @@ export function PhotoQuoteCalc() {
               onClick={() => setShowManualOptions(true)}
               style={{
                 alignSelf: 'flex-start', padding: 0, border: 'none', background: 'none',
-                fontSize: 12.5, fontWeight: 500, color: 'var(--color-muted)', fontFamily: 'inherit', cursor: 'pointer',
+                fontSize: 12.5, fontWeight: 500, color: 'var(--color-orange)', fontFamily: 'inherit', cursor: 'pointer',
               }}
             >
               Or start blank →

@@ -20,6 +20,7 @@ interface Inputs {
   preferredRiser: string;
   preferredGoing: string;
   nosing: string;
+  treadThickness: string;
 }
 
 const DEFAULTS: Inputs = {
@@ -28,6 +29,7 @@ const DEFAULTS: Inputs = {
   preferredRiser: '',
   preferredGoing: '',
   nosing: '',
+  treadThickness: '',
 };
 
 export function StairsCalc() {
@@ -51,6 +53,7 @@ export function StairsCalc() {
     const preferredRiser = parseFloat(inputs.preferredRiser);
     const preferredGoing = inputs.preferredGoing ? parseFloat(inputs.preferredGoing) : undefined;
     const nosing = inputs.nosing ? parseFloat(inputs.nosing) : undefined;
+    const treadThickness = inputs.treadThickness ? parseFloat(inputs.treadThickness) : undefined;
 
     if (!totalRise || totalRise <= 0) {
       setError('Enter a total rise to calculate.');
@@ -69,6 +72,7 @@ export function StairsCalc() {
       ...(preferredRiser && preferredRiser > 0 ? { preferredRiser } : {}),
       preferredGoing,
       ...(nosing && nosing > 0 ? { nosing } : {}),
+      ...(treadThickness && treadThickness > 0 ? { treadThickness } : {}),
       limits,
     });
     setResult(calc);
@@ -79,7 +83,7 @@ export function StairsCalc() {
       id,
       calculatorId: 'stairs',
       timestamp: Date.now(),
-      inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}), ...(nosing ? { nosing } : {}) },
+      inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}), ...(nosing ? { nosing } : {}), ...(treadThickness ? { treadThickness } : {}) },
       outputs: calc.outputs,
     });
 
@@ -103,6 +107,11 @@ export function StairsCalc() {
       explanation: 'The going is measured nosing-to-nosing — the board itself has to run past the riser below it by the nosing overhang',
       calculation: `${result.outputs.treadDepth} + ${inputs.nosing}`,
       result: `${result.outputs.treadBoardDepth} mm — the depth to cut/order`,
+    }] : []),
+    ...(result.outputs.stringerDrop > 0 ? [{
+      label: 'Stringer drop (bottom cut)',
+      explanation: 'Every tread board sits on top of its notch, raising that step by the board thickness — except the bottom one. Drop the bottom cut by the same amount so the first step matches the rest',
+      result: `${result.outputs.stringerDrop} mm off the bottom of the stringer`,
     }] : []),
   ] : [];
 
@@ -145,7 +154,9 @@ export function StairsCalc() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Nosing" value={inputs.nosing} onChange={set('nosing')} unit="mm" placeholder="e.g. 20" hint="optional · tread overhang past the riser" />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Tread thickness" value={inputs.treadThickness} onChange={set('treadThickness')} unit="mm" placeholder="e.g. 32" hint="optional · for the bottom stringer drop" />
+            </div>
           </div>
         </div>
 
@@ -257,10 +268,14 @@ export function StairsCalc() {
                 <ResultCard label="Riser height" value={result.outputs.riserHeight} unit="mm" />
                 <ResultCard label="Tread depth (going)" value={result.outputs.treadDepth} unit="mm" />
               </div>
-              {result.outputs.treadBoardDepth > result.outputs.treadDepth && (
+              {(result.outputs.treadBoardDepth > result.outputs.treadDepth || result.outputs.stringerDrop > 0) && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Tread board depth" value={result.outputs.treadBoardDepth} unit="mm" accent />
-                  <div />
+                  {result.outputs.treadBoardDepth > result.outputs.treadDepth
+                    ? <ResultCard label="Tread board depth" value={result.outputs.treadBoardDepth} unit="mm" accent />
+                    : <div />}
+                  {result.outputs.stringerDrop > 0
+                    ? <ResultCard label="Stringer drop" value={result.outputs.stringerDrop} unit="mm" accent />
+                    : <div />}
                 </div>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -296,6 +311,7 @@ export function StairsCalc() {
                 { term: 'Stringer', definition: 'The sloped structural board on each side of the staircase that carries the treads and risers. Calculated using Pythagoras.' },
                 { term: 'Flight', definition: 'A continuous run of stairs between two landings, or between floor and landing.' },
                 { term: 'Nosing', definition: 'The front edge of a tread that projects beyond the riser face below it. Adds to the board depth you need to cut/order beyond the going.' },
+                { term: 'Stringer drop', definition: 'How much to lower the bottom stringer cut so the first step ends up the same height as the rest once the tread board is sitting on it.' },
               ]}
             />
 

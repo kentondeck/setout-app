@@ -13,6 +13,7 @@ export interface StairsInputs {
   preferredRiser?: number;  // mm — optional; auto-derived from limits midpoint when omitted
   preferredGoing?: number;  // mm (optional — drives tread count when provided)
   nosing?: number;          // mm — optional; tread overhang past the riser face below it
+  treadThickness?: number;  // mm — optional; used only to work out the bottom stringer drop
   limits?: StairLimitsInput;
 }
 
@@ -25,6 +26,7 @@ export interface StairsOutputs extends Record<string, number> {
   stringerLength: number;   // mm — line length (hypotenuse). Add 50–100mm for top/bottom cuts when ordering stock.
   stringerAngle: number;    // degrees
   walklineSum: number;      // mm — 2 × riser + going (Blondel ergonomic check)
+  stringerDrop: number;     // mm — treadThickness: how much to drop the bottom stringer cut so the first step matches the rest
 }
 
 export interface StairsWarnings {
@@ -104,6 +106,10 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   // The going (treadDepth) is measured nosing-to-nosing, but the tread board itself has to run
   // past the riser face below it by the nosing overhang to actually form that nosing.
   const treadBoardDepth = parseFloat((treadDepth + nosing).toFixed(1));
+  // Every tread board sits on top of its stringer notch, raising that tread's surface by the
+  // board's thickness — except the bottom one, which has no board below it. Dropping the bottom
+  // of the stringer by that same thickness keeps the first step's rise equal to all the others.
+  const stringerDrop = inputs.treadThickness ?? 0;
 
   const stringerLength = parseFloat(
     Math.sqrt(Math.pow(totalRise, 2) + Math.pow(totalRun, 2)).toFixed(0)
@@ -157,6 +163,11 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
       formula: 'going + nosing overhang',
       result: `${treadDepth}mm + ${nosing}mm = ${treadBoardDepth}mm — the actual board depth to cut/order`,
     }] : []),
+    ...(stringerDrop > 0 ? [{
+      label: 'Stringer drop (bottom cut)',
+      formula: 'tread board thickness',
+      result: `Drop the bottom of the stringer by ${stringerDrop}mm so the first riser matches the rest once the tread board is fixed on`,
+    }] : []),
     {
       label: 'Stringer length',
       formula: '√( rise² + run² )',
@@ -170,7 +181,7 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   ];
 
   return {
-    outputs: { riserCount, treadCount, riserHeight, treadDepth, treadBoardDepth, stringerLength, stringerAngle, walklineSum },
+    outputs: { riserCount, treadCount, riserHeight, treadDepth, treadBoardDepth, stringerLength, stringerAngle, walklineSum, stringerDrop },
     warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived, riserAutoSelected },
     steps,
   };

@@ -12,17 +12,19 @@ export interface StairsInputs {
   totalRun?: number;        // mm — optional; derived from preferredGoing if omitted
   preferredRiser?: number;  // mm — optional; auto-derived from limits midpoint when omitted
   preferredGoing?: number;  // mm (optional — drives tread count when provided)
+  nosing?: number;          // mm — optional; tread overhang past the riser face below it
   limits?: StairLimitsInput;
 }
 
 export interface StairsOutputs extends Record<string, number> {
   riserCount: number;
   treadCount: number;
-  riserHeight: number;    // mm (actual, rounded)
-  treadDepth: number;     // mm
-  stringerLength: number; // mm — line length (hypotenuse). Add 50–100mm for top/bottom cuts when ordering stock.
-  stringerAngle: number;  // degrees
-  walklineSum: number;    // mm — 2 × riser + going (Blondel ergonomic check)
+  riserHeight: number;      // mm (actual, rounded)
+  treadDepth: number;       // mm — the going (nosing-to-nosing), used for the walkline/compliance check
+  treadBoardDepth: number;  // mm — treadDepth + nosing: the actual board depth to cut/order, front to back
+  stringerLength: number;   // mm — line length (hypotenuse). Add 50–100mm for top/bottom cuts when ordering stock.
+  stringerAngle: number;    // degrees
+  walklineSum: number;      // mm — 2 × riser + going (Blondel ergonomic check)
 }
 
 export interface StairsWarnings {
@@ -98,6 +100,10 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   const riserHeight = parseFloat((totalRise / riserCount).toFixed(1));
   const treadCount = riserCount - 1;
   const treadDepth = parseFloat((totalRun / treadCount).toFixed(1));
+  const nosing = inputs.nosing ?? 0;
+  // The going (treadDepth) is measured nosing-to-nosing, but the tread board itself has to run
+  // past the riser face below it by the nosing overhang to actually form that nosing.
+  const treadBoardDepth = parseFloat((treadDepth + nosing).toFixed(1));
 
   const stringerLength = parseFloat(
     Math.sqrt(Math.pow(totalRise, 2) + Math.pow(totalRun, 2)).toFixed(0)
@@ -146,6 +152,11 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
         ? `${riserCount} − 1 = ${treadCount} treads ; ${treadCount} × ${preferredGoing}mm = ${totalRun}mm run`
         : `${riserCount} − 1 = ${treadCount} treads ; ${totalRun}mm ÷ ${treadCount} = ${treadDepth}mm per tread`,
     },
+    ...(nosing > 0 ? [{
+      label: 'Tread board depth',
+      formula: 'going + nosing overhang',
+      result: `${treadDepth}mm + ${nosing}mm = ${treadBoardDepth}mm — the actual board depth to cut/order`,
+    }] : []),
     {
       label: 'Stringer length',
       formula: '√( rise² + run² )',
@@ -159,7 +170,7 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   ];
 
   return {
-    outputs: { riserCount, treadCount, riserHeight, treadDepth, stringerLength, stringerAngle, walklineSum },
+    outputs: { riserCount, treadCount, riserHeight, treadDepth, treadBoardDepth, stringerLength, stringerAngle, walklineSum },
     warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived, riserAutoSelected },
     steps,
   };

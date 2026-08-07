@@ -19,6 +19,7 @@ interface Inputs {
   totalRun: string;
   preferredRiser: string;
   preferredGoing: string;
+  nosing: string;
 }
 
 const DEFAULTS: Inputs = {
@@ -26,6 +27,7 @@ const DEFAULTS: Inputs = {
   totalRun: '',
   preferredRiser: '',
   preferredGoing: '',
+  nosing: '',
 };
 
 export function StairsCalc() {
@@ -48,6 +50,7 @@ export function StairsCalc() {
     const totalRun = parseFloat(inputs.totalRun);
     const preferredRiser = parseFloat(inputs.preferredRiser);
     const preferredGoing = inputs.preferredGoing ? parseFloat(inputs.preferredGoing) : undefined;
+    const nosing = inputs.nosing ? parseFloat(inputs.nosing) : undefined;
 
     if (!totalRise || totalRise <= 0) {
       setError('Enter a total rise to calculate.');
@@ -65,6 +68,7 @@ export function StairsCalc() {
       ...(totalRun && totalRun > 0 ? { totalRun } : {}),
       ...(preferredRiser && preferredRiser > 0 ? { preferredRiser } : {}),
       preferredGoing,
+      ...(nosing && nosing > 0 ? { nosing } : {}),
       limits,
     });
     setResult(calc);
@@ -75,7 +79,7 @@ export function StairsCalc() {
       id,
       calculatorId: 'stairs',
       timestamp: Date.now(),
-      inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}) },
+      inputs: { totalRise, totalRun, preferredRiser, ...(preferredGoing ? { preferredGoing } : {}), ...(nosing ? { nosing } : {}) },
       outputs: calc.outputs,
     });
 
@@ -94,6 +98,12 @@ export function StairsCalc() {
     { label: 'Risers needed', explanation: 'Divide the rise by your preferred riser height', calculation: `${stairRise} ÷ ${stairPrefRiser} = ${(stairRise / stairPrefRiser).toFixed(1)}`, result: `Round to ${result.outputs.riserCount} risers` },
     { label: 'Actual riser height', explanation: 'Divide the total rise by the number of risers for the real value', calculation: `${stairRise} ÷ ${result.outputs.riserCount}`, result: `${result.outputs.riserHeight} mm each` },
     { label: 'Treads', explanation: 'Always one less tread than risers', calculation: `${result.outputs.riserCount} - 1`, result: `${result.outputs.treadCount} treads` },
+    ...(result.outputs.treadBoardDepth > result.outputs.treadDepth ? [{
+      label: 'Tread board depth',
+      explanation: 'The going is measured nosing-to-nosing — the board itself has to run past the riser below it by the nosing overhang',
+      calculation: `${result.outputs.treadDepth} + ${inputs.nosing}`,
+      result: `${result.outputs.treadBoardDepth} mm — the depth to cut/order`,
+    }] : []),
   ] : [];
 
   return (
@@ -130,6 +140,12 @@ export function StairsCalc() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Preferred going" value={inputs.preferredGoing} onChange={set('preferredGoing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 250', m: 'e.g. 0.25' }} hint={`optional · ${STAIR_LIMITS[settings.region].treadMin}–${STAIR_LIMITS[settings.region].treadMax}mm`} />
             </div>
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <NumberInput label="Nosing" value={inputs.nosing} onChange={set('nosing')} unit="mm" placeholder="e.g. 20" hint="optional · tread overhang past the riser" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }} />
           </div>
         </div>
 
@@ -239,8 +255,14 @@ export function StairsCalc() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Riser height" value={result.outputs.riserHeight} unit="mm" />
-                <ResultCard label="Tread depth" value={result.outputs.treadDepth} unit="mm" />
+                <ResultCard label="Tread depth (going)" value={result.outputs.treadDepth} unit="mm" />
               </div>
+              {result.outputs.treadBoardDepth > result.outputs.treadDepth && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <ResultCard label="Tread board depth" value={result.outputs.treadBoardDepth} unit="mm" accent />
+                  <div />
+                </div>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
@@ -272,7 +294,7 @@ export function StairsCalc() {
                 { term: 'Tread / Going', definition: 'The horizontal part you walk on. "Going" is the depth of the tread, measured from nosing to nosing.' },
                 { term: 'Stringer', definition: 'The sloped structural board on each side of the staircase that carries the treads and risers. Calculated using Pythagoras.' },
                 { term: 'Flight', definition: 'A continuous run of stairs between two landings, or between floor and landing.' },
-                { term: 'Nosing', definition: 'The front edge of a tread that projects beyond the riser face below it.' },
+                { term: 'Nosing', definition: 'The front edge of a tread that projects beyond the riser face below it. Adds to the board depth you need to cut/order beyond the going.' },
               ]}
             />
 

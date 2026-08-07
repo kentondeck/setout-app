@@ -71,7 +71,7 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
   const [local, setLocal] = useState(() => toDisplay(value, activeUnit));
   const lastPropVal = useRef(value);
 
-  // Sync when value changes from outside (voice input, presets)
+  // Sync when value changes from outside (e.g. presets)
   useEffect(() => {
     if (value !== lastPropVal.current) {
       lastPropVal.current = value;

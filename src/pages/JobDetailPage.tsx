@@ -144,12 +144,6 @@ function CalcIcon({ id, size = 24 }: { id: CalculatorId; size?: number }) {
         <circle cx="50" cy="50" r="6" fill={o}/>
       </g>
     ),
-    codecheck: (
-      <g>
-        <path d="M30 50 L44 64 L70 36" stroke={o} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-        <circle cx="50" cy="50" r="32" stroke={o} strokeWidth="5" fill="none"/>
-      </g>
-    ),
   };
 
   return (

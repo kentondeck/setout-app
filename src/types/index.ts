@@ -9,7 +9,6 @@ export type CalculatorId =
   | 'raked'
   | 'cladding'
   | 'setout'
-  | 'codecheck'
   | 'roofing'
   | 'excavation'
   | 'gradient'

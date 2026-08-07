@@ -140,16 +140,6 @@ export function RoofCalc() {
     { label: hasRidge ? 'Cut rafter (to ridge face)' : 'Rafter length', explanation: hasRidge ? 'Line length minus the ridge shortening' : 'run ÷ cos(pitch)', calculation: hasRidge ? `${Math.round(out!.lineRafterLength * 1000)} − ${out!.ridgeShortening} = ${Math.round(out!.rafterLength * 1000)}` : `${roofRunMm} ÷ cos(${roofPitch}°) = ${Math.round(out!.rafterLength * 1000)}`, result: `${Math.round(out!.rafterLength * 1000)} mm` },
   ] : [];
 
-  function RafterDimChip({ label, value, unit }: { label: string; value: string; unit: string }) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '8px 12px', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10 }}>
-        <span style={{ fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
-          {value}<span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 400, marginLeft: 2 }}>{unit}</span>
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -313,26 +303,14 @@ export function RoofCalc() {
               label={jobName}
             />
 
-            {/* Summary: all 4 derived values + cut angles */}
-            <div style={{
-              background: 'var(--color-card)',
-              border: '0.5px solid var(--color-border)',
-              borderRadius: 'var(--radius-card)',
-              padding: '14px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <RafterDimChip label={roofType === 'skillion' ? 'Run' : 'Span'} value={String(out.span)} unit="m" />
-                <RafterDimChip label="Rise"   value={String(out.rise)}         unit="m" />
-                <RafterDimChip label={hasRidge ? 'Rafter (cut)' : 'Rafter'} value={String(out.totalRafterLength)} unit="m" />
-                <RafterDimChip label="Pitch"  value={String(out.pitchDegrees)} unit="°" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                <ResultCard label="Plumb cut" value={out.plumbCutAngle} unit="°" />
-                <ResultCard label="Seat cut" value={out.seatCutAngle} unit="°" />
-              </div>
+            {/* Summary: all 6 derived values */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <ResultCard label={roofType === 'skillion' ? 'Run' : 'Span'} value={String(out.span)} unit="m" accent />
+              <ResultCard label={hasRidge ? 'Rafter (cut)' : 'Rafter'} value={String(out.totalRafterLength)} unit="m" accent />
+              <ResultCard label="Rise"       value={String(out.rise)}         unit="m" />
+              <ResultCard label="Pitch"      value={String(out.pitchDegrees)} unit="°" />
+              <ResultCard label="Plumb cut"  value={out.plumbCutAngle}        unit="°" />
+              <ResultCard label="Seat cut"   value={out.seatCutAngle}         unit="°" />
             </div>
 
             {/* Rafter cut details — only when optional inputs were provided */}

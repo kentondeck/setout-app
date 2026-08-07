@@ -294,11 +294,11 @@ export function CutlistCalc() {
                   key={m.stockLength}
                   style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}
                 >
-                  <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                  <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
                     {m.bufferedCount}
                   </span>
-                  <span style={{ fontSize: 16, color: 'var(--color-muted)', fontWeight: 400 }}>×</span>
-                  <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
+                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontWeight: 400 }}>×</span>
+                  <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
                     {fmtLength(m.stockLength)}
                   </span>
                   {m.bufferedCount > m.count && (
@@ -353,7 +353,7 @@ export function CutlistCalc() {
                         borderBottom: stock.stockIndex < result.plan.length ? '0.5px solid var(--color-border)' : 'none',
                       }}
                     >
-                      <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600 }}>
+                      <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 500 }}>
                         {fmtLength(stock.stockLength)}
                       </p>
                       <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>

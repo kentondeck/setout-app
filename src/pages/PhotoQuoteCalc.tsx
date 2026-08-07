@@ -206,6 +206,8 @@ export function PhotoQuoteCalc() {
   const [result, setResult] = useState<QuoteResult | null>(null);
   const [fromCalculator, setFromCalculator] = useState(false);
   const [isManual, setIsManual] = useState(false);
+  const [showManualOptions, setShowManualOptions] = useState(false);
+  const [quoteDetailsOpen, setQuoteDetailsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -467,6 +469,9 @@ export function PhotoQuoteCalc() {
       setJobName(entry?.jobName ?? '');
       setLastEntryId(state.resumeEntryId);
       habitsCapturedRef.current = true; // don't re-learn build habits from a quote that's just being reopened, not freshly generated
+      if (snap.clientName || snap.clientPhone || snap.clientEmail || snap.clientAddress || snap.siteAddress || snap.notes) {
+        setQuoteDetailsOpen(true); // reopening a quote that already has details filled in — don't hide them behind a collapsed section
+      }
     } catch { /* corrupt snapshot — fall through to a blank quote rather than crash */ }
 
     navigate(location.pathname, { replace: true, state: null });
@@ -841,6 +846,8 @@ export function PhotoQuoteCalc() {
   }
 
   const canGenerate = description.trim().length > 0 && !loading && !plansUploading;
+  const hasQuoteDetails = !!(clientName || clientPhone || clientEmail || clientAddress || siteAddress || notes || logo);
+  const quoteDetailsSummary = [clientName, logo && 'logo set', notes && 'notes added'].filter(Boolean).join(' · ');
   const quoteDetailInputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
     background: 'var(--color-card)', fontSize: 15, fontFamily: 'inherit', color: 'var(--color-text)',
@@ -860,21 +867,33 @@ export function PhotoQuoteCalc() {
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
         {!fromCalculator && !isManual && !result && !loading && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {(['estimate', 'quote', 'invoice'] as QuoteDocType[]).map(t => (
-              <button
-                key={t}
-                onClick={() => startManual(t)}
-                style={{
-                  flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
-                  border: '1px dashed var(--color-orange)', background: 'none', color: 'var(--color-orange)',
-                }}
-              >
-                + New {docTypeLabel(t)}
-              </button>
-            ))}
-          </div>
+          showManualOptions ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['estimate', 'quote', 'invoice'] as QuoteDocType[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => startManual(t)}
+                  style={{
+                    flex: 1, padding: '10px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
+                    fontFamily: 'inherit', cursor: 'pointer',
+                    border: '1px dashed var(--color-orange)', background: 'none', color: 'var(--color-orange)',
+                  }}
+                >
+                  + New {docTypeLabel(t)}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowManualOptions(true)}
+              style={{
+                alignSelf: 'flex-start', padding: 0, border: 'none', background: 'none',
+                fontSize: 12.5, fontWeight: 500, color: 'var(--color-muted)', fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Or start blank →
+            </button>
+          )
         )}
 
         {!fromCalculator && !isManual && (
@@ -1766,6 +1785,30 @@ export function PhotoQuoteCalc() {
             )}
 
             <div>
+              <button
+                onClick={() => setQuoteDetailsOpen(o => !o)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                  padding: '12px 14px', borderRadius: 12, border: '0.5px solid var(--color-border)',
+                  background: 'var(--color-card)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13.5, fontWeight: 500, color: 'var(--color-text)' }}>Quote details, logo &amp; notes</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'var(--color-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {hasQuoteDetails ? (quoteDetailsSummary || 'Some details added') : 'Optional — client info, your logo, job notes'}
+                  </p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ flexShrink: 0, transform: quoteDetailsOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            </div>
+
+            {quoteDetailsOpen && (
+            <>
+            <div>
               <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>COMPANY LOGO <span style={{ textTransform: 'none', fontWeight: 400 }}>(small, top of PDF)</span></p>
               <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} />
               {logo ? (
@@ -1868,6 +1911,8 @@ export function PhotoQuoteCalc() {
                 }}
               />
             </div>
+            </>
+            )}
 
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />

@@ -280,6 +280,7 @@ export function StairsCalc() {
                   ? parseFloat(inputs.totalRun)
                   : result.outputs.treadCount * result.outputs.treadDepth
               }
+              nosing={result.outputs.treadBoardDepth - result.outputs.treadDepth}
               label={jobName}
             />
 

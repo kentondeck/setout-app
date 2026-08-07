@@ -7,6 +7,7 @@ export interface StairDiagramProps {
   stringerLength: number;
   totalRise: number;
   totalRun: number;
+  nosing?: number; // mm — draws a small overhang lip on each tread when > 0; omitted/0 leaves the profile flush
   label?: string;
 }
 
@@ -35,6 +36,7 @@ export const StairDiagram = memo(function StairDiagram({
   stringerLength,
   totalRise,
   totalRun,
+  nosing,
   label,
 }: StairDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -55,6 +57,22 @@ export const StairDiagram = memo(function StairDiagram({
     }
   }
   const bodyD = profileD + ` V${FLOOR_Y} Z`;
+
+  // Nosing — a small overhang lip drawn on top of each tread's front edge, on top of the flush
+  // silhouette above. Fixed visual size regardless of the real mm value (this is a schematic, not
+  // a to-scale elevation) — riser/tread geometry is unchanged, so it never affects the rest of the
+  // diagram. Left empty entirely when no nosing was entered.
+  const NOSING_PX = 9;
+  const NOSING_LIP_PX = 6;
+  let nosingD = '';
+  if (nosing && nosing > 0) {
+    const treadCount = riserCount - 1;
+    for (let i = 0; i < treadCount; i++) {
+      const x = FOOT_X + (i + 1) * goingPx;
+      const y = (FLOOR_Y - (i + 1) * risePx).toFixed(1);
+      nosingD += `M${x.toFixed(1)} ${y} h${NOSING_PX} v${NOSING_LIP_PX} `;
+    }
+  }
 
   // Stringer — runs along bottom of risers: foot (FOOT_X, FLOOR_Y) → (topX, topY + risePx)
   const stRisePx   = drawnH - risePx;
@@ -155,6 +173,9 @@ export const StairDiagram = memo(function StairDiagram({
 
         {/* Stair profile */}
         <path d={profileD} fill="none" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
+
+        {/* Nosing lips — only drawn when a nosing value was actually entered */}
+        {nosingD && <path d={nosingD} fill="none" stroke={INK} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />}
 
         {/* Stringer diagonal with end ticks — runs bottom of risers: foot → (topX, topY+risePx) */}
         <g transform={`translate(${FOOT_X},${FLOOR_Y}) rotate(${-angle})`}>

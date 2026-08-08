@@ -113,6 +113,18 @@ export function StairsCalc() {
       explanation: 'Every tread board sits on top of its notch, raising that step by the board thickness — except the bottom one. Drop the bottom cut by the same amount so the first step matches the rest',
       result: `${result.outputs.stringerDrop} mm off the bottom of the stringer`,
     }] : []),
+    {
+      label: 'Stringer length',
+      explanation: result.outputs.stringerDrop > 0
+        ? 'Pythagoras on rise and run, plus the extra length the bottom drop adds along the slope (drop ÷ sin(angle))'
+        : 'Pythagoras — the straight-line length from the foot of the stringer to the top',
+      result: `${result.outputs.stringerLength} mm`,
+    },
+    {
+      label: 'Ordering stock',
+      explanation: "The theoretical length above is the pitch line only — actual end cuts (top and bottom) eat into the board, so order a bit longer",
+      result: `${result.outputs.stringerLength}mm + 50–100mm allowance`,
+    },
   ] : [];
 
   return (
@@ -282,6 +294,9 @@ export function StairsCalc() {
                 <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
                 <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
               </div>
+              <p style={{ margin: '2px 4px 0', fontSize: 11, color: 'var(--color-muted)' }}>
+                Pitch-line length{result.outputs.stringerDrop > 0 ? ', including the bottom drop' : ''} — order +50–100mm on top for the top/bottom end cuts
+              </p>
             </div>
 
             <StairDiagram

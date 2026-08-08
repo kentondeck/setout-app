@@ -23,7 +23,9 @@ export interface StairsOutputs extends Record<string, number> {
   riserHeight: number;      // mm (actual, rounded)
   treadDepth: number;       // mm — the going (nosing-to-nosing), used for the walkline/compliance check
   treadBoardDepth: number;  // mm — treadDepth + nosing: the actual board depth to cut/order, front to back
-  stringerLength: number;   // mm — line length (hypotenuse). Add 50–100mm for top/bottom cuts when ordering stock.
+  stringerLength: number;   // mm — theoretical pitch-line length (hypotenuse), plus the extra run needed to
+                             // accommodate the bottom drop when treadThickness is set. Add 50–100mm on top
+                             // when ordering stock, to allow for the actual top/bottom end cuts.
   stringerAngle: number;    // degrees
   walklineSum: number;      // mm — 2 × riser + going (Blondel ergonomic check)
   stringerDrop: number;     // mm — treadThickness: how much to drop the bottom stringer cut so the first step matches the rest
@@ -111,12 +113,15 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   // of the stringer by that same thickness keeps the first step's rise equal to all the others.
   const stringerDrop = inputs.treadThickness ?? 0;
 
-  const stringerLength = parseFloat(
-    Math.sqrt(Math.pow(totalRise, 2) + Math.pow(totalRun, 2)).toFixed(0)
-  );
-  const stringerAngle = parseFloat(
-    ((Math.atan2(totalRise, totalRun) * 180) / Math.PI).toFixed(1)
-  );
+  const stringerAngleRad = Math.atan2(totalRise, totalRun);
+  const stringerAngle = parseFloat(((stringerAngleRad * 180) / Math.PI).toFixed(1));
+
+  const pitchLineLength = Math.sqrt(Math.pow(totalRise, 2) + Math.pow(totalRun, 2));
+  // Dropping the stringer's foot by stringerDrop (vertically) while keeping the same cutting
+  // angle extends the raw board along its own slope by stringerDrop ÷ sin(angle) — not by
+  // stringerDrop itself, since that extension runs at the pitch angle, not straight down.
+  const stringerDropExtra = stringerDrop > 0 ? stringerDrop / Math.sin(stringerAngleRad) : 0;
+  const stringerLength = parseFloat((pitchLineLength + stringerDropExtra).toFixed(0));
 
   const walklineSum = parseFloat((2 * riserHeight + treadDepth).toFixed(1));
 
@@ -170,8 +175,17 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
     }] : []),
     {
       label: 'Stringer length',
-      formula: '√( rise² + run² )',
-      result: `√( ${totalRise}² + ${totalRun}² ) = ${stringerLength}mm`,
+      formula: stringerDropExtra > 0
+        ? '√( rise² + run² ) + drop ÷ sin( angle )'
+        : '√( rise² + run² )',
+      result: stringerDropExtra > 0
+        ? `√( ${totalRise}² + ${totalRun}² ) + ${stringerDrop}mm ÷ sin(${stringerAngle}°) = ${Math.round(pitchLineLength)}mm + ${stringerDropExtra.toFixed(0)}mm = ${stringerLength}mm`
+        : `√( ${totalRise}² + ${totalRun}² ) = ${stringerLength}mm`,
+    },
+    {
+      label: 'Ordering stock',
+      formula: 'stringer length + 50–100mm allowance',
+      result: `Order ${stringerLength}mm + 50–100mm to allow for the top and bottom end cuts`,
     },
     {
       label: 'Stringer angle',

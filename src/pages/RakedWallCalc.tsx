@@ -23,6 +23,7 @@ interface Inputs {
   studSpacing: string;
   customSpacing: string;
   timberThickness: string;
+  nogginRows: string;
 }
 
 const DEFAULTS: Inputs = {
@@ -33,6 +34,7 @@ const DEFAULTS: Inputs = {
   studSpacing: '450',
   customSpacing: '',
   timberThickness: '45',
+  nogginRows: '',
 };
 
 export function RakedWallCalc() {
@@ -41,6 +43,7 @@ export function RakedWallCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('heights');
+  const [includeNoggins, setIncludeNoggins] = useState(true);
   const [result, setResult] = useState<{ outputs: RakedWallOutputs; studHeights: number[]; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -81,7 +84,8 @@ export function RakedWallCalc() {
     setError('');
 
     const timberThickness = parseFloat(inputs.timberThickness) || 45;
-    const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness });
+    const nogginRows = parseInt(inputs.nogginRows) || 1;
+    const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows });
     setResult(calc);
 
     const id = crypto.randomUUID();
@@ -90,7 +94,7 @@ export function RakedWallCalc() {
       id,
       calculatorId: 'raked',
       timestamp: Date.now(),
-      inputs: { wallLength, lowHeight, highHeight, studSpacing, timberThickness },
+      inputs: { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins: includeNoggins ? 1 : 0, ...(includeNoggins ? { nogginRows } : {}) },
       outputs: calc.outputs,
     });
 
@@ -195,6 +199,47 @@ export function RakedWallCalc() {
               </div>
             )}
           </div>
+
+          {/* Noggins toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Include nogs</span>
+            <button
+              onClick={() => setIncludeNoggins(v => !v)}
+              style={{
+                width: 44,
+                height: 26,
+                borderRadius: 13,
+                border: 'none',
+                background: includeNoggins ? 'var(--color-orange)' : '#ccc',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 3,
+                  left: includeNoggins ? 21 : 3,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </button>
+          </div>
+
+          {includeNoggins && (
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Nog rows" value={inputs.nogginRows} onChange={set('nogginRows')} unit="" placeholder="e.g. 1" hint="optional · default 1" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }} />
+            </div>
+          )}
         </div>
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
@@ -229,6 +274,12 @@ export function RakedWallCalc() {
                 <ResultCard label="Low stud" value={result.outputs.lowStudHeight} unit="mm" />
                 <ResultCard label="High stud" value={result.outputs.highStudHeight} unit="mm" />
               </div>
+              {includeNoggins && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <ResultCard label="Nogs" value={result.outputs.nogginCount} />
+                  <div />
+                </div>
+              )}
             </div>
 
             {/* Stud cut list */}
@@ -265,6 +316,9 @@ export function RakedWallCalc() {
                 { label: `Studs (varying heights)`, qty: result.outputs.studCount, detail: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm` },
                 { label: 'Rake plate', qty: 1, detail: `${result.outputs.rakePlateLength}mm` },
                 { label: 'Bottom plate', qty: 1, detail: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
+                ...(includeNoggins && result.outputs.nogginCount > 0
+                  ? [{ label: 'Noggins', qty: result.outputs.nogginCount, detail: `${Math.round(resolvedSpacing - 90)}mm` }]
+                  : []),
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
@@ -287,6 +341,7 @@ export function RakedWallCalc() {
                 { term: 'Low point / High point', definition: 'The shortest and tallest stud heights in the wall. All intermediate studs step between these two values.' },
                 { term: 'Stud height', definition: 'The length of each individual stud in a raked wall, measured plumb (vertical). Changes incrementally across the wall.' },
                 { term: 'Top plate rise', definition: 'The total vertical increase from one end of the top plate to the other, driven by the pitch and wall length.' },
+                { term: 'Noggin / Nog', definition: 'Horizontal blocking fitted between studs mid-height. Braces the wall and provides a fixing point for sheets and linings.' },
               ]}
             />
 

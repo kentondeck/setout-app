@@ -6,6 +6,8 @@ export interface RakedWallInputs {
   highHeight: number;       // mm — total wall height at tall end
   studSpacing: number;      // mm
   timberThickness: number;  // mm — plate/stud thickness (e.g. 45 for 45×90 framing)
+  includeNoggins?: boolean;
+  nogginRows?: number;      // number of noggin rows (typically 1–2)
 }
 
 export interface RakedWallOutputs extends Record<string, number> {
@@ -19,6 +21,7 @@ export interface RakedWallOutputs extends Record<string, number> {
   pitchAngle: number;         // degrees
   rakePlateVertical: number;  // mm — plumb height of the tilted rake plate at any stud
   studCutExtra: number;       // mm to add on the high side of each stud top cut
+  nogginCount: number;
 }
 
 export interface RakedWallResult {
@@ -28,7 +31,7 @@ export interface RakedWallResult {
 }
 
 export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
-  const { wallLength, lowHeight, highHeight, studSpacing, timberThickness } = inputs;
+  const { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows = 1 } = inputs;
 
   const rise = highHeight - lowHeight;
   const pitchRad = Math.atan2(rise, wallLength);
@@ -64,8 +67,14 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     (studHeights.reduce((s, h) => s + h, 0) / 1000).toFixed(2)
   );
 
+  // Noggins run between stud positions, same convention as the flat framing calculator
+  const nogginCount = includeNoggins ? (studCount - 1) * nogginRows : 0;
+  const nogginsLineal = includeNoggins
+    ? parseFloat((nogginCount * ((studSpacing - 90) / 1000)).toFixed(2))
+    : 0;
+
   const totalLinealMetres = parseFloat(
-    (totalStudLineal + rakePlateLength / 1000 + bottomPlateLineal).toFixed(2)
+    (totalStudLineal + rakePlateLength / 1000 + bottomPlateLineal + nogginsLineal).toFixed(2)
   );
 
   const steps: WorkingStep[] = [
@@ -104,10 +113,24 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
       formula: '√( wall length² + rise² )',
       result: `√( ${wallLength}² + ${rise}² ) = ${rakePlateLength}mm`,
     },
+    ...(includeNoggins
+      ? [
+          {
+            label: 'Nog count',
+            formula: '(stud count − 1) × nog rows',
+            result: `(${studCount} − 1) × ${nogginRows} = ${nogginCount} nogs`,
+          },
+          {
+            label: 'Nogs lineal metres',
+            formula: 'nog count × (stud spacing − 90mm stud width)',
+            result: `${nogginCount} × ${((studSpacing - 90) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
+          },
+        ]
+      : []),
   ];
 
   return {
-    outputs: { studCount, lowStudHeight, highStudHeight, rakePlateLength, bottomPlateLineal, totalStudLineal, totalLinealMetres, pitchAngle, rakePlateVertical, studCutExtra },
+    outputs: { studCount, lowStudHeight, highStudHeight, rakePlateLength, bottomPlateLineal, totalStudLineal, totalLinealMetres, pitchAngle, rakePlateVertical, studCutExtra, nogginCount },
     studHeights,
     steps,
   };

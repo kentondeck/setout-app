@@ -6,10 +6,10 @@ import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { SettingsContext, HistoryContext, JobsContext } from './contexts';
 import { SplashScreen } from './components/SplashScreen';
-import { InstallPromptScreen } from './components/InstallPromptScreen';
-import { BetaThankYou } from './pages/BetaThankYou';
 import { OnboardingName } from './pages/OnboardingName';
 import { OnboardingRegion } from './pages/OnboardingRegion';
+import { OnboardingRole } from './pages/OnboardingRole';
+import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
@@ -89,16 +89,6 @@ if (_params.has('reset')) {
 export function App() {
   const [splashDone, setSplashDone] = useState(false);
 
-  const [installDone, setInstallDone] = useState(() => {
-    const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-    const hasSeen = localStorage.getItem('setout_install_seen') === 'true';
-    return isInstalled || hasSeen;
-  });
-
-  const [thankYouDone, setThankYouDone] = useState(() => {
-    return localStorage.getItem('setout_thankyou_seen') === 'true';
-  });
-
   const [nameDone, setNameDone] = useState(() => {
     return !!localStorage.getItem('setout_user_name');
   });
@@ -107,30 +97,38 @@ export function App() {
     return !!localStorage.getItem('setout_region');
   });
 
+  const [roleDone, setRoleDone] = useState(() => {
+    return !!localStorage.getItem('setout_role');
+  });
+
+  const [emailDone, setEmailDone] = useState(() => {
+    return localStorage.getItem('setout_email_done') === 'true';
+  });
+
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
 
-  const onboardingDone = splashDone && installDone && thankYouDone && nameDone && regionDone;
+  const onboardingDone = splashDone && nameDone && regionDone && roleDone && emailDone;
 
   return (
     <>
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
-      {splashDone && !installDone && (
-        <InstallPromptScreen onComplete={() => { setInstallDone(true); }} />
+      {splashDone && !nameDone && (
+        <OnboardingName onComplete={() => setNameDone(true)} />
       )}
 
-      {splashDone && installDone && !thankYouDone && (
-        <BetaThankYou onComplete={() => { setThankYouDone(true); }} />
+      {splashDone && nameDone && !regionDone && (
+        <OnboardingRegion onComplete={() => setRegionDone(true)} />
       )}
 
-      {splashDone && installDone && thankYouDone && !nameDone && (
-        <OnboardingName onComplete={() => { setNameDone(true); }} />
+      {splashDone && nameDone && regionDone && !roleDone && (
+        <OnboardingRole onComplete={() => setRoleDone(true)} />
       )}
 
-      {splashDone && installDone && thankYouDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => { setRegionDone(true); }} />
+      {splashDone && nameDone && regionDone && roleDone && !emailDone && (
+        <OnboardingEmail onComplete={() => setEmailDone(true)} />
       )}
 
       {onboardingDone && (

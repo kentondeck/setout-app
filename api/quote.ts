@@ -130,6 +130,13 @@ export async function POST(req: Request): Promise<Response> {
     return new Response('API key not configured', { status: 500 });
   }
 
+  const validCodes = (process.env.PHOTOQUOTE_ACCESS_CODES ?? '')
+    .split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+  const token = req.headers.get('authorization')?.replace('Bearer ', '').trim().toUpperCase() ?? '';
+  if (validCodes.length > 0 && !validCodes.includes(token)) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
   let imageBase64: string | null, mediaType: string | null, pdfUrl: string | null, description: string, region: string, preferences: LearnedPreferences | undefined;
   try {
     ({ imageBase64, mediaType, pdfUrl, description, region, preferences } = (await req.json()) as {

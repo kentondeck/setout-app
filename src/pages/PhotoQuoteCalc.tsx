@@ -1,5 +1,7 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { PhotoQuoteGate } from '../components/PhotoQuoteGate';
+import { hasPhotoQuoteAccess, getPhotoQuoteToken } from '../lib/photoQuoteAccess';
 import { upload } from '@vercel/blob/client';
 import { CalcHeader } from '../components/CalcHeader';
 import { ResultCard } from '../components/ResultCard';
@@ -190,6 +192,16 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 }
 
 export function PhotoQuoteCalc() {
+  const [hasAccess, setHasAccess] = useState(() => hasPhotoQuoteAccess());
+
+  if (!hasAccess) {
+    return <PhotoQuoteGate onUnlocked={() => setHasAccess(true)} />;
+  }
+
+  return <PhotoQuoteCalcInner />;
+}
+
+function PhotoQuoteCalcInner() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const { history, addEntry, updateEntry } = useContext(HistoryContext);
   const location = useLocation();
@@ -533,7 +545,7 @@ export function PhotoQuoteCalc() {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
       const res = await fetch('/api/quote', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'authorization': `Bearer ${getPhotoQuoteToken()}` },
         body: JSON.stringify({
           imageBase64,
           mediaType: imageBase64 ? 'image/jpeg' : null,

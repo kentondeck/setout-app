@@ -428,7 +428,7 @@ export default defineConfig(({ mode }) => {
       priceCacheDevPlugin(env.REDIS_URL ?? ''),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+        includeAssets: ['logo.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'favicon-192.png', 'favicon-32.png'],
         manifest: {
           name: 'Setout',
           short_name: 'Setout',

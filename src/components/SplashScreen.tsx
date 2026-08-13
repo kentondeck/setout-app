@@ -31,7 +31,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
         <img
-          src="/logo.svg"
+          src="/logo.png"
           alt=""
           width={128}
           height={128}

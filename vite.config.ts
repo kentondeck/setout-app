@@ -445,6 +445,10 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          // Never let the SW's SPA fallback swallow API calls — they must always
+          // hit the network so JSON endpoints (validate-code, quote, price-lookup,
+          // etc.) don't return the index.html shell.
+          navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,

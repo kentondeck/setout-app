@@ -1,10 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Setout">
-  <rect width="512" height="512" rx="112" ry="112" fill="#F5F5F3"/>
-  <g fill="#FF5A1F">
-    <rect x="96" y="96"  width="320" height="72"  rx="16" ry="16"/>
-    <rect x="344" y="144" width="72"  height="112" rx="16" ry="16"/>
-    <rect x="96" y="216" width="320" height="72"  rx="16" ry="16"/>
-    <rect x="96" y="264" width="72"  height="112" rx="16" ry="16"/>
-    <rect x="96" y="344" width="320" height="72"  rx="16" ry="16"/>
-  </g>
+  <rect width="512" height="512" rx="104" ry="104" fill="#F5F5F3"/>
+  <path
+    d="M 145 190
+       L 305 190
+       A 60 60 0 0 1 305 310
+       L 207 310
+       A 60 60 0 0 0 207 430
+       L 367 430"
+    fill="none"
+    stroke="#FF5A1F"
+    stroke-width="112"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>

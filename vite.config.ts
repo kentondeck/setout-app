@@ -19,6 +19,36 @@ SCOPE: Answer only what was asked. Omit uncertain details.
 BANNED: Restating question, "Hope this helps", bold/asterisks/markdown/emoji, invented clause numbers, adjacent unrequested facts, LBP disclaimers unless asked.`,
 }
 
+// Mirrors api/validate-code.ts for local dev — matches an access code from
+// PHOTOQUOTE_ACCESS_CODES in .env.local against user input. Without this the
+// Smart Quote gate on localhost hits the SPA fallback and JSON parsing throws.
+function validateCodeDevPlugin(codesRaw: string): Plugin {
+  return {
+    name: 'validate-code-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api/validate-code', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+        const codes = codesRaw.split(',').map(c => c.trim()).filter(Boolean);
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          let code = '';
+          try { ({ code } = JSON.parse(Buffer.concat(chunks).toString()) as { code: string }); } catch {
+            res.statusCode = 400; res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify({ valid: false })); return;
+          }
+          const normalised = (code ?? '').trim().toUpperCase();
+          const valid = codes.map(c => c.toUpperCase()).includes(normalised);
+          res.setHeader('content-type', 'application/json');
+          res.statusCode = valid ? 200 : 401;
+          res.end(JSON.stringify(valid ? { valid: true, token: normalised } : { valid: false }));
+        });
+      });
+    },
+  };
+}
+
 function codeCheckDevPlugin(apiKey: string): Plugin {
   return {
     name: 'code-check-dev',
@@ -423,6 +453,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      validateCodeDevPlugin(env.PHOTOQUOTE_ACCESS_CODES ?? 'SETOUT'),
       quoteDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceLookupDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceCacheDevPlugin(env.REDIS_URL ?? ''),

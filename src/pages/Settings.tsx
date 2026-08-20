@@ -509,27 +509,38 @@ export function Settings() {
         )}
       </div>
 
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <button
-          onClick={() => navigate('/privacy')}
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: '4px 0',
-            fontSize: 13,
-            color: 'var(--color-orange)',
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            textDecoration: 'underline',
-            textDecorationColor: 'transparent',
-            transition: 'text-decoration-color 150ms',
-          }}
-          onPointerDown={e => (e.currentTarget.style.textDecorationColor = 'var(--color-orange)')}
-          onPointerUp={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
-          onPointerLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
-        >
-          Privacy Policy
-        </button>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+          <button
+            onClick={() => navigate('/support')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px 0',
+              fontSize: 13,
+              color: 'var(--color-orange)',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            Support
+          </button>
+          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>·</span>
+          <button
+            onClick={() => navigate('/privacy')}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: '4px 0',
+              fontSize: 13,
+              color: 'var(--color-orange)',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            Privacy Policy
+          </button>
+        </div>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
           Setout v0.1.0 — built for builders
         </p>

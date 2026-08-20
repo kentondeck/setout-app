@@ -19,6 +19,7 @@ import { QuotesPage } from './pages/QuotesPage';
 import { JobDetailPage } from './pages/JobDetailPage';
 import { Settings as SettingsPage } from './pages/Settings';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Support } from './pages/Support';
 import { CalcPlaceholder } from './pages/CalcPlaceholder';
 import { DeckingCalc } from './pages/DeckingCalc';
 import { FramingCalc } from './pages/FramingCalc';
@@ -52,6 +53,7 @@ function AppShell() {
           <Route path="/saved" element={<SavedJobs />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/calc/decking" element={<DeckingCalc />} />
           <Route path="/calc/framing" element={<FramingCalc />} />
           <Route path="/calc/stairs" element={<StairsCalc />} />

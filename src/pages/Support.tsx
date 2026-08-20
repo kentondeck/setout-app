@@ -5,10 +5,6 @@ const CONTACT_EMAIL = 'setoutapp@gmail.com';
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: 'How do I add Setout to my home screen?',
-    a: 'On iPhone: open setout-app.vercel.app in Safari, tap the Share button, then "Add to Home Screen". On Android: open the site in Chrome, tap the three-dot menu, then "Add to Home Screen".',
-  },
-  {
     q: 'Do the calculators work offline?',
     a: 'Yes — once the app has loaded once, all calculators work with no internet. Only Smart Quote and Code Check need a connection because they use AI to process photos and questions.',
   },

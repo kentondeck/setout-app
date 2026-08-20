@@ -89,7 +89,7 @@ Under the New Zealand Privacy Act 2020 and Australian Privacy Principles, you ca
 - **Withdraw consent** to us processing your data — usually by uninstalling the app or deleting your name in Settings
 - **Complain** to the New Zealand Privacy Commissioner ([privacy.org.nz](https://privacy.org.nz)) or the Office of the Australian Information Commissioner ([oaic.gov.au](https://oaic.gov.au)) if you think we've mishandled your data
 
-To exercise any of these rights, email us at **[your email]**. We'll respond within 20 working days.
+To exercise any of these rights, email us at **setoutapp@gmail.com**. We'll respond within 20 working days.
 
 ---
 

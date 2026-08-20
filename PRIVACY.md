@@ -5,7 +5,7 @@
 
 This is the privacy policy for **Setout** — the construction calculator app for tradies in New Zealand and Australia. This document explains what data Setout collects, why, and what your rights are.
 
-Setout is operated by **[YOUR LEGAL NAME / COMPANY]** (referred to as "we", "us", or "our" throughout). Contact: **[your email — e.g. hello@setoutapp.com.au]**.
+Setout is operated by **Setout PTY Ltd** (referred to as "we", "us", or "our" throughout). Contact: **setoutapp@gmail.com**.
 
 ---
 
@@ -138,5 +138,5 @@ If we change this policy in a way that affects how your data is used, we'll bump
 
 Questions, concerns, or requests about your data:
 
-**Email:** [your email — e.g. hello@setoutapp.com.au]
+**Email:** setoutapp@gmail.com
 **Website:** [setoutapp.com.au](https://setoutapp.com.au)

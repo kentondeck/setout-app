@@ -1,4 +1,5 @@
 import { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 import type { Employee } from '../types';
@@ -29,6 +30,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 
 export function Settings() {
+  const navigate = useNavigate();
   const { settings, updateSettings } = useContext(SettingsContext);
   const [nameInput, setNameInput] = useState(settings.userName);
   const [nameSaved, setNameSaved] = useState(false);
@@ -507,8 +509,28 @@ export function Settings() {
         )}
       </div>
 
-      <div style={{ marginTop: 'auto', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <button
+          onClick={() => navigate('/privacy')}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '4px 0',
+            fontSize: 13,
+            color: 'var(--color-orange)',
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            textDecorationColor: 'transparent',
+            transition: 'text-decoration-color 150ms',
+          }}
+          onPointerDown={e => (e.currentTarget.style.textDecorationColor = 'var(--color-orange)')}
+          onPointerUp={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+          onPointerLeave={e => (e.currentTarget.style.textDecorationColor = 'transparent')}
+        >
+          Privacy Policy
+        </button>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
           Setout v0.1.0 — built for builders
         </p>
       </div>

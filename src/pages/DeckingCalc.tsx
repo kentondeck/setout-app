@@ -254,16 +254,31 @@ export function DeckingCalc() {
         {/* Results */}
         {result && (
           <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
-                <ResultCard label="Lineal metres" value={fmt(result.outputs.totalLinealMetres)} unit="lm" />
+            {/* Big obvious answer card */}
+            <div style={{
+              background: 'var(--color-orange)',
+              color: '#fff',
+              borderRadius: 'var(--radius-card)',
+              padding: '22px 24px',
+              marginBottom: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+                Order this
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
-                <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
-                <ResultCard label="Fixings (approx)" value={fmt(result.outputs.fixingsCount)} />
+              <div style={{ fontSize: 42, fontWeight: 500, letterSpacing: '-1.2px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                {fmt(result.outputs.boardCount)} boards
               </div>
+              <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
+                {fmt(result.outputs.totalLinealMetres)} lineal metres · {fmt(result.outputs.fixingsCount)} screws
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
+              <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
             </div>
 
             {persistedSuggestions && (
@@ -490,14 +505,27 @@ export function DeckingCalc() {
               {COMPLIANCE_NOTES.decking[settings.region]}
             </p>
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <AddToQuoteButton
-              scopeSummary={`Deck, ${inputs.deckLength}m × ${inputs.deckWidth}m`}
-              materials={quoteMaterials}
-              jobName={jobName}
-            />
-            <ShareCalcButton calculationId={lastEntryId} />
+            <div style={{
+              background: 'var(--color-card)',
+              border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                Save &amp; share
+              </p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <AddToQuoteButton
+                scopeSummary={`Deck, ${inputs.deckLength}m × ${inputs.deckWidth}m`}
+                materials={quoteMaterials}
+                jobName={jobName}
+              />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

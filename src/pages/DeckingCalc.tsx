@@ -1,7 +1,6 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
@@ -254,31 +253,60 @@ export function DeckingCalc() {
         {/* Results */}
         {result && (
           <div ref={resultRef}>
-            {/* Big obvious answer card */}
+            {/* Big "order this" card — every material a chippie needs at the yard, together */}
             <div style={{
               background: 'var(--color-orange)',
               color: '#fff',
               borderRadius: 'var(--radius-card)',
-              padding: '22px 24px',
+              padding: '20px 22px',
               marginBottom: 12,
               display: 'flex',
               flexDirection: 'column',
-              gap: 4,
+              fontVariantNumeric: 'tabular-nums',
             }}>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)', marginBottom: 14 }}>
                 Order this
               </div>
-              <div style={{ fontSize: 42, fontWeight: 500, letterSpacing: '-1.2px', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
-                {fmt(result.outputs.boardCount)} boards
-              </div>
-              <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', marginTop: 4, fontVariantNumeric: 'tabular-nums' }}>
-                {fmt(result.outputs.totalLinealMetres)} lineal metres · {fmt(result.outputs.fixingsCount)} screws
-              </div>
-            </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
-              <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
+              {[
+                {
+                  qty: fmt(result.outputs.boardCount),
+                  unit: 'boards',
+                  detail: `${fmt(bw)}mm × ${(deckWidthMm / 1000).toFixed(2)}m each · ${fmt(result.outputs.totalLinealMetres)} lm total`,
+                },
+                {
+                  qty: fmt(result.outputs.joistCount),
+                  unit: 'joists',
+                  detail: `${(joistLengthMm / 1000).toFixed(2)}m each · ${fmt(joistLinealM)} lm total`,
+                },
+                {
+                  qty: fmt(result.outputs.bearerCount),
+                  unit: 'bearers',
+                  detail: `${(bearerLengthMm / 1000).toFixed(2)}m each · ${fmt(bearerLinealM)} lm total`,
+                },
+                {
+                  qty: fmt(result.outputs.fixingsCount),
+                  unit: 'screws',
+                  detail: `${screwBoxes} × ${DECKING_SCREWS_PER_BOX}-count box${screwBoxes === 1 ? '' : 'es'}`,
+                },
+              ].map((row, i, arr) => (
+                <div
+                  key={row.unit}
+                  style={{
+                    padding: '12px 0',
+                    borderBottom: i < arr.length - 1 ? '0.5px solid rgba(255,255,255,0.18)' : 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 3,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                    <span style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.8px', lineHeight: 1 }}>{row.qty}</span>
+                    <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.92)' }}>{row.unit}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{row.detail}</div>
+                </div>
+              ))}
             </div>
 
             {persistedSuggestions && (
@@ -340,7 +368,7 @@ export function DeckingCalc() {
               ]}
             />
 
-            {/* Material & Cut List */}
+            {/* Cut List */}
             <div style={{
               background: 'var(--color-card)',
               border: '0.5px solid var(--color-border)',
@@ -350,22 +378,6 @@ export function DeckingCalc() {
               flexDirection: 'column',
               gap: 14,
             }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckWidthMm },
-                { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
-                { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
-                { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
-                  </span>
-                </div>
-              ))}
-
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
               {/* Joists cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>

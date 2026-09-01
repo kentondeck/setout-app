@@ -253,18 +253,18 @@ export function DeckingCalc() {
         {/* Results */}
         {result && (
           <div ref={resultRef}>
-            {/* Big "order this" card — every material a chippie needs at the yard, together */}
+            {/* "Order this" card — every material a chippie needs at the yard, together */}
             <div style={{
               background: 'var(--color-orange)',
               color: '#fff',
               borderRadius: 'var(--radius-card)',
-              padding: '20px 22px',
+              padding: '14px 16px',
               marginBottom: 12,
               display: 'flex',
               flexDirection: 'column',
               fontVariantNumeric: 'tabular-nums',
             }}>
-              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)', marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)', marginBottom: 8 }}>
                 Order this
               </div>
 
@@ -272,39 +272,37 @@ export function DeckingCalc() {
                 {
                   qty: fmt(result.outputs.boardCount),
                   unit: 'boards',
-                  detail: `${fmt(bw)}mm × ${(deckWidthMm / 1000).toFixed(2)}m each · ${fmt(result.outputs.totalLinealMetres)} lm total`,
+                  detail: `${fmt(bw)}mm × ${(deckWidthMm / 1000).toFixed(2)}m · ${fmt(result.outputs.totalLinealMetres)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.joistCount),
                   unit: 'joists',
-                  detail: `${(joistLengthMm / 1000).toFixed(2)}m each · ${fmt(joistLinealM)} lm total`,
+                  detail: `${(joistLengthMm / 1000).toFixed(2)}m · ${fmt(joistLinealM)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.bearerCount),
                   unit: 'bearers',
-                  detail: `${(bearerLengthMm / 1000).toFixed(2)}m each · ${fmt(bearerLinealM)} lm total`,
+                  detail: `${(bearerLengthMm / 1000).toFixed(2)}m · ${fmt(bearerLinealM)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.fixingsCount),
                   unit: 'screws',
-                  detail: `${screwBoxes} × ${DECKING_SCREWS_PER_BOX}-count box${screwBoxes === 1 ? '' : 'es'}`,
+                  detail: `${screwBoxes} × ${DECKING_SCREWS_PER_BOX} box${screwBoxes === 1 ? '' : 'es'}`,
                 },
               ].map((row, i, arr) => (
                 <div
                   key={row.unit}
                   style={{
-                    padding: '12px 0',
+                    padding: '7px 0',
                     borderBottom: i < arr.length - 1 ? '0.5px solid rgba(255,255,255,0.18)' : 'none',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: 3,
+                    alignItems: 'baseline',
+                    gap: 10,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                    <span style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.8px', lineHeight: 1 }}>{row.qty}</span>
-                    <span style={{ fontSize: 15, fontWeight: 500, color: 'rgba(255,255,255,0.92)' }}>{row.unit}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>{row.detail}</div>
+                  <span style={{ fontSize: 20, fontWeight: 500, letterSpacing: '-0.3px', lineHeight: 1, minWidth: 44 }}>{row.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)' }}>{row.unit}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.72)', marginLeft: 'auto', textAlign: 'right' }}>{row.detail}</span>
                 </div>
               ))}
             </div>

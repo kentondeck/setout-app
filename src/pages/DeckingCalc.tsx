@@ -1,7 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
@@ -27,7 +26,7 @@ interface Inputs {
 }
 
 const MILL_ALLOWANCE = 10;
-const DECKING_SCREWS_PER_BOX = 500; // typical trade box of decking screws
+const DECKING_SCREWS_PER_BOX = 500;
 
 const DEFAULTS: Inputs = {
   deckLength: '',
@@ -39,6 +38,27 @@ const DEFAULTS: Inputs = {
 };
 
 const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
+
+// Reusable disclosure styles
+const disclosureCard: React.CSSProperties = {
+  background: 'var(--color-card)',
+  border: '0.5px solid var(--color-border)',
+  borderRadius: 'var(--radius-card)',
+  overflow: 'hidden',
+};
+const summaryRow: React.CSSProperties = {
+  padding: '14px 16px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+};
+const summaryTitle: React.CSSProperties = { fontSize: 13, fontWeight: 500, color: 'var(--color-text)' };
+const summarySub: React.CSSProperties = { fontSize: 11, color: 'var(--color-muted)', marginTop: 2 };
+const chevron = (
+  <svg className="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-muted)', flexShrink: 0 }}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
 
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
@@ -55,9 +75,14 @@ export function DeckingCalc() {
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
   const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
+  const [isStale, setIsStale] = useState(false);
+  const inputsDetailsRef = useRef<HTMLDetailsElement>(null);
 
   function set(field: keyof Inputs) {
-    return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
+    return (value: string) => {
+      setInputs(prev => ({ ...prev, [field]: value }));
+      if (result) setIsStale(true);
+    };
   }
 
   function handleCalculate() {
@@ -82,8 +107,10 @@ export function DeckingCalc() {
 
     const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
     setResult(calc);
+    setIsStale(false);
+    // Collapse the inputs card after a successful calc so the results have room
+    if (inputsDetailsRef.current) inputsDetailsRef.current.open = false;
 
-    // Joists span deckLength, bearers span deckWidth — pick smallest fitting stock for each
     setJoistStock([3000, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= length * 1000) ?? 6000);
     setBearerStock([3600, 4800, 5400, 6000].find(s => s + MILL_ALLOWANCE >= width * 1000) ?? 6000);
     setPersistedSuggestions(
@@ -115,6 +142,7 @@ export function DeckingCalc() {
     setInputs(prev => ({ ...prev, boardGap: String(gap) }));
     const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap: gap, joistSpacing, bearerSpacing });
     setResult(calc);
+    setIsStale(false);
   }
 
   const deckLengthMm = result ? Math.round(parseFloat(inputs.deckLength) * 1000) : 0;
@@ -124,7 +152,6 @@ export function DeckingCalc() {
   const js = result ? parseFloat(inputs.joistSpacing) : 0;
   const coverage = bw + bg;
 
-  // joists span the length (parallel to long axis), bearers span the width (perpendicular to joists)
   const joistLengthMm = deckLengthMm;
   const bearerLengthMm = deckWidthMm;
   const joistCutlist = result && joistLengthMm > 0 && joistLengthMm <= joistStock + MILL_ALLOWANCE
@@ -181,100 +208,144 @@ export function DeckingCalc() {
     { item: 'Decking screws', quantity: screwBoxes, unit: 'box', note: `${result.outputs.fixingsCount} screws` },
   ] : [];
 
+  const inputsSummary = result
+    ? `${inputs.deckLength} × ${inputs.deckWidth} m · ${inputs.boardWidth} mm boards · ${inputs.joistSpacing || '—'} mm joists`
+    : 'Deck size, boards, spacings';
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader title="Decking" />
 
-      <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-
-        {/* Inputs */}
-        <div
-          style={{
-            background: 'var(--color-card)',
-            border: '0.5px solid var(--color-border)',
-            borderRadius: 'var(--radius-card)',
-            padding: '18px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} units={['m', 'mm']} placeholders={{ m: 'e.g. 4.2', mm: 'e.g. 4200' }} />
+      {/* Sticky headline result — appears only after a calc, pins to top on scroll */}
+      {result && (
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
+          background: 'var(--color-orange)',
+          color: '#fff',
+          padding: '12px 20px 14px',
+          display: 'flex',
+          alignItems: 'baseline',
+          gap: 12,
+          boxShadow: '0 2px 0 rgba(0,0,0,0.04)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+              Order this
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} units={['m', 'mm']} placeholders={{ m: 'e.g. 3.6', mm: 'e.g. 3600' }} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 90', m: 'e.g. 0.09' }} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 5', m: 'e.g. 0.005' }} hint="default 5mm" />
+            <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.6px', fontVariantNumeric: 'tabular-nums', lineHeight: 1.15 }}>
+              {result.outputs.boardCount} boards · {result.outputs.totalLinealMetres} lm
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 450', m: 'e.g. 0.45' }} hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+              Fixings
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 1300', m: 'e.g. 1.3' }} />
+            <div style={{ fontSize: 16, fontWeight: 500, fontVariantNumeric: 'tabular-nums', lineHeight: 1.15 }}>
+              {result.outputs.fixingsCount.toLocaleString()}
             </div>
           </div>
         </div>
+      )}
+
+      <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Collapsible Inputs — open by default until first calc, then closed */}
+        <details className="disclosure" ref={inputsDetailsRef} open={!result} style={disclosureCard}>
+          <summary style={summaryRow}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={summaryTitle}>Inputs</div>
+              <div style={summarySub}>{inputsSummary}</div>
+            </div>
+            {chevron}
+          </summary>
+          <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Deck length" value={inputs.deckLength} onChange={set('deckLength')} units={['m', 'mm']} placeholders={{ m: 'e.g. 4.2', mm: 'e.g. 4200' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Deck width" value={inputs.deckWidth} onChange={set('deckWidth')} units={['m', 'mm']} placeholders={{ m: 'e.g. 3.6', mm: 'e.g. 3600' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Board width" value={inputs.boardWidth} onChange={set('boardWidth')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 90', m: 'e.g. 0.09' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Board gap" value={inputs.boardGap} onChange={set('boardGap')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 5', m: 'e.g. 0.005' }} hint="default 5mm" />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Joist spacing" value={inputs.joistSpacing} onChange={set('joistSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 450', m: 'e.g. 0.45' }} hint={settings.region === 'NZ' ? 'NZS 3604' : 'AS 1684'} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 1300', m: 'e.g. 1.3' }} />
+              </div>
+            </div>
+          </div>
+        </details>
 
         {error && (
           <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>
         )}
 
-        {/* Calculate button */}
-        <button
-          onClick={handleCalculate}
-          style={{
-            background: 'var(--color-orange)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 14,
-            padding: '16px',
-            fontSize: 16,
-            fontWeight: 500,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-            letterSpacing: '-0.3px',
-          }}
-          onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
-          onPointerUp={e => (e.currentTarget.style.opacity = '1')}
-          onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
-        >
-          Calculate
-        </button>
+        {/* Big Calculate button only before the first calc — after that the
+            sticky bottom bar is the recalculate action */}
+        {!result && (
+          <button
+            onClick={handleCalculate}
+            style={{
+              background: 'var(--color-orange)', color: '#fff', border: 'none',
+              borderRadius: 14, padding: '16px', fontSize: 16, fontWeight: 500,
+              fontFamily: 'inherit', cursor: 'pointer', letterSpacing: '-0.3px',
+            }}
+            onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
+            onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+            onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Calculate
+          </button>
+        )}
 
         {/* Results */}
         {result && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
-                <ResultCard label="Lineal metres" value={fmt(result.outputs.totalLinealMetres)} unit="lm" />
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* Primary result row — joists / bearers (boards & lm live in the sticky banner) */}
+            <div style={{
+              background: 'var(--color-card)',
+              border: '0.5px solid var(--color-border)',
+              borderRadius: 14,
+              padding: '14px 16px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '4px 16px',
+            }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--color-muted)' }}>Joists</div>
+                <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: '-0.4px', fontVariantNumeric: 'tabular-nums', color: 'var(--color-text)' }}>
+                  {result.outputs.joistCount}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
-                <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
-                <ResultCard label="Fixings (approx)" value={fmt(result.outputs.fixingsCount)} />
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--color-muted)' }}>Bearers</div>
+                <div style={{ fontSize: 20, fontWeight: 500, letterSpacing: '-0.4px', fontVariantNumeric: 'tabular-nums', color: 'var(--color-text)' }}>
+                  {result.outputs.bearerCount}
+                </div>
               </div>
             </div>
 
+            {/* Gap suggestions — kept visible (interactive, high-value) */}
             {persistedSuggestions && (
               <div style={{
                 background: 'var(--color-card)',
                 border: '0.5px solid var(--color-border)',
                 borderRadius: 'var(--radius-card)',
                 padding: '14px 16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
+                display: 'flex', flexDirection: 'column', gap: 10,
               }}>
                 <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
                   LAST BOARD {persistedSuggestions.lastBoardWidth}mm — tap for full boards, no rip
@@ -289,16 +360,10 @@ export function DeckingCalc() {
                         style={{
                           background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                           border: `0.5px solid ${active ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                          borderRadius: 10,
-                          padding: '8px 14px',
-                          fontSize: 13,
-                          fontFamily: 'inherit',
-                          cursor: 'pointer',
+                          borderRadius: 10, padding: '8px 14px',
+                          fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
                           color: active ? '#fff' : 'var(--color-text)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: 2,
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                         }}
                       >
                         <span style={{ fontWeight: 600 }}>{s.boardCount} boards</span>
@@ -310,186 +375,202 @@ export function DeckingCalc() {
               </div>
             )}
 
-            <ApprenticeWorking
-              steps={deckingSteps}
-              finalAnswer={`${result.outputs.boardCount} boards`}
-              finalLabel="Total decking boards needed"
-              visible={settings.apprenticeMode}
-              id="decking"
-              glossary={[
-                { term: 'Bearer', definition: 'The main structural timber running parallel to the house, spanning from post to post. Joists sit on top of bearers.' },
-                { term: 'Joist', definition: 'Secondary framing timber running perpendicular to bearers. Decking boards are fixed directly to joists.' },
-                { term: 'Decking board', definition: 'The surface boards you walk on. Width and thickness vary — 90mm, 140mm are common. Gap between boards allows drainage.' },
-                { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order long materials like decking and framing timber.' },
-                { term: 'Board gap', definition: 'The space left between adjacent decking boards for drainage and seasonal timber movement. Typically 5–8mm.' },
-              ]}
-            />
-
-            {/* Material & Cut List */}
-            <div style={{
-              background: 'var(--color-card)',
-              border: '0.5px solid var(--color-border)',
-              borderRadius: 'var(--radius-card)',
-              padding: '18px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckWidthMm },
-                { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
-                { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
-                { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
-                  </span>
+            {/* Show materials & cut list (collapsed) */}
+            <details className="disclosure" style={disclosureCard}>
+              <summary style={summaryRow}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={summaryTitle}>Materials & cut list</div>
+                  <div style={summarySub}>
+                    {result.outputs.boardCount} boards · {result.outputs.joistCount} joists · {result.outputs.bearerCount} bearers · {screwBoxes} × {DECKING_SCREWS_PER_BOX} screw box{screwBoxes === 1 ? '' : 'es'}
+                  </div>
                 </div>
-              ))}
+                {chevron}
+              </summary>
+              <div style={{ padding: '4px 16px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
+                {[
+                  { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckWidthMm },
+                  { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
+                  { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
+                  { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
+                ].map(row => (
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
+                    <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
+                      {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
+                    </span>
+                  </div>
+                ))}
 
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+                <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
-              {/* Joists cut list */}
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>
-
-              {joinRequired ? (
-                joistJoinOptions.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
-                    {(joistLengthMm / 1000).toFixed(1)}m span exceeds 6m — enter bearer spacing to calculate join options
-                  </p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-                      {(joistLengthMm / 1000).toFixed(1)}m span — join over bearer at:
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>
+                {joinRequired ? (
+                  joistJoinOptions.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                      {(joistLengthMm / 1000).toFixed(1)}m span exceeds 6m — enter bearer spacing to calculate join options
                     </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
+                        {(joistLengthMm / 1000).toFixed(1)}m span — join over bearer at:
+                      </p>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {joistJoinOptions.map((opt, i) => (
+                          <button key={opt.at} onClick={() => setSelectedJoinIdx(i)} style={{
+                            flex: 1, padding: '8px 0', borderRadius: 10,
+                            border: '0.5px solid var(--color-border)',
+                            background: selectedJoinIdx === i ? 'var(--color-orange)' : 'var(--color-bg)',
+                            color: selectedJoinIdx === i ? '#fff' : 'var(--color-text)',
+                            fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                          }}>
+                            {(opt.at / 1000).toFixed(1)}m
+                          </button>
+                        ))}
+                      </div>
+                      {(() => {
+                        const opt = joistJoinOptions[Math.min(selectedJoinIdx, joistJoinOptions.length - 1)];
+                        if (!opt) return null;
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {opt.cutlist.materialList.map(m => {
+                              const bins = opt.cutlist.plan.filter(p => p.stockLength === m.stockLength);
+                              const totalWaste = bins.reduce((s, p) => s + p.waste, 0);
+                              const totalStock = m.stockLength * m.count;
+                              const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
+                              return (
+                                <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                                    {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
+                                  </span>
+                                  <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                                    {wastePercent}% waste
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )
+                ) : (
+                  <>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      {joistJoinOptions.map((opt, i) => (
-                        <button key={opt.at} onClick={() => setSelectedJoinIdx(i)} style={{
+                      {[3000, 4800, 5400, 6000].map(len => (
+                        <button key={len} onClick={() => setJoistStock(len)} style={{
                           flex: 1, padding: '8px 0', borderRadius: 10,
                           border: '0.5px solid var(--color-border)',
-                          background: selectedJoinIdx === i ? 'var(--color-orange)' : 'var(--color-bg)',
-                          color: selectedJoinIdx === i ? '#fff' : 'var(--color-text)',
+                          background: joistStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                          color: joistStock === len ? '#fff' : 'var(--color-text)',
                           fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
                         }}>
-                          {(opt.at / 1000).toFixed(1)}m
+                          {(len / 1000).toFixed(1)}m
                         </button>
                       ))}
                     </div>
-                    {(() => {
-                      const opt = joistJoinOptions[Math.min(selectedJoinIdx, joistJoinOptions.length - 1)];
-                      if (!opt) return null;
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {opt.cutlist.materialList.map(m => {
-                            const bins = opt.cutlist.plan.filter(p => p.stockLength === m.stockLength);
-                            const totalWaste = bins.reduce((s, p) => s + p.waste, 0);
-                            const totalStock = m.stockLength * m.count;
-                            const wastePercent = parseFloat(((totalWaste / totalStock) * 100).toFixed(1));
-                            return (
-                              <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                                  {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m lengths
-                                </span>
-                                <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                                  {wastePercent}% waste
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )
-              ) : (
-                <>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    {[3000, 4800, 5400, 6000].map(len => (
-                      <button key={len} onClick={() => setJoistStock(len)} style={{
-                        flex: 1, padding: '8px 0', borderRadius: 10,
-                        border: '0.5px solid var(--color-border)',
-                        background: joistStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
-                        color: joistStock === len ? '#fff' : 'var(--color-text)',
-                        fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                      }}>
-                        {(len / 1000).toFixed(1)}m
-                      </button>
-                    ))}
-                  </div>
-                  {joistCutlist ? (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                        {joistCutlist.outputs.totalPieces} × {(joistStock / 1000).toFixed(1)}m lengths
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                        {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
-                      </span>
-                    </div>
-                  ) : (
-                    <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
-                      Joist length ({joistLengthMm}mm) exceeds selected stock — choose a longer length above
-                    </p>
-                  )}
-                </>
-              )}
+                    {joistCutlist ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                          {joistCutlist.outputs.totalPieces} × {(joistStock / 1000).toFixed(1)}m lengths
+                        </span>
+                        <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                          {joistCutlist.plan[joistCutlist.plan.length - 1]?.waste}mm off-cut · {joistCutlist.outputs.wastePercent}% waste
+                        </span>
+                      </div>
+                    ) : (
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                        Joist length ({joistLengthMm}mm) exceeds selected stock — choose a longer length above
+                      </p>
+                    )}
+                  </>
+                )}
 
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
+                <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
-              {/* Bearers cut list */}
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — BEARERS</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[3600, 4800, 5400, 6000].map(len => (
-                  <button key={len} onClick={() => setBearerStock(len)} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 10,
-                    border: '0.5px solid var(--color-border)',
-                    background: bearerStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
-                    color: bearerStock === len ? '#fff' : 'var(--color-text)',
-                    fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                  }}>
-                    {(len / 1000).toFixed(1)}m
-                  </button>
-                ))}
-              </div>
-              {bearerCutlist ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {bearerCutlist.outputs.totalPieces} × {(bearerStock / 1000).toFixed(1)}m lengths
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
-                    {bearerCutlist.plan[bearerCutlist.plan.length - 1]?.waste}mm off-cut · {bearerCutlist.outputs.wastePercent}% waste
-                  </span>
+                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — BEARERS</p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[3600, 4800, 5400, 6000].map(len => (
+                    <button key={len} onClick={() => setBearerStock(len)} style={{
+                      flex: 1, padding: '8px 0', borderRadius: 10,
+                      border: '0.5px solid var(--color-border)',
+                      background: bearerStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
+                      color: bearerStock === len ? '#fff' : 'var(--color-text)',
+                      fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                    }}>
+                      {(len / 1000).toFixed(1)}m
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
-                  Bearer length ({bearerLengthMm}mm) exceeds selected stock — increase stock size or join over post
-                </p>
-              )}
-            </div>
+                {bearerCutlist ? (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
+                      {bearerCutlist.outputs.totalPieces} × {(bearerStock / 1000).toFixed(1)}m lengths
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' as const }}>
+                      {bearerCutlist.plan[bearerCutlist.plan.length - 1]?.waste}mm off-cut · {bearerCutlist.outputs.wastePercent}% waste
+                    </span>
+                  </div>
+                ) : (
+                  <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)' }}>
+                    Bearer length ({bearerLengthMm}mm) exceeds selected stock — increase stock size or join over post
+                  </p>
+                )}
+              </div>
+            </details>
 
-            <DeckingDiagram
-              deckLength={deckLengthMm}
-              deckWidth={deckWidthMm}
-              boardWidth={bw}
-              boardGap={bg}
-              boardCount={result.outputs.boardCount}
-              joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
-              label={jobName}
-            />
+            {/* Show working — apprentice mode only, collapsed */}
+            {settings.apprenticeMode && (
+              <details className="disclosure" style={disclosureCard}>
+                <summary style={summaryRow}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={summaryTitle}>Show working</div>
+                    <div style={summarySub}>Apprentice mode · {deckingSteps.length} steps</div>
+                  </div>
+                  {chevron}
+                </summary>
+                <div style={{ padding: '4px 16px 16px' }}>
+                  <ApprenticeWorking
+                    steps={deckingSteps}
+                    finalAnswer={`${result.outputs.boardCount} boards`}
+                    finalLabel="Total decking boards needed"
+                    visible
+                    id="decking"
+                    glossary={[
+                      { term: 'Bearer', definition: 'The main structural timber running parallel to the house, spanning from post to post. Joists sit on top of bearers.' },
+                      { term: 'Joist', definition: 'Secondary framing timber running perpendicular to bearers. Decking boards are fixed directly to joists.' },
+                      { term: 'Decking board', definition: 'The surface boards you walk on. Width and thickness vary — 90mm, 140mm are common. Gap between boards allows drainage.' },
+                      { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order long materials like decking and framing timber.' },
+                      { term: 'Board gap', definition: 'The space left between adjacent decking boards for drainage and seasonal timber movement. Typically 5–8mm.' },
+                    ]}
+                  />
+                </div>
+              </details>
+            )}
 
-            <p
-              style={{
-                margin: 0,
-                fontSize: 11,
-                color: 'var(--color-muted)',
-                lineHeight: 1.5,
-              }}
-            >
-              {COMPLIANCE_NOTES.decking[settings.region]}
-            </p>
+            {/* Show diagram — collapsible, off by default to keep first-view clean */}
+            <details className="disclosure" style={disclosureCard}>
+              <summary style={summaryRow}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={summaryTitle}>Show diagram</div>
+                  <div style={summarySub}>Deck layout with board and joist positions</div>
+                </div>
+                {chevron}
+              </summary>
+              <div style={{ padding: '4px 16px 16px' }}>
+                <DeckingDiagram
+                  deckLength={deckLengthMm}
+                  deckWidth={deckWidthMm}
+                  boardWidth={bw}
+                  boardGap={bg}
+                  boardCount={result.outputs.boardCount}
+                  joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
+                  label={jobName}
+                />
+              </div>
+            </details>
 
+            {/* Save / share actions — kept visible, they're the reason you did the calc */}
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
             <AddToQuoteButton
@@ -498,9 +579,67 @@ export function DeckingCalc() {
               jobName={jobName}
             />
             <ShareCalcButton calculationId={lastEntryId} />
+
+            {/* One-line compliance */}
+            <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {COMPLIANCE_NOTES.decking[settings.region]}
+            </p>
           </div>
         )}
       </div>
+
+      {/* Sticky recalculate bar — only after a calc has run */}
+      {result && (
+        <div style={{
+          position: 'sticky',
+          bottom: 0,
+          padding: '0 12px 12px',
+          zIndex: 20,
+          pointerEvents: 'none',
+        }}>
+          <div style={{
+            pointerEvents: 'auto',
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '12px 14px',
+            borderRadius: 14,
+            background: isStale ? '#FEF3C7' : '#DCFCE7',
+            color: isStale ? '#92400E' : '#14532D',
+            boxShadow: '0 8px 24px -6px rgba(0,0,0,0.16)',
+            fontSize: 13, fontWeight: 500,
+            transition: 'background 200ms ease, color 200ms ease',
+          }}>
+            {isStale ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            <span style={{ flex: 1 }}>{isStale ? 'Results out of date' : 'Results current'}</span>
+            {isStale && (
+              <button
+                onClick={handleCalculate}
+                style={{
+                  padding: '8px 14px', borderRadius: 9,
+                  background: '#92400E', color: '#FEF3C7',
+                  border: 'none', fontSize: 12, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                  letterSpacing: '-0.1px',
+                }}
+                onPointerDown={e => (e.currentTarget.style.opacity = '0.85')}
+                onPointerUp={e => (e.currentTarget.style.opacity = '1')}
+                onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
+              >
+                Recalculate
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -74,14 +74,6 @@ input[type='number'] {
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Collapsible section on calc pages — kills the default triangle marker so
-   we can render our own chevron and lay the summary out with flex. */
-details.disclosure > summary { list-style: none; cursor: pointer; }
-details.disclosure > summary::-webkit-details-marker { display: none; }
-details.disclosure > summary::marker { display: none; }
-details.disclosure > summary .chev { transition: transform 200ms ease; }
-details.disclosure[open] > summary .chev { transform: rotate(180deg); }
-
 /* iPad / tablet — full screen, content centered in a readable column */
 @media (min-width: 520px) and (pointer: coarse) {
   body {

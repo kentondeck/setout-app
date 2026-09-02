@@ -173,6 +173,27 @@ export function DeckingCalc() {
   const bearerLinealM = result ? parseFloat((result.outputs.bearerCount * (bearerLengthMm / 1000)).toFixed(1)) : 0;
   const screwBoxes = result ? Math.ceil(result.outputs.fixingsCount / DECKING_SCREWS_PER_BOX) : 0;
 
+  // Boards + bearers span deck WIDTH, joists span deck LENGTH. Any span > 6m
+  // (max stock length) needs to be joined into multiple pieces per run — so the
+  // physical count you order is member-count × pieces-per-run, not member-count.
+  const MAX_STOCK_MM = 6000;
+  const piecesPerRun = (spanMm: number): number => (spanMm > 0 ? Math.ceil(spanMm / MAX_STOCK_MM) : 1);
+  const runBreakdown = (spanMm: number, pieces: number): string => {
+    if (pieces <= 1) return `${(spanMm / 1000).toFixed(2)}m each`;
+    // Default split: N-1 full 6m pieces + one remainder. User can retune in the cut list below.
+    const wholes = pieces - 1;
+    const remainder = spanMm - wholes * MAX_STOCK_MM;
+    const parts = [
+      ...Array(wholes).fill(`${(MAX_STOCK_MM / 1000).toFixed(2)}m`),
+      `${(remainder / 1000).toFixed(2)}m`,
+    ];
+    return `${parts.join(' + ')} per run`;
+  };
+  const boardPieces = piecesPerRun(deckWidthMm);
+  const joistPieces = piecesPerRun(joistLengthMm);
+  const bearerPieces = piecesPerRun(bearerLengthMm);
+  const anyJoinNeeded = boardPieces > 1 || joistPieces > 1 || bearerPieces > 1;
+
   const quoteMaterials = result ? [
     { item: `${bw}mm decking board`, quantity: result.outputs.totalLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
     { item: 'Joist (treated pine)', quantity: joistLinealM, unit: 'lineal metre', note: `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m` },
@@ -264,25 +285,32 @@ export function DeckingCalc() {
               flexDirection: 'column',
               fontVariantNumeric: 'tabular-nums',
             }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)', marginBottom: 8 }}>
-                Order this
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+                  Order this
+                </span>
+                {anyJoinNeeded && (
+                  <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.72)' }}>
+                    · some runs joined
+                  </span>
+                )}
               </div>
 
               {[
                 {
-                  qty: fmt(result.outputs.boardCount),
-                  unit: 'boards',
-                  detail: `${fmt(bw)}mm × ${(deckWidthMm / 1000).toFixed(2)}m · ${fmt(result.outputs.totalLinealMetres)} lm`,
+                  qty: fmt(result.outputs.boardCount * boardPieces),
+                  unit: boardPieces > 1 ? `boards (${boardPieces} per row)` : 'boards',
+                  detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
                 },
                 {
-                  qty: fmt(result.outputs.joistCount),
-                  unit: 'joists',
-                  detail: `${(joistLengthMm / 1000).toFixed(2)}m · ${fmt(joistLinealM)} lm`,
+                  qty: fmt(result.outputs.joistCount * joistPieces),
+                  unit: joistPieces > 1 ? `joists (${joistPieces} per run)` : 'joists',
+                  detail: `${runBreakdown(joistLengthMm, joistPieces)} · ${fmt(joistLinealM)} lm`,
                 },
                 {
-                  qty: fmt(result.outputs.bearerCount),
-                  unit: 'bearers',
-                  detail: `${(bearerLengthMm / 1000).toFixed(2)}m · ${fmt(bearerLinealM)} lm`,
+                  qty: fmt(result.outputs.bearerCount * bearerPieces),
+                  unit: bearerPieces > 1 ? `bearers (${bearerPieces} per run)` : 'bearers',
+                  detail: `${runBreakdown(bearerLengthMm, bearerPieces)} · ${fmt(bearerLinealM)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.fixingsCount),

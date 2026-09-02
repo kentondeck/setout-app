@@ -115,12 +115,12 @@ export function CladdingCalc() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput
-                label="Lap"
+                label="Desired overlap"
                 value={inputs.lap}
                 onChange={set('lap')}
                 units={['mm', 'm']}
                 placeholders={{ mm: 'e.g. 35', m: 'e.g. 0.035' }}
-                hint={inputs.boardWidth && inputs.lap ? `face ${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm` : undefined}
+                hint={inputs.boardWidth && inputs.lap ? `${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm face nominal` : 'actual may adjust for whole courses'}
               />
             </div>
           </div>
@@ -152,14 +152,25 @@ export function CladdingCalc() {
           Calculate
         </button>
 
-        {result && (
+        {result && (() => {
+          const desiredLap = parseFloat(inputs.lap);
+          const boardW = parseFloat(inputs.boardWidth);
+          const actualLap = parseFloat((boardW - result.outputs.faceCover).toFixed(1));
+          const lapDelta = parseFloat((actualLap - desiredLap).toFixed(1));
+          const lapAdjusted = Math.abs(lapDelta) >= 0.1;
+          return (
           <div ref={resultRef}>
             {/* Summary */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Courses" value={result.outputs.courseCount} accent />
-                <ResultCard label="Face cover" value={result.outputs.faceCover} unit="mm" />
+                <ResultCard label="Actual overlap" value={actualLap} unit="mm" />
               </div>
+              {lapAdjusted && (
+                <p style={{ margin: '-2px 2px 0', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+                  Adjusted from {desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly into the wall.
+                </p>
+              )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <ResultCard label="Boards" value={result.outputs.stockCount} unit={`@ ${inputs.boardLength}mm`} />
                 <ResultCard label="Waste" value={result.outputs.wastePercent} unit="%" />
@@ -226,7 +237,8 @@ export function CladdingCalc() {
               {COMPLIANCE_NOTES.cladding[settings.region]}
             </p>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

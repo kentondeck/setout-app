@@ -54,6 +54,8 @@ export function DeckingCalc() {
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
   const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
+  const [boardOrderMode, setBoardOrderMode] = useState<'fixed' | 'rlp'>('fixed');
+  const RLP_BUFFER_PCT = 10;
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -285,19 +287,53 @@ export function DeckingCalc() {
               flexDirection: 'column',
               fontVariantNumeric: 'tabular-nums',
             }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
-                  Order this
-                </span>
-                {anyJoinNeeded && (
-                  <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.72)' }}>
-                    · some runs joined
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+                    Order this
                   </span>
-                )}
+                  {anyJoinNeeded && boardOrderMode === 'fixed' && (
+                    <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.72)' }}>
+                      · some runs joined
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.14)', borderRadius: 8, padding: 2, gap: 2 }}>
+                  {([
+                    { key: 'fixed', label: 'Fixed' },
+                    { key: 'rlp', label: 'RLP' },
+                  ] as const).map(t => {
+                    const active = boardOrderMode === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setBoardOrderMode(t.key)}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: active ? '#fff' : 'transparent',
+                          color: active ? 'var(--color-orange)' : 'rgba(255,255,255,0.85)',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          fontFamily: 'inherit',
+                          cursor: 'pointer',
+                          letterSpacing: '-0.1px',
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {[
-                {
+                boardOrderMode === 'rlp' ? {
+                  qty: `${(result.outputs.totalLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
+                  unit: 'lm (RLP)',
+                  detail: `${fmt(result.outputs.totalLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · ${fmt(bw)}mm × assorted 2.4–6.0m`,
+                } : {
                   qty: fmt(result.outputs.boardCount * boardPieces),
                   unit: boardPieces > 1 ? `boards (${boardPieces} per row)` : 'boards',
                   detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.totalLinealMetres)} lm`,

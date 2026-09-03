@@ -1,4 +1,5 @@
-import { useContext, useState, useRef, useEffect, useMemo } from 'react';
+import { useContext, useState, useRef, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 import { SettingsContext, HistoryContext, JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 
@@ -23,9 +24,13 @@ export function ProfileSheet({ onClose }: Props) {
   const [nameInput, setNameInput] = useState(settings.userName);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (editingName) setTimeout(() => nameRef.current?.focus(), 50);
-  }, [editingName]);
+  function startEditingName() {
+    // flushSync + immediate focus keeps this inside the click's trusted
+    // gesture — a focus() reached via setTimeout instead opens the iOS
+    // keyboard without binding it, so nothing typed ever registers.
+    flushSync(() => { setNameInput(settings.userName); setEditingName(true); });
+    nameRef.current?.focus();
+  }
 
   function saveName() {
     const trimmed = nameInput.trim();
@@ -185,7 +190,7 @@ export function ProfileSheet({ onClose }: Props) {
                   {settings.userName || 'Your name'}
                 </span>
                 <button
-                  onClick={() => { setNameInput(settings.userName); setEditingName(true); }}
+                  onClick={startEditingName}
                   style={{ background: 'none', border: 'none', padding: 4, cursor: 'pointer', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                   aria-label="Edit name"
                 >

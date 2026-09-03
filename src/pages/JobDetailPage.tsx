@@ -1,4 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
@@ -1002,17 +1003,23 @@ export function JobDetailPage() {
     if (job) { setRenameDraft(job.name); setNotesDraft(job.notes); }
   }, [job?.id]);
 
-  useEffect(() => { if (showRename) setTimeout(() => renameInputRef.current?.focus(), 50); }, [showRename]);
-  useEffect(() => {
-    if (showNotesSheet) {
-      setTimeout(() => {
-        const el = notesRef.current;
-        if (!el) return;
-        el.focus();
-        el.setSelectionRange(el.value.length, el.value.length);
-      }, 50);
-    }
-  }, [showNotesSheet]);
+  function openRename() {
+    if (!job) return;
+    // flushSync + immediate focus keeps this inside the click's trusted
+    // gesture — a focus() reached via setTimeout instead opens the iOS
+    // keyboard without binding it, so nothing typed ever registers.
+    flushSync(() => { setShowMenu(false); setRenameDraft(job.name); setShowRename(true); });
+    renameInputRef.current?.focus();
+  }
+
+  function openNotesSheet() {
+    if (!job) return;
+    flushSync(() => { setNotesDraft(job.notes); setShowNotesSheet(true); });
+    const el = notesRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
 
   useEffect(() => {
     if (!showMenu) return;
@@ -1099,7 +1106,7 @@ export function JobDetailPage() {
               border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: 12,
               boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 160, zIndex: 50, overflow: 'hidden',
             }}>
-              <button onClick={() => { setShowMenu(false); setRenameDraft(job.name); setShowRename(true); }} style={menuItemStyle}>Rename</button>
+              <button onClick={openRename} style={menuItemStyle}>Rename</button>
               <div style={{ height: 0.5, background: 'rgba(0,0,0,0.06)' }} />
               <button onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }} style={{ ...menuItemStyle, color: '#e53e3e' }}>Delete job</button>
             </div>
@@ -1110,7 +1117,7 @@ export function JobDetailPage() {
       {/* Notes card */}
       <div style={{ padding: '16px 18px 14px' }}>
         <button
-          onClick={() => { setNotesDraft(job.notes); setShowNotesSheet(true); }}
+          onClick={openNotesSheet}
           onPointerDown={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
           onPointerUp={e => (e.currentTarget.style.background = 'var(--color-card)')}
           onPointerLeave={e => (e.currentTarget.style.background = 'var(--color-card)')}

@@ -1,4 +1,5 @@
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useContext, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { JobsContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
 
@@ -9,11 +10,13 @@ export function JobsPage() {
   const [editMode, setEditMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (showNewJob) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [showNewJob]);
+  function openNewJob() {
+    // flushSync + immediate focus keeps this inside the click's trusted
+    // gesture — a focus() reached via setTimeout instead opens the iOS
+    // keyboard without binding it, so nothing typed ever registers.
+    flushSync(() => { setShowNewJob(true); setEditMode(false); });
+    inputRef.current?.focus();
+  }
 
   function handleCreate() {
     if (!newJobName.trim()) return;
@@ -71,7 +74,7 @@ export function JobsPage() {
             </button>
           )}
           <button
-            onClick={() => { setShowNewJob(true); setEditMode(false); }}
+            onClick={openNewJob}
             style={{
               background: '#FF5A1F',
               color: '#fff',

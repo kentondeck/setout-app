@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import React, { useState, useRef, useEffect, Suspense, lazy } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 
 import { useHistory } from './lib/useHistory';
@@ -13,45 +13,56 @@ import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
 import { UpdateBanner } from './components/UpdateBanner';
 import { Home } from './pages/Home';
-import { History } from './pages/History';
-import { SavedJobs } from './pages/SavedJobs';
-import { JobsPage } from './pages/JobsPage';
-import { QuotesPage } from './pages/QuotesPage';
-import { JobDetailPage } from './pages/JobDetailPage';
-import { Settings as SettingsPage } from './pages/Settings';
-import { PrivacyPolicy } from './pages/PrivacyPolicy';
-import { Support } from './pages/Support';
-import { CalcPlaceholder } from './pages/CalcPlaceholder';
-import { DeckingCalc } from './pages/DeckingCalc';
-import { FramingCalc } from './pages/FramingCalc';
-import { StairsCalc } from './pages/StairsCalc';
-import { RoofCalc } from './pages/RoofCalc';
-import { CutlistCalc } from './pages/CutlistCalc';
-import { BalusterCalc } from './pages/BalusterCalc';
-import { ConcreteCalc } from './pages/ConcreteCalc';
-import { RakedWallCalc } from './pages/RakedWallCalc';
-import { CladdingCalc } from './pages/CladdingCalc';
-import { SetoutCalc } from './pages/SetoutCalc';
-import { RoofingCalc } from './pages/RoofingCalc';
-import { ExcavationCalc } from './pages/ExcavationCalc';
-import { GradientCalc } from './pages/GradientCalc';
-import { EqualSpacingCalc } from './pages/EqualSpacingCalc';
-import { FencingCalc } from './pages/FencingCalc';
-import { PhotoQuoteCalc } from './pages/PhotoQuoteCalc';
+
+// Every route below is only needed once the user navigates there, and several
+// (PhotoQuoteCalc, JobDetailPage, ConcreteCalc...) are large. Lazy-loading them
+// keeps the initial bundle to just the shell + Home instead of ~1.2MB upfront.
+const History = lazy(() => import('./pages/History').then(m => ({ default: m.History })));
+const JobsPage = lazy(() => import('./pages/JobsPage').then(m => ({ default: m.JobsPage })));
+const QuotesPage = lazy(() => import('./pages/QuotesPage').then(m => ({ default: m.QuotesPage })));
+const JobDetailPage = lazy(() => import('./pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
+const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const Support = lazy(() => import('./pages/Support').then(m => ({ default: m.Support })));
+const CalcPlaceholder = lazy(() => import('./pages/CalcPlaceholder').then(m => ({ default: m.CalcPlaceholder })));
+const DeckingCalc = lazy(() => import('./pages/DeckingCalc').then(m => ({ default: m.DeckingCalc })));
+const FramingCalc = lazy(() => import('./pages/FramingCalc').then(m => ({ default: m.FramingCalc })));
+const StairsCalc = lazy(() => import('./pages/StairsCalc').then(m => ({ default: m.StairsCalc })));
+const RoofCalc = lazy(() => import('./pages/RoofCalc').then(m => ({ default: m.RoofCalc })));
+const CutlistCalc = lazy(() => import('./pages/CutlistCalc').then(m => ({ default: m.CutlistCalc })));
+const BalusterCalc = lazy(() => import('./pages/BalusterCalc').then(m => ({ default: m.BalusterCalc })));
+const ConcreteCalc = lazy(() => import('./pages/ConcreteCalc').then(m => ({ default: m.ConcreteCalc })));
+const RakedWallCalc = lazy(() => import('./pages/RakedWallCalc').then(m => ({ default: m.RakedWallCalc })));
+const CladdingCalc = lazy(() => import('./pages/CladdingCalc').then(m => ({ default: m.CladdingCalc })));
+const SetoutCalc = lazy(() => import('./pages/SetoutCalc').then(m => ({ default: m.SetoutCalc })));
+const RoofingCalc = lazy(() => import('./pages/RoofingCalc').then(m => ({ default: m.RoofingCalc })));
+const ExcavationCalc = lazy(() => import('./pages/ExcavationCalc').then(m => ({ default: m.ExcavationCalc })));
+const GradientCalc = lazy(() => import('./pages/GradientCalc').then(m => ({ default: m.GradientCalc })));
+const EqualSpacingCalc = lazy(() => import('./pages/EqualSpacingCalc').then(m => ({ default: m.EqualSpacingCalc })));
+const FencingCalc = lazy(() => import('./pages/FencingCalc').then(m => ({ default: m.FencingCalc })));
+const PhotoQuoteCalc = lazy(() => import('./pages/PhotoQuoteCalc').then(m => ({ default: m.PhotoQuoteCalc })));
 
 
 
 function AppShell() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100svh', width: '100%' }}>
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+        <Suspense fallback={<div style={{ background: 'var(--color-bg)', minHeight: '100%' }} />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quotes" element={<QuotesPage />} />
           <Route path="/history" element={<History />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
-          <Route path="/saved" element={<SavedJobs />} />
+
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/support" element={<Support />} />
@@ -73,6 +84,7 @@ function AppShell() {
           <Route path="/calc/photoquote" element={<PhotoQuoteCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
+        </Suspense>
       </div>
       <BottomNav />
       <UpdateBanner />
@@ -122,15 +134,15 @@ export function App() {
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
       {splashDone && !nameDone && (
-        <OnboardingName onComplete={() => setNameDone(true)} />
+        <OnboardingName onComplete={() => setNameDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => setRegionDone(true)} />
+        <OnboardingRegion onComplete={() => setRegionDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && regionDone && !roleDone && (
-        <OnboardingRole onComplete={() => setRoleDone(true)} />
+        <OnboardingRole onComplete={() => setRoleDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && regionDone && roleDone && !emailDone && (

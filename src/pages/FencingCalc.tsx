@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -118,7 +119,7 @@ export function FencingCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const cardStyle = {
@@ -135,10 +136,10 @@ export function FencingCalc() {
     flex: 1,
     padding: '10px 0',
     borderRadius: 10,
-    border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-    background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
-    color: active ? 'var(--color-orange)' : 'var(--color-text)',
-    fontWeight: active ? 500 : 400,
+    border: '0.5px solid var(--color-border)',
+    background: active ? 'var(--color-orange)' : 'var(--color-bg)',
+    color: active ? '#fff' : 'var(--color-text)',
+    fontWeight: 500,
     fontSize: 14,
     fontFamily: 'inherit',
     cursor: 'pointer',

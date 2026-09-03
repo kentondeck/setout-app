@@ -36,6 +36,7 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
   const { jobs } = useContext(JobsContext);
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [notes, setNotes] = useState(entry.notes ?? '');
   const [notesSaved, setNotesSaved] = useState(false);
   const [showSheet, setShowSheet] = useState(false);
@@ -112,7 +113,7 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
-              {meta?.label} · {timeStr}
+              {entry.jobName ? `${meta?.label} · ${timeStr}` : timeStr}
             </p>
             {linkedJob && (
               <span
@@ -294,10 +295,11 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
           )}
 
           <button
-            onClick={() => onDelete(entry.id)}
+            onClick={() => confirmDelete ? onDelete(entry.id) : setConfirmDelete(true)}
+            onBlur={() => setConfirmDelete(false)}
             style={{
-              background: 'none',
-              border: '0.5px solid rgba(229,62,62,0.3)',
+              background: confirmDelete ? '#fee2e2' : 'none',
+              border: `0.5px solid ${confirmDelete ? 'rgba(229,62,62,0.4)' : 'rgba(229,62,62,0.3)'}`,
               borderRadius: 10,
               padding: '10px',
               fontSize: 13,
@@ -305,9 +307,10 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
               fontFamily: 'inherit',
               cursor: 'pointer',
               fontWeight: 500,
+              transition: 'all 0.15s',
             }}
           >
-            Delete this entry
+            {confirmDelete ? 'Sure? Tap to confirm' : 'Delete this entry'}
           </button>
         </div>
       )}
@@ -340,7 +343,7 @@ export function History() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 20px 24px',
+          padding: 'calc(env(safe-area-inset-top) + 60px) 20px 24px',
           gap: 12,
           textAlign: 'center',
         }}
@@ -359,7 +362,7 @@ export function History() {
   const groups = groupByDate(history);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 20px 24px', gap: 24 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px', gap: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1 style={{ margin: 0, fontWeight: 500, fontSize: 28, letterSpacing: '-0.8px', color: 'var(--color-text)' }}>
           History

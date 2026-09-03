@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -88,7 +89,7 @@ export function StairsCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const stairRise = result ? parseFloat(inputs.totalRise) : 0;
@@ -294,12 +295,8 @@ export function StairsCalc() {
               riserHeight={result.outputs.riserHeight}
               treadDepth={result.outputs.treadDepth}
               stringerLength={result.outputs.stringerLength}
-              totalRise={parseFloat(inputs.totalRise)}
-              totalRun={
-                inputs.totalRun && parseFloat(inputs.totalRun) > 0
-                  ? parseFloat(inputs.totalRun)
-                  : result.outputs.treadCount * result.outputs.treadDepth
-              }
+              totalRise={result.outputs.totalRise}
+              totalRun={result.outputs.totalRun}
               nosing={result.outputs.treadBoardDepth - result.outputs.treadDepth}
               label={jobName}
             />

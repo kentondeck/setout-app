@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
@@ -21,9 +22,10 @@ const ROLES: { id: Role; label: string; subtitle: string }[] = [
 
 interface Props {
   onComplete: (role: Role) => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 }
 
-export function OnboardingRole({ onComplete }: Props) {
+export function OnboardingRole({ onComplete, updateSettings }: Props) {
   const [exiting, setExiting] = useState(false);
   const [selected, setSelected] = useState<Role | null>(null);
 
@@ -35,10 +37,7 @@ export function OnboardingRole({ onComplete }: Props) {
 
     // If apprentice, enable apprentice mode in settings
     if (selected === 'apprentice') {
-      try {
-        const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
-        localStorage.setItem('setout_settings', JSON.stringify({ ...s, apprenticeMode: true }));
-      } catch {}
+      updateSettings({ apprenticeMode: true });
     }
 
     setExiting(true);
@@ -101,7 +100,7 @@ export function OnboardingRole({ onComplete }: Props) {
                   style={{
                     width: '100%', minHeight: 72,
                     borderRadius: 18,
-                    background: active ? 'rgba(255,90,31,0.06)' : '#fff',
+                    background: active ? ORANGE : '#fff',
                     border: `1.5px solid ${active ? ORANGE : 'rgba(0,0,0,0.08)'}`,
                     display: 'flex', alignItems: 'center', gap: 16,
                     padding: '16px 20px',
@@ -111,21 +110,21 @@ export function OnboardingRole({ onComplete }: Props) {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 16, fontWeight: 500, color: DARK, letterSpacing: '-0.4px' }}>{r.label}</div>
-                    <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{r.subtitle}</div>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: active ? '#fff' : DARK, letterSpacing: '-0.4px' }}>{r.label}</div>
+                    <div style={{ fontSize: 12, color: active ? 'rgba(255,255,255,0.8)' : MUTED, marginTop: 2 }}>{r.subtitle}</div>
                     {active && r.id === 'apprentice' && (
-                      <div style={{ fontSize: 12, color: ORANGE, marginTop: 6, lineHeight: 1.5 }}>
+                      <div style={{ fontSize: 12, color: '#fff', marginTop: 6, lineHeight: 1.5 }}>
                         Apprentice mode will be turned on — you can change this in Settings.
                       </div>
                     )}
                   </div>
                   {active && (
                     <div style={{
-                      width: 20, height: 20, borderRadius: '50%', background: ORANGE,
+                      width: 20, height: 20, borderRadius: '50%', background: '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
                     }}>
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 4l2.5 2.5L9 1" stroke={ORANGE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   )}

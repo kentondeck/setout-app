@@ -18,7 +18,7 @@ export function Toast({ message, onDismiss }: ToastProps) {
     <div
       style={{
         position: 'fixed',
-        bottom: 90,
+        bottom: 'calc(env(safe-area-inset-bottom) + 72px)',
         left: '50%',
         transform: 'translateX(-50%)',
         background: '#0a0a0a',

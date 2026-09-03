@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
@@ -121,7 +122,7 @@ export function RoofCalc() {
         outputs: calc.outputs,
       });
 
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticMedium();
     } catch (e) {
       setResult(null);
       setError(e instanceof RoofInputError ? e.message : 'Could not calculate — check inputs.');
@@ -161,11 +162,11 @@ export function RoofCalc() {
                   flex: 1,
                   padding: '10px 12px',
                   borderRadius: 10,
-                  border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                  background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                  color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                  border: '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                  color: active ? '#fff' : 'var(--color-text)',
                   fontSize: 13,
-                  fontWeight: active ? 600 : 500,
+                  fontWeight: 600,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
                   letterSpacing: '-0.2px',
@@ -193,11 +194,11 @@ export function RoofCalc() {
                   style={{
                     padding: '10px 12px',
                     borderRadius: 10,
-                    border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                    background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                    color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                    border: '0.5px solid var(--color-border)',
+                    background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                    color: active ? '#fff' : 'var(--color-text)',
                     fontSize: 13,
-                    fontWeight: active ? 600 : 500,
+                    fontWeight: 600,
                     fontFamily: 'inherit',
                     cursor: 'pointer',
                     letterSpacing: '-0.2px',

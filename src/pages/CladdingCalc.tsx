@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -77,7 +78,7 @@ export function CladdingCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const cardStyle = {
@@ -154,10 +155,8 @@ export function CladdingCalc() {
         </button>
 
         {result && (() => {
-          const desiredLap = parseFloat(inputs.lap);
-          const boardW = parseFloat(inputs.boardWidth);
-          const actualLap = parseFloat((boardW - result.outputs.faceCover).toFixed(1));
-          const lapDelta = parseFloat((actualLap - desiredLap).toFixed(1));
+          const actualLap = parseFloat((result.outputs.boardWidth - result.outputs.faceCover).toFixed(1));
+          const lapDelta = parseFloat((actualLap - result.outputs.desiredLap).toFixed(1));
           const lapAdjusted = Math.abs(lapDelta) >= 0.1;
           const shopRows = [
             { qty: `${result.outputs.stockCount}`, name: `${boardW}mm cladding boards`, meta: `${inputs.boardLength}mm each · ${result.outputs.totalLm} lm · ${result.outputs.wastePercent}% waste` },

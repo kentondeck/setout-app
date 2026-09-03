@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -190,7 +191,7 @@ export function ExcavationCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const cardStyle = {
@@ -250,13 +251,13 @@ export function ExcavationCalc() {
               alignSelf: 'flex-start',
               padding: '8px 14px',
               borderRadius: 10,
-              border: sloped ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-              background: sloped ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-              color: sloped ? 'var(--color-orange)' : 'var(--color-muted)',
+              border: '0.5px solid var(--color-border)',
+              background: sloped ? 'var(--color-orange)' : 'var(--color-card)',
+              color: sloped ? '#fff' : 'var(--color-muted)',
               fontSize: 13,
               fontFamily: 'inherit',
               cursor: 'pointer',
-              fontWeight: sloped ? 500 : 400,
+              fontWeight: 500,
             }}
           >
             {sloped ? 'Sloped site' : 'Flat site'} — tap to toggle
@@ -278,10 +279,10 @@ export function ExcavationCalc() {
                   style={{
                     padding: '12px 14px',
                     borderRadius: 'var(--radius-card)',
-                    border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                    background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                    color: active ? 'var(--color-orange)' : 'var(--color-text)',
-                    fontWeight: active ? 500 : 400,
+                    border: '0.5px solid var(--color-border)',
+                    background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                    color: active ? '#fff' : 'var(--color-text)',
+                    fontWeight: 500,
                     fontSize: 14,
                     fontFamily: 'inherit',
                     cursor: 'pointer',
@@ -314,10 +315,10 @@ export function ExcavationCalc() {
                   style={{
                     padding: '12px 10px',
                     borderRadius: 'var(--radius-card)',
-                    border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                    background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                    color: active ? 'var(--color-orange)' : 'var(--color-text)',
-                    fontWeight: active ? 500 : 400,
+                    border: '0.5px solid var(--color-border)',
+                    background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                    color: active ? '#fff' : 'var(--color-text)',
+                    fontWeight: 500,
                     fontSize: 14,
                     fontFamily: 'inherit',
                     cursor: 'pointer',
@@ -403,10 +404,10 @@ export function ExcavationCalc() {
             />
 
             <ExcavationDiagram
-              length={parseFloat(inputs.length)}
-              width={parseFloat(inputs.width)}
-              depthNear={parseFloat(inputs.depthNear)}
-              depthFar={sloped ? parseFloat(inputs.depthFar) : parseFloat(inputs.depthNear)}
+              length={result.outputs.length}
+              width={result.outputs.width}
+              depthNear={result.outputs.depthNear}
+              depthFar={result.outputs.depthFar}
               sloped={sloped}
               label={jobName}
             />

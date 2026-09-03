@@ -1,4 +1,5 @@
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useContext, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { JobsContext } from '../contexts';
 import type { SavedJob } from '../types';
 
@@ -21,9 +22,14 @@ export function AddToJobSheet({
   const [newJobName, setNewJobName] = useState('');
   const newJobInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (showNewJob) setTimeout(() => newJobInputRef.current?.focus(), 50);
-  }, [showNewJob]);
+  function handleShowNewJob() {
+    // flushSync mounts the input synchronously so the focus() call below stays
+    // inside this click's event-handler stack — on iOS WKWebView, a focus()
+    // reached via a later setTimeout/microtask loses the "trusted user
+    // gesture" the keyboard needs, and it opens without ever accepting input.
+    flushSync(() => setShowNewJob(true));
+    newJobInputRef.current?.focus();
+  }
 
   function handleSelectJob(job: SavedJob) {
     addCalculationToJob(job.id, calculationId);
@@ -71,7 +77,7 @@ export function AddToJobSheet({
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: '20px 20px 40px',
+          padding: '20px 20px calc(env(safe-area-inset-bottom) + 20px)',
           zIndex: 201,
           maxHeight: '72vh',
           display: 'flex',
@@ -283,7 +289,7 @@ export function AddToJobSheet({
             </div>
           ) : (
             <button
-              onClick={() => setShowNewJob(true)}
+              onClick={handleShowNewJob}
               style={{
                 display: 'flex',
                 alignItems: 'center',

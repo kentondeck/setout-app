@@ -48,8 +48,10 @@ export const RoofDiagram = memo(function RoofDiagram({
 }: RoofDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Clamp pitch to a drawable range
-  const pitch  = Math.max(5, Math.min(pitchDegrees, 70));
+  // Clamp pitch to a drawable range. Math.min/max propagate NaN, so an
+  // invalid pitch (e.g. from a 0-run/0-rise upstream edge case) falls back to
+  // the minimum drawable pitch instead of collapsing every coordinate to NaN.
+  const pitch  = Number.isFinite(pitchDegrees) ? Math.max(5, Math.min(pitchDegrees, 70)) : 5;
   const pRad   = pitch * Math.PI / 180;
   const cosP   = Math.cos(pRad);
   const sinP   = Math.sin(pRad);

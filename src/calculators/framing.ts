@@ -16,6 +16,11 @@ export interface FramingOutputs extends Record<string, number> {
   bottomPlateLineal: number;
   nogginCount: number;
   totalLinealMetres: number;
+  // Echoed back so the page's diagram/material list use the values that
+  // actually produced this result, not re-parsed live inputs.
+  wallLengthMm: number;
+  wallHeightMm: number;
+  studSpacingMm: number;
 }
 
 export interface FramingResult {
@@ -90,7 +95,12 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
   ];
 
   return {
-    outputs: { studCount, topPlateLineal, bottomPlateLineal, nogginCount, totalLinealMetres },
+    outputs: {
+      studCount, topPlateLineal, bottomPlateLineal, nogginCount, totalLinealMetres,
+      wallLengthMm: Math.round(wallLength * 1000),
+      wallHeightMm: Math.round(wallHeight * 1000),
+      studSpacingMm: studSpacing,
+    },
     steps,
   };
 }

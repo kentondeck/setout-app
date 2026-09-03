@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
@@ -20,20 +21,17 @@ type RegionCode = typeof REGIONS[number]['code'];
 
 interface Props {
   onComplete: () => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 }
 
-export function OnboardingRegion({ onComplete }: Props) {
+export function OnboardingRegion({ onComplete, updateSettings }: Props) {
   const [exiting, setExiting] = useState(false);
   const [selected, setSelected] = useState<RegionCode | null>(null);
 
   function handleContinue() {
     if (!selected) return;
     localStorage.setItem('setout_region', selected);
-    // Write into settings so compliance notes use the correct region immediately
-    try {
-      const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
-      localStorage.setItem('setout_settings', JSON.stringify({ ...s, region: selected }));
-    } catch {}
+    updateSettings({ region: selected });
     setExiting(true);
     setTimeout(() => onComplete(), 260);
   }
@@ -101,7 +99,7 @@ export function OnboardingRegion({ onComplete }: Props) {
                   style={{
                     width: '100%', height: 72,
                     borderRadius: 18,
-                    background: active ? 'rgba(255,90,31,0.06)' : '#fff',
+                    background: active ? ORANGE : '#fff',
                     border: `1.5px solid ${active ? ORANGE : 'rgba(0,0,0,0.08)'}`,
                     display: 'flex', alignItems: 'center', gap: 16,
                     padding: '0 20px',
@@ -112,18 +110,18 @@ export function OnboardingRegion({ onComplete }: Props) {
                 >
                   <span style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>{r.flag}</span>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: 16, fontWeight: 500, color: DARK, letterSpacing: '-0.4px' }}>{r.name}</div>
-                    <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{r.standard}</div>
+                    <div style={{ fontSize: 16, fontWeight: 500, color: active ? '#fff' : DARK, letterSpacing: '-0.4px' }}>{r.name}</div>
+                    <div style={{ fontSize: 12, color: active ? 'rgba(255,255,255,0.8)' : MUTED, marginTop: 2 }}>{r.standard}</div>
                   </div>
                   {active && (
                     <div style={{
                       marginLeft: 'auto', width: 20, height: 20,
-                      borderRadius: '50%', background: ORANGE,
+                      borderRadius: '50%', background: '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0,
                     }}>
                       <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M1 4l2.5 2.5L9 1" stroke={ORANGE} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                   )}

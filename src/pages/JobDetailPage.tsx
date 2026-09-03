@@ -1,6 +1,7 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext, HistoryContext } from '../contexts';
+import { JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
@@ -679,9 +680,9 @@ function OrderCard({ entries, job, updateJob }: {
               style={{
                 padding: '9px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
                 fontFamily: 'inherit', cursor: 'pointer',
-                border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                border: '0.5px solid var(--color-border)',
+                background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                color: active ? '#fff' : 'var(--color-text)',
                 transition: 'all 0.15s ease',
               }}
             >
@@ -822,12 +823,18 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
       <div style={{
         position: 'absolute', right: 0, top: 0, bottom: 0, width: SWIPE_THRESHOLD,
         background: '#e53e3e', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        // Fully transparent at rest, in sync with the card's slide transition
+        // — otherwise the card's antialiased rounded-corner edge blends
+        // against solid red sitting directly behind it, leaving a hairline
+        // red tint at the corner even though the bounds match exactly.
+        opacity: swipeX < 0 ? 1 : 0,
+        transition: isSwiping ? 'none' : 'opacity 0.2s ease',
       }}>
         <button onClick={() => onRemove(entry.id)} style={{
           background: 'none', border: 'none', color: '#fff',
           fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
         }}>
-          Delete
+          Remove
         </button>
       </div>
 
@@ -842,7 +849,11 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
           borderBottomLeftRadius: expanded ? 0 : 14, borderBottomRightRadius: expanded ? 0 : 14,
           borderBottom: expanded ? 'none' : '0.5px solid var(--color-border)',
           overflow: 'hidden',
-          transform: `translateX(${swipeX}px)`,
+          // Omit at rest rather than translateX(0px) — a zero-value transform
+          // still promotes this to its own compositing layer, whose
+          // anti-aliased rounded corners don't perfectly align with the
+          // parent clip, leaking a hairline of the red delete background.
+          ...(swipeX !== 0 ? { transform: `translateX(${swipeX}px)` } : {}),
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
           position: 'relative', zIndex: 1, cursor: 'pointer', userSelect: 'none',
           boxShadow: '0 1px 2px rgba(0,0,0,0.025)',
@@ -976,7 +987,6 @@ export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } = useContext(JobsContext);
-  const { deleteEntry } = useContext(HistoryContext);
 
   const job = jobs.find(j => j.id === id);
 
@@ -994,17 +1004,23 @@ export function JobDetailPage() {
     if (job) { setRenameDraft(job.name); setNotesDraft(job.notes); }
   }, [job?.id]);
 
-  useEffect(() => { if (showRename) setTimeout(() => renameInputRef.current?.focus(), 50); }, [showRename]);
-  useEffect(() => {
-    if (showNotesSheet) {
-      setTimeout(() => {
-        const el = notesRef.current;
-        if (!el) return;
-        el.focus();
-        el.setSelectionRange(el.value.length, el.value.length);
-      }, 50);
-    }
-  }, [showNotesSheet]);
+  function openRename() {
+    if (!job) return;
+    // flushSync + immediate focus keeps this inside the click's trusted
+    // gesture — a focus() reached via setTimeout instead opens the iOS
+    // keyboard without binding it, so nothing typed ever registers.
+    flushSync(() => { setShowMenu(false); setRenameDraft(job.name); setShowRename(true); });
+    renameInputRef.current?.focus();
+  }
+
+  function openNotesSheet() {
+    if (!job) return;
+    flushSync(() => { setNotesDraft(job.notes); setShowNotesSheet(true); });
+    const el = notesRef.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
 
   useEffect(() => {
     if (!showMenu) return;
@@ -1050,7 +1066,7 @@ export function JobDetailPage() {
 
       {/* Header */}
       <div style={{
-        display: 'flex', alignItems: 'center', padding: '12px 16px 10px', gap: 10,
+        display: 'flex', alignItems: 'center', padding: 'calc(env(safe-area-inset-top) + 20px) 16px 14px', gap: 10,
         position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 10,
       }}>
         <button onClick={() => navigate('/jobs')} style={{
@@ -1091,7 +1107,7 @@ export function JobDetailPage() {
               border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: 12,
               boxShadow: '0 4px 20px rgba(0,0,0,0.12)', minWidth: 160, zIndex: 50, overflow: 'hidden',
             }}>
-              <button onClick={() => { setShowMenu(false); setRenameDraft(job.name); setShowRename(true); }} style={menuItemStyle}>Rename</button>
+              <button onClick={openRename} style={menuItemStyle}>Rename</button>
               <div style={{ height: 0.5, background: 'rgba(0,0,0,0.06)' }} />
               <button onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }} style={{ ...menuItemStyle, color: '#e53e3e' }}>Delete job</button>
             </div>
@@ -1102,7 +1118,7 @@ export function JobDetailPage() {
       {/* Notes card */}
       <div style={{ padding: '16px 18px 14px' }}>
         <button
-          onClick={() => { setNotesDraft(job.notes); setShowNotesSheet(true); }}
+          onClick={openNotesSheet}
           onPointerDown={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
           onPointerUp={e => (e.currentTarget.style.background = 'var(--color-card)')}
           onPointerLeave={e => (e.currentTarget.style.background = 'var(--color-card)')}
@@ -1148,7 +1164,7 @@ export function JobDetailPage() {
                     <CalcEntryCard
                       key={entry.id}
                       entry={entry}
-                      onRemove={calcId => { removeCalculationFromJob(job.id, calcId); deleteEntry(calcId); }}
+                      onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
                     />
                   ))}
                 </div>
@@ -1239,7 +1255,7 @@ export function JobDetailPage() {
 const sheetStyle: React.CSSProperties = {
   position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
   width: '100%', maxWidth: 390, background: '#fff', borderRadius: '20px 20px 0 0',
-  padding: '20px 20px 44px', zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
+  padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)', zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
 };
 const sheetHandleStyle: React.CSSProperties = {
   width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center', marginBottom: 4,

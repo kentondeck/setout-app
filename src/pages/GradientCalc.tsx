@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -99,7 +100,7 @@ export function GradientCalc() {
       addEntry({ id, calculatorId: 'gradient', timestamp: Date.now(), inputs: { mode: 'findGradient', run: distVal, rise: fallVal }, outputs: calc.outputs });
     }
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const drainPresets = getDrainPresets(settings.region);
@@ -135,10 +136,10 @@ export function GradientCalc() {
                   flex: 1,
                   padding: '11px',
                   borderRadius: 'var(--radius-card)',
-                  border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                  background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                  color: active ? 'var(--color-orange)' : 'var(--color-muted)',
-                  fontWeight: active ? 500 : 400,
+                  border: '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                  color: active ? '#fff' : 'var(--color-muted)',
+                  fontWeight: 500,
                   fontSize: 14,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
@@ -166,8 +167,8 @@ export function GradientCalc() {
                     style={{
                       padding: '9px 10px',
                       borderRadius: 'var(--radius-card)',
-                      border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                      background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                      border: '0.5px solid var(--color-border)',
+                      background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                       fontFamily: 'inherit',
                       cursor: 'pointer',
                       textAlign: 'left' as const,
@@ -176,8 +177,8 @@ export function GradientCalc() {
                       gap: 2,
                     }}
                   >
-                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-orange)' : 'var(--color-text)' }}>{p.label}</span>
-                    <span style={{ fontSize: 10, color: active ? 'var(--color-orange)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? '#fff' : 'var(--color-text)' }}>{p.label}</span>
+                    <span style={{ fontSize: 10, color: active ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
                   </button>
                 );
               })}
@@ -198,8 +199,8 @@ export function GradientCalc() {
                     style={{
                       padding: '9px 10px',
                       borderRadius: 'var(--radius-card)',
-                      border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                      background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                      border: '0.5px solid var(--color-border)',
+                      background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                       fontFamily: 'inherit',
                       cursor: 'pointer',
                       textAlign: 'left' as const,
@@ -208,8 +209,8 @@ export function GradientCalc() {
                       gap: 2,
                     }}
                   >
-                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-orange)' : 'var(--color-text)' }}>{p.label}</span>
-                    <span style={{ fontSize: 10, color: active ? 'var(--color-orange)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? '#fff' : 'var(--color-text)' }}>{p.label}</span>
+                    <span style={{ fontSize: 10, color: active ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
                   </button>
                 );
               })}
@@ -276,7 +277,7 @@ export function GradientCalc() {
           <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <ResultHero
               label={!reverse ? 'Fall required' : 'Gradient'}
-              value={!reverse ? o.rise : `1:${o.gradientRatio}`}
+              value={!reverse ? o.rise : (o.gradientRatio > 0 ? `1:${o.gradientRatio}` : 'Flat')}
               unit={!reverse ? 'mm' : ''}
               spec={`${distance} distance${reverse ? ` · ${fall}mm fall` : ` · 1:${activeRatio}`}`}
               stats={[
@@ -288,7 +289,7 @@ export function GradientCalc() {
 
             <ApprenticeWorking
               steps={result.steps}
-              finalAnswer={!reverse ? `${o.rise}mm fall` : `1:${o.gradientRatio}`}
+              finalAnswer={!reverse ? `${o.rise}mm fall` : (o.gradientRatio > 0 ? `1:${o.gradientRatio}` : 'Flat')}
               finalLabel={`${o.risePerMetre}mm per metre`}
               visible={settings.apprenticeMode}
               id="gradient"

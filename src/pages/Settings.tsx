@@ -124,8 +124,7 @@ export function Settings() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: '28px 20px',
-        paddingBottom: 24,
+        padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px',
         gap: 28,
       }}
     >
@@ -159,12 +158,10 @@ export function Settings() {
                 style={{
                   padding: '14px',
                   borderRadius: 'var(--radius-card)',
-                  border: active
-                    ? '1.5px solid var(--color-orange)'
-                    : '0.5px solid var(--color-border)',
-                  background: active ? 'rgba(255, 90, 31, 0.06)' : 'var(--color-card)',
-                  color: active ? 'var(--color-orange)' : 'var(--color-text)',
-                  fontWeight: active ? 500 : 400,
+                  border: '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                  color: active ? '#fff' : 'var(--color-text)',
+                  fontWeight: 500,
                   fontSize: 14,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
@@ -191,10 +188,10 @@ export function Settings() {
                 style={{
                   padding: '14px',
                   borderRadius: 'var(--radius-card)',
-                  border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                  background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                  color: active ? 'var(--color-orange)' : 'var(--color-text)',
-                  fontWeight: active ? 500 : 400,
+                  border: '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                  color: active ? '#fff' : 'var(--color-text)',
+                  fontWeight: 500,
                   fontSize: 14,
                   fontFamily: 'inherit',
                   cursor: 'pointer',

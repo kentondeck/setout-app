@@ -36,10 +36,11 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditing) {
-      setDraftName(job.name);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    // Edit mode makes every card's name inline-editable at once, so there's
+    // no single field to autofocus — the user taps whichever one they want.
+    // (A delayed focus() here also isn't a real fix: on iOS WKWebView it
+    // opens the keyboard without binding it, so nothing typed registers.)
+    if (isEditing) setDraftName(job.name);
   }, [isEditing, job.name]);
 
   function handleRenameCommit() {
@@ -107,6 +108,13 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Fully transparent at rest, in sync with the card's own slide
+          // transition — otherwise the card's antialiased rounded-corner edge
+          // blends against solid red sitting directly behind it, leaving a
+          // hairline red tint at the corner even though the two elements'
+          // bounds match exactly.
+          opacity: swipeX < 0 ? 1 : 0,
+          transition: isSwiping ? 'none' : 'opacity 0.2s ease',
         }}
       >
         <button
@@ -148,7 +156,12 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
           gap: 12,
           cursor: 'pointer',
           textAlign: 'left',
-          transform: `translateX(${swipeX}px)`,
+          // Omit the transform entirely at rest (rather than translateX(0px)) —
+          // a zero-value transform still promotes the card to its own
+          // compositing layer, and its anti-aliased rounded corners don't
+          // perfectly align with the parent's overflow:hidden clip, leaking a
+          // hairline of the red delete background through at the edges.
+          ...(swipeX !== 0 ? { transform: `translateX(${swipeX}px)` } : {}),
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
           position: 'relative',
           zIndex: 1,

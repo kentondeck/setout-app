@@ -40,7 +40,7 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
   const update = useCallback((patch: Partial<Settings>) => {
     setSettings(prev => {
       const next = { ...prev, ...patch };
-      localStorage.setItem(KEY, JSON.stringify(next));
+      try { localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* in-memory state still updates; persistence is best-effort */ }
       return next;
     });
   }, []);

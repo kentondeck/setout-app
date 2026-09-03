@@ -18,6 +18,10 @@ export interface CladdingOutputs extends Record<string, number> {
   wastePercent: number;    // %
   firstMark: number;       // mm — first rod mark from datum
   lastMark: number;        // mm — bottom of last course
+  // Echoed back so the page's "actual overlap" display uses the values that
+  // actually produced this result, not re-parsed live inputs.
+  boardWidth: number;      // mm
+  desiredLap: number;      // mm — the lap originally requested, before rounding to a whole course count
 }
 
 export interface CladdingResult {
@@ -34,7 +38,9 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   // Spread courses evenly across wall height above start offset
   const availableHeight = wallHeight - startOffset;
   const rawCourseCount = availableHeight / nominalFace;
-  const courseCount = Math.round(rawCourseCount);
+  // At least one course whenever there's any wall height above the start
+  // offset — rounding a short wall down to 0 courses would divide by zero below.
+  const courseCount = Math.max(1, Math.round(rawCourseCount));
   const faceCover = parseFloat((availableHeight / courseCount).toFixed(1));
 
   // Rod marks: one per course line (bottom edge of each board) — keep 1dp
@@ -107,7 +113,7 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   ];
 
   return {
-    outputs: { courseCount, faceCover, topBoardRip, totalLm, stockCount, wastePercent, firstMark, lastMark },
+    outputs: { courseCount, faceCover, topBoardRip, totalLm, stockCount, wastePercent, firstMark, lastMark, boardWidth, desiredLap: lap },
     rodMarks,
     steps,
   };

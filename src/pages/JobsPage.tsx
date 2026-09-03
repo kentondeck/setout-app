@@ -1,4 +1,5 @@
-import { useState, useContext, useRef, useEffect } from 'react';
+import { useState, useContext, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { JobsContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
 
@@ -9,11 +10,13 @@ export function JobsPage() {
   const [editMode, setEditMode] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (showNewJob) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
-  }, [showNewJob]);
+  function openNewJob() {
+    // flushSync + immediate focus keeps this inside the click's trusted
+    // gesture — a focus() reached via setTimeout instead opens the iOS
+    // keyboard without binding it, so nothing typed ever registers.
+    flushSync(() => { setShowNewJob(true); setEditMode(false); });
+    inputRef.current?.focus();
+  }
 
   function handleCreate() {
     if (!newJobName.trim()) return;
@@ -32,16 +35,16 @@ export function JobsPage() {
   );
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 20px 24px', gap: 20 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px', gap: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: 500,
             color: '#0a0a0a',
-            letterSpacing: '-0.5px',
+            letterSpacing: '-0.8px',
           }}
         >
           Saved jobs
@@ -71,7 +74,7 @@ export function JobsPage() {
             </button>
           )}
           <button
-            onClick={() => { setShowNewJob(true); setEditMode(false); }}
+            onClick={openNewJob}
             style={{
               background: '#FF5A1F',
               color: '#fff',
@@ -178,7 +181,7 @@ export function JobsPage() {
               maxWidth: 390,
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              padding: '20px 20px 40px',
+              padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)',
               zIndex: 201,
               display: 'flex',
               flexDirection: 'column',

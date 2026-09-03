@@ -10,6 +10,8 @@ export interface BalusterOutputs extends Record<string, number> {
   balusters: number;
   actualGap: number;      // mm (exact gap achieved)
   totalBalusterWidth: number; // mm
+  totalLength: number;    // mm — echoed back so the diagram uses the value actually calculated, not a re-parsed live input
+  balusterWidth: number;  // mm — echoed back for the same reason
 }
 
 export interface BalusterResult {
@@ -54,7 +56,7 @@ export function calculateBaluster(inputs: BalusterInputs): BalusterResult {
   ];
 
   return {
-    outputs: { balusters, actualGap, totalBalusterWidth },
+    outputs: { balusters, actualGap, totalBalusterWidth, totalLength, balusterWidth },
     steps,
   };
 }

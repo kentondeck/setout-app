@@ -37,7 +37,7 @@ function readStore(): HabitsStore {
 }
 
 function writeStore(store: HabitsStore) {
-  localStorage.setItem(HABITS_KEY, JSON.stringify(store));
+  try { localStorage.setItem(HABITS_KEY, JSON.stringify(store)); } catch { /* best-effort — habit tracking, not critical data */ }
 }
 
 export function recordMaterialRemoved(item: string) {

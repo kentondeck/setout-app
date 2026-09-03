@@ -1,4 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PhotoQuoteGate } from '../components/PhotoQuoteGate';
 import { hasPhotoQuoteAccess, getPhotoQuoteToken } from '../lib/photoQuoteAccess';
@@ -623,7 +624,7 @@ function PhotoQuoteCalcInner() {
         },
       });
 
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticMedium();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {
@@ -1085,9 +1086,9 @@ function PhotoQuoteCalcInner() {
                   onClick={() => setDocType(t)}
                   style={{
                     flex: 1, padding: '12px 0', borderRadius: 12, fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                    border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                    background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                    color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                    border: '0.5px solid var(--color-border)',
+                    background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                    color: active ? '#fff' : 'var(--color-text)',
                   }}
                 >
                   {t === 'quote' ? 'Firm quote' : t === 'invoice' ? 'Invoice' : 'Estimate'}
@@ -1566,9 +1567,9 @@ function PhotoQuoteCalcInner() {
                           onClick={() => handleTravelModeChange(mode)}
                           style={{
                             flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                            border: `0.5px solid ${travelMode === mode ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                            background: travelMode === mode ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
-                            color: travelMode === mode ? 'var(--color-orange)' : 'var(--color-muted)',
+                            border: '0.5px solid var(--color-border)',
+                            background: travelMode === mode ? 'var(--color-orange)' : 'var(--color-bg)',
+                            color: travelMode === mode ? '#fff' : 'var(--color-muted)',
                           }}
                         >
                           {TRAVEL_MODE_LABELS[mode]}
@@ -1643,9 +1644,9 @@ function PhotoQuoteCalcInner() {
                           onClick={() => handleMaterialMarginChange(String(p))}
                           style={{
                             flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                            border: `0.5px solid ${materialMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                            background: materialMarginPct === String(p) ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
-                            color: materialMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-muted)',
+                            border: '0.5px solid var(--color-border)',
+                            background: materialMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-bg)',
+                            color: materialMarginPct === String(p) ? '#fff' : 'var(--color-muted)',
                           }}
                         >
                           {p}%
@@ -1672,9 +1673,9 @@ function PhotoQuoteCalcInner() {
                           onClick={() => handleLabourMarginChange(String(p))}
                           style={{
                             flex: 1, padding: '6px 0', borderRadius: 8, fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                            border: `0.5px solid ${labourMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-border)'}`,
-                            background: labourMarginPct === String(p) ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
-                            color: labourMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-muted)',
+                            border: '0.5px solid var(--color-border)',
+                            background: labourMarginPct === String(p) ? 'var(--color-orange)' : 'var(--color-bg)',
+                            color: labourMarginPct === String(p) ? '#fff' : 'var(--color-muted)',
                           }}
                         >
                           {p}%

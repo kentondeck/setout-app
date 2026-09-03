@@ -54,7 +54,8 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
       case 'decking': {
         const widthMm = num(i.deckWidth) * 1000;
         const lengthMm = num(i.deckLength) * 1000;
-        addPiece(widthMm, num(o.boardCount), 'Decking', 'boards');
+        const boardStockMm = num(o.boardStockMm) || widthMm;
+        addPiece(boardStockMm, num(o.boardCount), 'Decking', 'boards');
         addPiece(lengthMm, num(o.joistCount), 'Decking', 'joists');
         addPiece(widthMm, num(o.bearerCount), 'Decking', 'bearers');
         const screws = num(o.fixingsCount);
@@ -102,8 +103,13 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
           looseTimberLm += railLm;
           other.push({ id: `rails-${e.id}`, name: 'Fence rails', qty: Math.ceil(railLm), unit: 'lm', sources: ['Fencing'] });
         }
-        const bags = num(o.totalConcreteBags);
-        if (bags > 0) concrete.push({ id: `conc-fence-${e.id}`, name: '20 kg bags', qty: bags, unit: 'bags', sources: ['Fencing'] });
+        if (num(o.recommendTruck) === 1) {
+          const vol = num(o.totalConcreteVolM3);
+          if (vol > 0) concrete.push({ id: `conc-fence-${e.id}`, name: 'Ready-mix', qty: vol, unit: 'm³', sources: ['Fencing'] });
+        } else {
+          const bags = num(o.totalConcreteBags);
+          if (bags > 0) concrete.push({ id: `conc-fence-${e.id}`, name: '20 kg bags', qty: bags, unit: 'bags', sources: ['Fencing'] });
+        }
         break;
       }
       case 'concrete': {
@@ -151,7 +157,7 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
       case 'photoquote': {
         const raw = String(o.materialsJson ?? '');
         if (!raw) break;
-        let items: { item: string; quantity: number; unit: string }[] = [];
+        let items: { item: string; quantity: number; unit: string }[];
         try { items = JSON.parse(raw); } catch { break; }
         for (const m of items) {
           if (!m.item?.trim() || !(m.quantity > 0)) continue;

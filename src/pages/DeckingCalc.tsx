@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
@@ -73,6 +74,14 @@ export function DeckingCalc() {
       setError('Enter a valid board width.');
       return;
     }
+    if (!joistSpacing || joistSpacing <= 0) {
+      setError('Enter a valid joist spacing.');
+      return;
+    }
+    if (!bearerSpacing || bearerSpacing <= 0) {
+      setError('Enter a valid bearer spacing.');
+      return;
+    }
 
     setError('');
 
@@ -96,7 +105,7 @@ export function DeckingCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   function applyGapSuggestion(gap: number) {
@@ -115,8 +124,8 @@ export function DeckingCalc() {
   const bw = result ? parseFloat(inputs.boardWidth) : 0;
   // Board gap defaults to 5mm when input left blank — mirror the calc's fallback
   // so the diagram doesn't disappear just because the user didn't type a gap.
-  const bgRaw = result ? parseFloat(inputs.boardGap) : 0;
-  const bg = result && (!isFinite(bgRaw) || bgRaw < 0) ? 5 : bgRaw;
+  const bgRaw = parseFloat(inputs.boardGap);
+  const bg = result ? (isFinite(bgRaw) && bgRaw >= 0 ? bgRaw : 5) : 0;
   const js = result ? parseFloat(inputs.joistSpacing) : 0;
   const coverage = bw + bg;
 
@@ -175,7 +184,7 @@ export function DeckingCalc() {
   const quoteMaterials = result ? [
     {
       item: `${bw}mm decking board`,
-      quantity: result.outputs.totalLinealMetres,
+      quantity: result.outputs.boardLinealMetres,
       unit: 'lineal metre',
       note: boardPieces > 1
         ? `${result.outputs.boardCount * boardPieces} pieces — ${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)}`
@@ -283,14 +292,14 @@ export function DeckingCalc() {
           const shopRows = [
             boardOrderMode === 'rlp'
               ? {
-                  qty: `${(result.outputs.totalLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
+                  qty: `${(result.outputs.boardLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
                   name: `${bw}mm decking · random length pack`,
-                  meta: `${fmt(result.outputs.totalLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · assorted 2.4–6.0m`,
+                  meta: `${fmt(result.outputs.boardLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · assorted 2.4–6.0m`,
                 }
               : {
                   qty: fmt(boardsToBuy),
                   name: `${bw}mm decking${boardPieces > 1 ? ` · ${boardPieces} per row` : ''}`,
-                  meta: `${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
+                  meta: `${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)} · ${fmt(result.outputs.boardLinealMetres)} lm`,
                 },
             {
               qty: fmt(result.outputs.joistCount * joistPieces),
@@ -374,7 +383,7 @@ export function DeckingCalc() {
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {persistedSuggestions.items.map(s => {
-                    const active = parseFloat(inputs.boardGap) === s.gap;
+                    const active = originalGap === s.gap;
                     return (
                       <button
                         key={s.boardCount}

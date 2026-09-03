@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
@@ -13,9 +14,10 @@ function risen(delay: string) {
 
 interface Props {
   onComplete: () => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 }
 
-export function OnboardingName({ onComplete }: Props) {
+export function OnboardingName({ onComplete, updateSettings }: Props) {
   const [exiting, setExiting] = useState(false);
   const [name, setName] = useState('');
 
@@ -23,11 +25,7 @@ export function OnboardingName({ onComplete }: Props) {
     const trimmed = name.trim();
     if (!trimmed) return;
     localStorage.setItem('setout_user_name', trimmed);
-    // Write into settings so the greeting is correct on first app render
-    try {
-      const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
-      localStorage.setItem('setout_settings', JSON.stringify({ ...s, userName: trimmed }));
-    } catch {}
+    updateSettings({ userName: trimmed });
     setExiting(true);
     setTimeout(() => onComplete(), 260);
   }

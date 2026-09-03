@@ -11,9 +11,13 @@ export interface DeckingInputs {
 
 export interface DeckingOutputs extends Record<string, number> {
   boardCount: number;
-  totalLinealMetres: number;
+  boardLinealMetres: number;   // lm — boards only, stock-rounded per board
+  boardStockMm: number;        // mm — stock length each board is rounded up to
   joistCount: number;
+  joistLinealMetres: number;   // lm — joists only
   bearerCount: number;
+  bearerLinealMetres: number;  // lm — bearers only
+  totalLinealMetres: number;   // lm — boards + joists + bearers
   fixingsCount: number;
 }
 
@@ -50,13 +54,20 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const maxStockMm = BOARD_STOCK_LENGTHS[BOARD_STOCK_LENGTHS.length - 1];
   const needsJoin = boardLengthMm > maxStockMm;
   const boardStockMm = BOARD_STOCK_LENGTHS.find(s => s >= boardLengthMm) ?? boardLengthMm;
-  const totalLinealMetres = parseFloat(((boardCount * boardStockMm) / 1000).toFixed(2));
+  const boardLinealMetres = parseFloat(((boardCount * boardStockMm) / 1000).toFixed(2));
 
   // Joists span the deck length, spaced across the width
   const joistCount = Math.floor((deckWidth * 1000) / joistSpacing) + 1;
+  const joistLinealMetres = parseFloat((joistCount * deckLength).toFixed(2));
 
   // Bearers run perpendicular to joists (span the width), spaced along the length
   const bearerCount = Math.floor((deckLength * 1000) / bearerSpacing) + 1;
+  const bearerLinealMetres = parseFloat((bearerCount * deckWidth).toFixed(2));
+
+  // All structural timber for the job, not just boards — keeps this calculator
+  // consistent with framing.ts/raked-wall.ts, where totalLinealMetres always
+  // covers every timber category.
+  const totalLinealMetres = parseFloat((boardLinealMetres + joistLinealMetres + bearerLinealMetres).toFixed(2));
 
   // 2 fixings per board-joist intersection, +10% for joins landing on joists (4 screws instead of 2)
   const fixingsCount = Math.ceil(boardCount * joistCount * 2 * 1.1);
@@ -80,19 +91,24 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
       result: `ceil( ${deckLength * 1000} ÷ (${boardWidth} + ${boardGap}) ) = ceil( ${(deckLength * 1000 / effectiveBoardWidth).toFixed(2)} ) = ${boardCount} boards`,
     },
     {
-      label: 'Total lineal metres',
+      label: 'Board lineal metres',
       formula: 'board count × stock length per board',
-      result: `${boardCount} × ${(boardStockMm / 1000).toFixed(1)}m = ${totalLinealMetres}lm${stockNote}`,
+      result: `${boardCount} × ${(boardStockMm / 1000).toFixed(1)}m = ${boardLinealMetres}lm${stockNote}`,
     },
     {
       label: 'Joist count',
       formula: 'floor( deck width (mm) ÷ joist spacing ) + 1',
-      result: `floor( ${deckWidth * 1000} ÷ ${joistSpacing} ) + 1 = ${joistCount} joists`,
+      result: `floor( ${deckWidth * 1000} ÷ ${joistSpacing} ) + 1 = ${joistCount} joists (${joistLinealMetres}lm)`,
     },
     {
       label: 'Bearer count',
       formula: 'floor( deck length (mm) ÷ bearer spacing ) + 1',
-      result: `floor( ${deckLength * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers`,
+      result: `floor( ${deckLength * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers (${bearerLinealMetres}lm)`,
+    },
+    {
+      label: 'Total lineal metres',
+      formula: 'board lm + joist lm + bearer lm',
+      result: `${boardLinealMetres} + ${joistLinealMetres} + ${bearerLinealMetres} = ${totalLinealMetres}lm`,
     },
     fixingsStep,
   ];
@@ -114,7 +130,12 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   }
 
   return {
-    outputs: { boardCount, totalLinealMetres, joistCount, bearerCount, fixingsCount },
+    outputs: {
+      boardCount, boardLinealMetres, boardStockMm,
+      joistCount, joistLinealMetres,
+      bearerCount, bearerLinealMetres,
+      totalLinealMetres, fixingsCount,
+    },
     steps,
     lastBoardWidth,
     gapSuggestions,

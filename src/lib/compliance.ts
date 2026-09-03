@@ -17,7 +17,7 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Assumes a symmetrical gable roof. Verify rafter sizing against AS 1684 span tables for your timber species and wind/snow region.',
     NZ: 'Assumes a symmetrical gable roof. Verify rafter sizing against NZS 3604 span tables for your timber species and wind/snow zone.',
   },
-  balusters: {
+  baluster: {
     AU: '125mm max gap per AS 1657. Some councils and body corporates require tighter gaps for pool fencing or commercial use.',
     NZ: '100mm max gap per NZS 3604. Pool fencing and commercial applications may have additional requirements.',
   },
@@ -60,6 +60,10 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
   equalspacing: {
     AU: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant Australian Standard for your application.',
     NZ: 'Results are geometric only. Where spacing affects structural performance or code compliance (e.g. baluster gaps, fixing centres, joist spacing), verify against the relevant New Zealand Standard for your application.',
+  },
+  cutlist: {
+    AU: 'Assumes a 3mm saw kerf and standard mill lengths. Confirm actual stock lengths and tolerances with your timber supplier before cutting.',
+    NZ: 'Assumes a 3mm saw kerf and standard mill lengths. Confirm actual stock lengths and tolerances with your timber supplier before cutting.',
   },
 };
 

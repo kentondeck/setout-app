@@ -13,7 +13,12 @@ function load(): HistoryEntry[] {
 }
 
 function save(entries: HistoryEntry[]) {
-  localStorage.setItem(KEY, JSON.stringify(entries));
+  // Safari private browsing (a common iOS PWA case) and a full storage quota
+  // both throw here — this runs inside a setState updater, so an uncaught
+  // throw would propagate out of setHistory and break the update entirely.
+  try {
+    localStorage.setItem(KEY, JSON.stringify(entries));
+  } catch { /* in-memory state still updates; persistence is best-effort */ }
 }
 
 export function useHistory() {
@@ -45,7 +50,7 @@ export function useHistory() {
 
   const clearAll = useCallback(() => {
     setHistory([]);
-    localStorage.removeItem(KEY);
+    try { localStorage.removeItem(KEY); } catch { /* best-effort */ }
   }, []);
 
   return { history, addEntry, updateEntry, deleteEntry, clearAll };

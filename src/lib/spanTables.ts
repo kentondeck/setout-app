@@ -2,6 +2,11 @@
 // Floor joist / bearer spans are for single-span, standard residential loading.
 // Values are approximate mid-range figures — always verify against the current edition for your
 // specific load width, wind zone, and end-fixity conditions.
+//
+// NOT CURRENTLY WIRED IN: nothing in src/ or api/ calls lookupSpan or reads these
+// tables — no calculator or SmartQuote flow surfaces span guidance from this data
+// yet. Kept as reference data for a future structural-span feature; don't assume
+// the app currently shows users anything backed by this file.
 
 export interface SpanEntry {
   maxSpanM: number;

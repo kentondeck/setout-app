@@ -16,6 +16,11 @@ export interface ExcavationOutputs extends Record<string, number> {
   truckLoads: number;   // loads required (ceiling)
   avgDepth: number;     // m
   isSloped: number;     // 0 | 1
+  // Echoed back so diagrams use the values actually calculated, not re-parsed live inputs.
+  length: number;       // m
+  width: number;        // m
+  depthNear: number;    // m
+  depthFar: number;     // m — equals depthNear when not sloped
 }
 
 export interface ExcavationResult {
@@ -32,7 +37,7 @@ export function calculateExcavation(inputs: ExcavationInputs): ExcavationResult 
   const bankVolume = parseFloat((length * width * avgDepth).toFixed(2));
   const swellAdded = parseFloat((bankVolume * swellFactor).toFixed(2));
   const looseVolume = parseFloat((bankVolume + swellAdded).toFixed(2));
-  const truckLoads = Math.ceil(looseVolume / truckCapacity);
+  const truckLoads = truckCapacity > 0 ? Math.ceil(looseVolume / truckCapacity) : 0;
 
   const steps: WorkingStep[] = [
     ...(isSloped ? [{
@@ -58,7 +63,10 @@ export function calculateExcavation(inputs: ExcavationInputs): ExcavationResult 
   ];
 
   return {
-    outputs: { bankVolume, looseVolume, swellAdded, truckLoads, avgDepth, isSloped: isSloped ? 1 : 0 },
+    outputs: {
+      bankVolume, looseVolume, swellAdded, truckLoads, avgDepth, isSloped: isSloped ? 1 : 0,
+      length, width, depthNear, depthFar: isSloped ? depthFar! : depthNear,
+    },
     steps,
   };
 }

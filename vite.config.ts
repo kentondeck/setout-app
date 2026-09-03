@@ -19,6 +19,36 @@ SCOPE: Answer only what was asked. Omit uncertain details.
 BANNED: Restating question, "Hope this helps", bold/asterisks/markdown/emoji, invented clause numbers, adjacent unrequested facts, LBP disclaimers unless asked.`,
 }
 
+// Mirrors api/validate-code.ts for local dev — matches an access code from
+// PHOTOQUOTE_ACCESS_CODES in .env.local against user input. Without this the
+// Smart Quote gate on localhost hits the SPA fallback and JSON parsing throws.
+function validateCodeDevPlugin(codesRaw: string): Plugin {
+  return {
+    name: 'validate-code-dev',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/api/validate-code', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+        const codes = codesRaw.split(',').map(c => c.trim()).filter(Boolean);
+        const chunks: Buffer[] = [];
+        req.on('data', (c: Buffer) => chunks.push(c));
+        req.on('end', () => {
+          let code = '';
+          try { ({ code } = JSON.parse(Buffer.concat(chunks).toString()) as { code: string }); } catch {
+            res.statusCode = 400; res.setHeader('content-type', 'application/json');
+            res.end(JSON.stringify({ valid: false })); return;
+          }
+          const normalised = (code ?? '').trim().toUpperCase();
+          const valid = codes.map(c => c.toUpperCase()).includes(normalised);
+          res.setHeader('content-type', 'application/json');
+          res.statusCode = valid ? 200 : 401;
+          res.end(JSON.stringify(valid ? { valid: true, token: normalised } : { valid: false }));
+        });
+      });
+    },
+  };
+}
+
 function codeCheckDevPlugin(apiKey: string): Plugin {
   return {
     name: 'code-check-dev',
@@ -152,8 +182,18 @@ Rules:
 - Apply a waste factor to cut and measured materials (e.g. ~10% on timber for offcuts, ~5% on sheet goods) and summarise what you applied in wasteFactorApplied.
 - Deck and floor joists are structural — 140mm deep (e.g. 140x45) is the typical default, going up to 190mm for longer spans. Never default to 90mm for a structural joist — reserve 90mm for non-structural framing (e.g. fascia, screening battens).
 - Bearers are structural and usually built by doubling up two 140x45 boards bolted/nailed together, forming a 90mm-wide x 140mm-deep member. Bearers normally sit ON TOP of the posts (post continues up to bearer height). Only bolt/cheek-fix the bearer to the SIDE of the posts for a low-set deck close to the ground, where height clearance rules it out. List the bearer item as 140x45 and double the lineal-metre quantity to account for both boards, noting in the material's note field that it's a doubled/laminated bearer sitting on top of the posts (or side-fixed only if this is a low-set deck).
-- Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer) with hours per role. Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix. Do not estimate hourly rates.
-- A standard work day is 9 hours — use that when reasoning about how many days a job will take. Labour hours must cover the full scope: prep, cutting/fitting, sealing, and clean-up, not just the core install step. Real jobs consistently run longer than a bare best-case estimate — if your hours imply a day count that would surprise an experienced tradie as too fast for the scope described, revise the hours up rather than shipping an optimistic number.
+- Break labour into the roles actually needed for this job (e.g. Carpenter, Apprentice, Labourer). Use a single role for small jobs; multiple roles only when the job genuinely needs a crew mix. Do not estimate hourly rates.
+- Hours per role = TOTAL PERSON-HOURS for that role across the whole job, summed across every worker filling it. If two carpenters each spend 40 hours on site, that's 80 person-hours of Carpenter, NOT 40. If a solo tradie works the full job themselves, all their hours go against one role. Never divide by crew size to get "how long the job takes"; always give person-hours.
+- A standard work day is 9 person-hours per person. Anchor your estimates to realistic tradie productivity, INCLUDING prep, setout, cutting/fitting, weatherproofing, cleanup, and normal on-site inefficiency (waiting on materials, rework, weather). These are typical 2-tradie-crew ranges — a solo tradie takes ~25-40% more per unit:
+  - Small deck 10-20 m² (ground level): 50-90 person-hours end-to-end
+  - Medium deck 20-40 m² (subfloor + posts): 90-180 person-hours
+  - Large or raised deck 40+ m²: 180-350+ person-hours
+  - Timber fence: 6-10 person-hours per 10 lineal metres, +3-5 hours per gate
+  - Wall framing (studs + plates + noggins, no lining): 8-14 person-hours per 10 m² of wall area
+  - Roof framing + underlay + battens: 40-80 person-hours per 100 m² roof plan area
+  - Cladding install (weatherboard or sheet): 12-20 person-hours per 10 m² wall area
+  These are floors, not ceilings — steep sites, awkward access, retrofitting into existing structure, high-end joinery, second-storey work, or removals all push hours meaningfully higher.
+- Cross-check yourself before returning: multiply your total person-hours by an assumed rate around $80/h — if the resulting labour bill looks obviously light for the scope described (a full deck for under $2000 labour, a fence for under $600 etc.), you have under-estimated. Revise up.
 - scopeSummary: rewrite the tradie's raw job notes into one brief, professional sentence describing the scope of work, suitable to print on a client-facing quote (e.g. "Supply and install a 6x4m treated pine deck with 4x4 posts and a privacy screen."). Do not just repeat their notes verbatim — tighten it.
 - assumptions: list every material or dimension assumption you made so the tradie can correct it before ordering.
 - clarificationsNeeded: questions whose answer would materially change the takeoff (e.g. exact height above ground affecting post embedment, whether existing structure needs demolishing first). Leave empty if the input is clear enough that nothing would materially change the result.
@@ -423,12 +463,13 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       codeCheckDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
+      validateCodeDevPlugin(env.PHOTOQUOTE_ACCESS_CODES ?? 'SETOUT'),
       quoteDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceLookupDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceCacheDevPlugin(env.REDIS_URL ?? ''),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+        includeAssets: ['logo.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'favicon-192.png', 'favicon-32.png'],
         manifest: {
           name: 'Setout',
           short_name: 'Setout',
@@ -445,6 +486,10 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          // Never let the SW's SPA fallback swallow API calls — they must always
+          // hit the network so JSON endpoints (validate-code, quote, price-lookup,
+          // etc.) don't return the index.html shell.
+          navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,

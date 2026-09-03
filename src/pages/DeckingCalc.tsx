@@ -1,7 +1,6 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
@@ -56,6 +55,8 @@ export function DeckingCalc() {
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
   const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [selectedJoinIdx, setSelectedJoinIdx] = useState(0);
+  const [boardOrderMode, setBoardOrderMode] = useState<'fixed' | 'rlp'>('fixed');
+  const RLP_BUFFER_PCT = 10;
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -175,6 +176,27 @@ export function DeckingCalc() {
   const bearerLinealM = result ? parseFloat((result.outputs.bearerCount * (bearerLengthMm / 1000)).toFixed(1)) : 0;
   const screwBoxes = result ? Math.ceil(result.outputs.fixingsCount / DECKING_SCREWS_PER_BOX) : 0;
 
+  // Boards + bearers span deck WIDTH, joists span deck LENGTH. Any span > 6m
+  // (max stock length) needs to be joined into multiple pieces per run — so the
+  // physical count you order is member-count × pieces-per-run, not member-count.
+  const MAX_STOCK_MM = 6000;
+  const piecesPerRun = (spanMm: number): number => (spanMm > 0 ? Math.ceil(spanMm / MAX_STOCK_MM) : 1);
+  const runBreakdown = (spanMm: number, pieces: number): string => {
+    if (pieces <= 1) return `${(spanMm / 1000).toFixed(2)}m each`;
+    // Default split: N-1 full 6m pieces + one remainder. User can retune in the cut list below.
+    const wholes = pieces - 1;
+    const remainder = spanMm - wholes * MAX_STOCK_MM;
+    const parts = [
+      ...Array(wholes).fill(`${(MAX_STOCK_MM / 1000).toFixed(2)}m`),
+      `${(remainder / 1000).toFixed(2)}m`,
+    ];
+    return `${parts.join(' + ')} per run`;
+  };
+  const boardPieces = piecesPerRun(deckWidthMm);
+  const joistPieces = piecesPerRun(joistLengthMm);
+  const bearerPieces = piecesPerRun(bearerLengthMm);
+  const anyJoinNeeded = boardPieces > 1 || joistPieces > 1 || bearerPieces > 1;
+
   const quoteMaterials = result ? [
     { item: `${bw}mm decking board`, quantity: result.outputs.totalLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
     { item: 'Joist (treated pine)', quantity: joistLinealM, unit: 'lineal metre', note: `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m` },
@@ -255,16 +277,99 @@ export function DeckingCalc() {
         {/* Results */}
         {result && (
           <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Boards" value={fmt(result.outputs.boardCount)} accent />
-                <ResultCard label="Lineal metres" value={fmt(result.outputs.totalLinealMetres)} unit="lm" />
+            {/* "Order this" card — every material a chippie needs at the yard, together */}
+            <div style={{
+              background: 'var(--color-orange)',
+              color: '#fff',
+              borderRadius: 'var(--radius-card)',
+              padding: '14px 16px',
+              marginBottom: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.72)' }}>
+                    Order this
+                  </span>
+                  {anyJoinNeeded && boardOrderMode === 'fixed' && (
+                    <span style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.72)' }}>
+                      · some runs joined
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', background: 'rgba(0,0,0,0.14)', borderRadius: 8, padding: 2, gap: 2 }}>
+                  {([
+                    { key: 'fixed', label: 'Fixed' },
+                    { key: 'rlp', label: 'RLP' },
+                  ] as const).map(t => {
+                    const active = boardOrderMode === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setBoardOrderMode(t.key)}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 6,
+                          border: 'none',
+                          background: active ? '#fff' : 'transparent',
+                          color: active ? 'var(--color-orange)' : 'rgba(255,255,255,0.85)',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          fontFamily: 'inherit',
+                          cursor: 'pointer',
+                          letterSpacing: '-0.1px',
+                        }}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                <ResultCard label="Joists" value={fmt(result.outputs.joistCount)} />
-                <ResultCard label="Bearers" value={fmt(result.outputs.bearerCount)} />
-                <ResultCard label="Fixings (approx)" value={fmt(result.outputs.fixingsCount)} />
-              </div>
+
+              {[
+                boardOrderMode === 'rlp' ? {
+                  qty: `${(result.outputs.totalLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
+                  unit: 'lm (RLP)',
+                  detail: `${fmt(result.outputs.totalLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · ${fmt(bw)}mm × assorted 2.4–6.0m`,
+                } : {
+                  qty: fmt(result.outputs.boardCount * boardPieces),
+                  unit: boardPieces > 1 ? `boards (${boardPieces} per row)` : 'boards',
+                  detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
+                },
+                {
+                  qty: fmt(result.outputs.joistCount * joistPieces),
+                  unit: joistPieces > 1 ? `joists (${joistPieces} per run)` : 'joists',
+                  detail: `${runBreakdown(joistLengthMm, joistPieces)} · ${fmt(joistLinealM)} lm`,
+                },
+                {
+                  qty: fmt(result.outputs.bearerCount * bearerPieces),
+                  unit: bearerPieces > 1 ? `bearers (${bearerPieces} per run)` : 'bearers',
+                  detail: `${runBreakdown(bearerLengthMm, bearerPieces)} · ${fmt(bearerLinealM)} lm`,
+                },
+                {
+                  qty: fmt(result.outputs.fixingsCount),
+                  unit: 'screws',
+                  detail: `${screwBoxes} × ${DECKING_SCREWS_PER_BOX} box${screwBoxes === 1 ? '' : 'es'}`,
+                },
+              ].map((row, i, arr) => (
+                <div
+                  key={row.unit}
+                  style={{
+                    padding: '7px 0',
+                    borderBottom: i < arr.length - 1 ? '0.5px solid rgba(255,255,255,0.18)' : 'none',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 10,
+                  }}
+                >
+                  <span style={{ fontSize: 20, fontWeight: 500, letterSpacing: '-0.3px', lineHeight: 1, minWidth: 44 }}>{row.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.92)' }}>{row.unit}</span>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.72)', marginLeft: 'auto', textAlign: 'right' }}>{row.detail}</span>
+                </div>
+              ))}
             </div>
 
             {persistedSuggestions && (
@@ -326,7 +431,7 @@ export function DeckingCalc() {
               ]}
             />
 
-            {/* Material & Cut List */}
+            {/* Cut List */}
             <div style={{
               background: 'var(--color-card)',
               border: '0.5px solid var(--color-border)',
@@ -336,22 +441,6 @@ export function DeckingCalc() {
               flexDirection: 'column',
               gap: 14,
             }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: 'Decking boards', qty: result.outputs.boardCount, mm: deckWidthMm },
-                { label: 'Joists', qty: result.outputs.joistCount, mm: joistLengthMm },
-                { label: 'Bearers', qty: result.outputs.bearerCount, mm: bearerLengthMm },
-                { label: 'Fixings (approx)', qty: result.outputs.fixingsCount, mm: null },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.mm !== null ? `${fmt(row.qty)} × ${fmt(row.mm)}mm` : `${fmt(row.qty)} screws`}
-                  </span>
-                </div>
-              ))}
-
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
               {/* Joists cut list */}
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — JOISTS</p>
@@ -499,14 +588,27 @@ export function DeckingCalc() {
                 bearerCutlist ? { title: 'Bearers', stockLabel: `${(bearerStock / 1000).toFixed(1)}m stock`, result: bearerCutlist } : null,
               ].filter((s): s is NonNullable<typeof s> => s !== null)}
             />
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <AddToQuoteButton
-              scopeSummary={`Deck, ${inputs.deckLength}m × ${inputs.deckWidth}m`}
-              materials={quoteMaterials}
-              jobName={jobName}
-            />
-            <ShareCalcButton calculationId={lastEntryId} />
+            <div style={{
+              background: 'var(--color-card)',
+              border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                Save &amp; share
+              </p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <AddToQuoteButton
+                scopeSummary={`Deck, ${inputs.deckLength}m × ${inputs.deckWidth}m`}
+                materials={quoteMaterials}
+                jobName={jobName}
+              />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

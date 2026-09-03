@@ -160,12 +160,8 @@ function IOSConfirmDialog() {
       {/* Separator */}
       <line x1="0" y1="50" x2="360" y2="50" stroke="rgba(0,0,0,0.10)" strokeWidth="0.5" />
 
-      {/* App icon — orange rounded square */}
-      <rect x="148" y="62" width="64" height="64" rx="14" fill={ORANGE} />
-      {/* "S" lettermark inside icon */}
-      <text x="180" y="106" textAnchor="middle" fontFamily="Inter,system-ui,sans-serif" fontSize="32" fontWeight="700" fill="#ffffff" letterSpacing="-1">
-        S
-      </text>
+      {/* App icon — matches the actual home-screen icon at /logo.png */}
+      <image href="/logo.png" x="148" y="62" width="64" height="64" preserveAspectRatio="xMidYMid meet" />
 
       {/* App name */}
       <text x="180" y="140" textAnchor="middle" fontFamily="Inter,system-ui,sans-serif" fontSize="13" fill="#3c3c43">

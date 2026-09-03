@@ -1,10 +1,11 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, KeyboardContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
 
 export function JobsPage() {
   const { jobs, createJob, updateJob, deleteJob, getJobCalculations } = useContext(JobsContext);
+  const { inset: keyboardInset } = useContext(KeyboardContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -174,18 +175,19 @@ export function JobsPage() {
           <div
             style={{
               position: 'fixed',
-              bottom: 0,
+              bottom: keyboardInset,
               left: '50%',
               transform: 'translateX(-50%)',
               width: '100%',
               maxWidth: 390,
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)',
+              padding: `20px 20px ${keyboardInset > 0 ? '24px' : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
               zIndex: 201,
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
+              transition: 'bottom 0.2s ease',
             }}
           >
             <div

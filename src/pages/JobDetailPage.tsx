@@ -1,7 +1,7 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, KeyboardContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
@@ -987,6 +987,7 @@ export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } = useContext(JobsContext);
+  const { inset: keyboardInset } = useContext(KeyboardContext);
 
   const job = jobs.find(j => j.id === id);
 
@@ -1195,7 +1196,7 @@ export function JobDetailPage() {
       {showNotesSheet && (
         <>
           <div onClick={() => setShowNotesSheet(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
-          <div style={sheetStyle}>
+          <div style={getSheetStyle(keyboardInset)}>
             <div style={sheetHandleStyle} />
             <h2 style={sheetTitleStyle}>Notes</h2>
             <textarea ref={notesRef} value={notesDraft} onChange={e => setNotesDraft(e.target.value)}
@@ -1211,7 +1212,7 @@ export function JobDetailPage() {
       {showRename && (
         <>
           <div onClick={() => setShowRename(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
-          <div style={sheetStyle}>
+          <div style={getSheetStyle(keyboardInset)}>
             <div style={sheetHandleStyle} />
             <h2 style={sheetTitleStyle}>Rename job</h2>
             <input ref={renameInputRef} type="text" value={renameDraft}
@@ -1233,7 +1234,7 @@ export function JobDetailPage() {
       {showDeleteConfirm && (
         <>
           <div onClick={() => setShowDeleteConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
-          <div style={sheetStyle}>
+          <div style={getSheetStyle(keyboardInset)}>
             <div style={sheetHandleStyle} />
             <h2 style={sheetTitleStyle}>Delete "{job.name}"?</h2>
             <p style={{ margin: 0, fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.5 }}>
@@ -1252,11 +1253,15 @@ export function JobDetailPage() {
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
-const sheetStyle: React.CSSProperties = {
-  position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
-  width: '100%', maxWidth: 390, background: '#fff', borderRadius: '20px 20px 0 0',
-  padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)', zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
-};
+function getSheetStyle(keyboardInset: number): React.CSSProperties {
+  return {
+    position: 'fixed', bottom: keyboardInset, left: '50%', transform: 'translateX(-50%)',
+    width: '100%', maxWidth: 390, background: '#fff', borderRadius: '20px 20px 0 0',
+    padding: `20px 20px ${keyboardInset > 0 ? '24px' : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
+    zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
+    transition: 'bottom 0.2s ease',
+  };
+}
 const sheetHandleStyle: React.CSSProperties = {
   width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center', marginBottom: 4,
 };

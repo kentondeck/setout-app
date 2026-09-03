@@ -1,6 +1,6 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, KeyboardContext } from '../contexts';
 import type { SavedJob } from '../types';
 
 interface AddToJobSheetProps {
@@ -18,6 +18,7 @@ export function AddToJobSheet({
   onAdded,
 }: AddToJobSheetProps) {
   const { jobs, createJob, addCalculationToJob } = useContext(JobsContext);
+  const { inset: keyboardInset } = useContext(KeyboardContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
   const newJobInputRef = useRef<HTMLInputElement>(null);
@@ -70,19 +71,20 @@ export function AddToJobSheet({
       <div
         style={{
           position: 'fixed',
-          bottom: 0,
+          bottom: keyboardInset,
           left: '50%',
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: '20px 20px calc(env(safe-area-inset-bottom) + 20px)',
+          padding: `20px 20px ${keyboardInset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
           zIndex: 201,
           maxHeight: '72vh',
           display: 'flex',
           flexDirection: 'column',
           gap: 0,
+          transition: 'bottom 0.2s ease',
         }}
       >
         {/* Handle */}

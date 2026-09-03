@@ -12,15 +12,21 @@ const config: CapacitorConfig = {
     limitsNavigationsToAppBoundDomains: true,
   },
   plugins: {
-    // Without this, WKWebView has no managed keyboard-avoidance and
-    // scrollEnabled:false (above) disables its native fallback too —
-    // together they left fixed-position bottom sheets (Add to job,
-    // rename dialogs, etc.) with an unreachable/unresponsive input
-    // once the keyboard opened. 'native' resizes the WKWebView frame
-    // itself so fixed-bottom content stays above the keyboard.
+    // resize:'native' actually shrinks the WKWebView's own frame when the
+    // keyboard shows. That fought this app's fixed/sticky bottom UI: the
+    // sticky BottomNav and fixed-position sheets both re-anchor to the new
+    // (shrunk) viewport bottom independently, at different points because
+    // BottomNav lives in-flow inside a scrolling container while sheets are
+    // fixed to the true viewport — leaving BottomNav visibly stranded
+    // between a sheet and the keyboard, and safe-area-inset-bottom no
+    // longer meaningful once the WKWebView's bottom edge isn't the screen
+    // edge. resize:'none' leaves the frame alone; useKeyboardInset (see
+    // src/lib/useKeyboardInset.ts) reads the real keyboard height from
+    // this plugin's own show/hide events and every fixed sheet + BottomNav
+    // positions itself off that number directly, so there's one source of
+    // truth instead of two resize mechanisms fighting each other.
     Keyboard: {
-      resize: 'native',
-      resizeOnFullScreen: true,
+      resize: 'none',
     },
   },
   server: {

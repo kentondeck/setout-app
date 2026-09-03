@@ -65,3 +65,8 @@ export const JobsContext = createContext<JobsCtx>({
   removeCalculationFromJob: () => {},
   getJobCalculations: () => [],
 });
+
+// Height in px of the on-screen keyboard, 0 when it's not showing. See
+// src/lib/useKeyboardInset.ts — fixed-bottom sheets and BottomNav read this
+// to stay clear of the keyboard instead of relying on WKWebView auto-resize.
+export const KeyboardContext = createContext<{ inset: number }>({ inset: 0 });

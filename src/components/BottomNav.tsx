@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { KeyboardContext } from '../contexts';
 
 const tabs = [
   {
@@ -57,6 +59,14 @@ const tabs = [
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { inset } = useContext(KeyboardContext);
+
+  // Being sticky (in-flow), not fixed, means this doesn't share a
+  // containing block with the fixed-position sheets that sit over it —
+  // with the keyboard open it was turning up stranded between a sheet
+  // and the keyboard instead of hidden behind either. Simplest correct
+  // behaviour: it's not useful to tap a tab while typing anyway.
+  if (inset > 0) return null;
 
   return (
     <nav

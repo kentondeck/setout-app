@@ -4,7 +4,8 @@ import { useSettings } from './lib/useSettings';
 
 import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
-import { SettingsContext, HistoryContext, JobsContext } from './contexts';
+import { useKeyboardInset } from './lib/useKeyboardInset';
+import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from './contexts';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingName } from './pages/OnboardingName';
 import { OnboardingRegion } from './pages/OnboardingRegion';
@@ -126,6 +127,7 @@ export function App() {
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
+  const keyboardInset = useKeyboardInset();
 
   const onboardingDone = splashDone && nameDone && regionDone && roleDone && emailDone;
 
@@ -153,9 +155,11 @@ export function App() {
         <SettingsContext.Provider value={{ settings, updateSettings }}>
           <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
             <JobsContext.Provider value={jobsApi}>
-              <HashRouter>
-                <AppShell />
-              </HashRouter>
+              <KeyboardContext.Provider value={{ inset: keyboardInset }}>
+                <HashRouter>
+                  <AppShell />
+                </HashRouter>
+              </KeyboardContext.Provider>
             </JobsContext.Provider>
           </HistoryContext.Provider>
         </SettingsContext.Provider>

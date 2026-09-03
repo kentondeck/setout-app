@@ -169,16 +169,23 @@ export function DeckingCalc() {
   // physical count you order is member-count × pieces-per-run, not member-count.
   const MAX_STOCK_MM = 6000;
   const piecesPerRun = (spanMm: number): number => (spanMm > 0 ? Math.ceil(spanMm / MAX_STOCK_MM) : 1);
-  const runBreakdown = (spanMm: number, pieces: number): string => {
-    if (pieces <= 1) return `${(spanMm / 1000).toFixed(2)}m each`;
-    // Default split: N-1 full 6m pieces + one remainder. User can retune in the cut list below.
+  // orderBreakdown returns the actual stock lengths to buy, multiplied out
+  // by the number of runs — e.g. for a 9.4m span across 35 rows it gives
+  // "35 × 6.0m + 35 × 3.4m". When only one piece per run, it collapses to
+  // "35 × 4.2m each". Groups equal lengths together (e.g. 12m span across
+  // 4 runs = 8 × 6.0m, not 4 × 6.0m + 4 × 6.0m).
+  const orderBreakdown = (spanMm: number, pieces: number, memberCount: number): string => {
+    if (pieces <= 1) return `${memberCount} × ${(spanMm / 1000).toFixed(2)}m each`;
     const wholes = pieces - 1;
     const remainder = spanMm - wholes * MAX_STOCK_MM;
-    const parts = [
-      ...Array(wholes).fill(`${(MAX_STOCK_MM / 1000).toFixed(2)}m`),
-      `${(remainder / 1000).toFixed(2)}m`,
-    ];
-    return `${parts.join(' + ')} per run`;
+    // Group by length so identical-length pieces roll up
+    const counts = new Map<number, number>();
+    for (let i = 0; i < wholes; i++) counts.set(MAX_STOCK_MM, (counts.get(MAX_STOCK_MM) ?? 0) + memberCount);
+    counts.set(remainder, (counts.get(remainder) ?? 0) + memberCount);
+    return [...counts.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([lenMm, qty]) => `${qty} × ${(lenMm / 1000).toFixed(2)}m`)
+      .join(' + ');
   };
   const boardPieces = piecesPerRun(deckWidthMm);
   const joistPieces = piecesPerRun(joistLengthMm);
@@ -193,7 +200,7 @@ export function DeckingCalc() {
       label: 'Boards need joining',
       explanation: `Each row spans ${(deckWidthMm / 1000).toFixed(2)}m but max stock is 6.0m — each row needs to be joined from multiple lengths`,
       calculation: `${result.outputs.boardCount} rows × ${boardPieces} pieces = ${result.outputs.boardCount * boardPieces} boards to buy`,
-      result: `${result.outputs.boardCount * boardPieces} pieces total — ${runBreakdown(deckWidthMm, boardPieces)}`,
+      result: `${result.outputs.boardCount * boardPieces} pieces total — ${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)}`,
     } as WorkingStep] : []),
     { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${fmt(deckWidthMm)} ÷ ${fmt(js)} = ${joistDiv}, then + 1`, result: `${fmt(result.outputs.joistCount)} joists` },
   ] : [];
@@ -208,7 +215,7 @@ export function DeckingCalc() {
       quantity: result.outputs.totalLinealMetres,
       unit: 'lineal metre',
       note: boardPieces > 1
-        ? `${result.outputs.boardCount * boardPieces} pieces (${result.outputs.boardCount} rows joined — ${runBreakdown(deckWidthMm, boardPieces)})`
+        ? `${result.outputs.boardCount * boardPieces} pieces — ${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)}`
         : `${result.outputs.boardCount} boards × ${deckWidthMm}mm`,
     },
     {
@@ -216,7 +223,7 @@ export function DeckingCalc() {
       quantity: joistLinealM,
       unit: 'lineal metre',
       note: joistPieces > 1
-        ? `${result.outputs.joistCount * joistPieces} pieces (${result.outputs.joistCount} runs joined — ${runBreakdown(joistLengthMm, joistPieces)})`
+        ? `${result.outputs.joistCount * joistPieces} pieces — ${orderBreakdown(joistLengthMm, joistPieces, result.outputs.joistCount)}`
         : `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m`,
     },
     {
@@ -224,7 +231,7 @@ export function DeckingCalc() {
       quantity: bearerLinealM,
       unit: 'lineal metre',
       note: bearerPieces > 1
-        ? `${result.outputs.bearerCount * bearerPieces} pieces (${result.outputs.bearerCount} runs joined — ${runBreakdown(bearerLengthMm, bearerPieces)})`
+        ? `${result.outputs.bearerCount * bearerPieces} pieces — ${orderBreakdown(bearerLengthMm, bearerPieces, result.outputs.bearerCount)}`
         : `${result.outputs.bearerCount} × ${(bearerLengthMm / 1000).toFixed(1)}m`,
     },
     { item: 'Decking screws', quantity: screwBoxes, unit: 'box', note: `${result.outputs.fixingsCount} screws` },
@@ -363,17 +370,17 @@ export function DeckingCalc() {
                 } : {
                   qty: fmt(result.outputs.boardCount * boardPieces),
                   unit: boardPieces > 1 ? `boards (${boardPieces} per row)` : 'boards',
-                  detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
+                  detail: `${fmt(bw)}mm · ${orderBreakdown(deckWidthMm, boardPieces, result.outputs.boardCount)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.joistCount * joistPieces),
                   unit: joistPieces > 1 ? `joists (${joistPieces} per run)` : 'joists',
-                  detail: `${runBreakdown(joistLengthMm, joistPieces)} · ${fmt(joistLinealM)} lm`,
+                  detail: `${orderBreakdown(joistLengthMm, joistPieces, result.outputs.joistCount)} · ${fmt(joistLinealM)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.bearerCount * bearerPieces),
                   unit: bearerPieces > 1 ? `bearers (${bearerPieces} per run)` : 'bearers',
-                  detail: `${runBreakdown(bearerLengthMm, bearerPieces)} · ${fmt(bearerLinealM)} lm`,
+                  detail: `${orderBreakdown(bearerLengthMm, bearerPieces, result.outputs.bearerCount)} · ${fmt(bearerLinealM)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.fixingsCount),

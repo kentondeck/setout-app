@@ -51,5 +51,9 @@
 	<string>Setout uses your photo library in Smart Quote so you can attach a photo of the job site to generate an estimate.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Setout uses your location to check whether a job site falls within a coastal wind zone.</string>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>setoutapp.com.au</string>
+	</array>
 </dict>
 </plist>

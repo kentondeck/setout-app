@@ -36,10 +36,11 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isEditing) {
-      setDraftName(job.name);
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    // Edit mode makes every card's name inline-editable at once, so there's
+    // no single field to autofocus — the user taps whichever one they want.
+    // (A delayed focus() here also isn't a real fix: on iOS WKWebView it
+    // opens the keyboard without binding it, so nothing typed registers.)
+    if (isEditing) setDraftName(job.name);
   }, [isEditing, job.name]);
 
   function handleRenameCommit() {

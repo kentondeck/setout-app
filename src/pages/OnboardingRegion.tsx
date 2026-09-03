@@ -33,7 +33,7 @@ export function OnboardingRegion({ onComplete }: Props) {
     try {
       const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
       localStorage.setItem('setout_settings', JSON.stringify({ ...s, region: selected }));
-    } catch {}
+    } catch { /* setout_region above is already saved; settings mirror is best-effort */ }
     setExiting(true);
     setTimeout(() => onComplete(), 260);
   }

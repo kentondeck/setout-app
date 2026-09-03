@@ -151,7 +151,7 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
       case 'photoquote': {
         const raw = String(o.materialsJson ?? '');
         if (!raw) break;
-        let items: { item: string; quantity: number; unit: string }[] = [];
+        let items: { item: string; quantity: number; unit: string }[];
         try { items = JSON.parse(raw); } catch { break; }
         for (const m of items) {
           if (!m.item?.trim() || !(m.quantity > 0)) continue;

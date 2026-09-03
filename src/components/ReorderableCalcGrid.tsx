@@ -22,10 +22,10 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
   const [order, setOrder] = useState<CalculatorId[]>(calcs.map(c => c.id));
   const [dragId, setDragId] = useState<CalculatorId | null>(null);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragSize, setDragSize] = useState({ w: 0, h: 0 });
 
   const tileRefs = useRef<Map<CalculatorId, HTMLDivElement>>(new Map());
-  const dragOffset = useRef({ x: 0, y: 0 });
-  const dragSize = useRef({ w: 0, h: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const moved = useRef(false);
   const longPressTimer = useRef<number | null>(null);
@@ -48,8 +48,8 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     const el = tileRefs.current.get(id);
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    dragOffset.current = { x: clientX - rect.left, y: clientY - rect.top };
-    dragSize.current = { w: rect.width, h: rect.height };
+    setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
+    setDragSize({ w: rect.width, h: rect.height });
     dragIdRef.current = id;
     setDragId(id);
     setDragPos({ x: clientX, y: clientY });
@@ -176,10 +176,10 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
         <div
           style={{
             position: 'fixed',
-            left: dragPos.x - dragOffset.current.x,
-            top: dragPos.y - dragOffset.current.y,
-            width: dragSize.current.w,
-            height: dragSize.current.h,
+            left: dragPos.x - dragOffset.x,
+            top: dragPos.y - dragOffset.y,
+            width: dragSize.w,
+            height: dragSize.h,
             zIndex: 1000,
             pointerEvents: 'none',
           }}

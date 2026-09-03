@@ -33,7 +33,7 @@ function validateCodeDevPlugin(codesRaw: string): Plugin {
         const chunks: Buffer[] = [];
         req.on('data', (c: Buffer) => chunks.push(c));
         req.on('end', () => {
-          let code = '';
+          let code: string;
           try { ({ code } = JSON.parse(Buffer.concat(chunks).toString()) as { code: string }); } catch {
             res.statusCode = 400; res.setHeader('content-type', 'application/json');
             res.end(JSON.stringify({ valid: false })); return;

@@ -38,7 +38,7 @@ export function OnboardingRole({ onComplete }: Props) {
       try {
         const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
         localStorage.setItem('setout_settings', JSON.stringify({ ...s, apprenticeMode: true }));
-      } catch {}
+      } catch { /* setout_role above is already saved; settings mirror is best-effort */ }
     }
 
     setExiting(true);

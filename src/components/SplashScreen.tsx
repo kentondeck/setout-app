@@ -29,19 +29,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
         transition: exiting ? 'opacity 550ms cubic-bezier(0.4, 0, 1, 1), transform 550ms cubic-bezier(0.4, 0, 1, 1)' : 'none',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
-        <img
-          src="/logo.png"
-          alt=""
-          width={128}
-          height={128}
-          style={{
-            display: 'block',
-            width: 128,
-            height: 128,
-            animation: 'splashLogo 700ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both',
-          }}
-        />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
           <span
             style={{

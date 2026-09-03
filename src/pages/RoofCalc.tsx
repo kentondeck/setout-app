@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
@@ -119,7 +120,7 @@ export function RoofCalc() {
         outputs: calc.outputs,
       });
 
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticMedium();
     } catch (e) {
       setResult(null);
       setError(e instanceof RoofInputError ? e.message : 'Could not calculate — check inputs.');

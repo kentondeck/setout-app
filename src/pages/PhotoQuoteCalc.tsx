@@ -1,4 +1,5 @@
 import { useState, useContext, useRef, useEffect } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PhotoQuoteGate } from '../components/PhotoQuoteGate';
 import { hasPhotoQuoteAccess, getPhotoQuoteToken } from '../lib/photoQuoteAccess';
@@ -596,7 +597,7 @@ function PhotoQuoteCalcInner() {
         },
       });
 
-      if (navigator.vibrate) navigator.vibrate(30);
+      hapticMedium();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
     } finally {

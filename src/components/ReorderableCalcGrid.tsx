@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { hapticLight } from '../lib/haptics';
 import { useNavigate } from 'react-router-dom';
 import { CalculatorTile } from './CalculatorTile';
 import type { CalcMeta } from '../lib/calculators';
@@ -53,7 +54,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     dragIdRef.current = id;
     setDragId(id);
     setDragPos({ x: clientX, y: clientY });
-    if (navigator.vibrate) navigator.vibrate(12);
+    hapticLight();
   }
 
   function handlePointerDown(e: React.PointerEvent, id: CalculatorId) {

@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from 'react';
+import { hapticMedium } from '../lib/haptics';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
 import { ResultCard } from '../components/ResultCard';
@@ -95,7 +96,7 @@ export function BalusterCalc() {
       outputs: calc.outputs,
     });
 
-    if (navigator.vibrate) navigator.vibrate(30);
+    hapticMedium();
   }
 
   const balLen = result ? parseFloat(inputs.totalLength) : 0;

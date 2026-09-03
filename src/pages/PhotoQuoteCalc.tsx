@@ -775,11 +775,27 @@ function PhotoQuoteCalcInner() {
     });
   }
 
-  function handleDownloadPdf() {
+  async function handleDownloadPdf() {
     const doc = buildPdfDoc();
     if (!doc) return;
     captureBuildHabits();
-    doc.save(`${(jobName || docType).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
+    const fileName = `${(jobName || docType).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`;
+
+    // jsPDF's doc.save() uses a hidden <a download> element internally which
+    // WKWebView (Capacitor iOS) blocks. Try the native Share Sheet first —
+    // user picks "Save to Files" to get a real download. Fall back to
+    // doc.save() only in a desktop browser where <a download> works.
+    const blob = doc.output('blob') as Blob;
+    const file = new File([blob], fileName, { type: 'application/pdf' });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: `Setout ${docTypeLabel(docType)}` });
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+    doc.save(fileName);
   }
 
   async function handleSharePdf() {

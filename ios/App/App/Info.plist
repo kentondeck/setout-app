@@ -45,5 +45,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Setout uses your camera in Smart Quote so you can photograph a job site to generate an estimate.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Setout uses your photo library in Smart Quote so you can attach a photo of the job site to generate an estimate.</string>
 </dict>
 </plist>

@@ -1,15 +1,16 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateCutlist, DEFAULT_STOCK_LENGTHS } from '../calculators/cutlist';
 import { JobNameInput } from '../components/JobNameInput';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 interface CutRow {
@@ -26,7 +27,7 @@ interface Result {
 }
 
 function newRow(): CutRow {
-  return { id: crypto.randomUUID(), length: '', qty: '1' };
+  return { id: uuid(), length: '', qty: '1' };
 }
 
 const MAX_STANDARD = DEFAULT_STOCK_LENGTHS[DEFAULT_STOCK_LENGTHS.length - 1];
@@ -89,7 +90,7 @@ export function CutlistCalc() {
     const calc = calculateCutlist({ cuts, forcedStockLength: forcedLength });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -272,48 +273,27 @@ export function CutlistCalc() {
           Optimise
         </button>
 
-        {result && (
-          <div ref={resultRef}>
-            {/* ORDER card — vertical list */}
-            <div
-              style={{
-                background: 'var(--color-card)',
-                border: '0.5px solid var(--color-border)',
-                borderRadius: 'var(--radius-card)',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 10,
-              }}
-            >
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
-                ORDER{bufferPct > 0 ? ` · +${bufferPct}% buffer` : ''}
-              </p>
-              {bufferedList.map(m => (
-                <div
-                  key={m.stockLength}
-                  style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}
-                >
-                  <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
-                    {m.bufferedCount}
-                  </span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontWeight: 400 }}>×</span>
-                  <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-                    {fmtLength(m.stockLength)}
-                  </span>
-                  {m.bufferedCount > m.count && (
-                    <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-                      +{m.bufferedCount - m.count} extra
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+        {result && (() => {
+          const totalBufferedStocks = bufferedList.reduce((s, m) => s + m.bufferedCount, 0);
+          const shopRows = bufferedList.map(m => ({
+            qty: `${m.bufferedCount}`,
+            name: fmtLength(m.stockLength) + ' lengths',
+            meta: m.bufferedCount > m.count ? `${m.count} calculated + ${m.bufferedCount - m.count} buffer` : `${m.count} needed`,
+          }));
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="Order this"
+              value={totalBufferedStocks}
+              unit="lengths"
+              spec={`${result.outputs.totalPieces} cuts total${bufferPct > 0 ? ` · +${bufferPct}% buffer` : ''}`}
+              stats={[
+                { label: `${result.outputs.wastePercent}% waste` },
+                { label: `${bufferedList.length} stock size${bufferedList.length !== 1 ? 's' : ''}` },
+              ]}
+            />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <ResultCard label="Pieces" value={result.outputs.totalPieces} accent />
-              <ResultCard label="Waste" value={result.outputs.wastePercent} unit="%" />
-            </div>
+            <ShoppingList rows={shopRows} />
 
             {/* Cutting plan — collapsible */}
             <div
@@ -381,15 +361,31 @@ export function CutlistCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Optimised across standard NZ/AU stock lengths (2.4–6.0m) using best-fit decreasing with lookahead scoring, 3mm saw kerf per cut. Order 5–10% extra for splits and defects.
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Cut list order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `${result.outputs.totalPieces} cuts`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

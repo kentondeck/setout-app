@@ -1,10 +1,10 @@
 import { useState, useContext, useEffect } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateBaluster } from '../calculators/baluster';
 import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
@@ -13,6 +13,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
+import { uuid } from '../lib/uuid';
 
 interface Inputs {
   totalLength: string;
@@ -78,7 +79,7 @@ export function BalusterCalc() {
     const calc = calculateBaluster({ totalLength, balusterWidth, maxGap });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -170,12 +171,29 @@ export function BalusterCalc() {
           Calculate
         </button>
 
-        {result && (
-          <div ref={resultRef}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <ResultCard label="Balusters" value={result.outputs.balusters} accent />
-              <ResultCard label="Actual gap" value={result.outputs.actualGap} unit="mm" />
-            </div>
+        {result && (() => {
+          const shopRows = [
+            { qty: `${result.outputs.balusters}`, name: `${balWidth}mm balusters`, meta: `${balLen}mm span · ${result.outputs.actualGap}mm gaps` },
+          ];
+          const quoteMaterials = [
+            { item: `${balWidth}mm baluster`, quantity: result.outputs.balusters, unit: 'each', note: `${balLen}mm span, ${result.outputs.actualGap}mm gap` },
+          ];
+
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={result.outputs.balusters}
+              unit="balusters"
+              spec={`${balLen}mm span · ${balWidth}mm × ${result.outputs.actualGap}mm gaps`}
+              stats={[
+                { label: `${result.outputs.actualGap}mm gap` },
+                { label: `${parseFloat((balGap + balWidth).toFixed(1))}mm pitch` },
+                { label: `${result.outputs.balusters + 1} gaps` },
+              ]}
+            />
+
+            <ShoppingList rows={shopRows} />
 
             {/* Running marks — centre of each baluster from one end */}
             {balusterMarks.length > 0 && (
@@ -268,15 +286,36 @@ export function BalusterCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.balusters[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`Balustrade infill, ${balLen}mm span`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Balustrade order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `Balustrade infill, ${balLen}mm span`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

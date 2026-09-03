@@ -1,10 +1,10 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateStairs } from '../calculators/stairs';
 import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
 import type { WorkingStep } from '../components/ApprenticeWorking';
@@ -13,6 +13,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { StairDiagram } from '../components/StairDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
+import { uuid } from '../lib/uuid';
 
 interface Inputs {
   totalRise: string;
@@ -77,7 +78,7 @@ export function StairsCalc() {
     });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -198,7 +199,20 @@ export function StairsCalc() {
         </button>
 
         {result && (
-          <div ref={resultRef}>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="Stair layout"
+              value={result.outputs.riserCount}
+              unit="risers"
+              spec={`${result.outputs.treadCount} treads · ${result.outputs.riserHeight}mm rise · ${result.outputs.treadDepth}mm going · ${result.outputs.stringerAngle}°`}
+              stats={[
+                { label: `${result.outputs.stringerLength}mm stringer` },
+                ...(result.outputs.treadBoardDepth > result.outputs.treadDepth ? [{ label: `${result.outputs.treadBoardDepth}mm tread board` }] : []),
+                ...(result.outputs.stringerDrop > 0 ? [{ label: `${result.outputs.stringerDrop}mm bottom drop` }] : []),
+                { label: `2R+G = ${result.outputs.walklineSum}mm` },
+              ]}
+            />
+
             {/* Auto riser callout */}
             {result.warnings.riserAutoSelected && (
               <div style={{
@@ -271,33 +285,9 @@ export function StairsCalc() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Risers" value={result.outputs.riserCount} accent />
-                <ResultCard label="Treads" value={result.outputs.treadCount} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Riser height" value={result.outputs.riserHeight} unit="mm" />
-                <ResultCard label="Tread depth (going)" value={result.outputs.treadDepth} unit="mm" />
-              </div>
-              {(result.outputs.treadBoardDepth > result.outputs.treadDepth || result.outputs.stringerDrop > 0) && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  {result.outputs.treadBoardDepth > result.outputs.treadDepth
-                    ? <ResultCard label="Tread board depth" value={result.outputs.treadBoardDepth} unit="mm" accent />
-                    : <div />}
-                  {result.outputs.stringerDrop > 0
-                    ? <ResultCard label="Stringer drop" value={result.outputs.stringerDrop} unit="mm" accent />
-                    : <div />}
-                </div>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Stringer" value={result.outputs.stringerLength} unit="mm" />
-                <ResultCard label="Angle" value={result.outputs.stringerAngle} unit="°" />
-              </div>
-              <p style={{ margin: '2px 4px 0', fontSize: 11, color: 'var(--color-muted)' }}>
-                Pitch-line length{result.outputs.stringerDrop > 0 ? ', including the bottom drop' : ''} — order +50–100mm on top for the top/bottom end cuts
-              </p>
-            </div>
+            <p style={{ margin: '2px 4px 0', fontSize: 11, color: 'var(--color-muted)' }}>
+              Pitch-line length{result.outputs.stringerDrop > 0 ? ', including the bottom drop' : ''} — order stringers +50–100mm on top for the top/bottom end cuts
+            </p>
 
             <StairDiagram
               riserCount={result.outputs.riserCount}
@@ -330,13 +320,20 @@ export function StairsCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.stairs[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

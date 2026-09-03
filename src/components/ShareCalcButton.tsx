@@ -56,9 +56,14 @@ export function buildShareText(entry: HistoryEntry): { title: string; body: stri
 
 interface ShareCalcButtonProps {
   calculationId: string;
+  // When provided, share the given plain-text body (typically a shopping list)
+  // instead of the full inputs/outputs dump. Title falls back to the calc name
+  // if not given.
+  shareBody?: string;
+  shareTitle?: string;
 }
 
-export function ShareCalcButton({ calculationId }: ShareCalcButtonProps) {
+export function ShareCalcButton({ calculationId, shareBody, shareTitle }: ShareCalcButtonProps) {
   const { history } = useContext(HistoryContext);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -66,9 +71,34 @@ export function ShareCalcButton({ calculationId }: ShareCalcButtonProps) {
   const entry = history.find(h => h.id === calculationId);
   if (!entry) return null;
 
+  // Copy via a hidden textarea + execCommand — the only path that works over
+  // http:// (insecure context), which is what WKWebView sees during live-reload dev
+  // and what most old iOS Safari versions fall back to.
+  function fallbackCopy(text: string): boolean {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '0';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+
   async function handleShare() {
     if (!entry) return;
-    const { title, body } = buildShareText(entry);
+    const defaults = buildShareText(entry);
+    const title = shareTitle ?? defaults.title;
+    const body = shareBody ?? defaults.body;
 
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
@@ -80,11 +110,22 @@ export function ShareCalcButton({ calculationId }: ShareCalcButtonProps) {
       }
     }
 
-    try {
-      await navigator.clipboard.writeText(body);
+    // Prefer the modern async clipboard API (needs secure context)
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(body);
+        setToast('Copied to clipboard');
+        setTimeout(() => setToast(null), 2500);
+        return;
+      } catch {
+        // fall through to the textarea trick
+      }
+    }
+
+    if (fallbackCopy(body)) {
       setToast('Copied to clipboard');
       setTimeout(() => setToast(null), 2500);
-    } catch {
+    } else {
       setToast('Could not share or copy');
       setTimeout(() => setToast(null), 2500);
     }

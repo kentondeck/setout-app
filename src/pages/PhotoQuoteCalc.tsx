@@ -17,6 +17,7 @@ import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMateri
 import { lookupCachedPrices, normalizeItemKey, isCheapFixing } from '../lib/priceLookup';
 import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
 import type { Employee } from '../types';
+import { uuid } from '../lib/uuid';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -367,7 +368,7 @@ function PhotoQuoteCalcInner() {
       const remembered = getRememberedMaterialPrice(m.item, settings.region);
       const bookNow = !remembered && isCheapFixing(m.item) ? lookupMaterialPrice(m.item, settings.region) : '';
       return {
-        id: crypto.randomUUID(),
+        id: uuid(),
         item: m.item,
         quantity: m.quantity === null ? '' : String(m.quantity),
         unit: m.unit,
@@ -436,7 +437,7 @@ function PhotoQuoteCalcInner() {
     if (state.jobName) setJobName(state.jobName);
     fillMissingMaterialPrices(newMaterials, settings.region);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -542,7 +543,7 @@ function PhotoQuoteCalcInner() {
     setLabourList([]);
     setJobName('');
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -599,7 +600,7 @@ function PhotoQuoteCalcInner() {
       const newMaterials = priceMaterialsList(quote.materials);
       setMaterialsList(newMaterials);
       setLabourList(quote.labour.map(l => ({
-        id: crypto.randomUUID(),
+        id: uuid(),
         role: l.role,
         hours: String(l.hours),
         rate: getRememberedLabourRate(l.role, settings.region) || lookupLabourRate(l.role, settings.region),
@@ -607,7 +608,7 @@ function PhotoQuoteCalcInner() {
       fillMissingMaterialPrices(newMaterials, settings.region);
 
       const totalHours = quote.labour.reduce((s, l) => s + l.hours, 0);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastEntryId(id);
       addEntry({
         id,
@@ -668,7 +669,7 @@ function PhotoQuoteCalcInner() {
   function addMaterialRow() {
     // priceChecked: true — a hand-added row never goes through fillMissingMaterialPrices, so
     // leaving it false would show "Checking price list…" forever instead of prompting for a price.
-    setMaterialsList(prev => [...prev, { id: crypto.randomUUID(), item: '', quantity: '1', unit: 'each', unitPrice: '', priceChecked: true }]);
+    setMaterialsList(prev => [...prev, { id: uuid(), item: '', quantity: '1', unit: 'each', unitPrice: '', priceChecked: true }]);
   }
 
   function removeMaterialRow(id: string) {
@@ -680,7 +681,7 @@ function PhotoQuoteCalcInner() {
   }
 
   function addLabourRow() {
-    setLabourList(prev => [...prev, { id: crypto.randomUUID(), role: '', hours: '1', rate: '' }]);
+    setLabourList(prev => [...prev, { id: uuid(), role: '', hours: '1', rate: '' }]);
   }
 
   function removeLabourRow(id: string) {
@@ -695,7 +696,7 @@ function PhotoQuoteCalcInner() {
   // employeeName, shown in-app only, never in the PDF or share text.
   function addEmployeeToLabour(emp: Employee) {
     setLabourList(prev => [...prev, {
-      id: crypto.randomUUID(),
+      id: uuid(),
       role: emp.role || 'Labour',
       hours: '1',
       rate: String(emp.payRate),

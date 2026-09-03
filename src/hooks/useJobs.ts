@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { SavedJob, HistoryEntry } from '../types';
+import { uuid } from '../lib/uuid';
 
 const KEY = 'setout_jobs';
 
@@ -25,7 +26,7 @@ export function useJobs(
   const createJob = useCallback((name: string): SavedJob => {
     const now = new Date().toISOString();
     const job: SavedJob = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       name: name.trim(),
       notes: '',
       createdAt: now,

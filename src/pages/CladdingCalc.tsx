@@ -1,16 +1,17 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateCladding } from '../calculators/cladding';
 import { JobNameInput } from '../components/JobNameInput';
 import type { CladdingOutputs } from '../calculators/cladding';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 interface Inputs {
@@ -66,7 +67,7 @@ export function CladdingCalc() {
     const calc = calculateCladding({ wallHeight, wallWidth, boardWidth, lap, boardLength, startOffset });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -158,33 +159,39 @@ export function CladdingCalc() {
           const actualLap = parseFloat((boardW - result.outputs.faceCover).toFixed(1));
           const lapDelta = parseFloat((actualLap - desiredLap).toFixed(1));
           const lapAdjusted = Math.abs(lapDelta) >= 0.1;
+          const shopRows = [
+            { qty: `${result.outputs.stockCount}`, name: `${boardW}mm cladding boards`, meta: `${inputs.boardLength}mm each · ${result.outputs.totalLm} lm · ${result.outputs.wastePercent}% waste` },
+          ];
+          const quoteMaterials = [
+            { item: `${boardW}mm cladding board`, quantity: result.outputs.stockCount, unit: 'each', note: `${inputs.boardLength}mm · ${result.outputs.totalLm} lm total` },
+          ];
           return (
-          <div ref={resultRef}>
-            {/* Summary */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Courses" value={result.outputs.courseCount} accent />
-                <ResultCard label="Actual overlap" value={actualLap} unit="mm" />
-              </div>
-              {lapAdjusted && (
-                <p style={{ margin: '-2px 2px 0', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-                  Adjusted from {desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly into the wall.
-                </p>
-              )}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Boards" value={result.outputs.stockCount} unit={`@ ${inputs.boardLength}mm`} />
-                <ResultCard label="Waste" value={result.outputs.wastePercent} unit="%" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Total lineal m" value={result.outputs.totalLm} unit="lm" />
-                <ResultCard label="Top board rip" value={result.outputs.topBoardRip} unit="mm" />
-              </div>
-            </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={result.outputs.stockCount}
+              unit="boards"
+              spec={`${inputs.wallHeight}${inputs.wallHeight.includes('.') ? 'm' : 'mm'} × ${inputs.wallWidth}${inputs.wallWidth.includes('.') ? 'm' : 'mm'} wall · ${result.outputs.courseCount} courses @ ${result.outputs.faceCover}mm centres`}
+              stats={[
+                { label: `${result.outputs.totalLm} lm` },
+                { label: `${actualLap}mm actual lap` },
+                { label: `${result.outputs.topBoardRip}mm top rip` },
+                { label: `${result.outputs.wastePercent}% waste` },
+              ]}
+            />
+
+            {lapAdjusted && (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4, padding: '0 4px' }}>
+                Overlap adjusted from {desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly.
+              </p>
+            )}
+
+            <ShoppingList rows={shopRows} />
 
             {/* Story rod */}
             <div style={{ ...cardStyle, gap: 12 }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
-                STORY ROD — {result.outputs.faceCover}mm centres · top board ripped to {result.outputs.topBoardRip}mm
+              <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '1.6px', textTransform: 'uppercase' }}>
+                Story rod — {result.outputs.faceCover}mm centres
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {result.rodMarks.map((mark, i) => (
@@ -197,21 +204,6 @@ export function CladdingCalc() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            {/* Materials */}
-            <div style={{ ...cardStyle, gap: 14 }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: `Cladding boards (${inputs.boardLength}mm)`, qty: result.outputs.stockCount, detail: `${result.outputs.totalLm}lm` },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.qty} boards · {row.detail}
-                  </span>
-                </div>
-              ))}
             </div>
 
             <ApprenticeWorking
@@ -229,13 +221,33 @@ export function CladdingCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.cladding[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`Cladding, ${inputs.wallHeight} × ${inputs.wallWidth}`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Cladding order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `Cladding, ${inputs.wallHeight} × ${inputs.wallWidth}`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
           );
         })()}

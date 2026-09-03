@@ -4,13 +4,14 @@ import { NumberInput } from '../components/NumberInput';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
-import { AddToQuoteButton } from '../components/AddToQuoteButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateFencing } from '../calculators/fencing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { FenceType, PalingStyle, FencingResult } from '../calculators/fencing';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useScrollToResult } from '../lib/useScrollToResult';
+import { uuid } from '../lib/uuid';
 
 const HEIGHTS = [1.2, 1.5, 1.8] as const;
 const SPACINGS_PALING = [1.8, 2.4] as const;
@@ -107,7 +108,7 @@ export function FencingCalc() {
 
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -399,88 +400,70 @@ export function FencingCalc() {
           Calculate
         </button>
 
-        {result && o && (
-          <div ref={resultRef}>
-            {/* Waste buffer toggle */}
-            <div style={{ display: 'flex', gap: 8 }}>
+        {result && o && (() => {
+          const shopRows = [
+            { qty: `${bufferedPosts}`, name: `${o.postWidthMm}×${o.postWidthMm} treated pine posts`, meta: `${o.postTotalLengthMm}mm long · ${o.embedmentMm}mm embedment` },
+            { qty: `${bufferedRails}`, name: 'Rail (lineal metres)', meta: `${resolvedRailCount} rails × ${parseFloat(runLength) || 0}m run` },
+            ...(fenceType === 'paling' ? [{ qty: `${bufferedPalings}`, name: `${resolvedPalingWidth}mm palings`, meta: `${resolvedHeight * 1000}mm height · ${palingStyle}` }] : []),
+            ...(o.recommendTruck
+              ? [{ qty: `${bufferedConcreteVolM3}`, name: 'Ready-mix concrete (m³)', meta: `~$${truckCost} @ $${TRUCK_RATE_PER_M3}/m³ · post holes` }]
+              : [{ qty: `${bufferedConcrete}`, name: '20kg premix bags', meta: `${o.concretePerHoleBags} per hole` }]),
+            { qty: `${o.framingNailBoxes}`, name: 'Framing nails (75–90mm)', meta: `${o.framingNailCount} nails · skew-nail rails` },
+            ...(fenceType === 'paling' ? [{ qty: `${o.palingNailBoxes}`, name: 'Paling nails (30–40mm)', meta: `${o.palingNailCount} nails · 2 per paling per rail` }] : []),
+          ];
+
+          const bufferChips = (
+            <div style={{ display: 'flex', gap: 4 }}>
               {[0, 5, 10, 15].map(pct => (
                 <button
                   key={pct}
                   onClick={() => setWasteBuffer(pct)}
                   style={{
-                    flex: 1,
-                    padding: '9px 0',
-                    borderRadius: 10,
-                    border: wasteBuffer === pct ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                    background: wasteBuffer === pct ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                    color: wasteBuffer === pct ? 'var(--color-orange)' : 'var(--color-muted)',
-                    fontWeight: wasteBuffer === pct ? 500 : 400,
-                    fontSize: 13,
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
+                    padding: '4px 8px', borderRadius: 6, border: 'none',
+                    background: wasteBuffer === pct ? 'var(--color-card)' : 'transparent',
+                    color: wasteBuffer === pct ? 'var(--color-text)' : 'var(--color-muted)',
+                    fontSize: 11, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+                    boxShadow: wasteBuffer === pct ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                   }}
                 >
-                  {pct === 0 ? 'No buffer' : `+${pct}%`}
+                  {pct === 0 ? '0' : `+${pct}%`}
                 </button>
               ))}
             </div>
+          );
 
-            {/* Materials list */}
-            {(() => {
-              const posts = bufferedPosts;
-              const rails = bufferedRails;
-              const palings = bufferedPalings;
-              const concrete = bufferedConcrete;
-              const row = (qty: number | string, unit: string, detail: string, showX = true) => (
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-                  <span style={{ fontSize: 28, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px', lineHeight: 1 }}>
-                    {qty}
-                  </span>
-                  {showX && <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>×</span>}
-                  <span style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-                    {unit}
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)', marginLeft: 'auto' }}>{detail}</span>
-                </div>
-              );
-              return (
-                <div style={{
-                  background: 'var(--color-card)',
-                  border: '0.5px solid var(--color-border)',
-                  borderRadius: 'var(--radius-card)',
-                  padding: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
-                }}>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
-                    ORDER{wasteBuffer > 0 ? ` · +${wasteBuffer}% buffer` : ''}
-                  </p>
-                  {row(posts, `${o.postWidthMm}×${o.postWidthMm} × ${o.postTotalLengthMm} mm posts`, `${o.embedmentMm} mm in ground`)}
-                  {row(rails, 'lm rails', `${resolvedRailCount} rails × ${parseFloat(runLength) || 0} m`, false)}
-                  {fenceType === 'paling' && row(palings, `${resolvedHeight * 1000} mm palings`, `${resolvedPalingWidth} mm wide`)}
-                  {o.recommendTruck
-                    ? row(bufferedConcreteVolM3, 'm³ ready-mix', `~$${truckCost} @ $${TRUCK_RATE_PER_M3}/m³`, false)
-                    : row(concrete, '20 kg concrete bags', `${o.concretePerHoleBags} per hole`)}
-                  {row(o.framingNailBoxes, `box${o.framingNailBoxes !== 1 ? 'es' : ''} framing nails`, `${o.framingNailCount} nails`, false)}
-                  {fenceType === 'paling' && row(o.palingNailBoxes, `box${o.palingNailBoxes !== 1 ? 'es' : ''} paling nails`, `${o.palingNailCount} nails`, false)}
-                </div>
-              );
-            })()}
+          const bufferToggleWrap = (
+            <div style={{ display: 'flex', background: 'var(--color-bg)', borderRadius: 8, padding: 2 }}>
+              {bufferChips}
+            </div>
+          );
 
-            {/* Post hole info */}
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={bufferedPosts}
+              unit={`${o.postWidthMm}×${o.postWidthMm} posts`}
+              spec={`${parseFloat(runLength) || 0}m ${fenceType === 'paling' ? 'paling' : 'post & rail'} fence · ${resolvedHeight}m high${wasteBuffer > 0 ? ` · +${wasteBuffer}% buffer` : ''}`}
+              stats={[
+                { label: `${bufferedRails} lm rails` },
+                ...(fenceType === 'paling' ? [{ label: `${bufferedPalings} palings` }] : []),
+                { label: o.recommendTruck ? `${bufferedConcreteVolM3} m³ ready-mix` : `${bufferedConcrete} bags` },
+                { label: `${o.postHoleDepthMm}mm holes` },
+              ]}
+            />
+
+            <ShoppingList rows={shopRows} rightSlot={bufferToggleWrap} />
+
             <div style={{
-              background: 'var(--color-card)',
-              border: '0.5px solid var(--color-border)',
-              borderRadius: 10,
-              padding: '12px 14px',
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 10, padding: '12px 14px',
             }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
                 Post holes — {o.postHoleDiameterMm} mm diameter × {o.postHoleDepthMm} mm deep. Post stands 50 mm proud of the bottom (poured solid, no rubble) and its {o.postWidthMm}×{o.postWidthMm} mm cross-section is deducted from the concrete.
                 {fenceType === 'paling' && palingStyle !== 'tight'
                   ? ` Paling count based on ${palingStyle === 'lapped' ? `${customOverlap || 15} mm overlap` : `${customGap || 10} mm gap`}.`
                   : ''}
-                {' '}Add 5–10% to all timber quantities for waste and end cuts.
               </p>
             </div>
 
@@ -501,20 +484,36 @@ export function FencingCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <AddToQuoteButton
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {COMPLIANCE_NOTES.fencing[settings.region]}
+            </p>
+
+            <AddToQuoteCTA
               scopeSummary={`${fenceType === 'paling' ? 'Paling' : 'Post & rail'} fence, ${parseFloat(runLength) || 0}m run, ${resolvedHeight}m high`}
               materials={quoteMaterials}
               jobName={jobName}
             />
-            <ShareCalcButton calculationId={lastEntryId} />
-
-            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-              {COMPLIANCE_NOTES.fencing[settings.region]}
-            </p>
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Fencing order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `${parseFloat(runLength) || 0}m ${fenceType} fence, ${resolvedHeight}m high`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

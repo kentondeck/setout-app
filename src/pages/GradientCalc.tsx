@@ -1,15 +1,16 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateGradient } from '../calculators/gradient';
 import { JobNameInput } from '../components/JobNameInput';
 import type { GradientResult } from '../calculators/gradient';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { uuid } from '../lib/uuid';
 
 import type { Region } from '../types';
 
@@ -85,7 +86,7 @@ export function GradientCalc() {
       setError('');
       const calc = calculateGradient({ mode: 'findRise', run: distVal, rise: 0, gradientRatio: activeRatio });
       setResult(calc);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastEntryId(id);
       addEntry({ id, calculatorId: 'gradient', timestamp: Date.now(), inputs: { mode: 'findRise', run: distVal, gradientRatio: activeRatio }, outputs: calc.outputs });
     } else {
@@ -93,7 +94,7 @@ export function GradientCalc() {
       setError('');
       const calc = calculateGradient({ mode: 'findGradient', run: distVal, rise: fallVal, gradientRatio: 0 });
       setResult(calc);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastEntryId(id);
       addEntry({ id, calculatorId: 'gradient', timestamp: Date.now(), inputs: { mode: 'findGradient', run: distVal, rise: fallVal }, outputs: calc.outputs });
     }
@@ -272,27 +273,18 @@ export function GradientCalc() {
         </button>
 
         {result && o && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {!reverse ? (
-                <>
-                  <ResultCard label="Fall required" value={`${o.rise}`} unit="mm" accent />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <ResultCard label="Grade" value={`${o.percentage}%`} />
-                    <ResultCard label="Angle" value={`${o.angle}°`} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <ResultCard label="Gradient" value={`1:${o.gradientRatio}`} accent />
-                    <ResultCard label="Grade" value={`${o.percentage}%`} accent />
-                  </div>
-                  <ResultCard label="Angle" value={`${o.angle}°`} />
-                </>
-              )}
-              <ResultCard label="Rise per metre" value={`${o.risePerMetre}`} unit="mm/m" />
-            </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label={!reverse ? 'Fall required' : 'Gradient'}
+              value={!reverse ? o.rise : `1:${o.gradientRatio}`}
+              unit={!reverse ? 'mm' : ''}
+              spec={`${distance} distance${reverse ? ` · ${fall}mm fall` : ` · 1:${activeRatio}`}`}
+              stats={[
+                { label: `${o.percentage}% grade` },
+                { label: `${o.angle}° angle` },
+                { label: `${o.risePerMetre}mm/m` },
+              ]}
+            />
 
             <ApprenticeWorking
               steps={result.steps}
@@ -302,13 +294,20 @@ export function GradientCalc() {
               id="gradient"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.gradient[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

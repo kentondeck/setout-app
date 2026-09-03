@@ -1,11 +1,10 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
-import { AddToQuoteButton } from '../components/AddToQuoteButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateSlab, calculatePostHoles, calculateConcreteMix, calculateSlabReo } from '../calculators/concrete';
@@ -13,6 +12,7 @@ import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import type { SlabOutputs, PostHoleOutputs, MixOutputs, MixRatio, SlabReoOutputs } from '../calculators/concrete';
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { uuid } from '../lib/uuid';
 
 type Tab = 'slab' | 'postholes' | 'mix';
 type HoleType = 'round' | 'square';
@@ -102,7 +102,7 @@ export function ConcreteCalc() {
       const reoCalc = calculateSlabReo({ length, width });
       setSlabResult(calc);
       setSlabReoResult(reoCalc);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastSlabId(id);
       addEntry({
         id,
@@ -136,7 +136,7 @@ export function ConcreteCalc() {
         ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize }),
       });
       setPostResult(calc);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastPostId(id);
       addEntry({
         id,
@@ -158,7 +158,7 @@ export function ConcreteCalc() {
 
       const calc = calculateConcreteMix({ volumeM3: volume, ratio: resolvedMixRatio });
       setMixResult(calc);
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastMixId(id);
       addEntry({
         id,
@@ -231,6 +231,28 @@ export function ConcreteCalc() {
       ...(slabReoResult.outputs.tapeRolls > 0 ? [{ item: 'DPM join tape', quantity: slabReoResult.outputs.tapeRolls, unit: 'roll', note: `${slabReoResult.outputs.tapeLengthM}m of joins` }] : []),
     ] : []),
   ] : [];
+
+  const slabShopRows = slabResult ? [
+    { qty: `${slabResult.outputs.orderVolume}`, name: 'Ready-mix concrete (m³)', meta: `${slabResult.outputs.exactVolume} m³ + ${Math.round(wastage * 100)}% wastage` },
+    ...(slabReoResult ? [
+      { qty: `${slabReoResult.outputs.meshSheets}`, name: 'Reinforcing mesh sheets', meta: '6.0m × 2.4m sheets · 225mm lap' },
+      { qty: `${slabReoResult.outputs.barChairPacks}`, name: 'Bar chair packs', meta: `${slabReoResult.outputs.barChairs} chairs · ~1m centres` },
+      { qty: `${slabReoResult.outputs.plasticAreaM2}`, name: 'Plastic DPM (m²)', meta: 'under-slab membrane' },
+      { qty: `${slabReoResult.outputs.tieWireRolls}`, name: 'Tie wire rolls', meta: `${slabReoResult.outputs.tieWireCount} ties needed` },
+      ...(slabReoResult.outputs.tapeRolls > 0 ? [{ qty: `${slabReoResult.outputs.tapeRolls}`, name: 'DPM join tape rolls', meta: `${slabReoResult.outputs.tapeLengthM}m of joins` }] : []),
+    ] : []),
+  ] : [];
+
+  const mixShopRows = mixResult ? [
+    { qty: `${mixResult.outputs.cementBags}`, name: 'GP cement bags', meta: `${mixResult.outputs.cementKg} kg` },
+    { qty: `${mixResult.outputs.sandM3}`, name: 'Sand (m³)', meta: `${mixResult.outputs.sandKg} kg` },
+    { qty: `${mixResult.outputs.aggregateM3}`, name: 'Aggregate (m³)', meta: `${mixResult.outputs.aggregateKg} kg` },
+  ] : [];
+
+  const postShopRows = postResult ? (postResult.outputs.useBagMix
+    ? [{ qty: `${postResult.outputs.bagCount}`, name: '20kg premix bags', meta: `${postFields.numHoles} holes · incl. ${Math.round(wastage * 100)}% wastage` }]
+    : [{ qty: `${postResult.outputs.orderVolume}`, name: 'Ready-mix concrete (m³)', meta: `${postFields.numHoles} holes · incl. ${Math.round(wastage * 100)}% wastage` }]
+  ) : [];
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -568,38 +590,24 @@ export function ConcreteCalc() {
 
         {/* Slab results */}
         {tab === 'slab' && slabResult && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Volume" value={slabResult.outputs.exactVolume} unit="m³" accent />
-                <ResultCard label="Order (incl. wastage)" value={slabResult.outputs.orderVolume} unit="m³" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: slabResult.outputs.exactVolume < 1 ? '1fr 1fr' : '1fr', gap: 10 }}>
-                {slabResult.outputs.exactVolume < 1 && (
-                  <ResultCard label="Volume in litres" value={slabResult.outputs.litres} unit="L" />
-                )}
-                <ResultCard label="Est. weight" value={slabResult.outputs.weightTonnes} unit="t" />
-              </div>
-            </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="Order this much"
+              value={slabResult.outputs.orderVolume}
+              unit="m³ concrete"
+              spec={`${slabFields.length}m × ${slabFields.width}m × ${slabFields.thickness}mm slab · incl. ${Math.round(wastage * 100)}% wastage`}
+              stats={[
+                { label: `${slabResult.outputs.exactVolume} m³ net` },
+                { label: `${slabResult.outputs.weightTonnes} t` },
+                ...(slabResult.outputs.exactVolume < 1 ? [{ label: `${slabResult.outputs.litres} L` }] : []),
+                ...(slabReoResult ? [
+                  { label: `${slabReoResult.outputs.meshSheets} mesh` },
+                  { label: `${slabReoResult.outputs.barChairs} chairs` },
+                ] : []),
+              ]}
+            />
 
-            {slabReoResult && (
-              <div style={{
-                background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-                borderRadius: 'var(--radius-card)', padding: '18px 16px',
-                display: 'flex', flexDirection: 'column', gap: 14,
-              }}>
-                <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>REINFORCEMENT</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Mesh sheets" value={slabReoResult.outputs.meshSheets} accent />
-                  <ResultCard label="Bar chairs" value={slabReoResult.outputs.barChairs} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Tie wire" value={slabReoResult.outputs.tieWireRolls} unit="rolls" />
-                  <ResultCard label="Join tape" value={slabReoResult.outputs.tapeRolls} unit="rolls" />
-                </div>
-                <ResultCard label="Plastic (DPM)" value={slabReoResult.outputs.plasticAreaM2} unit="m²" />
-              </div>
-            )}
+            <ShoppingList rows={slabShopRows} />
 
             <ApprenticeWorking
               steps={slabWorkingSteps}
@@ -623,56 +631,52 @@ export function ConcreteCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastSlabId} />
-            <AddToQuoteButton
-              scopeSummary={`Concrete slab, ${slabFields.length}mm × ${slabFields.width}mm × ${slabFields.thickness}mm`}
-              materials={slabQuoteMaterials}
-              jobName={jobName}
-            />
-            <ShareCalcButton calculationId={lastSlabId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`Concrete slab, ${slabFields.length}m × ${slabFields.width}m × ${slabFields.thickness}mm`}
+              materials={slabQuoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastSlabId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastSlabId} />
+              <ShareCalcButton
+                calculationId={lastSlabId}
+                shareTitle={jobName || 'Concrete slab order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `Concrete slab, ${slabFields.length}m × ${slabFields.width}m × ${slabFields.thickness}mm`,
+                  rows: slabShopRows,
+                })}
+              />
+            </div>
           </div>
         )}
 
         {/* Post hole results */}
         {tab === 'postholes' && postResult && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Per hole" value={postResult.outputs.volumePerHole} unit="m³" accent />
-                <ResultCard label="Total" value={postResult.outputs.totalVolume} unit="m³" />
-              </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label={postResult.outputs.useBagMix ? 'Grab this many bags' : 'Order this much ready-mix'}
+              value={postResult.outputs.useBagMix ? postResult.outputs.bagCount : postResult.outputs.orderVolume}
+              unit={postResult.outputs.useBagMix ? '× 20kg' : 'm³'}
+              spec={`${postFields.numHoles} holes · ${postResult.outputs.volumePerHole} m³ each · incl. ${Math.round(wastage * 100)}% wastage`}
+              stats={[
+                { label: `${postResult.outputs.totalVolume} m³ net` },
+                { label: `${postResult.outputs.orderVolume} m³ order` },
+                { label: postResult.outputs.useBagMix ? 'Bag mix' : 'Ready-mix' },
+              ]}
+            />
 
-              <ResultCard label="Order (incl. wastage)" value={postResult.outputs.orderVolume} unit="m³" />
-            </div>
-
-            {/* Bag / ready-mix recommendation */}
-            <div style={{
-              background: postResult.outputs.useBagMix ? '#f0fdf4' : '#eff6ff',
-              border: `0.5px solid ${postResult.outputs.useBagMix ? '#22c55e' : '#3b82f6'}`,
-              borderRadius: 10,
-              padding: '12px 14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: postResult.outputs.useBagMix ? '#166534' : '#1e40af' }}>
-                {postResult.outputs.useBagMix ? 'Bag mix recommended' : 'Ready-mix recommended'}
-              </p>
-              {postResult.outputs.useBagMix ? (
-                <p style={{ margin: 0, fontSize: 12, color: '#166534' }}>
-                  ~{postResult.outputs.bagCount} × 20 kg bags (incl. {Math.round(wastage * 100)}% wastage)
-                </p>
-              ) : (
-                <p style={{ margin: 0, fontSize: 12, color: '#1e40af' }}>
-                  Total volume is 0.2 m³ or more — order ready-mix.
-                </p>
-              )}
-            </div>
+            <ShoppingList rows={postShopRows} />
 
             <ApprenticeWorking
               steps={postWorkingSteps}
@@ -688,39 +692,57 @@ export function ConcreteCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastPostId} />
-            <ShareCalcButton calculationId={lastPostId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.concrete[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastPostId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastPostId} />
+              <ShareCalcButton
+                calculationId={lastPostId}
+                shareTitle={jobName || 'Post hole concrete'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `${postFields.numHoles} post holes`,
+                  rows: postShopRows,
+                })}
+              />
+            </div>
           </div>
         )}
 
         {/* Mix results */}
         {tab === 'mix' && mixResult && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Cement" value={mixResult.outputs.cementBags} unit="bags" accent />
-                <ResultCard label="Cement" value={mixResult.outputs.cementKg} unit="kg" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Sand" value={mixResult.outputs.sandM3} unit="m³" />
-                <ResultCard label="Aggregate" value={mixResult.outputs.aggregateM3} unit="m³" />
-              </div>
-              <ResultCard label="Water" value={mixResult.outputs.waterLitres} unit="L" />
-            </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={mixResult.outputs.cementBags}
+              unit="cement bags"
+              spec={`${mixResult.outputs.wetVolume} m³ concrete · ${mixPreset === 'custom'
+                ? `${resolvedMixRatio.cement}:${resolvedMixRatio.sand}:${resolvedMixRatio.aggregate}`
+                : mixPreset} mix`}
+              stats={[
+                { label: `${mixResult.outputs.cementKg} kg cement` },
+                { label: `${mixResult.outputs.sandM3} m³ sand` },
+                { label: `${mixResult.outputs.aggregateM3} m³ aggregate` },
+                { label: `${mixResult.outputs.waterLitres} L water` },
+              ]}
+            />
+
+            <ShoppingList rows={mixShopRows} />
 
             <div style={{
               background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
               borderRadius: 10, padding: '12px 14px',
             }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                {mixResult.outputs.wetVolume} m³ of concrete, mixed at a {mixPreset === 'custom'
-                  ? `${resolvedMixRatio.cement}:${resolvedMixRatio.sand}:${resolvedMixRatio.aggregate}`
-                  : mixPreset} ratio. Rule-of-thumb batching, not a certified mix design — for structural
+                Rule-of-thumb batching, not a certified mix design — for structural
                 work needing a specific MPa rating, use certified ready-mix.
               </p>
             </div>
@@ -739,18 +761,33 @@ export function ConcreteCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastMixId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastMixId} />
-            <AddToQuoteButton
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {COMPLIANCE_NOTES.concrete[settings.region]}
+            </p>
+
+            <AddToQuoteCTA
               scopeSummary={`Concrete mix, ${mixResult.outputs.wetVolume} m³`}
               materials={mixQuoteMaterials}
               jobName={jobName}
             />
-            <ShareCalcButton calculationId={lastMixId} />
-
-            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-              {COMPLIANCE_NOTES.concrete[settings.region]}
-            </p>
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastMixId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastMixId} />
+              <ShareCalcButton
+                calculationId={lastMixId}
+                shareTitle={jobName || 'Concrete mix order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `${mixResult.outputs.wetVolume} m³ concrete mix`,
+                  rows: mixShopRows,
+                })}
+              />
+            </div>
           </div>
         )}
       </div>

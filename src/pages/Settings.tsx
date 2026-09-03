@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 import type { Employee } from '../types';
+import { uuid } from '../lib/uuid';
 
 const textInputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10,
@@ -75,7 +76,7 @@ export function Settings() {
       });
     } else {
       updateSettings({
-        employees: [...settings.employees, { id: crypto.randomUUID(), name, role, payRate, chargeRate }],
+        employees: [...settings.employees, { id: uuid(), name, role, payRate, chargeRate }],
       });
     }
     resetEmployeeForm();

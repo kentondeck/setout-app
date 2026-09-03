@@ -1,10 +1,10 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateSetout } from '../calculators/setout';
 import { JobNameInput } from '../components/JobNameInput';
 import type { SetoutOutputs } from '../calculators/setout';
@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { uuid } from '../lib/uuid';
 
 type InputMode = 'find' | 'check';
 
@@ -62,7 +63,7 @@ export function SetoutCalc() {
     const calc = calculateSetout({ sideA, sideB, measured });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -166,14 +167,20 @@ export function SetoutCalc() {
         </button>
 
         {result && (
-          <div ref={resultRef}>
-            {/* Diagonal result */}
-            <div style={{ display: 'grid', gridTemplateColumns: mode === 'check' ? '1fr 1fr' : '1fr', gap: 10 }}>
-              <ResultCard label="Diagonal" value={result.outputs.diagonal} unit="mm" accent />
-              {mode === 'check' && (
-                <ResultCard label="Measured" value={parseFloat(inputs.measured)} unit="mm" />
-              )}
-            </div>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label={mode === 'check' ? 'Square check' : 'Required diagonal'}
+              value={result.outputs.diagonal}
+              unit="mm"
+              spec={`${inputs.sideA}mm × ${inputs.sideB}mm rectangle${mode === 'check' ? ` · measured ${inputs.measured}mm` : ''}`}
+              stats={mode === 'check'
+                ? [
+                    { label: isSquare ? 'Perfectly square' : `${absError}mm ${result.outputs.error > 0 ? 'pull in' : 'push out'}` },
+                  ]
+                : [
+                    { label: `3-4-5 style` },
+                  ]}
+            />
 
             {/* Check square callout */}
             {mode === 'check' && (
@@ -218,13 +225,20 @@ export function SetoutCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.setout[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

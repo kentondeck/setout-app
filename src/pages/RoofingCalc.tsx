@@ -1,16 +1,17 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { calculateRoofing, ROOFING_PROFILES } from '../calculators/roofing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { RoofType, RoofProfile, RoofingResult } from '../calculators/roofing';
 import { useScrollToResult } from '../lib/useScrollToResult';
+import { uuid } from '../lib/uuid';
 
 interface Fields {
   planLength: string;
@@ -81,7 +82,7 @@ export function RoofingCalc() {
 
     const calc = calculateRoofing({ roofType, planLength, planWidth, pitchDegrees, profile, eaveOverhangMm, purlinSpacingMm });
     setResult(calc);
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastId(id);
     addEntry({
       id,
@@ -240,65 +241,52 @@ export function RoofingCalc() {
           Calculate
         </button>
 
-        {result && o && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {result && o && (() => {
+          const shopRows = [
+            { qty: `${o.sheetCount}`, name: `${ROOFING_PROFILES[profile].label} sheets`, meta: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover · ${o.slopeAreaM2} m² total` },
+            { qty: `${o.purlinCount * (roofType === 'gable' || roofType === 'hip' ? 2 : 1)}`, name: 'Purlins (per face × faces)', meta: `${o.purlinCount} per face · ${roofType === 'skillion' ? '1 face' : '2 faces'}` },
+            ...(roofType !== 'skillion' ? [{ qty: `${o.ridgeCapM}`, name: 'Ridge cap (lm)', meta: 'incl. 10% for laps' }] : []),
+            ...(roofType === 'hip' ? [{ qty: `${o.hipCapM}`, name: 'Hip caps (lm)', meta: 'incl. 10% for laps' }] : []),
+            ...(o.bargeM > 0 ? [{ qty: `${o.bargeM}`, name: roofType === 'skillion' ? 'Barge flashing (lm)' : 'Barge / rake (lm)', meta: 'incl. 10% for laps' }] : []),
+            { qty: `${o.eaveFlashingM}`, name: 'Eave flashing (lm)', meta: 'incl. 10% for laps' },
+            { qty: `${o.screwBoxes}`, name: 'Roofing screw boxes (×250)', meta: `${o.screwCount} screws · incl. 10% waste` },
+          ];
+          const quoteMaterials = [
+            { item: `${ROOFING_PROFILES[profile].label} roofing sheets`, quantity: o.sheetCount, unit: 'each', note: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover` },
+            { item: 'Purlins', quantity: o.purlinCount * (roofType === 'skillion' ? 1 : 2), unit: 'each', note: `${o.purlinCount} per face` },
+            ...(roofType !== 'skillion' ? [{ item: 'Ridge cap', quantity: o.ridgeCapM, unit: 'lineal metre', note: 'incl. 10% for laps' }] : []),
+            ...(roofType === 'hip' ? [{ item: 'Hip caps', quantity: o.hipCapM, unit: 'lineal metre', note: 'incl. 10% for laps' }] : []),
+            ...(o.bargeM > 0 ? [{ item: 'Barge flashing', quantity: o.bargeM, unit: 'lineal metre', note: 'incl. 10% for laps' }] : []),
+            { item: 'Eave flashing', quantity: o.eaveFlashingM, unit: 'lineal metre', note: 'incl. 10% for laps' },
+            { item: 'Roofing screws (250-pk)', quantity: o.screwBoxes, unit: 'box', note: `${o.screwCount} screws` },
+          ];
 
-              {/* Sheets + length */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Sheets" value={o.sheetCount} accent />
-                <ResultCard label="Sheet length" value={sheetLengthDisplay} />
-              </div>
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={o.sheetCount}
+              unit={`${ROOFING_PROFILES[profile].label} sheets`}
+              spec={`${ROOF_TYPE_LABELS[roofType]} roof · ${fields.planLength}m × ${fields.planWidth}m plan · ${fields.pitch}° pitch · ${sheetLengthDisplay} sheets`}
+              stats={[
+                { label: `${o.slopeAreaM2} m² slope` },
+                { label: `${o.purlinCount} purlins/face` },
+                { label: `${o.screwBoxes} screw boxes` },
+                ...(roofType !== 'skillion' ? [{ label: `${o.ridgeCapM} m ridge` }] : []),
+              ]}
+            />
 
-              {/* Slope area + purlins */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Slope area" value={o.slopeAreaM2} unit="m²" />
-                <ResultCard label="Purlins / face" value={o.purlinCount} />
-              </div>
+            <ShoppingList rows={shopRows} />
 
-              {/* Ridge cap — gable and hip */}
-              {roofType !== 'skillion' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Ridge cap" value={o.ridgeCapM} unit="m" />
-                  {roofType === 'hip'
-                    ? <ResultCard label="Hip caps" value={o.hipCapM} unit="m" />
-                    : <ResultCard label="Barge / rake" value={o.bargeM} unit="m" />
-                  }
-                </div>
-              )}
-
-              {/* Barge for skillion */}
-              {roofType === 'skillion' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Barge flashing" value={o.bargeM} unit="m" />
-                  <ResultCard label="Eave + head flashing" value={o.eaveFlashingM} unit="m" />
-                </div>
-              )}
-
-              {/* Eave flashing — gable and hip */}
-              {roofType !== 'skillion' && (
-                <ResultCard label="Eave flashing" value={o.eaveFlashingM} unit="m" />
-              )}
-
-              {/* Screws */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Screws (incl. 10% waste)" value={o.screwCount} />
-                <ResultCard label="Screw boxes (×250)" value={o.screwBoxes} />
-              </div>
-
-              {/* Profile cover info */}
-              <div style={{
-                background: 'var(--color-card)',
-                border: '0.5px solid var(--color-border)',
-                borderRadius: 10,
-                padding: '12px 14px',
-              }}>
-                <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                  {ROOFING_PROFILES[profile].label} — {ROOFING_PROFILES[profile].coverMm}mm cover width.
-                  All flashing quantities include 10% for laps and joins.
-                  {roofType === 'hip' ? ' Hip-end sheets include waste for diagonal cuts.' : ''}
-                </p>
-              </div>
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 10, padding: '12px 14px',
+            }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                {ROOFING_PROFILES[profile].label} — {ROOFING_PROFILES[profile].coverMm}mm cover width.
+                All flashing quantities include 10% for laps and joins.
+                {roofType === 'hip' ? ' Hip-end sheets include waste for diagonal cuts.' : ''}
+              </p>
             </div>
 
             <ApprenticeWorking
@@ -309,15 +297,36 @@ export function RoofingCalc() {
               id="roofing"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastId} />
-            <ShareCalcButton calculationId={lastId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.roofing[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`${ROOF_TYPE_LABELS[roofType]} roof, ${fields.planLength}m × ${fields.planWidth}m`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastId} />
+              <ShareCalcButton
+                calculationId={lastId}
+                shareTitle={jobName || 'Roofing order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `${ROOF_TYPE_LABELS[roofType]} roof, ${fields.planLength}m × ${fields.planWidth}m`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

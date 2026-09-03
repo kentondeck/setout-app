@@ -1,16 +1,17 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateRakedWall } from '../calculators/raked-wall';
 import { JobNameInput } from '../components/JobNameInput';
 import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 type InputMode = 'heights' | 'pitch';
@@ -88,7 +89,7 @@ export function RakedWallCalc() {
     const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -258,29 +259,35 @@ export function RakedWallCalc() {
           Calculate
         </button>
 
-        {result && (
-          <div ref={resultRef}>
-            {/* Summary results */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Studs" value={result.outputs.studCount} accent />
-                <ResultCard label="Total lineal m" value={result.outputs.totalLinealMetres} unit="lm" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Rake plate" value={result.outputs.rakePlateLength} unit="mm" />
-                <ResultCard label="Pitch angle" value={result.outputs.pitchAngle} unit="°" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Low stud" value={result.outputs.lowStudHeight} unit="mm" />
-                <ResultCard label="High stud" value={result.outputs.highStudHeight} unit="mm" />
-              </div>
-              {includeNoggins && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Nogs" value={result.outputs.nogginCount} />
-                  <div />
-                </div>
-              )}
-            </div>
+        {result && (() => {
+          const nogMm = Math.round(resolvedSpacing - 90);
+          const shopRows = [
+            { qty: `${result.outputs.studCount}`, name: 'Studs (varying heights)', meta: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm · cut top @ ${result.outputs.pitchAngle}°` },
+            { qty: '1', name: 'Rake plate', meta: `${result.outputs.rakePlateLength}mm` },
+            { qty: '1', name: 'Bottom plate', meta: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
+            ...(includeNoggins && result.outputs.nogginCount > 0 ? [{ qty: `${result.outputs.nogginCount}`, name: 'Noggins', meta: `${nogMm}mm each` }] : []),
+          ];
+          const quoteMaterials = [
+            { item: 'Studs (varying)', quantity: result.outputs.studCount, unit: 'each', note: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm` },
+            { item: 'Rake plate', quantity: 1, unit: 'each', note: `${result.outputs.rakePlateLength}mm` },
+            { item: 'Bottom plate', quantity: 1, unit: 'each', note: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
+            ...(includeNoggins && result.outputs.nogginCount > 0 ? [{ item: 'Noggins', quantity: result.outputs.nogginCount, unit: 'each', note: `${nogMm}mm each` }] : []),
+          ];
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={result.outputs.studCount}
+              unit="studs"
+              spec={`${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm range · ${result.outputs.pitchAngle}° rake · ${resolvedSpacing}mm centres`}
+              stats={[
+                { label: `${result.outputs.totalLinealMetres} lm` },
+                { label: `${result.outputs.rakePlateLength}mm rake plate` },
+                ...(includeNoggins && result.outputs.nogginCount > 0 ? [{ label: `${result.outputs.nogginCount} nogs` }] : []),
+              ]}
+            />
+
+            <ShoppingList rows={shopRows} />
 
             {/* Stud cut list */}
             <div style={{ ...cardStyle, gap: 12 }}>
@@ -309,26 +316,6 @@ export function RakedWallCalc() {
               </div>
             </div>
 
-            {/* Materials */}
-            <div style={{ ...cardStyle, gap: 14 }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: `Studs (varying heights)`, qty: result.outputs.studCount, detail: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm` },
-                { label: 'Rake plate', qty: 1, detail: `${result.outputs.rakePlateLength}mm` },
-                { label: 'Bottom plate', qty: 1, detail: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
-                ...(includeNoggins && result.outputs.nogginCount > 0
-                  ? [{ label: 'Noggins', qty: result.outputs.nogginCount, detail: `${Math.round(resolvedSpacing - 90)}mm` }]
-                  : []),
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.qty > 1 ? `${row.qty} × ` : ''}{row.detail}
-                  </span>
-                </div>
-              ))}
-            </div>
-
             <ApprenticeWorking
               steps={result.steps}
               finalAnswer={`${result.outputs.studCount} studs, ${result.outputs.pitchAngle}° pitch`}
@@ -345,15 +332,36 @@ export function RakedWallCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.raked[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`Raked wall, ${inputs.wallLength}, ${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Raked wall order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `Raked wall, ${inputs.wallLength}, ${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

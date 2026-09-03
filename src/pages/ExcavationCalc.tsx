@@ -1,15 +1,16 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateExcavation } from '../calculators/excavation';
 import type { ExcavationResult } from '../calculators/excavation';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { JobNameInput } from '../components/JobNameInput';
+import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 const SWELL_PRESETS = [
@@ -179,7 +180,7 @@ export function ExcavationCalc() {
     });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -388,7 +389,19 @@ export function ExcavationCalc() {
         </button>
 
         {result && (
-          <div ref={resultRef}>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="Cart off"
+              value={fmt(result.outputs.truckLoads)}
+              unit={`× ${displayTruckSize} m³ loads`}
+              spec={`${inputs.length}m × ${inputs.width}m${sloped ? ` · ${inputs.depthNear}–${inputs.depthFar}m deep` : ` × ${inputs.depthNear}m deep`}`}
+              stats={[
+                { label: `${fmt(result.outputs.bankVolume)} m³ bank` },
+                ...(swellFactor > 0 ? [{ label: `${fmt(result.outputs.looseVolume)} m³ loose (${swellLabel})` }] : []),
+                ...(sloped ? [{ label: `${fmt(result.outputs.avgDepth)} m avg` }] : []),
+              ]}
+            />
+
             <ExcavationDiagram
               length={parseFloat(inputs.length)}
               width={parseFloat(inputs.width)}
@@ -398,22 +411,6 @@ export function ExcavationCalc() {
               label={jobName}
             />
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Bank volume" value={fmt(result.outputs.bankVolume)} unit="m³" accent />
-                <ResultCard label="Truck loads" value={fmt(result.outputs.truckLoads)} unit={`× ${displayTruckSize} m³`} accent />
-              </div>
-              {swellFactor > 0 && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label={`Loose (${swellLabel})`} value={fmt(result.outputs.looseVolume)} unit="m³" />
-                  <ResultCard label="Swell added" value={fmt(result.outputs.swellAdded)} unit="m³" />
-                </div>
-              )}
-              {sloped && (
-                <ResultCard label="Avg depth" value={fmt(result.outputs.avgDepth)} unit="m" />
-              )}
-            </div>
-
             <ApprenticeWorking
               steps={result.steps}
               finalAnswer={`${result.outputs.truckLoads} truck loads`}
@@ -422,13 +419,20 @@ export function ExcavationCalc() {
               id="excavation"
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.excavation[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

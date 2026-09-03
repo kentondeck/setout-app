@@ -10,6 +10,7 @@ import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
 import { RoofDiagram } from '../components/RoofDiagram';
 import { BalusterDiagram } from '../components/BalusterDiagram';
+import { uuid } from '../lib/uuid';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -637,7 +638,7 @@ function OrderCard({ entries, job, updateJob }: {
 
   function handleAddMaterial(name: string, qty: number, unit: string) {
     const extras = job.orderExtraLines ?? [];
-    updateJob(job.id, { orderExtraLines: [...extras, { id: crypto.randomUUID(), name, qty, unit }] });
+    updateJob(job.id, { orderExtraLines: [...extras, { id: uuid(), name, qty, unit }] });
   }
 
   if (!hasLines) {

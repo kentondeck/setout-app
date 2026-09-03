@@ -5,6 +5,7 @@ import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateRoof, RoofInputError } from '../calculators/roof';
 import type { RoofOutputs } from '../calculators/roof';
 import type { WorkingStep } from '../components/ApprenticeWorking';
@@ -13,6 +14,7 @@ import { SettingsContext, HistoryContext } from '../contexts';
 import { RoofDiagram } from '../components/RoofDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
+import { uuid } from '../lib/uuid';
 
 type PairKey = 'span' | 'rise' | 'rafterLength' | 'pitchDegrees';
 type Mode = 'span-pitch' | 'span-rise' | 'rise-pitch' | 'rafter-pitch';
@@ -100,7 +102,7 @@ export function RoofCalc() {
       setResult(calc);
       setError('');
 
-      const id = crypto.randomUUID();
+      const id = uuid();
       setLastEntryId(id);
       addEntry({
         id,
@@ -290,7 +292,20 @@ export function RoofCalc() {
         </button>
 
         {result && out && (
-          <div ref={resultRef}>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label={hasRidge ? 'Cut rafter length' : 'Rafter length'}
+              value={out.totalRafterLength}
+              unit="m"
+              spec={`${roofType === 'skillion' ? 'Skillion' : 'Gabled'} · ${out.span}m ${roofType === 'skillion' ? 'run' : 'span'} · ${out.pitchDegrees}° pitch · ${out.rise}m rise`}
+              stats={[
+                { label: `Plumb ${out.plumbCutAngle}°` },
+                { label: `Seat ${out.seatCutAngle}°` },
+                ...(out.birdsmouthPlumbDepth > 0 ? [{ label: `Birdsmouth ${out.birdsmouthPlumbDepth}mm` }] : []),
+                ...(out.ridgeShortening > 0 ? [{ label: `Shorten ${out.ridgeShortening}mm` }] : []),
+              ]}
+            />
+
             <RoofDiagram
               buildingWidthMm={out.span * 1000}
               pitchDegrees={out.pitchDegrees}
@@ -379,13 +394,20 @@ export function RoofCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.roof[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

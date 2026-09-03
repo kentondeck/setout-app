@@ -1,10 +1,10 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero } from '../components/CalcResult';
 import { calculateEqualSpacing } from '../calculators/equalspacing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { EqualSpacingOutputs } from '../calculators/equalspacing';
@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useScrollToResult } from '../lib/useScrollToResult';
+import { uuid } from '../lib/uuid';
 
 interface Inputs {
   totalSpan: string;
@@ -66,7 +67,7 @@ export function EqualSpacingCalc() {
     const calc = calculateEqualSpacing({ totalSpan, itemWidth, itemCount, preferredSpacing });
     setResult(calc);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -179,7 +180,19 @@ export function EqualSpacingCalc() {
         </button>
 
         {result && (
-          <div ref={resultRef}>
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="Equal spacing"
+              value={result.outputs.itemCount}
+              unit="items"
+              spec={`${inputs.totalSpan} span · ${result.outputs.actualGap}mm ${hasItemWidth ? 'clear gap' : 'spacing'}`}
+              stats={[
+                ...(hasItemWidth ? [{ label: `${result.outputs.centreSpacing}mm centres` }] : []),
+                { label: `First mark ${firstMark}mm` },
+                { label: `${result.outputs.gapCount} gaps` },
+              ]}
+            />
+
             {result.countDerived && (
               <div style={{
                 background: 'var(--color-card)',
@@ -192,24 +205,6 @@ export function EqualSpacingCalc() {
                 </p>
               </div>
             )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Items" value={result.outputs.itemCount} accent />
-                <ResultCard label={hasItemWidth ? 'Gap (clear)' : 'Spacing'} value={result.outputs.actualGap} unit="mm" />
-              </div>
-              {hasItemWidth && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <ResultCard label="Centres" value={result.outputs.centreSpacing} unit="mm" />
-                  <ResultCard label="First mark" value={firstMark} unit="mm from end" />
-                </div>
-              )}
-              {!hasItemWidth && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
-                  <ResultCard label="First mark" value={firstMark} unit="mm from end" />
-                </div>
-              )}
-            </div>
 
             <ApprenticeWorking
               steps={apprenticeSteps}
@@ -224,13 +219,20 @@ export function EqualSpacingCalc() {
               ]}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.equalspacing[settings.region]}
             </p>
+
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton calculationId={lastEntryId} />
+            </div>
           </div>
         )}
       </div>

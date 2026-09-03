@@ -1,10 +1,10 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { NumberInput } from '../components/NumberInput';
-import { ResultCard } from '../components/ResultCard';
 import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
+import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { calculateFraming } from '../calculators/framing';
 import type { FramingOutputs } from '../calculators/framing';
 import { calculateCutlist } from '../calculators/cutlist';
@@ -14,6 +14,7 @@ import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
+import { uuid } from '../lib/uuid';
 
 interface Inputs {
   wallLength: string;
@@ -74,7 +75,7 @@ export function FramingCalc() {
     setResult(calc);
     setCalcNogginRows(includeNoggins ? (nogginRows || 1) : 0);
 
-    const id = crypto.randomUUID();
+    const id = uuid();
     setLastEntryId(id);
     addEntry({
       id,
@@ -343,21 +344,54 @@ export function FramingCalc() {
           Calculate
         </button>
 
-        {result && (
-          <div ref={resultRef}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Studs" value={result.outputs.studCount} accent />
-                <ResultCard label="Total lineal m" value={result.outputs.totalLinealMetres} unit="lm" />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <ResultCard label="Top plate" value={result.outputs.topPlateLineal} unit="lm" />
-                <ResultCard label="Bottom plate" value={result.outputs.bottomPlateLineal} unit="lm" />
-              </div>
-              {includeNoggins && (
-                <ResultCard label="Nogs" value={result.outputs.nogginCount} />
-              )}
+        {result && (() => {
+          const shopRows = [
+            { qty: `${result.outputs.studCount}`, name: 'Studs (90×45 pine)', meta: `${wallHeightMm}mm each · ${resolvedSpacingMm}mm c/c${studCutlist ? ` · ${studCutlist.outputs.wastePercent}% waste` : ''}` },
+            { qty: `${plateRuns}`, name: `Plates (${doubleTopPlate ? 'double top' : 'single top'} + bottom)`, meta: `${wallLengthMm}mm × ${plateRuns} runs · order ${(plateStock/1000).toFixed(1)}m lengths${plateWasteMm > 0 ? ` · ${plateWasteMm}mm waste` : ''}` },
+            ...(includeNoggins && nogginCount > 0 ? [{ qty: `${nogginCount}`, name: 'Noggins', meta: `${nogginLengthMm}mm each${nogginCutlist ? ` · ${nogginCutlist.outputs.wastePercent}% waste` : ''}` }] : []),
+            ...(orderList.length > 0 ? [{ qty: `${orderList.reduce((s, m) => s + m.count, 0)}`, name: 'Timber to order (total pieces)', meta: orderList.map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m`).join(' + ') }] : []),
+          ];
+
+          const quoteMaterials = [
+            { item: 'Studs (90×45 pine)', quantity: result.outputs.studCount, unit: 'each', note: `${wallHeightMm}mm` },
+            { item: 'Plates (90×45 pine)', quantity: parseFloat((result.outputs.topPlateLineal + result.outputs.bottomPlateLineal).toFixed(1)), unit: 'lineal metre', note: `${plateRuns} runs × ${wallLengthMm}mm` },
+            ...(includeNoggins && nogginCount > 0 ? [{ item: 'Noggins (90×45 pine)', quantity: nogginCount, unit: 'each', note: `${nogginLengthMm}mm` }] : []),
+          ];
+
+          const plateChips = (
+            <div style={{ display: 'flex', background: 'var(--color-bg)', borderRadius: 8, padding: 2, gap: 2 }}>
+              {[4200, 4800, 6000].map(len => {
+                const active = plateStock === len;
+                return (
+                  <button key={len} onClick={() => setPlateStock(len)} style={{
+                    padding: '4px 8px', borderRadius: 6, border: 'none',
+                    background: active ? 'var(--color-card)' : 'transparent',
+                    color: active ? 'var(--color-text)' : 'var(--color-muted)',
+                    fontSize: 11, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+                    boxShadow: active ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  }}>
+                    {(len / 1000).toFixed(1)}m
+                  </button>
+                );
+              })}
             </div>
+          );
+
+          return (
+          <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <ResultHero
+              label="You'll need"
+              value={result.outputs.studCount}
+              unit="studs"
+              spec={`${wallLengthMm / 1000}m × ${wallHeightMm / 1000}m wall · ${resolvedSpacingMm}mm centres`}
+              stats={[
+                { label: `${result.outputs.totalLinealMetres} lm total` },
+                { label: `${parseFloat((result.outputs.topPlateLineal + result.outputs.bottomPlateLineal).toFixed(1))} lm plates` },
+                ...(includeNoggins && nogginCount > 0 ? [{ label: `${nogginCount} noggins` }] : []),
+              ]}
+            />
+
+            <ShoppingList rows={shopRows} rightSlot={plateChips} />
 
             <ApprenticeWorking
               steps={framingSteps}
@@ -374,99 +408,6 @@ export function FramingCalc() {
               ]}
             />
 
-            {/* Material & Cut List */}
-            <div style={{
-              background: 'var(--color-card)',
-              border: '0.5px solid var(--color-border)',
-              borderRadius: 'var(--radius-card)',
-              padding: '18px 16px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-            }}>
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>MATERIALS</p>
-              {[
-                { label: 'Studs', qty: result.outputs.studCount, mm: wallHeightMm },
-                { label: `Top plate (${doubleTopPlate ? '2 runs' : '1 run'})`, qty: doubleTopPlate ? 2 : 1, mm: wallLengthMm },
-                { label: 'Bottom plate', qty: 1, mm: wallLengthMm },
-                ...(includeNoggins && nogginCount > 0 ? [{ label: 'Nogs', qty: nogginCount, mm: nogginLengthMm }] : []),
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)' }}>{row.label}</span>
-                  <span style={{ fontSize: 14, color: 'var(--color-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                    {row.qty} × {row.mm}mm
-                  </span>
-                </div>
-              ))}
-
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
-
-              {/* Studs cut list */}
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — STUDS</p>
-              {studCutlist && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {result.outputs.studCount} × {wallHeightMm}mm
-                  </span>
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{studCutlist.outputs.wastePercent}% waste</span>
-                </div>
-              )}
-
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
-
-              {/* Plates cut list */}
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — PLATES</p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {[4200, 4800, 6000].map(len => (
-                  <button key={len} onClick={() => setPlateStock(len)} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 10,
-                    border: '0.5px solid var(--color-border)',
-                    background: plateStock === len ? 'var(--color-orange)' : 'var(--color-bg)',
-                    color: plateStock === len ? '#fff' : 'var(--color-text)',
-                    fontSize: 13, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
-                  }}>
-                    {(len / 1000).toFixed(1)}m
-                  </button>
-                ))}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                  {plateRuns} × {wallLengthMm}mm
-                </span>
-                {plateWasteMm > 0 && (
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{plateWasteMm}mm waste</span>
-                )}
-              </div>
-
-              {/* Noggins cut list */}
-              {includeNoggins && nogginCount > 0 && (
-                <>
-                  <div style={{ height: 0.5, background: 'var(--color-border)' }} />
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>CUT LIST — NOGS</p>
-                  {nogginCutlist && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                        {nogginCount} × {nogginLengthMm}mm
-                      </span>
-                      <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>{nogginCutlist.outputs.wastePercent}% waste</span>
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div style={{ height: 0.5, background: 'var(--color-border)' }} />
-
-              {/* Combined order list */}
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>TIMBER TO ORDER</p>
-              {orderList.map(m => (
-                <div key={m.stockLength} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>
-                    {m.count} × {(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m
-                  </span>
-                </div>
-              ))}
-            </div>
-
             <FramingDiagram
               wallLengthMm={wallLengthMm}
               wallHeightMm={wallHeightMm}
@@ -478,15 +419,36 @@ export function FramingCalc() {
               label={jobName}
             />
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
-            <AddToJobPrompt calculationId={lastEntryId} />
-            <ShareCalcButton calculationId={lastEntryId} />
-
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {COMPLIANCE_NOTES.framing[settings.region]}
             </p>
+
+            <AddToQuoteCTA
+              scopeSummary={`Wall framing, ${wallLengthMm / 1000}m × ${wallHeightMm / 1000}m`}
+              materials={quoteMaterials}
+              jobName={jobName}
+            />
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              <p style={{ margin: '0 0 2px', fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>Save</p>
+              <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
+              <AddToJobPrompt calculationId={lastEntryId} />
+              <ShareCalcButton
+                calculationId={lastEntryId}
+                shareTitle={jobName || 'Framing order'}
+                shareBody={buildShoppingListShareBody({
+                  jobName,
+                  scopeSummary: `Wall framing, ${wallLengthMm / 1000}m × ${wallHeightMm / 1000}m`,
+                  rows: shopRows,
+                })}
+              />
+            </div>
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

@@ -11,6 +11,18 @@ const config: CapacitorConfig = {
     allowsLinkPreview: false,
     limitsNavigationsToAppBoundDomains: true,
   },
+  plugins: {
+    // Without this, WKWebView has no managed keyboard-avoidance and
+    // scrollEnabled:false (above) disables its native fallback too —
+    // together they left fixed-position bottom sheets (Add to job,
+    // rename dialogs, etc.) with an unreachable/unresponsive input
+    // once the keyboard opened. 'native' resizes the WKWebView frame
+    // itself so fixed-bottom content stays above the keyboard.
+    Keyboard: {
+      resize: 'native',
+      resizeOnFullScreen: true,
+    },
+  },
   server: {
     // Point the native shell at the live web app so /api/* calls are
     // same-origin and endpoints like /api/validate-code, /api/quote,

@@ -62,7 +62,7 @@ function readStore(key: string): MemoryStore {
 function writeEntry(key: string, storeKey: string, price: string, source?: string) {
   const store = readStore(key);
   store[storeKey] = { price, source, updatedAt: Date.now() };
-  localStorage.setItem(key, JSON.stringify(store));
+  try { localStorage.setItem(key, JSON.stringify(store)); } catch { /* best-effort — remembered price, not critical data */ }
 }
 
 export function getRememberedMaterialPrice(item: string, region: Region): string {

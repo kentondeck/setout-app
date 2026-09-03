@@ -285,7 +285,7 @@ export function GradientCalc() {
               ) : (
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <ResultCard label="Gradient" value={`1:${o.gradientRatio}`} accent />
+                    <ResultCard label="Gradient" value={o.gradientRatio > 0 ? `1:${o.gradientRatio}` : 'Flat'} accent />
                     <ResultCard label="Grade" value={`${o.percentage}%`} accent />
                   </div>
                   <ResultCard label="Angle" value={`${o.angle}°`} />
@@ -296,7 +296,7 @@ export function GradientCalc() {
 
             <ApprenticeWorking
               steps={result.steps}
-              finalAnswer={!reverse ? `${o.rise}mm fall` : `1:${o.gradientRatio}`}
+              finalAnswer={!reverse ? `${o.rise}mm fall` : (o.gradientRatio > 0 ? `1:${o.gradientRatio}` : 'Flat')}
               finalLabel={`${o.risePerMetre}mm per metre`}
               visible={settings.apprenticeMode}
               id="gradient"

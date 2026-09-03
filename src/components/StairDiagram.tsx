@@ -41,6 +41,21 @@ export const StairDiagram = memo(function StairDiagram({
 }: StairDiagramProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
+  const isValid = totalRun > 0 && isFinite(totalRun) && totalRise > 0 && isFinite(totalRise) && riserCount > 0 && isFinite(riserCount);
+  if (!isValid) {
+    return (
+      <div style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)', padding: '16px' }}>
+        <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.04em' }}>STAIR DIAGRAM</p>
+        <svg width="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} role="img" aria-label="Stair diagram preview" style={{ display: 'block' }}>
+          <rect x={(VB_W - 280) / 2} y={(VB_H - 130) / 2} width={280} height={130} rx={8} fill="#f5f5f3" />
+          <text x={VB_W / 2} y={VB_H / 2} textAnchor="middle" dominantBaseline="middle" fontSize={13} fontFamily={FONT} fill="#999">
+            Enter values to see layout
+          </text>
+        </svg>
+      </div>
+    );
+  }
+
   const scale   = Math.min(MAX_W / totalRun, MAX_H / totalRise);
   const risePx  = riserHeight * scale;
   const goingPx = treadDepth  * scale;

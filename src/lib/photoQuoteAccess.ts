@@ -1,13 +1,13 @@
 const KEY = 'setout_photoquote_token';
 
 export function getPhotoQuoteToken(): string | null {
-  return localStorage.getItem(KEY);
+  try { return localStorage.getItem(KEY); } catch { return null; }
 }
 
 export function setPhotoQuoteToken(token: string): void {
-  localStorage.setItem(KEY, token);
+  try { localStorage.setItem(KEY, token); } catch { /* best-effort — access still granted for this session */ }
 }
 
 export function hasPhotoQuoteAccess(): boolean {
-  return !!localStorage.getItem(KEY);
+  try { return !!localStorage.getItem(KEY); } catch { return false; }
 }

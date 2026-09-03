@@ -130,7 +130,11 @@ export function ConcreteCalc() {
         if (!sideWidth || sideWidth <= 0) { setError('Enter a side width to calculate.'); return; }
       }
 
-      const postSize = postDeductEnabled ? parseFloat(postFields.postSize) || undefined : undefined;
+      const postSize = postDeductEnabled ? parseFloat(postFields.postSize) : undefined;
+      if (postDeductEnabled && (!postSize || postSize <= 0)) {
+        setError('Enter a post size to deduct, or turn off "Deduct post".');
+        return;
+      }
       const calc = calculatePostHoles({
         holeType, diameter, sideWidth, depth, numHoles, wastage,
         ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize }),

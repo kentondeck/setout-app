@@ -68,6 +68,10 @@ export function FramingCalc() {
       setError('Enter a valid wall height.');
       return;
     }
+    if (!studSpacing || studSpacing <= 0) {
+      setError('Enter a valid stud spacing.');
+      return;
+    }
 
     setError('');
 
@@ -88,13 +92,13 @@ export function FramingCalc() {
     if (navigator.vibrate) navigator.vibrate(30);
   }
 
-  // Derived values for material & cut list
-  const wallLengthMm = result ? Math.round(parseFloat(inputs.wallLength) * 1000) : 0;
-  const wallHeightMm = result ? Math.round(parseFloat(inputs.wallHeight) * 1000) : 0;
-  const resolvedSpacingMm = inputs.studSpacing === 'custom'
-    ? (parseFloat(inputs.customSpacing) || 450)
-    : parseFloat(inputs.studSpacing);
-  const nogginLengthMm = Math.round(resolvedSpacingMm - 90);
+  // Derived values for material & cut list — sourced from the frozen result,
+  // not re-parsed from live inputs, so the diagram/materials never disagree
+  // with the numbers actually shown above them.
+  const wallLengthMm = result ? result.outputs.wallLengthMm : 0;
+  const wallHeightMm = result ? result.outputs.wallHeightMm : 0;
+  const studSpacingMm = result ? result.outputs.studSpacingMm : 0;
+  const nogginLengthMm = Math.round(studSpacingMm - 90);
   const plateRuns = (doubleTopPlate ? 2 : 1) + 1;
   // Optimised: share tail cuts across all plate runs
   const totalPlateStocks = wallLengthMm > 0 ? Math.ceil((plateRuns * wallLengthMm) / plateStock) : 0;
@@ -116,7 +120,6 @@ export function FramingCalc() {
   const orderList = [...orderMap.entries()].sort((a, b) => a[0] - b[0]).map(([stockLength, count]) => ({ stockLength, count }));
 
   // Build new-format working steps from actual calculator outputs
-  const studSpacingMm = inputs.studSpacing === 'custom' ? (parseFloat(inputs.customSpacing) || 450) : parseFloat(inputs.studSpacing);
   const studsBefore = result ? result.outputs.studCount - 1 : 0;
 
   const framingSteps: WorkingStep[] = result ? [
@@ -472,7 +475,7 @@ export function FramingCalc() {
               wallLengthMm={wallLengthMm}
               wallHeightMm={wallHeightMm}
               studCount={result.outputs.studCount}
-              studSpacingMm={resolvedSpacingMm}
+              studSpacingMm={studSpacingMm}
               nogginRows={calcNogginRows}
               doubleTopPlate={doubleTopPlate}
               doubleStuds={doubleStuds}

@@ -1,6 +1,6 @@
 import { useState, useContext, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { JobsContext, HistoryContext } from '../contexts';
+import { JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
@@ -826,7 +826,7 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
           background: 'none', border: 'none', color: '#fff',
           fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
         }}>
-          Delete
+          Remove
         </button>
       </div>
 
@@ -975,7 +975,6 @@ export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { jobs, updateJob, deleteJob, getJobCalculations, removeCalculationFromJob } = useContext(JobsContext);
-  const { deleteEntry } = useContext(HistoryContext);
 
   const job = jobs.find(j => j.id === id);
 
@@ -1147,7 +1146,7 @@ export function JobDetailPage() {
                     <CalcEntryCard
                       key={entry.id}
                       entry={entry}
-                      onRemove={calcId => { removeCalculationFromJob(job.id, calcId); deleteEntry(calcId); }}
+                      onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
                     />
                   ))}
                 </div>

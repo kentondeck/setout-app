@@ -11,6 +11,7 @@ import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { COMPLIANCE_NOTES } from '../lib/compliance';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 interface CutRow {
@@ -393,6 +394,9 @@ export function CutlistCalc() {
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               Optimised across standard NZ/AU stock lengths (2.4–6.0m) using best-fit decreasing with lookahead scoring, 3mm saw kerf per cut. Order 5–10% extra for splits and defects.
+            </p>
+            <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {COMPLIANCE_NOTES.cutlist[settings.region]}
             </p>
           </div>
         )}

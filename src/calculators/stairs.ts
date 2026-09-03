@@ -29,6 +29,8 @@ export interface StairsOutputs extends Record<string, number> {
   stringerAngle: number;    // degrees
   walklineSum: number;      // mm — 2 × riser + going (Blondel ergonomic check)
   stringerDrop: number;     // mm — treadThickness: how much to drop the bottom stringer cut so the first step matches the rest
+  totalRise: number;        // mm — echoed back so diagrams/derived displays use the value actually calculated, not a re-parsed live input
+  totalRun: number;         // mm — the resolved run actually used (may be derived from preferredGoing rather than the raw input)
 }
 
 export interface StairsWarnings {
@@ -195,7 +197,7 @@ export function calculateStairs(inputs: StairsInputs): StairsResult {
   ];
 
   return {
-    outputs: { riserCount, treadCount, riserHeight, treadDepth, treadBoardDepth, stringerLength, stringerAngle, walklineSum, stringerDrop },
+    outputs: { riserCount, treadCount, riserHeight, treadDepth, treadBoardDepth, stringerLength, stringerAngle, walklineSum, stringerDrop, totalRise, totalRun },
     warnings: { riserOutOfRange, treadOutOfRange, walklineOutOfRange, angleOutOfRange, suggestedMinRun, suggestedMaxRun, runDerived, riserAutoSelected },
     steps,
   };

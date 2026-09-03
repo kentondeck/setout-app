@@ -390,10 +390,10 @@ export function ExcavationCalc() {
         {result && (
           <div ref={resultRef}>
             <ExcavationDiagram
-              length={parseFloat(inputs.length)}
-              width={parseFloat(inputs.width)}
-              depthNear={parseFloat(inputs.depthNear)}
-              depthFar={sloped ? parseFloat(inputs.depthFar) : parseFloat(inputs.depthNear)}
+              length={result.outputs.length}
+              width={result.outputs.width}
+              depthNear={result.outputs.depthNear}
+              depthFar={result.outputs.depthFar}
               sloped={sloped}
               label={jobName}
             />

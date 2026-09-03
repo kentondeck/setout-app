@@ -153,10 +153,8 @@ export function CladdingCalc() {
         </button>
 
         {result && (() => {
-          const desiredLap = parseFloat(inputs.lap);
-          const boardW = parseFloat(inputs.boardWidth);
-          const actualLap = parseFloat((boardW - result.outputs.faceCover).toFixed(1));
-          const lapDelta = parseFloat((actualLap - desiredLap).toFixed(1));
+          const actualLap = parseFloat((result.outputs.boardWidth - result.outputs.faceCover).toFixed(1));
+          const lapDelta = parseFloat((actualLap - result.outputs.desiredLap).toFixed(1));
           const lapAdjusted = Math.abs(lapDelta) >= 0.1;
           return (
           <div ref={resultRef}>
@@ -168,7 +166,7 @@ export function CladdingCalc() {
               </div>
               {lapAdjusted && (
                 <p style={{ margin: '-2px 2px 0', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-                  Adjusted from {desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly into the wall.
+                  Adjusted from {result.outputs.desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly into the wall.
                 </p>
               )}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

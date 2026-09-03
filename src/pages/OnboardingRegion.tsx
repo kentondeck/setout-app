@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
@@ -20,20 +21,17 @@ type RegionCode = typeof REGIONS[number]['code'];
 
 interface Props {
   onComplete: () => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 }
 
-export function OnboardingRegion({ onComplete }: Props) {
+export function OnboardingRegion({ onComplete, updateSettings }: Props) {
   const [exiting, setExiting] = useState(false);
   const [selected, setSelected] = useState<RegionCode | null>(null);
 
   function handleContinue() {
     if (!selected) return;
     localStorage.setItem('setout_region', selected);
-    // Write into settings so compliance notes use the correct region immediately
-    try {
-      const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
-      localStorage.setItem('setout_settings', JSON.stringify({ ...s, region: selected }));
-    } catch { /* setout_region above is already saved; settings mirror is best-effort */ }
+    updateSettings({ region: selected });
     setExiting(true);
     setTimeout(() => onComplete(), 260);
   }

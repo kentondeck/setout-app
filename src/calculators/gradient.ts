@@ -37,12 +37,16 @@ export function calculateGradient(inputs: GradientInputs): GradientResult {
     run = inputs.run;
     rise = inputs.rise;
     const runMm = run * 1000;
-    gradientRatio = parseFloat((runMm / rise).toFixed(1));
+    // A level/flat run (rise=0) is a legitimate real input — runMm/0 would be
+    // Infinity, which JSON.stringify silently turns into null when this result
+    // is saved to history. 0 stands in for "flat" here; the step text below
+    // spells that out instead of showing a ratio.
+    gradientRatio = rise !== 0 ? parseFloat((runMm / rise).toFixed(1)) : 0;
     percentage = parseFloat(((rise / runMm) * 100).toFixed(3));
     angle = parseFloat((Math.atan(rise / runMm) * (180 / Math.PI)).toFixed(2));
     steps.push(
       { label: 'Convert run to mm', formula: 'run × 1000', result: `${run}m × 1000 = ${runMm}mm` },
-      { label: 'Gradient ratio', formula: 'run (mm) ÷ rise', result: `${runMm} ÷ ${rise} = 1:${gradientRatio}` },
+      { label: 'Gradient ratio', formula: 'run (mm) ÷ rise', result: rise !== 0 ? `${runMm} ÷ ${rise} = 1:${gradientRatio}` : 'Flat — no fall, so no gradient ratio' },
       { label: 'Percentage', formula: '(rise ÷ run) × 100', result: `(${rise} ÷ ${runMm}) × 100 = ${percentage}%` },
       { label: 'Angle', formula: 'arctan(rise ÷ run)', result: `arctan(${rise} ÷ ${runMm}) = ${angle}°` },
     );
@@ -74,7 +78,7 @@ export function calculateGradient(inputs: GradientInputs): GradientResult {
     );
   }
 
-  const risePerMetre = parseFloat((rise / run).toFixed(1));
+  const risePerMetre = run !== 0 ? parseFloat((rise / run).toFixed(1)) : 0;
   steps.push({ label: 'Rise per metre', formula: 'rise ÷ run', result: `${rise}mm ÷ ${run}m = ${risePerMetre}mm/m` });
 
   return {

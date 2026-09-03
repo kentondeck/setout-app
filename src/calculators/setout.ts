@@ -34,7 +34,7 @@ export function calculateSetout(inputs: SetoutInputs): SetoutResult {
           formula: 'measured − required diagonal',
           result: error === 0
             ? `${measured}mm matches ${diagonal}mm — perfectly square`
-            : `${measured}mm − ${diagonal}mm = ${error > 0 ? '+' : ''}${error}mm — ${error > 0 ? 'push' : 'pull'} the far corner ${Math.abs(error)}mm`,
+            : `${measured}mm − ${diagonal}mm = ${error > 0 ? '+' : ''}${error}mm — ${error > 0 ? 'pull in' : 'push out'} the far corner ${Math.abs(error)}mm`,
         }]
       : []),
   ];

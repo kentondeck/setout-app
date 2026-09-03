@@ -118,7 +118,7 @@ export function buildCutlistPdf(input: CutlistPdfInput): jsPDF {
     for (const { bin, count } of grouped) {
       ensureSpace(16);
       const cutsStr = formatBinCuts(bin.cuts);
-      const wasteStr = bin.waste > 3 ? `  off-cut: ${bin.waste - 3}mm` : '';
+      const wasteStr = bin.waste > 0 ? `  off-cut: ${bin.waste}mm` : '';
       const countPrefix = count > 1 ? `${count} × ` : '';
       doc.setTextColor(40, 40, 40);
       doc.text(`${countPrefix}${cutsStr}`, marginX + 12, y);

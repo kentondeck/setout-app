@@ -42,13 +42,19 @@ export const DEFAULT_STOCK_LENGTHS = [2400, 3000, 3600, 4200, 4800, 5400, 6000];
 
 const KERF = 3;
 
+// A kerf is lost between pieces, not before the first one — n pieces cut from
+// one stock length need n-1 kerfs, not n. Reserving a kerf for the first
+// piece in a fresh bin can push a job onto an extra stock length it doesn't
+// actually need (e.g. 3×1198mm fits exactly in one 3600mm board: 3×1198 +
+// 2×3mm kerf = 3600mm).
 function packBin(cuts: number[], stockLen: number): number[] {
   const packed: number[] = [];
   let used = 0;
   for (const cut of cuts) {
-    if (used + cut + KERF <= stockLen) {
+    const needed = packed.length === 0 ? cut : cut + KERF;
+    if (used + needed <= stockLen) {
       packed.push(cut);
-      used += cut + KERF;
+      used += needed;
     }
   }
   return packed;
@@ -72,7 +78,7 @@ function bfdSingle(cuts: number[], stockLen: number): number[][] {
       remaining[bestIdx] -= cut + KERF;
     } else {
       bins.push([cut]);
-      remaining.push(stockLen - cut - KERF);
+      remaining.push(stockLen - cut);
     }
   }
   return bins;
@@ -107,7 +113,7 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
     let bestPacked: number[] = [];
 
     for (const stockLen of lengths) {
-      if (stockLen < cut + KERF) continue;
+      if (stockLen < cut) continue;
       const packed = packBin(todo, stockLen);
       if (
         bestLen === -1 ||
@@ -120,11 +126,11 @@ function mixedBFD(cuts: number[], lengths: number[]): { stockLength: number; cut
     }
 
     const newBin = { stockLength: bestLen, cuts: bestPacked, remaining: bestLen };
-    for (const c of bestPacked) {
-      newBin.remaining -= c + KERF;
+    bestPacked.forEach((c, i) => {
+      newBin.remaining -= i === 0 ? c : c + KERF;
       const idx = todo.indexOf(c);
       if (idx >= 0) todo.splice(idx, 1);
-    }
+    });
     bins.push(newBin);
   }
 
@@ -148,7 +154,7 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   // A cut longer than the largest available stock can never be packed. Without
   // this guard, mixedBFD would never empty its todo list and loop forever.
   const maxStockLen = lengths.length ? Math.max(...lengths) : 0;
-  if (allCuts.length > 0 && allCuts[0] + KERF > maxStockLen) {
+  if (allCuts.length > 0 && allCuts[0] > maxStockLen) {
     throw new Error(
       `Cut ${allCuts[0]}mm is longer than the longest stock length (${maxStockLen - millAllowance}mm).`
     );
@@ -159,7 +165,7 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   let winnerTotal = Infinity;
 
   for (const stockLen of lengths) {
-    if (stockLen < allCuts[0] + KERF) continue;
+    if (stockLen < allCuts[0]) continue;
     const singleBins = bfdSingle(allCuts, stockLen).map(c => ({ stockLength: stockLen, cuts: c }));
     const count = singleBins.length;
     const total = count * stockLen;
@@ -184,7 +190,7 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   // Convert effective stock lengths back to nominal (subtract millAllowance) for display
   const plan: CutlistPlan[] = winnerBins.map((bin, i) => {
     const nominalStock = bin.stockLength - millAllowance;
-    const used = bin.cuts.reduce((s, l) => s + l + KERF, 0);
+    const used = bin.cuts.reduce((s, l, i) => s + l + (i === 0 ? 0 : KERF), 0);
     return {
       stockIndex: i + 1,
       stockLength: nominalStock,

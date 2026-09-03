@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
@@ -21,9 +22,10 @@ const ROLES: { id: Role; label: string; subtitle: string }[] = [
 
 interface Props {
   onComplete: (role: Role) => void;
+  updateSettings: (patch: Partial<Settings>) => void;
 }
 
-export function OnboardingRole({ onComplete }: Props) {
+export function OnboardingRole({ onComplete, updateSettings }: Props) {
   const [exiting, setExiting] = useState(false);
   const [selected, setSelected] = useState<Role | null>(null);
 
@@ -35,10 +37,7 @@ export function OnboardingRole({ onComplete }: Props) {
 
     // If apprentice, enable apprentice mode in settings
     if (selected === 'apprentice') {
-      try {
-        const s = JSON.parse(localStorage.getItem('setout_settings') ?? '{}');
-        localStorage.setItem('setout_settings', JSON.stringify({ ...s, apprenticeMode: true }));
-      } catch { /* setout_role above is already saved; settings mirror is best-effort */ }
+      updateSettings({ apprenticeMode: true });
     }
 
     setExiting(true);

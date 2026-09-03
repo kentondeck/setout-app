@@ -95,7 +95,11 @@ const DEFAULT_LABOUR_RATE_NZD = 62;
 export function lookupMaterialPrice(itemName: string, region: Region): string {
   const s = itemName.toLowerCase();
 
-  if (s.includes('post')) {
+  // POST_PRICE is a treated-pine fence-post rate — don't apply it to posts made
+  // of something else (e.g. "aluminium balustrade post"), which cost far more
+  // and belong in the general catalog lookup below instead.
+  const isOtherMaterialPost = /aluminium|aluminum|steel|metal|balustrade/.test(s);
+  if (s.includes('post') && !isOtherMaterialPost) {
     const tier = s.includes('125') || s.includes('150') ? 'large' : 'standard';
     return String(region === 'AU' ? POST_PRICE[tier].AUD : POST_PRICE[tier].NZD);
   }

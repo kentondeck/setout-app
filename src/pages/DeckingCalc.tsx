@@ -79,6 +79,14 @@ export function DeckingCalc() {
       setError('Enter a valid board width.');
       return;
     }
+    if (!joistSpacing || joistSpacing <= 0) {
+      setError('Enter a valid joist spacing.');
+      return;
+    }
+    if (!bearerSpacing || bearerSpacing <= 0) {
+      setError('Enter a valid bearer spacing.');
+      return;
+    }
 
     setError('');
 
@@ -199,7 +207,7 @@ export function DeckingCalc() {
   const anyJoinNeeded = boardPieces > 1 || joistPieces > 1 || bearerPieces > 1;
 
   const quoteMaterials = result ? [
-    { item: `${bw}mm decking board`, quantity: result.outputs.totalLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
+    { item: `${bw}mm decking board`, quantity: result.outputs.boardLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
     { item: 'Joist (treated pine)', quantity: joistLinealM, unit: 'lineal metre', note: `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m` },
     { item: 'Bearer (treated pine)', quantity: bearerLinealM, unit: 'lineal metre', note: `${result.outputs.bearerCount} × ${(bearerLengthMm / 1000).toFixed(1)}m` },
     { item: 'Decking screws', quantity: screwBoxes, unit: 'box', note: `${result.outputs.fixingsCount} screws` },
@@ -332,13 +340,13 @@ export function DeckingCalc() {
 
               {[
                 boardOrderMode === 'rlp' ? {
-                  qty: `${(result.outputs.totalLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
+                  qty: `${(result.outputs.boardLinealMetres * (1 + RLP_BUFFER_PCT / 100)).toFixed(1)}`,
                   unit: 'lm (RLP)',
-                  detail: `${fmt(result.outputs.totalLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · ${fmt(bw)}mm × assorted 2.4–6.0m`,
+                  detail: `${fmt(result.outputs.boardLinealMetres)} lm + ${RLP_BUFFER_PCT}% buffer · ${fmt(bw)}mm × assorted 2.4–6.0m`,
                 } : {
                   qty: fmt(result.outputs.boardCount * boardPieces),
                   unit: boardPieces > 1 ? `boards (${boardPieces} per row)` : 'boards',
-                  detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.totalLinealMetres)} lm`,
+                  detail: `${fmt(bw)}mm · ${runBreakdown(deckWidthMm, boardPieces)} · ${fmt(result.outputs.boardLinealMetres)} lm`,
                 },
                 {
                   qty: fmt(result.outputs.joistCount * joistPieces),

@@ -43,13 +43,20 @@ export function BalusterCalc() {
 
   useEffect(() => {
     if (!result) { setDiagramProps(null); return; }
-    const tl = parseFloat(inputs.totalLength);
-    const bw = parseFloat(inputs.balusterWidth);
+    // Depend only on `result` — it already carries the exact totalLength/
+    // balusterWidth that produced balusterCount/gap. Depending on the live
+    // inputs too let a post-calculate edit pair a fresh span with a stale
+    // count/gap from the previous Calculate press.
     const timer = setTimeout(() => {
-      setDiagramProps({ totalLength: tl, balusterWidth: bw, balusterCount: result.outputs.balusters, gap: result.outputs.actualGap });
+      setDiagramProps({
+        totalLength: result.outputs.totalLength,
+        balusterWidth: result.outputs.balusterWidth,
+        balusterCount: result.outputs.balusters,
+        gap: result.outputs.actualGap,
+      });
     }, 300);
     return () => clearTimeout(timer);
-  }, [result, inputs.totalLength, inputs.balusterWidth]);
+  }, [result]);
 
   function set(field: keyof Inputs) {
     return (value: string) => setInputs(prev => ({ ...prev, [field]: value }));
@@ -273,7 +280,7 @@ export function BalusterCalc() {
             <ShareCalcButton calculationId={lastEntryId} />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-              {COMPLIANCE_NOTES.balusters[settings.region]}
+              {COMPLIANCE_NOTES.baluster[settings.region]}
             </p>
           </div>
         )}

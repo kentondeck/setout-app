@@ -132,15 +132,15 @@ export function App() {
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
       {splashDone && !nameDone && (
-        <OnboardingName onComplete={() => setNameDone(true)} />
+        <OnboardingName onComplete={() => setNameDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => setRegionDone(true)} />
+        <OnboardingRegion onComplete={() => setRegionDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && regionDone && !roleDone && (
-        <OnboardingRole onComplete={() => setRoleDone(true)} />
+        <OnboardingRole onComplete={() => setRoleDone(true)} updateSettings={updateSettings} />
       )}
 
       {splashDone && nameDone && regionDone && roleDone && !emailDone && (

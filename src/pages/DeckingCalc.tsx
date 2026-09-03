@@ -164,17 +164,6 @@ export function DeckingCalc() {
   const coverageDiv = Number.isFinite(deckLengthMm / coverage) ? (deckLengthMm / coverage).toFixed(1) : '—';
   const joistDiv = Number.isFinite(deckWidthMm / js) ? (deckWidthMm / js).toFixed(1) : '—';
 
-  const deckingSteps: WorkingStep[] = result ? [
-    { label: 'Deck width', explanation: 'Each board runs across this dimension (perpendicular to joists)', result: `${fmt(deckWidthMm)} mm` },
-    { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${fmt(bw)} + ${fmt(bg)}`, result: `${fmt(coverage)} mm per board` },
-    { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${fmt(deckLengthMm)} ÷ ${fmt(coverage)} = ${coverageDiv}`, result: `Round up to ${fmt(result.outputs.boardCount)} boards` },
-    { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${fmt(deckWidthMm)} ÷ ${fmt(js)} = ${joistDiv}, then + 1`, result: `${fmt(result.outputs.joistCount)} joists` },
-  ] : [];
-
-  const joistLinealM = result ? parseFloat((result.outputs.joistCount * (joistLengthMm / 1000)).toFixed(1)) : 0;
-  const bearerLinealM = result ? parseFloat((result.outputs.bearerCount * (bearerLengthMm / 1000)).toFixed(1)) : 0;
-  const screwBoxes = result ? Math.ceil(result.outputs.fixingsCount / DECKING_SCREWS_PER_BOX) : 0;
-
   // Boards + bearers span deck WIDTH, joists span deck LENGTH. Any span > 6m
   // (max stock length) needs to be joined into multiple pieces per run — so the
   // physical count you order is member-count × pieces-per-run, not member-count.
@@ -196,10 +185,48 @@ export function DeckingCalc() {
   const bearerPieces = piecesPerRun(bearerLengthMm);
   const anyJoinNeeded = boardPieces > 1 || joistPieces > 1 || bearerPieces > 1;
 
+  const deckingSteps: WorkingStep[] = result ? [
+    { label: 'Deck width', explanation: 'Each board runs across this dimension (perpendicular to joists)', result: `${fmt(deckWidthMm)} mm` },
+    { label: 'Board coverage', explanation: 'Each board covers its own width plus the gap to the next one', calculation: `${fmt(bw)} + ${fmt(bg)}`, result: `${fmt(coverage)} mm per board` },
+    { label: 'Boards needed', explanation: 'Divide the deck length by how much each board covers', calculation: `${fmt(deckLengthMm)} ÷ ${fmt(coverage)} = ${coverageDiv}`, result: `Round up to ${fmt(result.outputs.boardCount)} rows` },
+    ...(boardPieces > 1 ? [{
+      label: 'Boards need joining',
+      explanation: `Each row spans ${(deckWidthMm / 1000).toFixed(2)}m but max stock is 6.0m — each row needs to be joined from multiple lengths`,
+      calculation: `${result.outputs.boardCount} rows × ${boardPieces} pieces = ${result.outputs.boardCount * boardPieces} boards to buy`,
+      result: `${result.outputs.boardCount * boardPieces} pieces total — ${runBreakdown(deckWidthMm, boardPieces)}`,
+    } as WorkingStep] : []),
+    { label: 'Joists needed', explanation: 'Divide the deck width by the joist spacing, then add one for the end', calculation: `${fmt(deckWidthMm)} ÷ ${fmt(js)} = ${joistDiv}, then + 1`, result: `${fmt(result.outputs.joistCount)} joists` },
+  ] : [];
+
+  const joistLinealM = result ? parseFloat((result.outputs.joistCount * (joistLengthMm / 1000)).toFixed(1)) : 0;
+  const bearerLinealM = result ? parseFloat((result.outputs.bearerCount * (bearerLengthMm / 1000)).toFixed(1)) : 0;
+  const screwBoxes = result ? Math.ceil(result.outputs.fixingsCount / DECKING_SCREWS_PER_BOX) : 0;
+
   const quoteMaterials = result ? [
-    { item: `${bw}mm decking board`, quantity: result.outputs.totalLinealMetres, unit: 'lineal metre', note: `${result.outputs.boardCount} boards × ${deckWidthMm}mm` },
-    { item: 'Joist (treated pine)', quantity: joistLinealM, unit: 'lineal metre', note: `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m` },
-    { item: 'Bearer (treated pine)', quantity: bearerLinealM, unit: 'lineal metre', note: `${result.outputs.bearerCount} × ${(bearerLengthMm / 1000).toFixed(1)}m` },
+    {
+      item: `${bw}mm decking board`,
+      quantity: result.outputs.totalLinealMetres,
+      unit: 'lineal metre',
+      note: boardPieces > 1
+        ? `${result.outputs.boardCount * boardPieces} pieces (${result.outputs.boardCount} rows joined — ${runBreakdown(deckWidthMm, boardPieces)})`
+        : `${result.outputs.boardCount} boards × ${deckWidthMm}mm`,
+    },
+    {
+      item: 'Joist (treated pine)',
+      quantity: joistLinealM,
+      unit: 'lineal metre',
+      note: joistPieces > 1
+        ? `${result.outputs.joistCount * joistPieces} pieces (${result.outputs.joistCount} runs joined — ${runBreakdown(joistLengthMm, joistPieces)})`
+        : `${result.outputs.joistCount} × ${(joistLengthMm / 1000).toFixed(1)}m`,
+    },
+    {
+      item: 'Bearer (treated pine)',
+      quantity: bearerLinealM,
+      unit: 'lineal metre',
+      note: bearerPieces > 1
+        ? `${result.outputs.bearerCount * bearerPieces} pieces (${result.outputs.bearerCount} runs joined — ${runBreakdown(bearerLengthMm, bearerPieces)})`
+        : `${result.outputs.bearerCount} × ${(bearerLengthMm / 1000).toFixed(1)}m`,
+    },
     { item: 'Decking screws', quantity: screwBoxes, unit: 'box', note: `${result.outputs.fixingsCount} screws` },
   ] : [];
 

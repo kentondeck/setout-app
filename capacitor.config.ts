@@ -9,11 +9,12 @@ const config: CapacitorConfig = {
     contentInset: 'always',
   },
   server: {
-    // Point the native shell at the live web app so /api/* calls are
-    // same-origin and endpoints like /api/validate-code, /api/quote,
-    // /api/price-cache work in TestFlight. Service worker keeps the
-    // calculators available offline after first launch.
-    url: 'https://setout-app.vercel.app',
+    // `npm run ios:live` sets CAP_SERVER_URL to http://<mac-lan-ip>:5173, so the
+    // native app on the phone loads live from Vite and hot-reloads on save.
+    // `npm run ios:release` leaves it unset and falls back to the deployed PWA,
+    // which is what TestFlight / App Store builds should always ship with.
+    url: process.env.CAP_SERVER_URL || 'https://setout-app.vercel.app',
+    cleartext: !!process.env.CAP_SERVER_URL,
     allowNavigation: ['setoutapp.com.au', 'setout-app.vercel.app'],
   },
 };

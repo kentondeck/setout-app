@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "dev:local": "vercel dev",
+    "dev:phone": "vite --host",
     "build": "tsc -b && vite build",
     "build:ios": "tsc -b && VITE_API_BASE=https://setoutapp.com.au vite build && npx cap sync ios",
+    "ios:live": "CAP_SERVER_URL=http://$(ipconfig getifaddr en0):5173 npx cap sync ios && npx cap open ios",
+    "ios:release": "npx cap sync ios && npx cap open ios",
     "lint": "eslint .",
     "preview": "vite preview",
     "seed-prices": "tsx scripts/seed-common-prices.ts"

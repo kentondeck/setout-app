@@ -122,7 +122,8 @@ export function DeckingCalc() {
   const deckLengthMm = result ? Math.round(parseFloat(inputs.deckLength) * 1000) : 0;
   const deckWidthMm = result ? Math.round(parseFloat(inputs.deckWidth) * 1000) : 0;
   const bw = result ? parseFloat(inputs.boardWidth) : 0;
-  const bg = result ? parseFloat(inputs.boardGap) : 0;
+  const bgRaw = parseFloat(inputs.boardGap);
+  const bg = result ? (isFinite(bgRaw) && bgRaw >= 0 ? bgRaw : 5) : 0;
   const js = result ? parseFloat(inputs.joistSpacing) : 0;
   const coverage = bw + bg;
 
@@ -387,7 +388,7 @@ export function DeckingCalc() {
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {persistedSuggestions.items.map(s => {
-                    const active = parseFloat(inputs.boardGap) === s.gap;
+                    const active = originalGap === s.gap;
                     return (
                       <button
                         key={s.boardCount}

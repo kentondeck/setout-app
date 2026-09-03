@@ -351,7 +351,7 @@ export function FramingCalc() {
 
         {result && (() => {
           const shopRows = [
-            { qty: `${result.outputs.studCount}`, name: 'Studs (90×45 pine)', meta: `${wallHeightMm}mm each · ${resolvedSpacingMm}mm c/c${studCutlist ? ` · ${studCutlist.outputs.wastePercent}% waste` : ''}` },
+            { qty: `${result.outputs.studCount}`, name: 'Studs (90×45 pine)', meta: `${wallHeightMm}mm each · ${studSpacingMm}mm c/c${studCutlist ? ` · ${studCutlist.outputs.wastePercent}% waste` : ''}` },
             { qty: `${plateRuns}`, name: `Plates (${doubleTopPlate ? 'double top' : 'single top'} + bottom)`, meta: `${wallLengthMm}mm × ${plateRuns} runs · order ${(plateStock/1000).toFixed(1)}m lengths${plateWasteMm > 0 ? ` · ${plateWasteMm}mm waste` : ''}` },
             ...(includeNoggins && nogginCount > 0 ? [{ qty: `${nogginCount}`, name: 'Noggins', meta: `${nogginLengthMm}mm each${nogginCutlist ? ` · ${nogginCutlist.outputs.wastePercent}% waste` : ''}` }] : []),
             ...(orderList.length > 0 ? [{ qty: `${orderList.reduce((s, m) => s + m.count, 0)}`, name: 'Timber to order (total pieces)', meta: orderList.map(m => `${m.count} × ${(m.stockLength / 1000).toFixed(1).replace(/\.0$/, '')}m`).join(' + ') }] : []),
@@ -388,7 +388,7 @@ export function FramingCalc() {
               label="You'll need"
               value={result.outputs.studCount}
               unit="studs"
-              spec={`${wallLengthMm / 1000}m × ${wallHeightMm / 1000}m wall · ${resolvedSpacingMm}mm centres`}
+              spec={`${wallLengthMm / 1000}m × ${wallHeightMm / 1000}m wall · ${studSpacingMm}mm centres`}
               stats={[
                 { label: `${result.outputs.totalLinealMetres} lm total` },
                 { label: `${parseFloat((result.outputs.topPlateLineal + result.outputs.bottomPlateLineal).toFixed(1))} lm plates` },

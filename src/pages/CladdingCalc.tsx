@@ -159,10 +159,10 @@ export function CladdingCalc() {
           const lapDelta = parseFloat((actualLap - result.outputs.desiredLap).toFixed(1));
           const lapAdjusted = Math.abs(lapDelta) >= 0.1;
           const shopRows = [
-            { qty: `${result.outputs.stockCount}`, name: `${boardW}mm cladding boards`, meta: `${inputs.boardLength}mm each · ${result.outputs.totalLm} lm · ${result.outputs.wastePercent}% waste` },
+            { qty: `${result.outputs.stockCount}`, name: `${result.outputs.boardWidth}mm cladding boards`, meta: `${inputs.boardLength}mm each · ${result.outputs.totalLm} lm · ${result.outputs.wastePercent}% waste` },
           ];
           const quoteMaterials = [
-            { item: `${boardW}mm cladding board`, quantity: result.outputs.stockCount, unit: 'each', note: `${inputs.boardLength}mm · ${result.outputs.totalLm} lm total` },
+            { item: `${result.outputs.boardWidth}mm cladding board`, quantity: result.outputs.stockCount, unit: 'each', note: `${inputs.boardLength}mm · ${result.outputs.totalLm} lm total` },
           ];
           return (
           <div ref={resultRef} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -181,7 +181,7 @@ export function CladdingCalc() {
 
             {lapAdjusted && (
               <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4, padding: '0 4px' }}>
-                Overlap adjusted from {desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly.
+                Overlap adjusted from {result.outputs.desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly.
               </p>
             )}
 

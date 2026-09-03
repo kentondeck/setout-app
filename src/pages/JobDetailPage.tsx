@@ -678,9 +678,9 @@ function OrderCard({ entries, job, updateJob }: {
               style={{
                 padding: '9px 0', borderRadius: 12, fontSize: 12.5, fontWeight: 500,
                 fontFamily: 'inherit', cursor: 'pointer',
-                border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                color: active ? 'var(--color-orange)' : 'var(--color-text)',
+                border: '0.5px solid var(--color-border)',
+                background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                color: active ? '#fff' : 'var(--color-text)',
                 transition: 'all 0.15s ease',
               }}
             >

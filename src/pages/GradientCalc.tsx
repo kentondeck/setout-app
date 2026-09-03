@@ -134,10 +134,10 @@ export function GradientCalc() {
                   flex: 1,
                   padding: '11px',
                   borderRadius: 'var(--radius-card)',
-                  border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                  background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-card)',
-                  color: active ? 'var(--color-orange)' : 'var(--color-muted)',
-                  fontWeight: active ? 500 : 400,
+                  border: '0.5px solid var(--color-border)',
+                  background: active ? 'var(--color-orange)' : 'var(--color-card)',
+                  color: active ? '#fff' : 'var(--color-muted)',
+                  fontWeight: 500,
                   fontSize: 14,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
@@ -165,8 +165,8 @@ export function GradientCalc() {
                     style={{
                       padding: '9px 10px',
                       borderRadius: 'var(--radius-card)',
-                      border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                      background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                      border: '0.5px solid var(--color-border)',
+                      background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                       fontFamily: 'inherit',
                       cursor: 'pointer',
                       textAlign: 'left' as const,
@@ -175,8 +175,8 @@ export function GradientCalc() {
                       gap: 2,
                     }}
                   >
-                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-orange)' : 'var(--color-text)' }}>{p.label}</span>
-                    <span style={{ fontSize: 10, color: active ? 'var(--color-orange)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? '#fff' : 'var(--color-text)' }}>{p.label}</span>
+                    <span style={{ fontSize: 10, color: active ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
                   </button>
                 );
               })}
@@ -197,8 +197,8 @@ export function GradientCalc() {
                     style={{
                       padding: '9px 10px',
                       borderRadius: 'var(--radius-card)',
-                      border: active ? '1.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
-                      background: active ? 'rgba(255,90,31,0.06)' : 'var(--color-bg)',
+                      border: '0.5px solid var(--color-border)',
+                      background: active ? 'var(--color-orange)' : 'var(--color-bg)',
                       fontFamily: 'inherit',
                       cursor: 'pointer',
                       textAlign: 'left' as const,
@@ -207,8 +207,8 @@ export function GradientCalc() {
                       gap: 2,
                     }}
                   >
-                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? 'var(--color-orange)' : 'var(--color-text)' }}>{p.label}</span>
-                    <span style={{ fontSize: 10, color: active ? 'var(--color-orange)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: active ? '#fff' : 'var(--color-text)' }}>{p.label}</span>
+                    <span style={{ fontSize: 10, color: active ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)', lineHeight: 1.3 }}>{p.note}</span>
                   </button>
                 );
               })}

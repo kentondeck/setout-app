@@ -11,6 +11,7 @@ import { OnboardingRegion } from './pages/OnboardingRegion';
 import { OnboardingRole } from './pages/OnboardingRole';
 import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
+import { UpdateBanner } from './components/UpdateBanner';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
 import { SavedJobs } from './pages/SavedJobs';
@@ -74,6 +75,7 @@ function AppShell() {
         </Routes>
       </div>
       <BottomNav />
+      <UpdateBanner />
     </div>
   );
 }

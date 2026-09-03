@@ -468,7 +468,7 @@ export default defineConfig(({ mode }) => {
       priceLookupDevPlugin(env.ANTHROPIC_API_KEY ?? ''),
       priceCacheDevPlugin(env.REDIS_URL ?? ''),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: ['logo.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'favicon-192.png', 'favicon-32.png'],
         manifest: {
           name: 'Setout',

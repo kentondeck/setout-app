@@ -1049,7 +1049,7 @@ export function JobDetailPage() {
 
       {/* Header */}
       <div style={{
-        display: 'flex', alignItems: 'center', padding: '12px 16px 10px', gap: 10,
+        display: 'flex', alignItems: 'center', padding: 'calc(env(safe-area-inset-top) + 20px) 16px 14px', gap: 10,
         position: 'sticky', top: 0, background: 'var(--color-bg)', zIndex: 10,
       }}>
         <button onClick={() => navigate('/jobs')} style={{
@@ -1238,7 +1238,7 @@ export function JobDetailPage() {
 const sheetStyle: React.CSSProperties = {
   position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
   width: '100%', maxWidth: 390, background: '#fff', borderRadius: '20px 20px 0 0',
-  padding: '20px 20px 44px', zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
+  padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)', zIndex: 201, display: 'flex', flexDirection: 'column', gap: 14,
 };
 const sheetHandleStyle: React.CSSProperties = {
   width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center', marginBottom: 4,

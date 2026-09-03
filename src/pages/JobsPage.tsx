@@ -32,16 +32,16 @@ export function JobsPage() {
   );
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 20px 24px', gap: 20 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px', gap: 20 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 22,
+            fontSize: 28,
             fontWeight: 500,
             color: '#0a0a0a',
-            letterSpacing: '-0.5px',
+            letterSpacing: '-0.8px',
           }}
         >
           Saved jobs
@@ -178,7 +178,7 @@ export function JobsPage() {
               maxWidth: 390,
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              padding: '20px 20px 40px',
+              padding: '20px 20px calc(env(safe-area-inset-bottom) + 24px)',
               zIndex: 201,
               display: 'flex',
               flexDirection: 'column',

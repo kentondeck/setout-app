@@ -15,11 +15,11 @@ export function CalcHeader({ title, right }: CalcHeaderProps) {
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: '20px 20px 0',
+        padding: 'calc(env(safe-area-inset-top) + 20px) 20px 16px',
       }}
     >
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/')}
         style={{
           background: 'none',
           border: 'none',

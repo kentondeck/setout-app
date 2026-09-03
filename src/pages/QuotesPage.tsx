@@ -21,6 +21,7 @@ function parseMaterials(json: string): QuoteMaterial[] {
 function QuoteRow({ entry, onDelete }: { entry: HistoryEntry; onDelete: (id: string) => void }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const label = entry.jobName || 'Untitled quote';
   const canEdit = typeof entry.outputs.quoteStateJson === 'string';
   const dateStr = new Date(entry.timestamp).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -105,14 +106,17 @@ function QuoteRow({ entry, onDelete }: { entry: HistoryEntry; onDelete: (id: str
           )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button
-              onClick={() => onDelete(entry.id)}
+              onClick={() => confirmDelete ? onDelete(entry.id) : setConfirmDelete(true)}
+              onBlur={() => setConfirmDelete(false)}
               style={{
                 padding: '8px 14px', borderRadius: 10, border: 'none',
-                background: 'rgba(0,0,0,0.05)', color: 'var(--color-muted)', fontSize: 13,
+                background: confirmDelete ? '#fee2e2' : 'rgba(0,0,0,0.05)',
+                color: confirmDelete ? '#e53e3e' : 'var(--color-muted)', fontSize: 13,
                 fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                transition: 'all 0.15s',
               }}
             >
-              Delete
+              {confirmDelete ? 'Sure?' : 'Delete'}
             </button>
             {canEdit && (
               <button
@@ -142,9 +146,9 @@ export function QuotesPage() {
     .sort((a, b) => b.timestamp - a.timestamp);
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '28px 20px 24px', gap: 20 }}>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px', gap: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px' }}>
+        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.8px' }}>
           Quotes
         </h1>
       </div>

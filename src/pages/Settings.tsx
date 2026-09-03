@@ -121,8 +121,7 @@ export function Settings() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: '28px 20px',
-        paddingBottom: 24,
+        padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px',
         gap: 28,
       }}
     >

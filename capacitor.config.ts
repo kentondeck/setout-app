@@ -6,7 +6,10 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   ios: {
     backgroundColor: '#F5F5F3',
-    contentInset: 'always',
+    contentInset: 'never',
+    scrollEnabled: false,
+    allowsLinkPreview: false,
+    limitsNavigationsToAppBoundDomains: true,
   },
   server: {
     allowNavigation: ['setoutapp.com.au'],

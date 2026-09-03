@@ -71,7 +71,7 @@ export function AddToJobSheet({
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: '20px 20px 40px',
+          padding: '20px 20px calc(env(safe-area-inset-bottom) + 20px)',
           zIndex: 201,
           maxHeight: '72vh',
           display: 'flex',

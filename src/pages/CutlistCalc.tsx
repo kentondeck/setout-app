@@ -7,6 +7,7 @@ import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
 import { calculateCutlist, DEFAULT_STOCK_LENGTHS } from '../calculators/cutlist';
 import { JobNameInput } from '../components/JobNameInput';
+import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
@@ -381,6 +382,11 @@ export function CutlistCalc() {
               ]}
             />
 
+            <DownloadCutlistButton
+              calcName="Cut List"
+              jobName={jobName}
+              sections={result ? [{ title: 'Cut list', result }] : []}
+            />
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
             <ShareCalcButton calculationId={lastEntryId} />

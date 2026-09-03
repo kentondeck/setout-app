@@ -17,7 +17,7 @@ export function TopBar({ userName }: TopBarProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '20px 20px 0',
+          padding: 'calc(env(safe-area-inset-top) + 20px) 20px 0',
         }}
       >
         <Logo />

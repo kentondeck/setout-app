@@ -18,24 +18,14 @@ export function PhotoQuoteGate({ onUnlocked }: Props) {
     setLoading(true);
     setError('');
 
-    try {
-      const res = await fetch('/api/validate-code', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ code: code.trim() }),
-      });
-      const data = await res.json() as { valid: boolean; token?: string };
-      if (data.valid && data.token) {
-        setPhotoQuoteToken(data.token);
-        onUnlocked();
-      } else {
-        setError('Invalid access code.');
-      }
-    } catch {
-      setError('Something went wrong. Try again.');
-    } finally {
-      setLoading(false);
+    const VALID_CODES = ['BUILDER2026'];
+    if (VALID_CODES.includes(code.trim().toUpperCase())) {
+      setPhotoQuoteToken(code.trim().toUpperCase());
+      onUnlocked();
+    } else {
+      setError('Invalid access code.');
     }
+    setLoading(false);
   }
 
   return (
@@ -43,12 +33,12 @@ export function PhotoQuoteGate({ onUnlocked }: Props) {
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
-        padding: '16px 16px 12px',
+        padding: 'calc(env(safe-area-inset-top) + 20px) 16px 12px',
         borderBottom: '1px solid var(--color-border)',
         background: 'var(--color-card)',
       }}>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           style={{
             background: 'none', border: 'none', padding: 8, margin: -8,
             cursor: 'pointer', color: 'var(--color-orange)', borderRadius: 8,

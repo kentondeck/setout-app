@@ -16,6 +16,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
+import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
 
 interface Inputs {
   deckLength: string;
@@ -490,6 +491,14 @@ export function DeckingCalc() {
               {COMPLIANCE_NOTES.decking[settings.region]}
             </p>
 
+            <DownloadCutlistButton
+              calcName="Decking"
+              jobName={jobName}
+              sections={[
+                !joinRequired && joistCutlist ? { title: 'Joists', stockLabel: `${(joistStock / 1000).toFixed(1)}m stock`, result: joistCutlist } : null,
+                bearerCutlist ? { title: 'Bearers', stockLabel: `${(bearerStock / 1000).toFixed(1)}m stock`, result: bearerCutlist } : null,
+              ].filter((s): s is NonNullable<typeof s> => s !== null)}
+            />
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
             <AddToQuoteButton

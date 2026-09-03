@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 
 import { useHistory } from './lib/useHistory';
@@ -13,7 +13,7 @@ import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
 import { Home } from './pages/Home';
 import { History } from './pages/History';
-import { SavedJobs } from './pages/SavedJobs';
+
 import { JobsPage } from './pages/JobsPage';
 import { QuotesPage } from './pages/QuotesPage';
 import { JobDetailPage } from './pages/JobDetailPage';
@@ -39,16 +39,23 @@ import { PhotoQuoteCalc } from './pages/PhotoQuoteCalc';
 
 
 function AppShell() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '100svh', width: '100%' }}>
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quotes" element={<QuotesPage />} />
           <Route path="/history" element={<History />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
-          <Route path="/saved" element={<SavedJobs />} />
+
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/calc/decking" element={<DeckingCalc />} />
           <Route path="/calc/framing" element={<FramingCalc />} />

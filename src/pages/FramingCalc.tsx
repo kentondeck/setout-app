@@ -14,6 +14,7 @@ import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
+import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
 
 interface Inputs {
   wallLength: string;
@@ -478,6 +479,14 @@ export function FramingCalc() {
               label={jobName}
             />
 
+            <DownloadCutlistButton
+              calcName="Framing"
+              jobName={jobName}
+              sections={[
+                studCutlist ? { title: 'Studs', result: studCutlist } : null,
+                nogginCutlist ? { title: 'Noggins', result: nogginCutlist } : null,
+              ].filter((s): s is NonNullable<typeof s> => s !== null)}
+            />
             <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
             <ShareCalcButton calculationId={lastEntryId} />

@@ -6,15 +6,15 @@ const CONTACT_EMAIL = 'setoutapp@gmail.com';
 const FAQS: { q: string; a: string }[] = [
   {
     q: 'Do the calculators work offline?',
-    a: 'Yes — once the app has loaded once, all calculators work with no internet. Only Smart Quote and Code Check need a connection because they use AI to process photos and questions.',
+    a: 'Yes — once the app has loaded once, all calculators work with no internet.',
   },
   {
     q: 'Which building codes does Setout follow?',
     a: 'Setout applies NZS 3604 for New Zealand and AS 1684 / AS 1657 / NCC for Australia, based on the region you pick during onboarding. You can change the region in Settings any time.',
   },
   {
-    q: 'How do I unlock Smart Quote?',
-    a: 'Smart Quote is currently invite-only. If you don\'t have a code, email us at ' + CONTACT_EMAIL + ' with what type of tradie work you do — we\'ll send you one.',
+    q: 'How do I build a quote?',
+    a: 'Open the Quotes tab and tap New quote. You can add materials by hand or price them up from any calculator — after you calculate, tap Add to quote and the materials flow straight in with quantities.',
   },
   {
     q: 'Where are my calculations stored?',

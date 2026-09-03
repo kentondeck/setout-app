@@ -8,6 +8,7 @@ import { ResultCard } from '../components/ResultCard';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { JobNameInput } from '../components/JobNameInput';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
+import { FEATURES } from '../lib/features';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf, formatDateInput } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
@@ -106,6 +107,14 @@ export interface ResumeQuoteRequest {
   resumeEntryId: string;
 }
 
+// Navigate to /calc/photoquote with this state to start a fresh BLANK quote/invoice/estimate
+// with no AI takeoff. Used by the "New quote" button on the Quotes tab while SmartQuote is
+// disabled via the feature flag — bypasses the AI upload UI and the access-code gate.
+export interface BlankQuoteRequest {
+  manual: true;
+  docType?: QuoteDocType;
+}
+
 // Full editable state of a quote, snapshotted into the history entry's outputs on every edit
 // (as quoteStateJson) so it can be reloaded exactly as left — not just the summary shown in lists.
 interface QuoteStateSnapshot {
@@ -194,7 +203,9 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 export function PhotoQuoteCalc() {
   const [hasAccess, setHasAccess] = useState(() => hasPhotoQuoteAccess());
 
-  if (!hasAccess) {
+  // Only enforce the invite-code gate when SmartQuote (AI takeoff) is enabled —
+  // blank/manual quotes and calc handoffs must work without the code.
+  if (FEATURES.smartQuote && !hasAccess) {
     return <PhotoQuoteGate onUnlocked={() => setHasAccess(true)} />;
   }
 
@@ -440,6 +451,21 @@ function PhotoQuoteCalcInner() {
       },
     });
     navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Blank-quote entry — either explicit ({ manual: true, docType }) OR the default when SmartQuote
+  // is disabled via FEATURES.smartQuote AND there's no other state pushing us into a specific mode.
+  // Skips the AI upload/gate flow entirely, drops the tradie straight into the manual quote editor.
+  useEffect(() => {
+    const state = location.state as (BlankQuoteRequest | CalcQuoteHandoff | ResumeQuoteRequest | null);
+    const isExplicitManual = !!(state && 'manual' in state && state.manual);
+    const noStateAndFlagOff = !state && !FEATURES.smartQuote;
+    if (!isExplicitManual && !noStateAndFlagOff) return;
+
+    const docType = (isExplicitManual && (state as BlankQuoteRequest).docType) || 'quote';
+    startManual(docType);
+    if (isExplicitManual) navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -885,7 +911,7 @@ function PhotoQuoteCalcInner() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <CalcHeader title={(fromCalculator || isManual) ? docTypeLabel(docType) : 'SmartQuote'} />
+      <CalcHeader title={(fromCalculator || isManual || !FEATURES.smartQuote) ? docTypeLabel(docType) : 'SmartQuote'} />
 
       <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 

@@ -151,7 +151,7 @@ export function QuotesPage() {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <button
-          onClick={() => navigate('/calc/photoquote')}
+          onClick={() => navigate('/calc/photoquote', { state: { manual: true, docType: 'quote' } })}
           style={{
             flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '16px', borderRadius: 14, border: 'none',

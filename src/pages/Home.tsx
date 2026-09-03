@@ -5,6 +5,7 @@ import { ReorderableCalcGrid } from '../components/ReorderableCalcGrid';
 import { QuoteTile } from '../components/QuoteTile';
 import { getGreeting } from '../lib/greeting';
 import { CALCULATORS } from '../lib/calculators';
+import { FEATURES } from '../lib/features';
 import type { CalculatorId } from '../types';
 
 // SmartQuote gets pulled out into its own wide tile up top (see QuoteTile) — everything else is
@@ -69,9 +70,11 @@ export function Home() {
         </p>
       </div>
 
-      <div style={{ padding: '0 20px 12px' }}>
-        <QuoteTile calc={QUOTE_AI} />
-      </div>
+      {FEATURES.smartQuote && (
+        <div style={{ padding: '0 20px 12px' }}>
+          <QuoteTile calc={QUOTE_AI} />
+        </div>
+      )}
 
       <div style={{ padding: '8px 20px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {pinnedCalcs.length > 0 && (

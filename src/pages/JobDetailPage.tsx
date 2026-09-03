@@ -821,6 +821,12 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
       <div style={{
         position: 'absolute', right: 0, top: 0, bottom: 0, width: SWIPE_THRESHOLD,
         background: '#e53e3e', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        // Fully transparent at rest, in sync with the card's slide transition
+        // — otherwise the card's antialiased rounded-corner edge blends
+        // against solid red sitting directly behind it, leaving a hairline
+        // red tint at the corner even though the bounds match exactly.
+        opacity: swipeX < 0 ? 1 : 0,
+        transition: isSwiping ? 'none' : 'opacity 0.2s ease',
       }}>
         <button onClick={() => onRemove(entry.id)} style={{
           background: 'none', border: 'none', color: '#fff',
@@ -841,7 +847,11 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
           borderBottomLeftRadius: expanded ? 0 : 14, borderBottomRightRadius: expanded ? 0 : 14,
           borderBottom: expanded ? 'none' : '0.5px solid var(--color-border)',
           overflow: 'hidden',
-          transform: `translateX(${swipeX}px)`,
+          // Omit at rest rather than translateX(0px) — a zero-value transform
+          // still promotes this to its own compositing layer, whose
+          // anti-aliased rounded corners don't perfectly align with the
+          // parent clip, leaking a hairline of the red delete background.
+          ...(swipeX !== 0 ? { transform: `translateX(${swipeX}px)` } : {}),
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
           position: 'relative', zIndex: 1, cursor: 'pointer', userSelect: 'none',
           boxShadow: '0 1px 2px rgba(0,0,0,0.025)',

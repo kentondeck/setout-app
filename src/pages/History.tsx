@@ -113,7 +113,7 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
-              {meta?.label} · {timeStr}
+              {entry.jobName ? `${meta?.label} · ${timeStr}` : timeStr}
             </p>
             {linkedJob && (
               <span

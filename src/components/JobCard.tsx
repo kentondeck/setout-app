@@ -107,6 +107,13 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Fully transparent at rest, in sync with the card's own slide
+          // transition — otherwise the card's antialiased rounded-corner edge
+          // blends against solid red sitting directly behind it, leaving a
+          // hairline red tint at the corner even though the two elements'
+          // bounds match exactly.
+          opacity: swipeX < 0 ? 1 : 0,
+          transition: isSwiping ? 'none' : 'opacity 0.2s ease',
         }}
       >
         <button
@@ -148,7 +155,12 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
           gap: 12,
           cursor: 'pointer',
           textAlign: 'left',
-          transform: `translateX(${swipeX}px)`,
+          // Omit the transform entirely at rest (rather than translateX(0px)) —
+          // a zero-value transform still promotes the card to its own
+          // compositing layer, and its anti-aliased rounded corners don't
+          // perfectly align with the parent's overflow:hidden clip, leaking a
+          // hairline of the red delete background through at the edges.
+          ...(swipeX !== 0 ? { transform: `translateX(${swipeX}px)` } : {}),
           transition: isSwiping ? 'none' : 'transform 0.2s ease',
           position: 'relative',
           zIndex: 1,

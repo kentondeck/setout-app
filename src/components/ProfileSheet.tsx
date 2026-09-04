@@ -83,9 +83,9 @@ export function ProfileSheet({ onClose }: Props) {
       <div
         style={{
           position: 'fixed',
-          bottom: keyboardInset,
+          bottom: 0,
           left: '50%',
-          transform: 'translateX(-50%)',
+          transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
           width: '100%',
           maxWidth: 390,
           background: '#fff',
@@ -97,7 +97,7 @@ export function ProfileSheet({ onClose }: Props) {
           flexDirection: 'column',
           gap: 0,
           overflowY: 'auto',
-          transition: 'bottom 0.2s ease',
+          transition: 'transform 0.2s ease',
         }}
       >
         {/* Handle */}

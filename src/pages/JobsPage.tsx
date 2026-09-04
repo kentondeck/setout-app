@@ -175,9 +175,9 @@ export function JobsPage() {
           <div
             style={{
               position: 'fixed',
-              bottom: keyboardInset,
+              bottom: 0,
               left: '50%',
-              transform: 'translateX(-50%)',
+              transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
               width: '100%',
               maxWidth: 390,
               background: '#fff',
@@ -187,7 +187,7 @@ export function JobsPage() {
               display: 'flex',
               flexDirection: 'column',
               gap: 14,
-              transition: 'bottom 0.2s ease',
+              transition: 'transform 0.2s ease',
             }}
           >
             <div

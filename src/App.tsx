@@ -13,6 +13,7 @@ import { OnboardingRole } from './pages/OnboardingRole';
 import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
 import { UpdateBanner } from './components/UpdateBanner';
+import { KeyboardDoneBar } from './components/KeyboardDoneBar';
 import { Home } from './pages/Home';
 
 // Every route below is only needed once the user navigates there, and several
@@ -89,6 +90,7 @@ function AppShell() {
       </div>
       <BottomNav />
       <UpdateBanner />
+      <KeyboardDoneBar />
     </div>
   );
 }

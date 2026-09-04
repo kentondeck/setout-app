@@ -71,9 +71,11 @@ export function AddToJobSheet({
       <div
         style={{
           position: 'fixed',
-          bottom: keyboardInset,
+          bottom: 0,
           left: '50%',
-          transform: 'translateX(-50%)',
+          // translateY (not animating `bottom`) keeps the keyboard-open shift
+          // on the compositor instead of forcing layout every frame.
+          transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
           width: '100%',
           maxWidth: 390,
           background: '#fff',
@@ -84,7 +86,7 @@ export function AddToJobSheet({
           display: 'flex',
           flexDirection: 'column',
           gap: 0,
-          transition: 'bottom 0.2s ease',
+          transition: 'transform 0.2s ease',
         }}
       >
         {/* Handle */}

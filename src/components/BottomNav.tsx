@@ -1,5 +1,6 @@
+import { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useKeyboardOpen } from '../lib/useKeyboardOpen';
+import { KeyboardContext } from '../contexts';
 
 const tabs = [
   {
@@ -58,14 +59,14 @@ const tabs = [
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const keyboardOpen = useKeyboardOpen();
+  const { inset } = useContext(KeyboardContext);
 
-  // Fully hide when a text input is focused — otherwise Capacitor's
-  // `resize: native` shrinks the WebView and the sticky nav sits right on top
-  // of the keyboard, covering the Calculate button and anything else below the
-  // focused input. `display: none` (rather than translate) removes it from
-  // layout entirely so it doesn't reserve any vertical space either.
-  if (keyboardOpen) return null;
+  // Being sticky (in-flow), not fixed, means this doesn't share a
+  // containing block with the fixed-position sheets that sit over it —
+  // with the keyboard open it was turning up stranded between a sheet
+  // and the keyboard instead of hidden behind either. Simplest correct
+  // behaviour: it's not useful to tap a tab while typing anyway.
+  if (inset > 0) return null;
 
   return (
     <nav

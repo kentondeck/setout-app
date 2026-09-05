@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 :root {
+  /* The app is always light — there's no dark theme. Without this, WebKit
+     falls back to the device's system appearance for UI it renders itself
+     (the on-screen keyboard, form control chrome), so a phone in Dark Mode
+     got a black keyboard over this light UI even though nothing else on
+     the page ever changed. */
+  color-scheme: light;
   --color-bg: #f5f5f3;
   --color-card: #ffffff;
   --color-border: rgba(0, 0, 0, 0.06);

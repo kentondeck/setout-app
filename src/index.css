@@ -10,6 +10,10 @@
   --radius-tile: 18px;
   --radius-card: 16px;
   font-family: 'Inter', system-ui, sans-serif;
+  /* Pin the WebView (and every form control inside it) to the light colour
+     scheme so iOS doesn't render a dark keyboard when the phone is in
+     system-wide dark mode. Info.plist locks the native shell to the same. */
+  color-scheme: light;
 }
 
 *, *::before, *::after {

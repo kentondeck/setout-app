@@ -29,6 +29,71 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Collapsible section — header row with a chevron, tap to expand/collapse.
+// Used for long blocks (Business details, Your team) so the Settings page
+// stays scannable at first glance instead of a wall of inputs.
+function Collapsible({
+  title,
+  subtitle,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{
+      background: 'var(--color-card)',
+      border: '0.5px solid var(--color-border)',
+      borderRadius: 'var(--radius-card)',
+      overflow: 'hidden',
+    }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 16px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          textAlign: 'left',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
+            {title}
+          </div>
+          {subtitle && (
+            <div style={{ marginTop: 2, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 16px 16px', borderTop: '0.5px solid var(--color-border)', paddingTop: 14 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function Settings() {
   const navigate = useNavigate();
@@ -267,11 +332,10 @@ export function Settings() {
         </div>
       </div>
 
-      <div>
-        <SectionLabel>Business details</SectionLabel>
-        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-          Printed on every quote/estimate PDF — {settings.region === 'AU' ? 'your ABN is required for a valid tax invoice' : 'your GST number is required if you\'re GST-registered'}.
-        </p>
+      <Collapsible
+        title="Business details"
+        subtitle={`Printed on every quote/estimate PDF — ${settings.region === 'AU' ? 'ABN required for a valid tax invoice' : 'GST number required if you\'re GST-registered'}.`}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             type="text"
@@ -369,7 +433,7 @@ export function Settings() {
             {businessSaved ? '✓ Saved' : 'Save business details'}
           </button>
         </div>
-      </div>
+      </Collapsible>
 
       <div>
         <SectionLabel>Invoice numbering</SectionLabel>

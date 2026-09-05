@@ -653,12 +653,30 @@ function OrderCard({ entries, job, updateJob }: {
   const orderText = formatOrderText(order, job.name, bufferPct);
 
   async function handleShare() {
+    const dialogTitle = `Order — ${job.name || 'Job'}`;
+
+    // Try Capacitor Share unconditionally — even in dev mode where the app
+    // loads from the LAN URL and Capacitor reports platform 'web', the native
+    // plugin bridge is still injected and the call routes through it.
+    try {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({ title: dialogTitle, text: orderText, dialogTitle });
+      return;
+    } catch (err) {
+      const msg = (err as Error)?.message ?? '';
+      if (msg.toLowerCase().includes('cancel')) return;
+      // Plugin missing or unimplemented — fall through to Web Share / clipboard.
+    }
+
     if (navigator.share) {
       try {
-        await navigator.share({ text: orderText });
+        await navigator.share({ title: dialogTitle, text: orderText });
         return;
-      } catch { /* user cancelled — fall through to copy */ }
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
     }
+
     handleCopy();
   }
 

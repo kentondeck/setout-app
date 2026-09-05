@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { shareOrPreviewImage } from '../lib/saveImage';
 
 export interface StairDiagramProps {
   riserCount: number;
@@ -152,16 +153,7 @@ export const StairDiagram = memo(function StairDiagram({
       canvas.toBlob(async blob => {
         if (!blob) return;
         const name = `stair-${Math.round(totalRise)}rise-${Math.round(totalRun)}run.png`;
-        const file = new File([blob], name, { type: 'image/png' });
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Stair Diagram' }); return; } catch { /**/ }
-        }
-        // Fallback for WKWebView / iOS Safari where <a download> is ignored:
-        // open the image so the user can long-press → Save Image to Photos.
-        const blobUrl = URL.createObjectURL(blob);
-        const opened = window.open(blobUrl, '_blank');
-        if (!opened) window.location.href = blobUrl;
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+        await shareOrPreviewImage(blob, name, 'Stair Diagram');
       }, 'image/png');
     };
     img.src = url;

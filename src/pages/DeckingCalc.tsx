@@ -383,7 +383,10 @@ export function DeckingCalc() {
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {persistedSuggestions.items.map(s => {
-                    const active = originalGap === s.gap;
+                    // Compare against the CURRENT applied gap, not the original,
+                    // so the tile you tap goes orange (and stays orange until
+                    // you tap it again to revert or pick a different one).
+                    const active = parseFloat(inputs.boardGap) === s.gap;
                     return (
                       <button
                         key={s.boardCount}

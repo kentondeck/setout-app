@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useKeyboardOpen } from '../lib/useKeyboardOpen';
 
 const tabs = [
   {
@@ -57,6 +58,14 @@ const tabs = [
 export function BottomNav() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const keyboardOpen = useKeyboardOpen();
+
+  // Fully hide when a text input is focused — otherwise Capacitor's
+  // `resize: native` shrinks the WebView and the sticky nav sits right on top
+  // of the keyboard, covering the Calculate button and anything else below the
+  // focused input. `display: none` (rather than translate) removes it from
+  // layout entirely so it doesn't reserve any vertical space either.
+  if (keyboardOpen) return null;
 
   return (
     <nav

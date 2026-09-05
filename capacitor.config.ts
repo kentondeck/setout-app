@@ -9,7 +9,12 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     scrollEnabled: false,
     allowsLinkPreview: false,
-    limitsNavigationsToAppBoundDomains: true,
+    // Nick's production security lock: WKWebView only loads setoutapp.com.au
+    // (per WKAppBoundDomains in Info.plist). But `npm run ios:live` points at
+    // the Mac's LAN IP, which can't be an app-bound domain — relax the lock
+    // only when CAP_SERVER_URL is set (i.e. dev-server mode). Production
+    // builds ship with the lock on.
+    limitsNavigationsToAppBoundDomains: !process.env.CAP_SERVER_URL,
   },
   plugins: {
     // Without this, WKWebView has no managed keyboard-avoidance and
@@ -21,6 +26,11 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: 'native',
       resizeOnFullScreen: true,
+      // Force the light on-screen keyboard theme so it doesn't render dark
+      // when the phone is set to system-wide dark mode. Pairs with
+      // UIUserInterfaceStyle=Light in Info.plist which locks the entire app
+      // to light mode at the native level.
+      style: 'LIGHT',
     },
   },
   server: {

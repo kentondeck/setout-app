@@ -37,16 +37,19 @@ interface Job {
 }
 
 // ─── Categories ──────────────────────────────────────────────────────────────
+// Order roughly follows the build sequence for a new-build home: site prep
+// first, structural next, weather-tight before finishing, then trim, then
+// outdoor. Renovation sits last because it's not part of the linear flow.
 
 const CATEGORIES: Category[] = [
+  { key: 'site-setout',          label: 'Site setout',           emoji: '📏' },
+  { key: 'concrete-foundations', label: 'Concrete & foundations',emoji: '🧱' },
   { key: 'framing',              label: 'Framing & structure',   emoji: '🪵' },
+  { key: 'roofing-cladding',     label: 'Roofing & cladding',    emoji: '🏠' },
   { key: 'doors-windows',        label: 'Doors & windows',       emoji: '🚪' },
+  { key: 'wet-areas',            label: 'Wet areas',             emoji: '🚿' },
   { key: 'interior-finishing',   label: 'Interior finishing',    emoji: '📐' },
   { key: 'decking-outdoor',      label: 'Decking & outdoor',     emoji: '🌳' },
-  { key: 'concrete-foundations', label: 'Concrete & foundations',emoji: '🧱' },
-  { key: 'roofing-cladding',     label: 'Roofing & cladding',    emoji: '🏠' },
-  { key: 'site-setout',          label: 'Site setout',           emoji: '📏' },
-  { key: 'wet-areas',            label: 'Wet areas',             emoji: '🚿' },
   { key: 'renovation',           label: 'Renovation',            emoji: '🔨' },
 ];
 
@@ -55,7 +58,20 @@ const CATEGORIES: Category[] = [
 // placeholders so the library reads as intentional & growing, not empty.
 
 const JOBS: Job[] = [
-  // Framing & structure
+  // ─── Site setout — first thing on a bare section ─────────────────────────
+  { id: 'set-datum-peg',        category: 'site-setout', label: 'Set a datum peg',                    summary: 'Height reference for the whole site — protect from disturbance.' },
+  { id: 'setup-laser',          category: 'site-setout', label: 'Set up a builder\'s level or laser', summary: 'Levelling, self-check, reading rod.' },
+  { id: 'batter-boards',        category: 'site-setout', label: 'Batter boards for a foundation',     summary: 'Position, level, string-line offsets.' },
+  { id: 'setout-rectangle',     category: 'site-setout', label: 'Set out a rectangular slab',         summary: '3-4-5 rule, diagonal check, string lines.' },
+  { id: 'run-string-line',      category: 'site-setout', label: 'Run a string line true',             summary: 'Tensioning, blocking sag, sighting.' },
+
+  // ─── Concrete & foundations ──────────────────────────────────────────────
+  { id: 'setout-strip-footing', category: 'concrete-foundations', label: 'Set out for a strip footing',   summary: 'Batter boards, dig line, level.' },
+  { id: 'setout-slab',          category: 'concrete-foundations', label: 'Set out a slab',                summary: 'Formwork, mesh, DPM, pour prep.' },
+  { id: 'install-slab-mesh',    category: 'concrete-foundations', label: 'Install steel mesh in a slab',  summary: 'Chairs, lap, position before pour starts.' },
+  { id: 'pour-screed-slab',     category: 'concrete-foundations', label: 'Pour and screed a small slab',  summary: 'Wet-edge, screed rails, bull float.' },
+
+  // ─── Framing & structure ─────────────────────────────────────────────────
   {
     id: 'frame-internal-wall',
     category: 'framing',
@@ -123,82 +139,67 @@ const JOBS: Job[] = [
       },
     ],
   },
+  // Rest of the framing category, roughly in build order (floor → walls → roof)
+  { id: 'fit-joist-hanger',     category: 'framing', label: 'Fit a joist hanger',            summary: 'Correct nails, correct count, correct position.' },
   { id: 'frame-external-wall',  category: 'framing', label: 'Frame an external wall',        summary: 'Load-bearing wall with lintels, corner studs, and wrap.' },
   { id: 'frame-corner',         category: 'framing', label: 'Frame a corner',                summary: 'Two-stud vs three-stud corner, plate joining.' },
+  { id: 'install-beam',         category: 'framing', label: 'Install a beam',                summary: 'Sit-on-post or hung-off-post, bearing rules.' },
+  { id: 'frame-stair-opening',  category: 'framing', label: 'Frame a stair opening',         summary: 'Trimmers, headers, and stringer support.' },
   { id: 'cut-rafter',           category: 'framing', label: 'Cut a rafter with birdsmouth',  summary: 'Plumb cut, seat cut, tail cut on a common rafter.' },
   { id: 'install-hip-rafter',   category: 'framing', label: 'Install a hip rafter',          summary: 'Backing bevel, side cuts, tying jack rafters.' },
-  { id: 'frame-stair-opening',  category: 'framing', label: 'Frame a stair opening',         summary: 'Trimmers, headers, and stringer support.' },
-  { id: 'install-beam',         category: 'framing', label: 'Install a beam',                summary: 'Sit-on-post or hung-off-post, bearing rules.' },
-  { id: 'notch-joist',          category: 'framing', label: 'Notch a joist for services',    summary: 'Where notches are OK vs where they aren\'t (NZS 3604 §7).' },
-  { id: 'fit-joist-hanger',     category: 'framing', label: 'Fit a joist hanger',            summary: 'Correct nails, correct count, correct position.' },
 
-  // Doors & windows
-  { id: 'hang-internal-door',   category: 'doors-windows', label: 'Hang an internal door',       summary: 'Pre-hung frame into a stud opening.' },
-  { id: 'hang-door-existing',   category: 'doors-windows', label: 'Hang a door in an existing frame', summary: 'Hinges from scratch, latch mortise, margin.' },
-  { id: 'fit-hinges',           category: 'doors-windows', label: 'Fit hinges from scratch',     summary: 'Marking, mortising, chiselling, hanging.' },
-  { id: 'install-lockset',      category: 'doors-windows', label: 'Install a lockset',           summary: 'Bore for a tubular latch + deadbolt or handle.' },
-  { id: 'install-window',       category: 'doors-windows', label: 'Install a pre-made window',   summary: 'Packing, plumbing, flashing tape, sill flashing.' },
-  { id: 'install-bifold',       category: 'doors-windows', label: 'Install a bifold door',       summary: 'Track alignment, roller adjustment, gaps.' },
-  { id: 'fit-sliding-door',     category: 'doors-windows', label: 'Fit a sliding door on a track', summary: 'Head track, bottom guide, panel hanging.' },
-
-  // Interior finishing
-  { id: 'install-skirting',     category: 'interior-finishing', label: 'Cut and install skirting',      summary: 'Scribes vs mitres, joins, nailing pattern.' },
-  { id: 'install-architrave',   category: 'interior-finishing', label: 'Cut and install architrave',    summary: 'Margins, mitre corners, punching + filling.' },
-  { id: 'cope-corner',          category: 'interior-finishing', label: 'Cope an internal corner',       summary: 'When to cope vs mitre, coping-saw technique.' },
-  { id: 'fix-plasterboard',     category: 'interior-finishing', label: 'Fix plasterboard to a wall',    summary: 'Sheet layout, screw spacing, joint prep.' },
-  { id: 'stop-butt-join',       category: 'interior-finishing', label: 'Set and stop a butt join',      summary: 'Three coats, sanding, feathering.' },
-  { id: 'cut-hole-gib',         category: 'interior-finishing', label: 'Cut a hole in gib for a power point', summary: 'Template, jab saw or router, tolerance.' },
-  { id: 'install-corner-bead',  category: 'interior-finishing', label: 'Install a metal corner bead',   summary: 'External corners, tin-snip cuts, screw fixing.' },
-
-  // Decking & outdoor
-  { id: 'lay-deck',             category: 'decking-outdoor', label: 'Lay a deck (bearer → joist → boards)', summary: 'End-to-end substructure and surface.' },
-  { id: 'setout-deck-posts',    category: 'decking-outdoor', label: 'Set out deck posts + footings',        summary: 'Batter boards, string lines, hole layout.' },
-  { id: 'fix-fascia',           category: 'decking-outdoor', label: 'Fix fascia and soffit',                summary: 'Set line, gaps, corner mitres.' },
-  { id: 'build-retaining-wall', category: 'decking-outdoor', label: 'Build a low timber retaining wall',    summary: 'Poles, rails, drainage, geo-textile.' },
-  { id: 'build-paling-fence',   category: 'decking-outdoor', label: 'Build a paling fence',                 summary: 'Post, rail, paling sequence.' },
-  { id: 'concrete-post-hole',   category: 'decking-outdoor', label: 'Concrete a post hole',                 summary: 'Depth, diameter, mix, standoff, curing.' },
-  { id: 'install-post-anchor',  category: 'decking-outdoor', label: 'Install a post-anchor bracket',        summary: 'Chemical anchor vs bolt-down, plumb.' },
-
-  // Concrete & foundations
-  { id: 'setout-strip-footing', category: 'concrete-foundations', label: 'Set out for a strip footing',    summary: 'Batter boards, dig line, level.' },
-  { id: 'setout-slab',          category: 'concrete-foundations', label: 'Set out a slab',                 summary: 'Formwork, mesh, DPM, pour prep.' },
-  { id: 'pour-screed-slab',     category: 'concrete-foundations', label: 'Pour and screed a small slab',   summary: 'Wet-edge, screed rails, bull float.' },
-  { id: 'install-slab-mesh',    category: 'concrete-foundations', label: 'Install steel mesh in a slab',   summary: 'Chairs, lap, position after pour starts.' },
-  { id: 'cut-control-joint',    category: 'concrete-foundations', label: 'Cut a control joint',            summary: 'When to cut (green vs cured), depth, spacing.' },
-
-  // Roofing & cladding
+  // ─── Roofing & cladding — get the building weather-tight ─────────────────
   { id: 'setout-rafters',       category: 'roofing-cladding', label: 'Set out common rafters from a ridge', summary: 'Pitch, run, birdsmouth position, tail.' },
-  { id: 'fit-fascia-soffit',    category: 'roofing-cladding', label: 'Cut and fit fascia + soffit',         summary: 'String line, mitre corners, spouting prep.' },
   { id: 'install-ridge-cap',    category: 'roofing-cladding', label: 'Install ridge cap',                    summary: 'Lap direction, screws vs nails, sealant.' },
+  { id: 'fit-fascia-soffit',    category: 'roofing-cladding', label: 'Cut and fit fascia + soffit',         summary: 'String line, mitre corners, spouting prep.' },
+  { id: 'flash-window-head',    category: 'roofing-cladding', label: 'Flash around a window head',           summary: 'Head flashing, tape, wrap laps.' },
   { id: 'lay-weatherboards',    category: 'roofing-cladding', label: 'Lay weatherboards',                    summary: 'Story rod, starter strip, laps, joins.' },
   { id: 'install-fc-sheet',     category: 'roofing-cladding', label: 'Install fibre-cement cladding',        summary: 'Sheet layout, cutting, cavity battens.' },
-  { id: 'flash-window-head',    category: 'roofing-cladding', label: 'Flash around a window head',           summary: 'Head flashing, tape, wrap laps.' },
 
-  // Site setout
-  { id: 'setout-rectangle',     category: 'site-setout', label: 'Set out a rectangular slab',    summary: '3-4-5 rule, diagonal check, string lines.' },
-  { id: 'setup-laser',          category: 'site-setout', label: 'Set up a builder\'s level or laser', summary: 'Levelling, self-check, reading rod.' },
-  { id: 'run-string-line',      category: 'site-setout', label: 'Run a string line true',        summary: 'Tensioning, blocking sag, sighting.' },
-  { id: 'batter-boards',        category: 'site-setout', label: 'Batter boards for a foundation', summary: 'Position, level, string-line offsets.' },
-  { id: 'set-datum-peg',        category: 'site-setout', label: 'Set a datum peg',               summary: 'Height reference, protecting from disturbance.' },
+  // ─── Doors & windows — installed once building is weather-tight ──────────
+  { id: 'install-window',       category: 'doors-windows', label: 'Install a pre-made window',       summary: 'Packing, plumbing, flashing tape, sill flashing.' },
+  { id: 'hang-internal-door',   category: 'doors-windows', label: 'Hang an internal door',           summary: 'Pre-hung frame into a stud opening.' },
+  { id: 'hang-door-existing',   category: 'doors-windows', label: 'Hang a door in an existing frame',summary: 'Hinges from scratch, latch mortise, margin.' },
+  { id: 'fit-hinges',           category: 'doors-windows', label: 'Fit hinges from scratch',         summary: 'Marking, mortising, chiselling, hanging.' },
+  { id: 'install-lockset',      category: 'doors-windows', label: 'Install a lockset',               summary: 'Bore for a tubular latch + deadbolt or handle.' },
+  { id: 'install-bifold',       category: 'doors-windows', label: 'Install a bifold door',           summary: 'Track alignment, roller adjustment, gaps.' },
+  { id: 'fit-sliding-door',     category: 'doors-windows', label: 'Fit a sliding door on a track',   summary: 'Head track, bottom guide, panel hanging.' },
 
-  // Wet areas
-  { id: 'waterproof-shower',    category: 'wet-areas', label: 'Waterproof a shower base',   summary: 'Substrate prep, membrane, fall, tape corners.' },
-  { id: 'install-shower-liner', category: 'wet-areas', label: 'Install a shower liner',     summary: 'Pre-formed liner, sealant, screw pattern.' },
-  { id: 'tile-setout-wall',     category: 'wet-areas', label: 'Tile setout on a wall',      summary: 'Feature course, centre-out, cut position.' },
-  { id: 'fit-bathroom-vanity',  category: 'wet-areas', label: 'Fit a bathroom vanity',      summary: 'Level, wall-fixing, plumbing gap.' },
+  // ─── Wet areas — before lining is finished ───────────────────────────────
+  { id: 'waterproof-shower',    category: 'wet-areas', label: 'Waterproof a shower base', summary: 'Substrate prep, membrane, fall, tape corners.' },
+  { id: 'install-shower-liner', category: 'wet-areas', label: 'Install a shower liner',   summary: 'Pre-formed liner, sealant, screw pattern.' },
+  { id: 'tile-setout-wall',     category: 'wet-areas', label: 'Tile setout on a wall',    summary: 'Feature course, centre-out, cut position.' },
+  { id: 'fit-bathroom-vanity',  category: 'wet-areas', label: 'Fit a bathroom vanity',    summary: 'Level, wall-fixing, plumbing gap.' },
 
-  // Renovation
-  { id: 'cut-into-wall',        category: 'renovation', label: 'Cut into an existing wall',   summary: 'Locate services first, minimise damage.' },
-  { id: 'identify-load-bearing', category: 'renovation', label: 'Identify a load-bearing wall', summary: 'Signs, plan check, when to call an engineer.' },
-  { id: 'patch-gib-hole',       category: 'renovation', label: 'Patch a hole in gib',         summary: 'Backer, sheet patch, three-coat stop.' },
-  { id: 'replace-weatherboard', category: 'renovation', label: 'Replace a rotten weatherboard', summary: 'Cut-out, splice, flash, prime, install.' },
+  // ─── Interior finishing — after wet areas, in fit-out order ──────────────
+  { id: 'fix-plasterboard',     category: 'interior-finishing', label: 'Fix plasterboard to a wall',           summary: 'Sheet layout, screw spacing, joint prep.' },
+  { id: 'install-corner-bead',  category: 'interior-finishing', label: 'Install a metal corner bead',           summary: 'External corners, tin-snip cuts, screw fixing.' },
+  { id: 'stop-butt-join',       category: 'interior-finishing', label: 'Set and stop a butt join',              summary: 'Three coats, sanding, feathering.' },
+  { id: 'cut-hole-gib',         category: 'interior-finishing', label: 'Cut a hole in gib for a power point',   summary: 'Template, jab saw or router, tolerance.' },
+  { id: 'install-skirting',     category: 'interior-finishing', label: 'Cut and install skirting',              summary: 'Scribes vs mitres, joins, nailing pattern.' },
+  { id: 'cope-corner',          category: 'interior-finishing', label: 'Cope an internal corner',               summary: 'When to cope vs mitre, coping-saw technique.' },
+  { id: 'install-architrave',   category: 'interior-finishing', label: 'Cut and install architrave',            summary: 'Margins, mitre corners, punching + filling.' },
+
+  // ─── Decking & outdoor — usually last on a new build ─────────────────────
+  { id: 'setout-deck-posts',    category: 'decking-outdoor', label: 'Set out deck posts + footings',        summary: 'Batter boards, string lines, hole layout.' },
+  { id: 'concrete-post-hole',   category: 'decking-outdoor', label: 'Concrete a post hole',                 summary: 'Depth, diameter, mix, standoff, curing.' },
+  { id: 'install-post-anchor',  category: 'decking-outdoor', label: 'Install a post-anchor bracket',        summary: 'Chemical anchor vs bolt-down, plumb.' },
+  { id: 'lay-deck',             category: 'decking-outdoor', label: 'Lay a deck (bearer → joist → boards)', summary: 'End-to-end substructure and surface.' },
+  { id: 'build-retaining-wall', category: 'decking-outdoor', label: 'Build a low timber retaining wall',    summary: 'Poles, rails, drainage, geo-textile.' },
+  { id: 'build-paling-fence',   category: 'decking-outdoor', label: 'Build a paling fence',                 summary: 'Post, rail, paling sequence.' },
+
+  // ─── Renovation — off the linear build path ──────────────────────────────
+  { id: 'identify-load-bearing', category: 'renovation', label: 'Identify a load-bearing wall',   summary: 'Signs, plan check, when to call an engineer.' },
+  { id: 'cut-into-wall',         category: 'renovation', label: 'Cut into an existing wall',      summary: 'Locate services first, minimise damage.' },
+  { id: 'patch-gib-hole',        category: 'renovation', label: 'Patch a hole in gib',            summary: 'Backer, sheet patch, three-coat stop.' },
+  { id: 'replace-weatherboard',  category: 'renovation', label: 'Replace a rotten weatherboard',  summary: 'Cut-out, splice, flash, prime, install.' },
 ];
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function Sequencer() {
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
-  const [openCategory, setOpenCategory] = useState<CategoryKey | null>('framing');
+  const [openCategory, setOpenCategory] = useState<CategoryKey | null>(null);
 
   const activeJob = activeJobId ? JOBS.find(j => j.id === activeJobId) : null;
 

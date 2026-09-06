@@ -58,11 +58,19 @@ const CATEGORIES: Category[] = [
 
 const JOBS: Job[] = [
   // ─── Site setout — first thing on a bare section ─────────────────────────
-  { id: 'set-datum-peg',        category: 'site-setout', label: 'Set a datum peg',                    summary: 'Height reference for the whole site — protect from disturbance.' },
-  { id: 'setup-laser',          category: 'site-setout', label: 'Set up a builder\'s level or laser', summary: 'Levelling, self-check, reading rod.' },
-  { id: 'batter-boards',        category: 'site-setout', label: 'Batter boards for a foundation',     summary: 'Position, level, string-line offsets.' },
-  { id: 'setout-rectangle',     category: 'site-setout', label: 'Set out a rectangular slab',         summary: '3-4-5 rule, diagonal check, string lines.' },
-  { id: 'run-string-line',      category: 'site-setout', label: 'Run a string line true',             summary: 'Tensioning, blocking sag, sighting.' },
+  { id: 'check-boundary-setbacks', category: 'site-setout', label: 'Check setbacks from boundary pegs', summary: 'Verify title-plan offsets before you commit a single peg.' },
+  { id: 'set-datum-peg',           category: 'site-setout', label: 'Set a datum peg',                    summary: 'Height reference for the whole site — protect from disturbance.' },
+  { id: 'setup-laser',             category: 'site-setout', label: 'Set up a builder\'s level or laser', summary: 'Levelling, self-check, reading rod.' },
+  { id: 'run-string-line',         category: 'site-setout', label: 'Run a string line true',             summary: 'Tensioning, blocking sag, sighting.' },
+  { id: 'batter-boards',           category: 'site-setout', label: 'Batter boards for a foundation',     summary: 'Position, level, string-line offsets.' },
+  { id: 'setout-rectangle',        category: 'site-setout', label: 'Set out a rectangular slab',         summary: '3-4-5 rule, diagonal check, string lines.' },
+  { id: 'setout-lshape-slab',      category: 'site-setout', label: 'Set out an L-shape or T-shape slab', summary: 'Break into rectangles, square each, check all diagonals.' },
+  { id: 'peg-foundation-corners',  category: 'site-setout', label: 'Peg foundation corners from batter boards', summary: 'Plumb from string intersections down to dig-line pegs.' },
+  { id: 'setout-piles',            category: 'site-setout', label: 'Set out for concrete piles or pads', summary: 'Grid positions from batter boards, depth to good ground.' },
+  { id: 'setout-garage-slab',      category: 'site-setout', label: 'Set out a garage slab with door recess', summary: 'Perimeter, door rebate, thickened edge under wall lines.' },
+  { id: 'snap-wall-lines',         category: 'site-setout', label: 'Snap wall lines on a fresh slab',    summary: 'Chalk out bottom-plate positions before framing starts.' },
+  { id: 'transfer-datum-interior', category: 'site-setout', label: 'Transfer a datum inside the building', summary: 'Carry the height reference from an external peg to internal walls.' },
+  { id: 'setout-driveway-falls',   category: 'site-setout', label: 'Set falls for a driveway or path',   summary: 'Long-fall, cross-fall, high point + low point pegs.' },
 
   // ─── Concrete & foundations ──────────────────────────────────────────────
   { id: 'setout-strip-footing', category: 'concrete-foundations', label: 'Set out for a strip footing',   summary: 'Batter boards, dig line, level.' },

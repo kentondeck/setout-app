@@ -17,7 +17,6 @@ type CategoryKey =
 interface Category {
   key: CategoryKey;
   label: string;
-  emoji: string;
 }
 
 interface Step {
@@ -42,15 +41,15 @@ interface Job {
 // outdoor. Renovation sits last because it's not part of the linear flow.
 
 const CATEGORIES: Category[] = [
-  { key: 'site-setout',          label: 'Site setout',           emoji: '📏' },
-  { key: 'concrete-foundations', label: 'Concrete & foundations',emoji: '🧱' },
-  { key: 'framing',              label: 'Framing & structure',   emoji: '🪵' },
-  { key: 'roofing-cladding',     label: 'Roofing & cladding',    emoji: '🏠' },
-  { key: 'doors-windows',        label: 'Doors & windows',       emoji: '🚪' },
-  { key: 'wet-areas',            label: 'Wet areas',             emoji: '🚿' },
-  { key: 'interior-finishing',   label: 'Interior finishing',    emoji: '📐' },
-  { key: 'decking-outdoor',      label: 'Decking & outdoor',     emoji: '🌳' },
-  { key: 'renovation',           label: 'Renovation',            emoji: '🔨' },
+  { key: 'site-setout',          label: 'Site setout' },
+  { key: 'concrete-foundations', label: 'Concrete & foundations' },
+  { key: 'framing',              label: 'Framing & structure' },
+  { key: 'roofing-cladding',     label: 'Roofing & cladding' },
+  { key: 'doors-windows',        label: 'Doors & windows' },
+  { key: 'wet-areas',            label: 'Wet areas' },
+  { key: 'interior-finishing',   label: 'Interior finishing' },
+  { key: 'decking-outdoor',      label: 'Decking & outdoor' },
+  { key: 'renovation',           label: 'Renovation' },
 ];
 
 // ─── Jobs ────────────────────────────────────────────────────────────────────
@@ -323,7 +322,6 @@ export function Sequencer() {
                   fontFamily: 'inherit', textAlign: 'left',
                 }}
               >
-                <span style={{ fontSize: 22, lineHeight: 1 }}>{cat.emoji}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 15, fontWeight: 500, color: 'var(--color-text)',

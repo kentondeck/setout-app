@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
+import { SettingsContext } from '../contexts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -25,14 +26,22 @@ interface Step {
   watchFor?: string;
 }
 
+interface JobDetail {
+  tools: string[];
+  materials: string[];
+  steps: Step[];
+}
+
+// AU and NZ build to different standards, use different terminology, and fix
+// with different products. Every writeable job carries both variants; the
+// active one is picked at render time from settings.region.
 interface Job {
   id: string;
   category: CategoryKey;
   label: string;
   summary: string;
-  tools?: string[];
-  materials?: string[];
-  steps?: Step[]; // if absent → treated as a "coming soon" stub
+  au?: JobDetail;
+  nz?: JobDetail;
 }
 
 // ─── Categories ──────────────────────────────────────────────────────────────
@@ -81,67 +90,132 @@ const JOBS: Job[] = [
     category: 'framing',
     label: 'Frame an internal wall',
     summary: 'Non-load-bearing timber stud wall, floor to ceiling.',
-    tools: [
-      'Tape', 'Chalk line', 'Pencil', 'Square', 'Level',
-      'Hammer or nail gun', 'Circular / mitre saw', 'Temporary brace stock',
-    ],
-    materials: [
-      '90×45 kiln-dried pine (plates + studs + noggings)',
-      '90×3.15 flat-head galv framing nails (or gun equivalent)',
-      'Fixings for floor + top plate (screws / masonry anchors as needed)',
-    ],
-    steps: [
-      {
-        title: 'Mark the wall on the floor',
-        body: 'Grab the plan, find your wall. Chalk-line the floor along where the bottom plate will sit. Measure off two known points (an outside wall, or a datum line you\'ve already set out) — not off adjacent framing that might not be square.',
-        watchFor: "Don't reference off a wall you haven't checked for plumb. New apprentices lose hours here.",
-      },
-      {
-        title: 'Cut plates',
-        body: 'Cut a bottom plate to the wall length. Cut a top plate the same length — do them together so they\'re identical.',
-        watchFor: 'If the wall butts into an existing one, subtract the finished skirting/lining allowance from the length.',
-      },
-      {
-        title: 'Mark stud positions on both plates',
-        body: 'Stack the two plates edge-to-edge and mark stud centres on both at once. Standard spacing is 600 mm c/c for a non-load-bearing wall; 400 mm c/c if it\'s load-bearing or supporting long sheet linings. Mark the two end studs first, then work the centres.',
-        watchFor: 'Mark a "T" for trimmers where doors will go — cutting them in after the wall is up is a nightmare.',
-      },
-      {
-        title: 'Cut studs',
-        body: 'Stud length = wall height − (bottom plate + top plate). For 45 mm plates and a 2.4 m ceiling that\'s 2400 − 90 = 2310 mm. Cut ONE stud first, dry-fit it between the plates, confirm it lands where you want the top plate — then cut the rest.',
-        watchFor: 'If the floor and ceiling aren\'t perfectly parallel (they rarely are on renovations), measure a stud at each end of the wall and taper any middle studs to suit.',
-      },
-      {
-        title: 'Assemble flat on the floor',
-        body: 'Lay the bottom plate on the floor, studs on their marks, top plate on the far end. Nail through the plates into each stud end — 2 nails per end. Keep the wall square as you go: measure the diagonals corner-to-corner; when they match, you\'re square.',
-        watchFor: 'Nail from the plate INTO the stud end, not the other way around. End-nailing into the stud\'s end grain has poor pull-out resistance.',
-      },
-      {
-        title: 'Stand the wall + brace temporarily',
-        body: 'Two people to lift and stand. As soon as it\'s up, screw off-cuts diagonally from the top corners down to fixed points (existing framing, the floor, a nearby wall). Don\'t let go until it\'s braced.',
-        watchFor: 'A stud wall is deceptively heavy. If it\'s a long wall, tie a rope to the top plate and pull from above while lifting the base.',
-      },
-      {
-        title: 'Plumb + straighten',
-        body: 'Plumb both ends with a level on the end studs — check both faces (the wall must be vertical in and out AND left-right). Sight down the top plate for straightness; adjust the brace and re-nail if the middle bows.',
-        watchFor: 'A 4-ft level barely spans a 2.4 m stud. Use a 1.8 m or 2 m level, or check with a spirit level at top, middle, and bottom on the same stud.',
-      },
-      {
-        title: 'Fix the bottom plate to the floor',
-        body: 'Timber subfloor over joists: nails or screws down through the plate into the joist below. Concrete slab: masonry anchors (Ramset, Tapcon, Dynabolt) — pre-drill through the plate first with a wood bit, then swap to a masonry bit for the slab.',
-        watchFor: 'Hit a joist. Random screws into subfloor plywood alone will pull out first time someone leans on the wall.',
-      },
-      {
-        title: 'Fix the top plate up',
-        body: 'Nail or screw the top plate up into the ceiling joists / trusses above. If you\'re running parallel to the joists, you need blocking between them to catch the top plate.',
-        watchFor: 'Take the ceiling lining off (or plan the wall centreline) to hit a joist above. Blind-nailing into gib and hoping is not a strategy.',
-      },
-      {
-        title: 'Add noggings',
-        body: 'Cut and install a row of noggings between the studs at wall height ÷ 2 (about 1100–1200 mm for a standard ceiling). Noggings brace the wall from twisting and give a fixing for horizontal plasterboard joins.',
-        watchFor: 'Stagger noggings up-and-down between studs so you can nail through the stud faces — trying to end-nail into every nog gets tedious fast.',
-      },
-    ],
+    nz: {
+      tools: [
+        'Tape', 'Chalk line', 'Pencil', 'Combination square', 'Spirit level (1.8 m+)',
+        'Hammer or gun', 'Circular / drop saw', 'Off-cuts for temporary bracing',
+      ],
+      materials: [
+        '90×45 SG8 kiln-dried radiata pine (plates + studs + nogs)',
+        '90×3.15 flat-head bright framing nails (or 75×3.06 gun nails)',
+        'Fixings for bottom plate: 100 mm bugle screws to joists, or Dynabolt / Loxin to slab',
+      ],
+      steps: [
+        {
+          title: 'Mark the wall on the floor',
+          body: 'Grab the plans, find your wall. Chalk-line the floor along where the bottom plate will sit. Measure off two known points — an external wall you\'ve confirmed straight, or a setout line from the datum peg — not adjacent framing that could be out.',
+          watchFor: "Don't reference off a wall you haven't checked for plumb. New apprentices lose hours chasing an out-of-square starting line.",
+        },
+        {
+          title: 'Cut plates',
+          body: 'Cut a bottom plate to the wall length. Cut a top plate the same length — do them together so they end up identical. Use 90×45 SG8 kiln-dried radiata for both.',
+          watchFor: 'If the wall butts into an existing lined wall, subtract the gib + skirting reveal off the length so your new plate finishes flush.',
+        },
+        {
+          title: 'Mark stud positions on both plates',
+          body: 'Stack the two plates edge-to-edge and mark stud centres on both at once. NZS 3604 §8 allows up to 600 mm c/c for non-loadbearing internal walls. Drop to 400 mm c/c if the wall is loadbearing, or carries a long horizontal gib join. Mark end studs first, then space the middles evenly.',
+          watchFor: "Mark a 'T' for trimmers where doors go. Cutting a doorway into a wall after it's stood is a much bigger job.",
+        },
+        {
+          title: 'Cut studs',
+          body: 'Stud length = wall height − (bottom plate + top plate). For 45 mm plates under a 2.4 m stud height that\'s 2400 − 90 = 2310 mm. Cut ONE stud first, dry-fit between the plates, confirm the top plate lands right — then cut the rest.',
+          watchFor: 'On renos the floor and ceiling are rarely parallel. Measure a stud at each end of the wall and taper middle studs if the run isn\'t even.',
+        },
+        {
+          title: 'Assemble flat on the floor',
+          body: 'Lay the bottom plate on the floor, studs on their marks, top plate on the far end. Nail through the plates into each stud end — 2 × 90×3.15 nails per end. Keep the wall square as you go: measure diagonals corner-to-corner; when they match, you\'re square.',
+          watchFor: 'Nail from the plate INTO the stud end, not the other way around. End-grain nailing has poor pull-out and gets flagged on inspection.',
+        },
+        {
+          title: 'Stand the wall + brace temporarily',
+          body: 'Two of you to lift and stand. As soon as it\'s up, run off-cut diagonal braces from the top corners down to fixed points — the floor, existing framing, or a plate you\'ve tacked down. Don\'t let go of it until at least two braces are on.',
+          watchFor: 'A 2.4 m wall is heavier than it looks. On a long wall, tie a rope to the top plate and have someone pull from above while you walk the base up.',
+        },
+        {
+          title: 'Plumb + straighten',
+          body: 'Plumb both ends with a 1.8 m level on the end studs — check both faces (in-and-out AND left-right). Sight down the top plate for straightness; adjust the temporary brace and re-nail if the middle bows.',
+          watchFor: 'A 600 mm level is useless on a 2.4 m stud. Use 1.8 m minimum, or check with a spirit level at top, middle, and bottom of the same stud.',
+        },
+        {
+          title: 'Fix the bottom plate down',
+          body: 'Timber floor over joists: 100 mm bugle screws or twist-shank nails down through the plate into the joist below — hit the joist, not the ply. Concrete slab: pre-drill through the plate with a wood bit, swap to a masonry bit, sink Dynabolts or Loxins at ~900 mm c/c minimum, extra near openings.',
+          watchFor: 'Random screws through the flooring ply with no joist under will pull out the first time someone leans on the wall.',
+        },
+        {
+          title: 'Fix the top plate up',
+          body: 'Nail or screw up through the top plate into the ceiling joists or trusses above. If your wall runs parallel to the joists and there\'s no joist directly over the plate, fit blocking between the joists first to catch the fixings.',
+          watchFor: 'Blind-nailing into gib and hoping to catch a joist above isn\'t a fix. Snap a line on the ceiling from a known joist position, or pop a strip of gib to sight it in.',
+        },
+        {
+          title: 'Add nogs',
+          body: 'Cut and install a row of nogs between studs at roughly half wall-height (1100–1200 mm for a standard 2.4 m ceiling). Nogs stop studs twisting and give a fix for horizontal gib joins. Stagger up/down between bays so you can face-nail through the stud sides rather than end-nailing every one.',
+          watchFor: 'If you\'re fixing horizontal gib sheets, position the mid-nog line at exactly the sheet join height — measure from the floor, not the ceiling.',
+        },
+      ],
+    },
+    au: {
+      tools: [
+        'Tape', 'Chalk line', 'Pencil', 'Combination square', 'Spirit level (1.8 m+)',
+        'Hammer or gun', 'Circular / drop saw', 'Off-cuts for temporary bracing',
+      ],
+      materials: [
+        '90×45 MGP10 pine (plates + studs + noggins) — H2-blue treated in termite zones',
+        '75×3.05 gun nails or 90×3.15 flat-head bright framing nails',
+        'Fixings for bottom plate: 100 mm Type 17 screws to joists, or Dynabolts / Ramset ChemSet to slab',
+      ],
+      steps: [
+        {
+          title: 'Mark the wall on the floor',
+          body: 'Grab the plans, find your wall. Chalk a line on the floor where the bottom plate will sit. Measure off two known points — a checked external wall, or a setout line from the datum peg — not from framing that hasn\'t been verified square.',
+          watchFor: "Don't reference off a wall you haven't checked for plumb. First-year apprentices lose hours chasing an out-of-square starting line.",
+        },
+        {
+          title: 'Cut plates',
+          body: 'Cut a bottom plate to the wall length. Cut a top plate the same length — do them together so they finish identical. 90×45 MGP10 pine for both (H2-blue in termite-management zones — check state supplement to the NCC).',
+          watchFor: 'If the wall butts into a lined wall, subtract the plasterboard + skirting reveal off the length so the plate finishes flush.',
+        },
+        {
+          title: 'Mark stud positions on both plates',
+          body: 'Stack the two plates edge-to-edge and mark stud centres on both at once. AS 1684.2 tables give you max spacing by grade + load; for MGP10 non-loadbearing you\'re usually 600 mm c/c, dropped to 450 mm c/c if loadbearing or carrying long horizontal plasterboard joins. Mark end studs first, then space the middles.',
+          watchFor: "Mark a 'T' for trimmers where doors go. Cutting a doorway in after the wall is up is a much bigger job.",
+        },
+        {
+          title: 'Cut studs',
+          body: 'Stud length = wall height − (bottom plate + top plate). For 45 mm plates under a 2.4 m stud height that\'s 2400 − 90 = 2310 mm. Cut ONE stud first, dry-fit between the plates, confirm the top plate lands right — then cut the rest.',
+          watchFor: 'On renos the floor and ceiling are rarely parallel. Measure a stud at each end of the wall and taper middle studs if the run isn\'t even.',
+        },
+        {
+          title: 'Assemble flat on the floor',
+          body: 'Lay the bottom plate down, studs on their marks, top plate at the far end. Nail through the plates into each stud end — 2 nails per end. Keep it square as you go: measure diagonals corner-to-corner; equal diagonals = square.',
+          watchFor: 'Nail from the plate INTO the stud end, not the other way. End-grain nailing has weak pull-out and gets pulled up by the certifier.',
+        },
+        {
+          title: 'Stand the wall + brace temporarily',
+          body: 'Two of you to lift. As soon as it\'s up, run diagonal off-cut braces from the top corners down to fixed points — the floor, existing framing, or a plate you\'ve tacked down. Two braces minimum before letting go.',
+          watchFor: 'A 2.4 m wall is heavier than it looks. On a long wall, tie a rope to the top plate and have someone pull from above while you walk the base up.',
+        },
+        {
+          title: 'Plumb + straighten',
+          body: 'Plumb both ends with a 1.8 m level on the end studs — check both faces (in-and-out AND left-right). Sight down the top plate for straightness; adjust the brace and re-nail if the middle bows.',
+          watchFor: 'A 600 mm level is useless on a 2.4 m stud. Use 1.8 m minimum, or check with a spirit level at top, middle, and bottom of the same stud.',
+        },
+        {
+          title: 'Fix the bottom plate down',
+          body: 'Timber floor over joists: 100 mm Type 17 bugle screws or twist-shank nails through the plate into the joist below — hit the joist, not the flooring. Concrete slab: pre-drill through the plate with a wood bit, swap to a masonry bit, sink Dynabolts or Ramset ChemSet at ~900 mm c/c minimum, extra near openings.',
+          watchFor: 'In a termite-management area, don\'t breach the termite barrier at the slab join with un-flashed penetrations — check the barrier manufacturer\'s spec.',
+        },
+        {
+          title: 'Fix the top plate up',
+          body: 'Nail or screw up through the top plate into the ceiling joists or trusses above. If your wall runs parallel to the joists and there\'s no joist directly over the plate, fit blocking between the joists first to catch the fixings.',
+          watchFor: 'Blind-nailing into plasterboard and hoping to catch a joist above isn\'t a fix. Snap a line on the ceiling from a known joist, or pop a strip of ceiling to sight it in.',
+        },
+        {
+          title: 'Add noggins',
+          body: 'Cut and install a row of noggins between studs at roughly half wall-height (1100–1200 mm for a standard 2.4 m ceiling). Noggins stop studs twisting and give a fixing line for horizontal plasterboard joins. Stagger up/down between bays so you can face-nail through the stud sides.',
+          watchFor: 'If you\'re fixing horizontal plasterboard sheets, position the mid-noggin row at exactly the sheet join — measure from the floor, not the ceiling.',
+        },
+      ],
+    },
   },
   // Rest of the framing category, roughly in build order (floor → walls → roof)
   { id: 'fit-joist-hanger',     category: 'framing', label: 'Fit a joist hanger',            summary: 'Correct nails, correct count, correct position.' },
@@ -202,62 +276,60 @@ const JOBS: Job[] = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function Sequencer() {
+  const { settings } = useContext(SettingsContext);
+  const regionKey: 'au' | 'nz' = settings.region === 'NZ' ? 'nz' : 'au';
+
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<CategoryKey | null>(null);
 
   const activeJob = activeJobId ? JOBS.find(j => j.id === activeJobId) : null;
+  const activeDetail = activeJob?.[regionKey];
 
   // ── Job-detail view ────────────────────────────────────────────────────────
-  if (activeJob && activeJob.steps) {
+  if (activeJob && activeDetail) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <JobHeader label={activeJob.label} onBack={() => setActiveJobId(null)} />
         <div style={{ padding: '4px 20px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <p style={{ margin: '0 4px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-            {activeJob.summary} · {activeJob.steps.length} steps
+            {activeJob.summary} · {activeDetail.steps.length} steps · Written for {settings.region}
           </p>
 
-          {(activeJob.tools || activeJob.materials) && (
-            <details style={cardStyle}>
-              <summary style={{
-                listStyle: 'none', cursor: 'pointer', outline: 'none',
-                padding: '12px 14px',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <span style={labelStyle}>Before you start</span>
-                <span style={{ fontSize: 11, color: 'var(--color-orange)', fontWeight: 500 }}>Tap to view</span>
-              </summary>
-              <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {activeJob.tools && (
-                  <div>
-                    <p style={{ ...labelStyle, marginBottom: 6, fontSize: 10 }}>Tools</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {activeJob.tools.map(t => (
-                        <span key={t} style={{
-                          background: 'var(--color-bg)', color: 'var(--color-text)',
-                          fontSize: 12, padding: '4px 10px', borderRadius: 999,
-                          letterSpacing: '-0.1px',
-                        }}>{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {activeJob.materials && (
-                  <div>
-                    <p style={{ ...labelStyle, marginBottom: 6, fontSize: 10 }}>Materials</p>
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {activeJob.materials.map(m => (
-                        <li key={m} style={{ fontSize: 13, color: 'var(--color-text)', letterSpacing: '-0.1px' }}>• {m}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          <details style={cardStyle}>
+            <summary style={{
+              listStyle: 'none', cursor: 'pointer', outline: 'none',
+              padding: '12px 14px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={labelStyle}>Before you start</span>
+              <span style={{ fontSize: 11, color: 'var(--color-orange)', fontWeight: 500 }}>Tap to view</span>
+            </summary>
+            <div style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <p style={{ ...labelStyle, marginBottom: 6, fontSize: 10 }}>Tools</p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {activeDetail.tools.map(t => (
+                    <span key={t} style={{
+                      background: 'var(--color-bg)', color: 'var(--color-text)',
+                      fontSize: 12, padding: '4px 10px', borderRadius: 999,
+                      letterSpacing: '-0.1px',
+                    }}>{t}</span>
+                  ))}
+                </div>
               </div>
-            </details>
-          )}
+              <div>
+                <p style={{ ...labelStyle, marginBottom: 6, fontSize: 10 }}>Materials</p>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {activeDetail.materials.map(m => (
+                    <li key={m} style={{ fontSize: 13, color: 'var(--color-text)', letterSpacing: '-0.1px' }}>• {m}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </details>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {activeJob.steps.map((step, i) => (
+            {activeDetail.steps.map((step, i) => (
               <div key={i} style={{ ...cardStyle, padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                   <div style={{
@@ -300,7 +372,7 @@ export function Sequencer() {
   }
 
   // ── Library view ───────────────────────────────────────────────────────────
-  const readyCount = JOBS.filter(j => j.steps).length;
+  const readyCount = JOBS.filter(j => j[regionKey]).length;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -308,13 +380,13 @@ export function Sequencer() {
 
       <div style={{ padding: '0 20px 32px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p style={{ margin: '0 4px 8px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          Step-by-step guides for common jobs. {readyCount} of {JOBS.length} written so far —
-          more coming as they get written up.
+          Step-by-step guides for common jobs, written for {settings.region} practice.
+          {' '}{readyCount} of {JOBS.length} ready — more added as they get written up.
         </p>
 
         {CATEGORIES.map(cat => {
           const catJobs = JOBS.filter(j => j.category === cat.key);
-          const catReady = catJobs.filter(j => j.steps).length;
+          const catReady = catJobs.filter(j => j[regionKey]).length;
           const open = openCategory === cat.key;
           return (
             <div key={cat.key} style={{ ...cardStyle, overflow: 'hidden' }}>
@@ -352,7 +424,7 @@ export function Sequencer() {
               {open && (
                 <div style={{ borderTop: '0.5px solid var(--color-border)' }}>
                   {catJobs.map(job => {
-                    const ready = !!job.steps;
+                    const ready = !!job[regionKey];
                     return (
                       <button
                         key={job.id}

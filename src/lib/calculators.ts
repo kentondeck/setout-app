@@ -116,18 +116,10 @@ export const CALCULATORS: CalcMeta[] = [
     svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22',
   },
   {
-    id: 'fieldguide',
-    label: 'Field guide',
-    subtitle: 'Tap parts to learn',
-    number: '17',
-    // Open book icon
-    svgPath: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
-  },
-  {
     id: 'sequencer',
     label: 'Sequencer',
     subtitle: 'Step-by-step job guides',
-    number: '18',
+    number: '17',
     // Checklist icon
     svgPath: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
   },
@@ -135,7 +127,7 @@ export const CALCULATORS: CalcMeta[] = [
     id: 'photoquote',
     label: 'SmartQuote',
     subtitle: 'Job estimate & project feasibility',
-    number: '19',
+    number: '18',
     svgPath: 'M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h4l2 3h3a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   },
 ];

@@ -116,11 +116,12 @@ export const CALCULATORS: CalcMeta[] = [
     svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22',
   },
   {
-    id: 'spancheck',
-    label: 'Span check',
-    subtitle: 'NZS 3604 / AS 1684 lookup',
+    id: 'fieldguide',
+    label: 'Field guide',
+    subtitle: 'Tap parts to learn',
     number: '17',
-    svgPath: 'M4 6h16M4 6v12M4 18h16M20 6v12M8 6v12M12 6v12M16 6v12',
+    // Open book icon
+    svgPath: 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
   },
   {
     id: 'photoquote',

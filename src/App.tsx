@@ -42,7 +42,7 @@ const ExcavationCalc = lazy(() => import('./pages/ExcavationCalc').then(m => ({ 
 const GradientCalc = lazy(() => import('./pages/GradientCalc').then(m => ({ default: m.GradientCalc })));
 const EqualSpacingCalc = lazy(() => import('./pages/EqualSpacingCalc').then(m => ({ default: m.EqualSpacingCalc })));
 const FencingCalc = lazy(() => import('./pages/FencingCalc').then(m => ({ default: m.FencingCalc })));
-const SpanCheckCalc = lazy(() => import('./pages/SpanCheckCalc').then(m => ({ default: m.SpanCheckCalc })));
+const FieldGuide = lazy(() => import('./pages/FieldGuide').then(m => ({ default: m.FieldGuide })));
 const PhotoQuoteCalc = lazy(() => import('./pages/PhotoQuoteCalc').then(m => ({ default: m.PhotoQuoteCalc })));
 
 
@@ -84,7 +84,7 @@ function AppShell() {
           <Route path="/calc/gradient" element={<GradientCalc />} />
           <Route path="/calc/equalspacing" element={<EqualSpacingCalc />} />
           <Route path="/calc/fencing" element={<FencingCalc />} />
-          <Route path="/calc/spancheck" element={<SpanCheckCalc />} />
+          <Route path="/calc/fieldguide" element={<FieldGuide />} />
           <Route path="/calc/photoquote" element={<PhotoQuoteCalc />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>

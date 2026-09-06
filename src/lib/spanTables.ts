@@ -3,10 +3,9 @@
 // Values are approximate mid-range figures — always verify against the current
 // edition for your specific load width, wind zone, and end-fixity conditions.
 //
-// Consumed by src/pages/SpanCheckCalc.tsx (the "Span check" tile on Home) —
-// the calc reads the constants directly and renders them as chip selectors +
-// a hero result + a reference table. `lookupSpan()` below is the text-only
-// alternative used by SmartQuote's system prompt.
+// Not surfaced directly to the user right now — `lookupSpan()` below is the
+// text-only interface used by SmartQuote's system prompt. Kept as reference
+// data for a future consumer.
 
 export interface SpanEntry {
   maxSpanM: number;

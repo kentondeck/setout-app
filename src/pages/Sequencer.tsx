@@ -1308,6 +1308,38 @@ const JOBS: Job[] = [
     },
   },
   {
+    id: 'install-shower-liner',
+    category: 'wet-areas',
+    label: 'Install a shower liner',
+    summary: 'Pre-formed acrylic panels: dry-fit, cut for taps, adhesive, silicone.',
+    nz: {
+      tools: ['Tape', 'Spirit level', 'Marker pen', 'Cordless drill / impact driver', 'Jigsaw or fine-tooth handsaw', 'Hole saw (54 mm for mixer, 32 mm for shower rose)', 'Silicone gun', 'Utility knife', 'Sandpaper (fine)'],
+      materials: ['Shower liner kit (3-piece: back + 2 sides, or moulded 1-piece — Marbletrend / Athena / Century)', 'Construction adhesive (Selleys Liquid Nails Wet Area, or Sika Sikaflex 11FC)', 'Silicone (neutral-cure, colour-matched to liner)', 'Corner trims / cap strips (supplied with kit)', 'Masking tape'],
+      steps: [
+        { title: 'Confirm walls are lined + waterproofed', body: 'Shower recess walls should be gib (Standard or Aqualine) or Villaboard + waterproofed by a licensed waterproofer before the liner goes on. Liner is a decorative + secondary weather seal — NOT primary waterproofing.', watchFor: 'Skipping waterproofing under a liner = wall framing rots when the silicone seal eventually fails. Waterproofing is licensed work; get the certificate.' },
+        { title: 'Dry-fit the liner panels', body: 'Lift panels into position — back panel first, then sides. Check the panels meet at corners with a consistent 2–3 mm gap for silicone, and sit hard against the shower base rim.', watchFor: 'Shower recesses are rarely dead square. If a corner\'s out by more than 5 mm, either scribe the liner edge or plan for a wider silicone bead. Test-fit before adhesive.' },
+        { title: 'Mark + cut tap + shower-rose holes', body: 'Turn panel around, measure from the base + adjacent wall to mark the tap centreline. Drill from the FRONT (visible) face with a hole saw to avoid chipping the finished face.', watchFor: 'Marking + drilling from the back is a common apprentice mistake — hole saws blow out the visible face. Score with a utility knife first if worried about chipping.' },
+        { title: 'Apply adhesive per manufacturer', body: 'Squiggle-bead adhesive on the panel back — typically horizontal squiggles 200 mm apart, plus a solid perimeter bead 25 mm in from every edge. Don\'t over-apply; excess squeezes out at joints.', watchFor: 'Adhesive too close to the edge oozes out when panel is pressed. 25 mm setback from edges gives the silicone a clean zone to sit in.' },
+        { title: 'Position + press panels', body: 'Back panel first — align to base + centre horizontally. Press across the whole face, work air out from centre outward. Then side panels — same process, aligning against back panel + base.', watchFor: 'Panels slide once adhesive is on. Masking tape a temporary hold at the top until adhesive grabs (usually 15–30 min).' },
+        { title: 'Silicone all joints + penetrations', body: 'Vertical joins between panels, horizontal join to shower base, around tap + rose penetrations. Neutral-cure silicone in the panel colour. Tool the bead with a wet finger for a clean concave finish.', watchFor: 'The silicone is the primary weather seal from here on. Any pinhole or gap = water gets behind the liner. Take time, tool every join clean.' },
+        { title: 'Fit corner + edge trims', body: 'Kit-supplied trim strips (usually colour-matched aluminium) fit at exposed vertical edges + top of liner. Fix with adhesive + hidden pins.', watchFor: 'Un-trimmed liner edges look unfinished + get bumped / chipped. Fit the trims — they\'re in the kit for a reason.' },
+      ],
+    },
+    au: {
+      tools: ['Tape', 'Spirit level', 'Marker pen', 'Cordless drill / impact driver', 'Jigsaw or fine-tooth handsaw', 'Hole saw (54 mm mixer, 32 mm rose)', 'Silicone gun', 'Utility knife', 'Sandpaper (fine)'],
+      materials: ['Shower liner kit (3-piece or moulded 1-piece — Marbletrend, Estilo, Highgrove)', 'Construction adhesive (Selleys Liquid Nails Wet Area, or Sika Sikaflex 11FC)', 'Silicone (neutral-cure, colour-matched)', 'Corner trims / cap strips (kit)', 'Masking tape'],
+      steps: [
+        { title: 'Confirm walls are lined + waterproofed', body: 'Recess walls should be plasterboard (Standard, Wet-Area, or Villaboard) + waterproofed by a licensed waterproofer per AS 3740 before liner. Liner is decorative + secondary — NOT primary waterproofing.', watchFor: 'Skipping waterproofing = wall framing rots when silicone eventually fails. Waterproofing is licensed work in AU; get the compliance certificate.' },
+        { title: 'Dry-fit the liner panels', body: 'Back panel first, then sides. Check corners meet with 2–3 mm gap for silicone; sit hard against base rim.', watchFor: 'Recesses rarely dead square. Corner out by >5 mm: scribe the edge or plan a wider silicone bead. Test-fit before adhesive.' },
+        { title: 'Mark + cut tap + rose holes', body: 'Turn panel around, measure from base + adjacent wall for tap centreline. Drill from the FRONT face with a hole saw to avoid chipping.', watchFor: 'Drilling from back = blown-out visible face. Score with utility knife first if worried.' },
+        { title: 'Apply adhesive per manufacturer', body: 'Squiggle-bead on panel back — horizontal squiggles at 200 mm, plus perimeter bead 25 mm from edges. Don\'t over-apply — excess squeezes out at joints.', watchFor: 'Adhesive too close to edge oozes at panel press. 25 mm setback gives silicone a clean zone.' },
+        { title: 'Position + press panels', body: 'Back panel first — align to base, centre horizontally. Press whole face, work air out from centre. Sides next — align to back + base.', watchFor: 'Panels slide once adhesive is on. Masking tape as temporary hold at top until adhesive grabs (15–30 min).' },
+        { title: 'Silicone all joints + penetrations', body: 'Vertical joins between panels, horizontal join to base, around taps + rose. Neutral-cure silicone in panel colour. Tool with wet finger for clean concave finish.', watchFor: 'Silicone is primary weather seal from here. Any pinhole = water behind liner. Take time, tool clean.' },
+        { title: 'Fit corner + edge trims', body: 'Kit trims (colour-matched aluminium) at exposed vertical edges + top of liner. Adhesive + hidden pins.', watchFor: 'Un-trimmed edges look unfinished + get bumped / chipped. Fit the trims.' },
+      ],
+    },
+  },
+  {
     id: 'tile-wall',
     category: 'wet-areas',
     label: 'Tile a wall (setout + laying)',

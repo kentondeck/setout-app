@@ -2163,26 +2163,19 @@ export function Sequencer() {
                 aria-expanded={open}
                 style={{
                   width: '100%', padding: '14px 16px', background: 'none', border: 'none',
-                  display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
-                  fontFamily: 'inherit', textAlign: 'left',
+                  display: 'grid', gridTemplateColumns: '16px 1fr 16px', alignItems: 'center', gap: 12,
+                  cursor: 'pointer', fontFamily: 'inherit',
                 }}
               >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 15, fontWeight: 500, color: 'var(--color-text)',
-                    letterSpacing: '-0.2px',
-                  }}>{cat.label}</div>
-                  <div style={{
-                    marginTop: 2, fontSize: 11.5, color: 'var(--color-muted)',
-                    letterSpacing: '-0.1px',
-                  }}>
-                    {catJobs.length} {catJobs.length === 1 ? 'job' : 'jobs'}
-                  </div>
-                </div>
+                <span aria-hidden />
+                <div style={{
+                  fontSize: 15, fontWeight: 500, color: 'var(--color-text)',
+                  letterSpacing: '-0.2px', textAlign: 'center',
+                }}>{cat.label}</div>
                 <svg
                   width="16" height="16" viewBox="0 0 24 24" fill="none"
                   stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+                  style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
                 >
                   <polyline points="6 9 12 15 18 9" />
                 </svg>

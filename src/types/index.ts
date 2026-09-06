@@ -15,6 +15,7 @@ export type CalculatorId =
   | 'equalspacing'
   | 'fencing'
   | 'fieldguide'
+  | 'sequencer'
   | 'photoquote';
 
 export type Region = 'AU' | 'NZ';

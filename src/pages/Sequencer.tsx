@@ -67,14 +67,10 @@ const CATEGORIES: Category[] = [
 
 const JOBS: Job[] = [
   // ─── Site setout — first thing on a bare section ─────────────────────────
-  { id: 'check-boundary-setbacks', category: 'site-setout', label: 'Check setbacks from boundary pegs', summary: 'Verify title-plan offsets before you commit a single peg.' },
-  { id: 'set-datum-peg',           category: 'site-setout', label: 'Set a datum peg',                    summary: 'Height reference for the whole site — protect from disturbance.' },
-  { id: 'profile-boards',          category: 'site-setout', label: 'Profile boards for a foundation',    summary: 'Position, level, string-line offsets.' },
-  { id: 'setout-rectangle',        category: 'site-setout', label: 'Set out a rectangular slab',         summary: '3-4-5 rule, diagonal check, string lines.' },
-  { id: 'setout-lshape-slab',      category: 'site-setout', label: 'Set out an L-shape or T-shape slab', summary: 'Break into rectangles, square each, check all diagonals.' },
-  { id: 'peg-foundation-corners',  category: 'site-setout', label: 'Peg foundation corners from profile boards', summary: 'Plumb from string intersections down to dig-line pegs.' },
-  { id: 'setout-piles',            category: 'site-setout', label: 'Set out for concrete piles or pads', summary: 'Grid positions from profile boards, depth to good ground.' },
-  { id: 'setout-garage-slab',      category: 'site-setout', label: 'Set out a garage slab with door recess', summary: 'Perimeter, door rebate, thickened edge under wall lines.' },
+  { id: 'check-boundary-setbacks', category: 'site-setout', label: 'Check setbacks from boundary pegs',  summary: 'Verify title-plan offsets before you commit a single peg.' },
+  { id: 'profile-boards',          category: 'site-setout', label: 'Set up profile boards + peg the corners', summary: 'Datum peg, level rails, string lines, drop corner pegs.' },
+  { id: 'setout-slab',             category: 'site-setout', label: 'Set out a slab (rectangle, L, or T)', summary: '3-4-5 rule, diagonal check, break L / T into rectangles.' },
+  { id: 'setout-piles',            category: 'site-setout', label: 'Set out for piles or pier pads',      summary: 'Grid positions from profile boards, depth to good ground.' },
   { id: 'snap-wall-lines',         category: 'site-setout', label: 'Snap wall lines on a fresh slab',    summary: 'Chalk out bottom-plate positions before framing starts.' },
   { id: 'setout-driveway-falls',   category: 'site-setout', label: 'Set falls for a driveway or path',   summary: 'Long-fall, cross-fall, high point + low point pegs.' },
 

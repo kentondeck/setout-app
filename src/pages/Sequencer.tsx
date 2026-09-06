@@ -2144,8 +2144,6 @@ export function Sequencer() {
   }
 
   // ── Library view ───────────────────────────────────────────────────────────
-  const readyCount = JOBS.filter(j => j[regionKey]).length;
-
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <CalcHeader title="Sequencer" />
@@ -2153,12 +2151,10 @@ export function Sequencer() {
       <div style={{ padding: '0 20px 32px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p style={{ margin: '0 4px 8px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
           Step-by-step guides for common jobs, written for {settings.region} practice.
-          {' '}{readyCount} of {JOBS.length} ready — more added as they get written up.
         </p>
 
         {CATEGORIES.map(cat => {
           const catJobs = JOBS.filter(j => j.category === cat.key);
-          const catReady = catJobs.filter(j => j[regionKey]).length;
           const open = openCategory === cat.key;
           return (
             <div key={cat.key} style={{ ...cardStyle, overflow: 'hidden' }}>
@@ -2180,9 +2176,7 @@ export function Sequencer() {
                     marginTop: 2, fontSize: 11.5, color: 'var(--color-muted)',
                     letterSpacing: '-0.1px',
                   }}>
-                    {catReady > 0
-                      ? `${catReady} of ${catJobs.length} ready`
-                      : `${catJobs.length} coming`}
+                    {catJobs.length} {catJobs.length === 1 ? 'job' : 'jobs'}
                   </div>
                 </div>
                 <svg

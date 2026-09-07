@@ -1286,6 +1286,24 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingDraft, setEditingDraft] = useState('');
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+
+  // Auto-reset the "tap again to delete" state after 3 s so a stale
+  // confirm state doesn't linger and catch a next-tap by accident.
+  useEffect(() => {
+    if (!confirmingDeleteId) return;
+    const t = setTimeout(() => setConfirmingDeleteId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmingDeleteId]);
+
+  function handleDeleteClick(photoId: string) {
+    if (confirmingDeleteId === photoId) {
+      removePhoto(photoId);
+      setConfirmingDeleteId(null);
+    } else {
+      setConfirmingDeleteId(photoId);
+    }
+  }
 
   async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1492,13 +1510,17 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
                       {new Date(photo.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
                     <button
-                      onClick={() => removePhoto(photo.id)}
+                      onClick={() => handleDeleteClick(photo.id)}
                       style={{
-                        background: 'none', border: 'none', padding: '4px 0',
-                        color: 'var(--color-muted)', fontSize: 12,
+                        background: 'none', border: 'none', padding: '4px 8px',
+                        borderRadius: 6,
+                        color: confirmingDeleteId === photo.id ? '#fff' : 'var(--color-muted)',
+                        backgroundColor: confirmingDeleteId === photo.id ? '#e53e3e' : 'transparent',
+                        fontSize: 12, fontWeight: confirmingDeleteId === photo.id ? 600 : 400,
                         cursor: 'pointer', fontFamily: 'inherit',
+                        transition: 'background-color 0.15s ease, color 0.15s ease',
                       }}
-                    >Delete</button>
+                    >{confirmingDeleteId === photo.id ? 'Tap again to confirm' : 'Delete'}</button>
                   </div>
                 </div>
               ))

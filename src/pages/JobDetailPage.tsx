@@ -613,7 +613,7 @@ function OrderCard({ entries, job, updateJob }: {
 }) {
   const [bufferPct, setBufferPct] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [listExpanded, setListExpanded] = useState(true);
+  const [listExpanded, setListExpanded] = useState(false);
 
   const order = applyManualEdits(buildJobOrder(entries), job);
   const itemCount = order.timber.length + order.concrete.length + order.fixings.length + order.other.length;

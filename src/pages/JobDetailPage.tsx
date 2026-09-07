@@ -1454,7 +1454,14 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
                 <button
                   onClick={closeSheet}
                   aria-label="Close"
-                  style={{ background: 'none', border: 'none', padding: 6, cursor: 'pointer', color: 'var(--color-muted)', fontSize: 20, lineHeight: 1 }}
+                  style={{
+                    background: 'var(--color-bg)', border: 'none',
+                    width: 36, height: 36, borderRadius: 999,
+                    cursor: 'pointer', color: 'var(--color-text)',
+                    fontSize: 24, lineHeight: 1, fontWeight: 400,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 0,
+                  }}
                 >×</button>
               </div>
               <button

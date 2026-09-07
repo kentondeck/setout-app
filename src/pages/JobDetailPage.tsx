@@ -613,9 +613,11 @@ function OrderCard({ entries, job, updateJob }: {
 }) {
   const [bufferPct, setBufferPct] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [listExpanded, setListExpanded] = useState(true);
 
   const order = applyManualEdits(buildJobOrder(entries), job);
-  const hasLines = order.timber.length + order.concrete.length + order.fixings.length + order.other.length > 0;
+  const itemCount = order.timber.length + order.concrete.length + order.fixings.length + order.other.length;
+  const hasLines = itemCount > 0;
 
   function handleLineChange(id: string, changes: { name?: string; unit?: string; qty?: number }) {
     const updates: Partial<SavedJob> = {};
@@ -719,40 +721,59 @@ function OrderCard({ entries, job, updateJob }: {
       </div>
 
       <div style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)', boxShadow: '0 1px 2px rgba(0,0,0,0.025)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '13px 14px 8px' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--color-text)' }}>Order</span>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-orange)' }}>
-            {bufferPct === 0 ? 'No buffer' : `+${bufferPct}% buffer applied`}
+        <button
+          onClick={() => setListExpanded(v => !v)}
+          aria-expanded={listExpanded}
+          style={{
+            width: '100%', background: 'none', border: 'none',
+            padding: '13px 14px', cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--color-text)' }}>
+            Order · {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </span>
-        </div>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-orange)' }}>
+              {bufferPct === 0 ? 'No buffer' : `+${bufferPct}% buffer`}
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: listExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </button>
 
-        {order.timber.length > 0 && (
+        {listExpanded && (
           <>
-            <OrderGroupLabel>Timber</OrderGroupLabel>
-            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.concrete.length > 0 && (
-          <>
-            <OrderGroupLabel>Concrete</OrderGroupLabel>
-            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.fixings.length > 0 && (
-          <>
-            <OrderGroupLabel>Fixings</OrderGroupLabel>
-            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.other.length > 0 && (
-          <>
-            <OrderGroupLabel>Other</OrderGroupLabel>
-            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+            {order.timber.length > 0 && (
+              <>
+                <OrderGroupLabel>Timber</OrderGroupLabel>
+                {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.concrete.length > 0 && (
+              <>
+                <OrderGroupLabel>Concrete</OrderGroupLabel>
+                {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.fixings.length > 0 && (
+              <>
+                <OrderGroupLabel>Fixings</OrderGroupLabel>
+                {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.other.length > 0 && (
+              <>
+                <OrderGroupLabel>Other</OrderGroupLabel>
+                {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
           </>
         )}
 
         {order.timberLinealM > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: 'rgba(255,90,31,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: 'rgba(255,90,31,0.05)', borderTop: listExpanded ? 'none' : '0.5px solid var(--color-border)' }}>
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>Timber total</span>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
               {applyBuffer(order.timberLinealM, bufferPct)} lm

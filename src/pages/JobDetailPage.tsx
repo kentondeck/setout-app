@@ -654,31 +654,38 @@ function OrderCard({ entries, job, updateJob }: {
   const orderText = formatOrderText(order, job.name, bufferPct);
 
   async function handleShare() {
-    const dialogTitle = `Order — ${job.name || 'Job'}`;
+    const subject = `Order — ${job.name || 'Job'}`;
 
-    // Try Capacitor Share unconditionally — even in dev mode where the app
-    // loads from the LAN URL and Capacitor reports platform 'web', the native
-    // plugin bridge is still injected and the call routes through it.
+    // 1) Native iOS/Android share sheet via Capacitor — lets tradie pick
+    //    Mail / Messages / WhatsApp / AirDrop. Even in dev mode (LAN URL,
+    //    platform reports 'web'), the plugin bridge is injected and the
+    //    call routes through it.
     try {
       const { Share } = await import('@capacitor/share');
-      await Share.share({ title: dialogTitle, text: orderText, dialogTitle });
+      await Share.share({ title: subject, text: orderText, dialogTitle: subject });
       return;
     } catch (err) {
       const msg = (err as Error)?.message ?? '';
       if (msg.toLowerCase().includes('cancel')) return;
-      // Plugin missing or unimplemented — fall through to Web Share / clipboard.
+      // Plugin missing or unimplemented — fall through to browser paths.
     }
 
+    // 2) Web Share API (Safari + Chrome mobile, some desktops)
     if (navigator.share) {
       try {
-        await navigator.share({ title: dialogTitle, text: orderText });
+        await navigator.share({ title: subject, text: orderText });
         return;
       } catch (err) {
         if ((err as Error)?.name === 'AbortError') return;
       }
     }
 
-    handleCopy();
+    // 3) Desktop web + anywhere Share isn't available — open the user's
+    //    email client with the order pre-filled. They add the supplier's
+    //    address in the To: field and hit send. "Send to supplier" should
+    //    do something send-like everywhere; silently copying isn't that.
+    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(orderText)}`;
+    window.location.href = mailto;
   }
 
   function handleCopy() {

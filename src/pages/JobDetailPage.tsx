@@ -1143,7 +1143,7 @@ export function JobDetailPage() {
       </div>
 
       {/* Notes card */}
-      <div style={{ padding: '16px 18px 14px' }}>
+      <div style={{ padding: '16px 18px 8px' }}>
         <button
           onClick={openNotesSheet}
           onPointerDown={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
@@ -1170,7 +1170,6 @@ export function JobDetailPage() {
           </span>
         </button>
       </div>
-
 
       {/* Photos + comments */}
       <JobPhotosSection jobId={job.id} />
@@ -1282,9 +1281,14 @@ export function JobDetailPage() {
 
 // ─── Photos + comments ───────────────────────────────────────────────────────
 
+// Compact trigger button that lives on the Job Detail page, alongside the
+// Notes card. Tapping it opens a full-height bottom sheet with the actual
+// photo management UI — matching the app's existing sheet pattern for
+// Notes / Rename / Delete so the vertical stack on the Job Detail page
+// stays tidy.
 function JobPhotosSection({ jobId }: { jobId: string }) {
   const { photos, addPhoto, updateComment, removePhoto } = useJobPhotos(jobId);
-  const [expanded, setExpanded] = useState(false);
+  const [showSheet, setShowSheet] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [pendingComment, setPendingComment] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -1295,8 +1299,8 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
-  // Auto-reset the "tap again to delete" state after 3 s so a stale
-  // confirm state doesn't linger and catch a next-tap by accident.
+  // Auto-reset the "tap again to delete" state so a stale confirm doesn't
+  // linger between sheet opens.
   useEffect(() => {
     if (!confirmingDeleteId) return;
     const t = setTimeout(() => setConfirmingDeleteId(null), 3000);
@@ -1320,7 +1324,7 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
     setError('');
     try {
       setPendingPhoto(await compressImageFile(file));
-      setExpanded(true);
+      setShowSheet(true);
     } catch {
       setError('Could not process that image — try another photo');
     } finally {
@@ -1355,8 +1359,21 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
     setEditingDraft('');
   }
 
+  function closeSheet() {
+    setShowSheet(false);
+    setEditingId(null);
+    setEditingDraft('');
+    setConfirmingDeleteId(null);
+    if (pendingPhoto && !pendingComment) {
+      // If they opened the picker but never saved, treat sheet-dismiss
+      // as discarding the pending photo. Comment-typed drafts survive
+      // so re-opening still has their work.
+      setPendingPhoto(null);
+    }
+  }
+
   return (
-    <div style={{ padding: '0 18px 14px' }}>
+    <>
       <input
         ref={fileInputRef}
         type="file"
@@ -1366,182 +1383,216 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
         style={{ display: 'none' }}
       />
 
-      {/* Header: expand toggle + add button */}
-      <div style={{
-        background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-        borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.025)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'stretch' }}>
-          <button
-            onClick={() => setExpanded(e => !e)}
-            style={{
-              flex: 1, background: 'none', border: 'none', padding: '12px 14px',
-              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-              fontFamily: 'inherit', textAlign: 'left',
-            }}
-            aria-expanded={expanded}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-              <circle cx="12" cy="13" r="4" />
-            </svg>
-            <span style={{ fontSize: 13.5, letterSpacing: '-0.2px', color: 'var(--color-text)', fontWeight: 500 }}>
-              Photos
-            </span>
-            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-              {photos.length === 0 ? 'Add on-site photos + comments' : `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`}
-            </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={processing}
-            style={{
-              padding: '0 16px', background: 'none', border: 'none',
-              borderLeft: '0.5px solid var(--color-border)',
-              color: 'var(--color-orange)', fontSize: 13, fontWeight: 500,
-              cursor: processing ? 'wait' : 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', gap: 5,
-            }}
-          >
-            {processing ? '…' : (
-              <>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Add
-              </>
-            )}
-          </button>
-        </div>
-
-        {expanded && (
-          <div style={{ borderTop: '0.5px solid var(--color-border)', padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Pending photo pre-save form */}
-            {pendingPhoto && (
-              <div style={{ background: 'var(--color-bg)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ position: 'relative' }}>
-                  <img src={pendingPhoto} alt="Pending" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-                  <button
-                    onClick={() => { setPendingPhoto(null); setPendingComment(''); }}
-                    aria-label="Discard photo"
-                    style={{
-                      position: 'absolute', top: 8, right: 8,
-                      width: 28, height: 28, borderRadius: 999,
-                      background: 'rgba(0,0,0,0.65)', color: '#fff',
-                      border: 'none', fontSize: 16, cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >×</button>
-                </div>
-                <textarea
-                  value={pendingComment}
-                  onChange={e => setPendingComment(e.target.value)}
-                  placeholder="Add a comment (optional)…"
-                  rows={2}
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
-                    background: '#fff', border: '0.5px solid var(--color-border)',
-                    borderRadius: 8, padding: '8px 10px',
-                    resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
-                  }}
-                />
-                <button
-                  onClick={handleSaveNewPhoto}
-                  style={{
-                    padding: '10px 12px', borderRadius: 10,
-                    background: 'var(--color-orange)', color: '#fff', border: 'none',
-                    fontSize: 13, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer',
-                  }}
-                >Save photo</button>
-              </div>
-            )}
-
-            {error && <p style={{ margin: 0, fontSize: 12, color: '#c72a2a' }}>{error}</p>}
-
-            {photos.length === 0 && !pendingPhoto ? (
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', lineHeight: 1.5, padding: '6px 4px' }}>
-                No photos yet. Tap Add to snap or upload one.
-              </p>
-            ) : (
-              photos.map(photo => (
-                <div key={photo.id} style={{ background: 'var(--color-bg)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <button
-                    onClick={() => setViewerPhoto(photo.dataUrl)}
-                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
-                  >
-                    <img src={photo.dataUrl} alt="" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
-                  </button>
-
-                  {editingId === photo.id ? (
-                    <>
-                      <textarea
-                        value={editingDraft}
-                        onChange={e => setEditingDraft(e.target.value)}
-                        rows={2}
-                        style={{
-                          width: '100%', boxSizing: 'border-box',
-                          fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
-                          background: '#fff', border: '0.5px solid var(--color-border)',
-                          borderRadius: 8, padding: '8px 10px',
-                          resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
-                        }}
-                      />
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={saveEdit}
-                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'var(--color-orange)', color: '#fff', border: 'none', fontSize: 12.5, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
-                        >Save</button>
-                        <button
-                          onClick={() => { setEditingId(null); setEditingDraft(''); }}
-                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'none', color: 'var(--color-muted)', border: '0.5px solid var(--color-border)', fontSize: 12.5, fontFamily: 'inherit', cursor: 'pointer' }}
-                        >Cancel</button>
-                      </div>
-                    </>
-                  ) : (
-                    <p
-                      onClick={() => startEdit(photo.id, photo.comment)}
-                      style={{
-                        margin: 0, fontSize: 13.5, lineHeight: 1.5, letterSpacing: '-0.1px',
-                        color: photo.comment ? 'var(--color-text)' : 'var(--color-muted)',
-                        whiteSpace: 'pre-wrap', cursor: 'text', padding: '4px 2px',
-                      }}
-                    >{photo.comment || 'Tap to add a comment…'}</p>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                      {new Date(photo.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
-                    <button
-                      onClick={() => handleDeleteClick(photo.id)}
-                      style={{
-                        background: 'none', border: 'none', padding: '4px 8px',
-                        borderRadius: 6,
-                        color: confirmingDeleteId === photo.id ? '#fff' : 'var(--color-muted)',
-                        backgroundColor: confirmingDeleteId === photo.id ? '#e53e3e' : 'transparent',
-                        fontSize: 12, fontWeight: confirmingDeleteId === photo.id ? 600 : 400,
-                        cursor: 'pointer', fontFamily: 'inherit',
-                        transition: 'background-color 0.15s ease, color 0.15s ease',
-                      }}
-                    >{confirmingDeleteId === photo.id ? 'Tap again to confirm' : 'Delete'}</button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+      {/* Compact trigger row on the Job Detail page */}
+      <div style={{ padding: '0 18px 14px' }}>
+        <button
+          onClick={() => setShowSheet(true)}
+          style={{
+            width: '100%', background: 'var(--color-card)',
+            border: '0.5px solid var(--color-border)',
+            borderRadius: 14, padding: '12px 14px',
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            fontFamily: 'inherit', textAlign: 'left',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.025)',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span style={{
+            flex: 1, fontSize: 13.5, letterSpacing: '-0.2px',
+            color: photos.length ? 'var(--color-text)' : 'var(--color-muted)',
+          }}>
+            {photos.length === 0
+              ? 'Add on-site photos + comments'
+              : `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--color-orange)', fontWeight: 500 }}>Open</span>
+        </button>
       </div>
+
+      {/* Photos bottom sheet */}
+      {showSheet && (
+        <>
+          <div onClick={closeSheet} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 390, height: '85vh',
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            display: 'flex', flexDirection: 'column',
+            zIndex: 201,
+          }}>
+            {/* Fixed header */}
+            <div style={{ padding: '10px 20px 12px', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.4px' }}>
+                  Photos {photos.length > 0 && <span style={{ fontWeight: 400, color: 'var(--color-muted)', fontSize: 15 }}>· {photos.length}</span>}
+                </h2>
+                <button
+                  onClick={closeSheet}
+                  aria-label="Close"
+                  style={{ background: 'none', border: 'none', padding: 6, cursor: 'pointer', color: 'var(--color-muted)', fontSize: 20, lineHeight: 1 }}
+                >×</button>
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processing}
+                style={{
+                  padding: '11px', borderRadius: 12, border: 'none',
+                  background: 'var(--color-orange)', color: '#fff',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                  cursor: processing ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                {processing ? 'Processing…' : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Add photo
+                  </>
+                )}
+              </button>
+              {error && <p style={{ margin: 0, fontSize: 12, color: '#c72a2a' }}>{error}</p>}
+            </div>
+
+            {/* Scrollable body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px calc(env(safe-area-inset-bottom) + 20px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Pending photo pre-save form */}
+              {pendingPhoto && (
+                <div style={{ background: 'rgba(255,90,31,0.06)', border: '0.5px solid rgba(255,90,31,0.25)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ position: 'relative' }}>
+                    <img src={pendingPhoto} alt="Pending" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                    <button
+                      onClick={() => { setPendingPhoto(null); setPendingComment(''); }}
+                      aria-label="Discard photo"
+                      style={{
+                        position: 'absolute', top: 8, right: 8,
+                        width: 28, height: 28, borderRadius: 999,
+                        background: 'rgba(0,0,0,0.65)', color: '#fff',
+                        border: 'none', fontSize: 16, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >×</button>
+                  </div>
+                  <textarea
+                    value={pendingComment}
+                    onChange={e => setPendingComment(e.target.value)}
+                    placeholder="Add a comment (optional)…"
+                    rows={2}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
+                      background: '#fff', border: '0.5px solid var(--color-border)',
+                      borderRadius: 8, padding: '8px 10px',
+                      resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveNewPhoto}
+                    style={{
+                      padding: '10px 12px', borderRadius: 10,
+                      background: 'var(--color-orange)', color: '#fff', border: 'none',
+                      fontSize: 13, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >Save photo</button>
+                </div>
+              )}
+
+              {photos.length === 0 && !pendingPhoto ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                    No photos yet.<br />Snap a photo of the site or a spec detail — add a comment so future-you remembers what it was for.
+                  </p>
+                </div>
+              ) : (
+                photos.map(photo => (
+                  <div key={photo.id} style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: 10, display: 'flex', gap: 10 }}>
+                    <button
+                      onClick={() => setViewerPhoto(photo.dataUrl)}
+                      aria-label="View full-screen"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'zoom-in', flexShrink: 0 }}
+                    >
+                      <img src={photo.dataUrl} alt="" style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                    </button>
+
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {editingId === photo.id ? (
+                        <>
+                          <textarea
+                            value={editingDraft}
+                            onChange={e => setEditingDraft(e.target.value)}
+                            rows={3}
+                            autoFocus
+                            style={{
+                              width: '100%', boxSizing: 'border-box',
+                              fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)',
+                              background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
+                              borderRadius: 8, padding: '6px 8px',
+                              resize: 'vertical', outline: 'none', lineHeight: 1.4,
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={saveEdit}
+                              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, background: 'var(--color-orange)', color: '#fff', border: 'none', fontSize: 12, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+                            >Save</button>
+                            <button
+                              onClick={() => { setEditingId(null); setEditingDraft(''); }}
+                              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, background: 'none', color: 'var(--color-muted)', border: '0.5px solid var(--color-border)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}
+                            >Cancel</button>
+                          </div>
+                        </>
+                      ) : (
+                        <p
+                          onClick={() => startEdit(photo.id, photo.comment)}
+                          style={{
+                            margin: 0, fontSize: 13, lineHeight: 1.4, letterSpacing: '-0.1px',
+                            color: photo.comment ? 'var(--color-text)' : 'var(--color-muted)',
+                            whiteSpace: 'pre-wrap', cursor: 'text',
+                            flex: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: 'vertical' as const,
+                            overflow: 'hidden',
+                          } as React.CSSProperties}
+                        >{photo.comment || 'Tap to add a comment…'}</p>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          {new Date(photo.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteClick(photo.id)}
+                          style={{
+                            background: confirmingDeleteId === photo.id ? '#e53e3e' : 'transparent',
+                            border: 'none', padding: '4px 8px', borderRadius: 6,
+                            color: confirmingDeleteId === photo.id ? '#fff' : 'var(--color-muted)',
+                            fontSize: 11.5, fontWeight: confirmingDeleteId === photo.id ? 600 : 400,
+                            cursor: 'pointer', fontFamily: 'inherit',
+                            transition: 'background-color 0.15s ease, color 0.15s ease',
+                          }}
+                        >{confirmingDeleteId === photo.id ? 'Tap again' : 'Delete'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Full-screen photo viewer */}
       {viewerPhoto && (
         <div
           onClick={() => setViewerPhoto(null)}
           style={{
-            position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.92)',
+            position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.92)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 'calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px)',
             cursor: 'zoom-out',
@@ -1550,7 +1601,7 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
           <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 6 }} />
         </div>
       )}
-    </div>
+    </>
   );
 }
 

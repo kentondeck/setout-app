@@ -690,10 +690,48 @@ function OrderCard({ entries, job, updateJob }: {
     window.location.href = mailto;
   }
 
-  function handleCopy() {
-    navigator.clipboard?.writeText(orderText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    let ok = false;
+
+    // Preferred path — needs a secure context (HTTPS or localhost).
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(orderText);
+        ok = true;
+      } catch {
+        // Permission denied / not focused / etc. — fall through to legacy.
+      }
+    }
+
+    // Legacy fallback for HTTP dev + older WebViews. execCommand is
+    // deprecated but still works everywhere the modern API doesn't.
+    if (!ok) {
+      const ta = document.createElement('textarea');
+      ta.value = orderText;
+      ta.setAttribute('readonly', '');
+      // Keep it off-screen but not display:none, or the browser won't
+      // select from it.
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(ta);
+    }
+
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      // Both paths failed — surface it so the user isn't fooled by a
+      // fake success indicator. Rare on the actual app (HTTPS + real
+      // WebView) but possible in dev-mode preview.
+      alert('Could not copy to clipboard on this device — try Send to supplier instead.');
+    }
   }
 
   return (

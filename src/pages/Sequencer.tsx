@@ -1,6 +1,7 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { SettingsContext } from '../contexts';
+import { useJobNotes, compressImageFile } from '../lib/useJobNotes';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -2088,6 +2089,47 @@ export function Sequencer() {
   const activeJob = activeJobId ? JOBS.find(j => j.id === activeJobId) : null;
   const activeDetail = activeJob?.[regionKey];
 
+  const { notes, addNote, removeNote } = useJobNotes(activeJobId);
+  const [noteText, setNoteText] = useState('');
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [noteError, setNoteError] = useState('');
+  const [processingPhoto, setProcessingPhoto] = useState(false);
+  const notePhotoInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleNotePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setProcessingPhoto(true);
+    setNoteError('');
+    try {
+      const compressed = await compressImageFile(file);
+      setPendingPhoto(compressed);
+    } catch {
+      setNoteError('Could not process that image — try another photo');
+    } finally {
+      setProcessingPhoto(false);
+    }
+  }
+
+  function handleSaveNote() {
+    const trimmed = noteText.trim();
+    if (!trimmed && !pendingPhoto) return;
+    try {
+      addNote(trimmed, pendingPhoto ?? undefined);
+      setNoteText('');
+      setPendingPhoto(null);
+      setNoteError('');
+    } catch (err) {
+      // localStorage quota exceeded — most likely with many photos
+      setNoteError(
+        err instanceof Error && err.name === 'QuotaExceededError'
+          ? 'Storage is full — delete some older notes to add more.'
+          : 'Could not save the note — try again.'
+      );
+    }
+  }
+
   // ── Job-detail view ────────────────────────────────────────────────────────
   if (activeJob && activeDetail) {
     return (
@@ -2168,6 +2210,138 @@ export function Sequencer() {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* ─── My notes ────────────────────────────────────────────────────── */}
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', margin: '4px 4px 0' }}>
+              <p style={labelStyle}>My notes</p>
+              {notes.length > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{notes.length}</span>
+              )}
+            </div>
+
+            <input
+              ref={notePhotoInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleNotePhotoChange}
+              style={{ display: 'none' }}
+            />
+
+            <div style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {pendingPhoto && (
+                <div style={{ position: 'relative' }}>
+                  <img
+                    src={pendingPhoto}
+                    alt="Note attachment"
+                    style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 10, display: 'block' }}
+                  />
+                  <button
+                    onClick={() => setPendingPhoto(null)}
+                    aria-label="Remove photo"
+                    style={{
+                      position: 'absolute', top: 8, right: 8,
+                      width: 28, height: 28, borderRadius: 999,
+                      background: 'rgba(0,0,0,0.65)', color: '#fff',
+                      border: 'none', fontSize: 16, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >×</button>
+                </div>
+              )}
+
+              <textarea
+                value={noteText}
+                onChange={e => setNoteText(e.target.value)}
+                placeholder="Add a note for this job — what worked, what to watch out for, a spec you don't want to forget…"
+                rows={3}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
+                  background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 10, padding: '10px 12px',
+                  resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
+                }}
+              />
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => notePhotoInputRef.current?.click()}
+                  disabled={processingPhoto}
+                  style={{
+                    flex: 1, padding: '10px 12px', borderRadius: 10,
+                    background: 'var(--color-bg)', color: 'var(--color-text)',
+                    border: '0.5px solid var(--color-border)',
+                    fontSize: 13, fontFamily: 'inherit', fontWeight: 500,
+                    cursor: processingPhoto ? 'wait' : 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
+                  </svg>
+                  {processingPhoto ? 'Processing…' : pendingPhoto ? 'Replace photo' : 'Add photo'}
+                </button>
+
+                <button
+                  onClick={handleSaveNote}
+                  disabled={!noteText.trim() && !pendingPhoto}
+                  style={{
+                    flex: 1, padding: '10px 12px', borderRadius: 10,
+                    background: (!noteText.trim() && !pendingPhoto) ? 'var(--color-border)' : 'var(--color-orange)',
+                    color: '#fff', border: 'none',
+                    fontSize: 13, fontFamily: 'inherit', fontWeight: 600,
+                    cursor: (!noteText.trim() && !pendingPhoto) ? 'default' : 'pointer',
+                    letterSpacing: '-0.1px',
+                  }}
+                >
+                  Save note
+                </button>
+              </div>
+
+              {noteError && (
+                <p style={{ margin: 0, fontSize: 12, color: '#c72a2a' }}>{noteError}</p>
+              )}
+            </div>
+
+            {notes.length === 0 ? (
+              <p style={{ margin: '0 4px 4px', fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', lineHeight: 1.5 }}>
+                Your notes + photos on this job live here. Only visible on this device.
+              </p>
+            ) : (
+              notes.map(note => (
+                <div key={note.id} style={{ ...cardStyle, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {note.photo && (
+                    <img
+                      src={note.photo}
+                      alt=""
+                      style={{ width: '100%', maxHeight: 320, objectFit: 'cover', borderRadius: 10, display: 'block' }}
+                    />
+                  )}
+                  {note.text && (
+                    <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-text)', lineHeight: 1.5, letterSpacing: '-0.1px', whiteSpace: 'pre-wrap' }}>
+                      {note.text}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                      {new Date(note.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() => removeNote(note.id)}
+                      style={{
+                        background: 'none', border: 'none', padding: '4px 0',
+                        color: 'var(--color-muted)', fontSize: 12,
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >Delete</button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

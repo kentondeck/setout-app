@@ -6,6 +6,7 @@ import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
+import { useJobPhotos, compressImageFile } from '../lib/useJobPhotos';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
@@ -1164,6 +1165,9 @@ export function JobDetailPage() {
       </div>
 
 
+      {/* Photos + comments */}
+      <JobPhotosSection jobId={job.id} />
+
       {/* Consolidated order */}
       {calculations.length > 0 && <OrderCard entries={calculations} job={job} updateJob={updateJob} />}
 
@@ -1264,6 +1268,258 @@ export function JobDetailPage() {
             </button>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+// ─── Photos + comments ───────────────────────────────────────────────────────
+
+function JobPhotosSection({ jobId }: { jobId: string }) {
+  const { photos, addPhoto, updateComment, removePhoto } = useJobPhotos(jobId);
+  const [expanded, setExpanded] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [pendingComment, setPendingComment] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState('');
+  const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
+
+  async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setProcessing(true);
+    setError('');
+    try {
+      setPendingPhoto(await compressImageFile(file));
+      setExpanded(true);
+    } catch {
+      setError('Could not process that image — try another photo');
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  function handleSaveNewPhoto() {
+    if (!pendingPhoto) return;
+    try {
+      addPhoto(pendingPhoto, pendingComment.trim());
+      setPendingPhoto(null);
+      setPendingComment('');
+      setError('');
+    } catch (err) {
+      setError(
+        err instanceof Error && err.name === 'QuotaExceededError'
+          ? 'Storage is full — delete some older photos to add more.'
+          : 'Could not save the photo — try again.'
+      );
+    }
+  }
+
+  function startEdit(photoId: string, current: string) {
+    setEditingId(photoId);
+    setEditingDraft(current);
+  }
+
+  function saveEdit() {
+    if (editingId) updateComment(editingId, editingDraft.trim());
+    setEditingId(null);
+    setEditingDraft('');
+  }
+
+  return (
+    <div style={{ padding: '0 18px 14px' }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoFile}
+        style={{ display: 'none' }}
+      />
+
+      {/* Header: expand toggle + add button */}
+      <div style={{
+        background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+        borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 2px rgba(0,0,0,0.025)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
+          <button
+            onClick={() => setExpanded(e => !e)}
+            style={{
+              flex: 1, background: 'none', border: 'none', padding: '12px 14px',
+              display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+              fontFamily: 'inherit', textAlign: 'left',
+            }}
+            aria-expanded={expanded}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+            <span style={{ fontSize: 13.5, letterSpacing: '-0.2px', color: 'var(--color-text)', fontWeight: 500 }}>
+              Photos
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+              {photos.length === 0 ? 'Add on-site photos + comments' : `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`}
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', flexShrink: 0, transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={processing}
+            style={{
+              padding: '0 16px', background: 'none', border: 'none',
+              borderLeft: '0.5px solid var(--color-border)',
+              color: 'var(--color-orange)', fontSize: 13, fontWeight: 500,
+              cursor: processing ? 'wait' : 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            {processing ? '…' : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Add
+              </>
+            )}
+          </button>
+        </div>
+
+        {expanded && (
+          <div style={{ borderTop: '0.5px solid var(--color-border)', padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Pending photo pre-save form */}
+            {pendingPhoto && (
+              <div style={{ background: 'var(--color-bg)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ position: 'relative' }}>
+                  <img src={pendingPhoto} alt="Pending" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                  <button
+                    onClick={() => { setPendingPhoto(null); setPendingComment(''); }}
+                    aria-label="Discard photo"
+                    style={{
+                      position: 'absolute', top: 8, right: 8,
+                      width: 28, height: 28, borderRadius: 999,
+                      background: 'rgba(0,0,0,0.65)', color: '#fff',
+                      border: 'none', fontSize: 16, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >×</button>
+                </div>
+                <textarea
+                  value={pendingComment}
+                  onChange={e => setPendingComment(e.target.value)}
+                  placeholder="Add a comment (optional)…"
+                  rows={2}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
+                    background: '#fff', border: '0.5px solid var(--color-border)',
+                    borderRadius: 8, padding: '8px 10px',
+                    resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
+                  }}
+                />
+                <button
+                  onClick={handleSaveNewPhoto}
+                  style={{
+                    padding: '10px 12px', borderRadius: 10,
+                    background: 'var(--color-orange)', color: '#fff', border: 'none',
+                    fontSize: 13, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >Save photo</button>
+              </div>
+            )}
+
+            {error && <p style={{ margin: 0, fontSize: 12, color: '#c72a2a' }}>{error}</p>}
+
+            {photos.length === 0 && !pendingPhoto ? (
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', lineHeight: 1.5, padding: '6px 4px' }}>
+                No photos yet. Tap Add to snap or upload one.
+              </p>
+            ) : (
+              photos.map(photo => (
+                <div key={photo.id} style={{ background: 'var(--color-bg)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <button
+                    onClick={() => setViewerPhoto(photo.dataUrl)}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'zoom-in' }}
+                  >
+                    <img src={photo.dataUrl} alt="" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                  </button>
+
+                  {editingId === photo.id ? (
+                    <>
+                      <textarea
+                        value={editingDraft}
+                        onChange={e => setEditingDraft(e.target.value)}
+                        rows={2}
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
+                          background: '#fff', border: '0.5px solid var(--color-border)',
+                          borderRadius: 8, padding: '8px 10px',
+                          resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
+                        }}
+                      />
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={saveEdit}
+                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'var(--color-orange)', color: '#fff', border: 'none', fontSize: 12.5, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+                        >Save</button>
+                        <button
+                          onClick={() => { setEditingId(null); setEditingDraft(''); }}
+                          style={{ flex: 1, padding: '8px 12px', borderRadius: 8, background: 'none', color: 'var(--color-muted)', border: '0.5px solid var(--color-border)', fontSize: 12.5, fontFamily: 'inherit', cursor: 'pointer' }}
+                        >Cancel</button>
+                      </div>
+                    </>
+                  ) : (
+                    <p
+                      onClick={() => startEdit(photo.id, photo.comment)}
+                      style={{
+                        margin: 0, fontSize: 13.5, lineHeight: 1.5, letterSpacing: '-0.1px',
+                        color: photo.comment ? 'var(--color-text)' : 'var(--color-muted)',
+                        whiteSpace: 'pre-wrap', cursor: 'text', padding: '4px 2px',
+                      }}
+                    >{photo.comment || 'Tap to add a comment…'}</p>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                      {new Date(photo.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                    <button
+                      onClick={() => removePhoto(photo.id)}
+                      style={{
+                        background: 'none', border: 'none', padding: '4px 0',
+                        color: 'var(--color-muted)', fontSize: 12,
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >Delete</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Full-screen photo viewer */}
+      {viewerPhoto && (
+        <div
+          onClick={() => setViewerPhoto(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 'calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px)',
+            cursor: 'zoom-out',
+          }}
+        >
+          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 6 }} />
+        </div>
       )}
     </div>
   );

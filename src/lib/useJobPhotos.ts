@@ -1,23 +1,21 @@
 import { useCallback, useEffect, useState } from 'react';
 
-// Personal photo + text notes attached to a Sequencer job (e.g. "the way I
-// nailed off this brace panel on the Smith job"). Persisted to localStorage
-// per Sequencer job id so a tradie can build up their own field library
-// over time.
+// Photos + comments attached to a saved job (a real job in the Jobs list).
+// Kept in a per-job localStorage key rather than inside the SavedJob record
+// so many-photo jobs don't bloat the main sitehand_jobs blob.
 //
-// Photos are compressed on capture (canvas-resize + JPEG-encode) so a
-// phone photo that comes in at 3–5 MB shrinks to ~100–300 KB before it
-// hits storage — keeps us comfortably inside the 5 MB localStorage budget
-// for typical usage.
+// Photos are compressed on capture (canvas-resize + JPEG-encode) — a phone
+// photo that comes in at 3–5 MB shrinks to ~100–300 KB, so 15–30+ photos
+// fit inside the 5 MB per-key localStorage budget.
 
-export interface JobNote {
+export interface JobPhoto {
   id: string;
   timestamp: number;
-  text: string;
-  photo?: string; // data URL (image/jpeg), already compressed
+  dataUrl: string; // compressed JPEG data URL
+  comment: string;
 }
 
-const STORAGE_PREFIX = 'sitehand_jobnotes_';
+const STORAGE_PREFIX = 'sitehand_jobphotos_';
 const MAX_IMAGE_DIMENSION = 1400;
 const JPEG_QUALITY = 0.72;
 
@@ -25,7 +23,7 @@ function storageKey(jobId: string): string {
   return `${STORAGE_PREFIX}${jobId}`;
 }
 
-function loadNotes(jobId: string): JobNote[] {
+function loadPhotos(jobId: string): JobPhoto[] {
   try {
     const raw = localStorage.getItem(storageKey(jobId));
     if (!raw) return [];
@@ -36,13 +34,13 @@ function loadNotes(jobId: string): JobNote[] {
   }
 }
 
-function saveNotes(jobId: string, notes: JobNote[]): void {
-  localStorage.setItem(storageKey(jobId), JSON.stringify(notes));
+function savePhotos(jobId: string, photos: JobPhoto[]): void {
+  localStorage.setItem(storageKey(jobId), JSON.stringify(photos));
 }
 
 // Read the file, draw into a canvas at capped dimensions, re-encode as
 // JPEG. Returns a data URL small enough to sit in localStorage next to
-// dozens of other notes.
+// dozens of other photos.
 export async function compressImageFile(file: File): Promise<string> {
   const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -72,32 +70,39 @@ export async function compressImageFile(file: File): Promise<string> {
   return canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 }
 
-export function useJobNotes(jobId: string | null) {
-  const [notes, setNotes] = useState<JobNote[]>(() => (jobId ? loadNotes(jobId) : []));
+export function useJobPhotos(jobId: string | null | undefined) {
+  const [photos, setPhotos] = useState<JobPhoto[]>(() => (jobId ? loadPhotos(jobId) : []));
 
   useEffect(() => {
-    setNotes(jobId ? loadNotes(jobId) : []);
+    setPhotos(jobId ? loadPhotos(jobId) : []);
   }, [jobId]);
 
-  const addNote = useCallback((text: string, photo?: string) => {
+  const addPhoto = useCallback((dataUrl: string, comment: string) => {
     if (!jobId) return;
-    const note: JobNote = {
+    const photo: JobPhoto = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       timestamp: Date.now(),
-      text,
-      photo,
+      dataUrl,
+      comment,
     };
-    const next = [note, ...notes];
-    saveNotes(jobId, next);
-    setNotes(next);
-  }, [jobId, notes]);
+    const next = [photo, ...photos];
+    savePhotos(jobId, next);
+    setPhotos(next);
+  }, [jobId, photos]);
 
-  const removeNote = useCallback((noteId: string) => {
+  const updateComment = useCallback((photoId: string, comment: string) => {
     if (!jobId) return;
-    const next = notes.filter(n => n.id !== noteId);
-    saveNotes(jobId, next);
-    setNotes(next);
-  }, [jobId, notes]);
+    const next = photos.map(p => p.id === photoId ? { ...p, comment } : p);
+    savePhotos(jobId, next);
+    setPhotos(next);
+  }, [jobId, photos]);
 
-  return { notes, addNote, removeNote };
+  const removePhoto = useCallback((photoId: string) => {
+    if (!jobId) return;
+    const next = photos.filter(p => p.id !== photoId);
+    savePhotos(jobId, next);
+    setPhotos(next);
+  }, [jobId, photos]);
+
+  return { photos, addPhoto, updateComment, removePhoto };
 }

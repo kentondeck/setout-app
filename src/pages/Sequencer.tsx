@@ -572,8 +572,8 @@ const JOBS: Job[] = [
         },
         {
           title: 'Add nogs',
-          body: 'Cut and install a row of nogs between studs at roughly half wall-height (1100–1200 mm for a standard 2.4 m ceiling). Nogs stop studs twisting and give a fix for horizontal gib joins. Stagger up/down between bays so you can face-nail through the stud sides rather than end-nailing every one.',
-          watchFor: 'If you\'re fixing horizontal gib sheets, position the mid-nog line at exactly the sheet join height — measure from the floor, not the ceiling.',
+          body: 'Cut and install rows of nogs between studs at your desired height (usually to line up with horizontal gib joins). Nogs stop studs twisting and give a fix for the linings. Stagger up/down between bays so you can face-nail through the stud sides rather than end-nailing every one.',
+          watchFor: 'If you\'re fixing horizontal gib sheets, set the nog row at exactly the sheet join height — measure from the floor, not the ceiling.',
         },
       ],
     },
@@ -635,8 +635,8 @@ const JOBS: Job[] = [
         },
         {
           title: 'Add noggins',
-          body: 'Cut and install a row of noggins between studs at roughly half wall-height (1100–1200 mm for a standard 2.4 m ceiling). Noggins stop studs twisting and give a fixing line for horizontal plasterboard joins. Stagger up/down between bays so you can face-nail through the stud sides.',
-          watchFor: 'If you\'re fixing horizontal plasterboard sheets, position the mid-noggin row at exactly the sheet join — measure from the floor, not the ceiling.',
+          body: 'Cut and install a row of noggins between studs at roughly mid wall-height (1100–1200 mm for a standard 2.4 m ceiling). Noggins stop studs twisting and give a fixing line for horizontal plasterboard joins. Stagger up/down between bays so you can face-nail through the stud sides.',
+          watchFor: 'If you\'re fixing horizontal plasterboard sheets, position the noggin row at exactly the sheet join — measure from the floor, not the ceiling.',
         },
       ],
     },

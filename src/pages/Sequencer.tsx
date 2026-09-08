@@ -1288,40 +1288,6 @@ const JOBS: Job[] = [
       ],
     },
   },
-  {
-    id: 'install-sliding-door',
-    category: 'doors-windows',
-    label: 'Install a sliding aluminium door',
-    summary: 'Frame, threshold level, panels, roller adjust, interlock.',
-    nz: {
-      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Sealant gun', 'Utility knife', 'Rubber mallet', 'Screwdriver (for roller adjust)'],
-      materials: ['Sliding door unit (aluminium, 2- or 3-panel with fixed side/s)', 'Sill flashing (extruded metal, colour-matched)', 'Sill flashing tape (butyl)', 'Head flashing tape', 'Packers', 'Sealant (neutral-cure)', '75 mm bugle screws through frame flange', 'Handle + lock hardware (supplied)'],
-      steps: [
-        { title: 'Read the plan + manufacturer guide', body: 'Sliding door orientations (which panel slides, which is fixed) vary. Confirm the layout on the plan matches the ordered unit before fitting.', watchFor: 'A "reverse-hand" mistake — the sliding panel on the wrong side — means removing the whole unit and re-ordering. Confirm before installing.' },
-        { title: 'Verify rough opening', body: 'Frame external dim + 15 mm clearance each side. Diagonals must match to within 3 mm. Threshold must be dead level along the full length.', watchFor: 'A sliding door threshold that isn\'t level along the run = door rolls uphill in one direction. Every metre out matters.' },
-        { title: 'Fit sill flashing + tape', body: 'Extruded metal sill flashing into sill, sloped OUT 15°+. Butyl flashing tape over flashing + up each jamb 250 mm. Same detail as a window.', watchFor: 'Sliding doors have big thresholds that collect water. Get the flashing right or the frame rusts.' },
-        { title: 'Position frame in opening', body: 'Lift frame into opening — a 3-panel slider frame is 40–60 kg. Sit on sill packers. Plumb jambs, level head, level threshold in both directions.', watchFor: 'Frames flex during install — hold with props while you plumb. A twisted frame = panels won\'t seal.' },
-        { title: 'Screw frame flange to framing', body: 'Type 17s through flange into stud/head/sill at 300 mm c/c. Start at bottom corner, work around checking plumb + level.', watchFor: 'Overdriving warps the flange and cracks the seal. Snug — the frame should sit flat against the packers, not pulled tight.' },
-        { title: 'Install fixed panel/s + sliding panel', body: 'Fixed panels sit into the head + sill tracks first, secured with fixing brackets. Sliding panel lifts INTO the head track, then DROPS into the sill track (bottom-rolling) or hangs (top-hung).', watchFor: 'Trying to install the sliding panel by lifting into the sill track first won\'t work — the panel has to go into the head track first, then drop.' },
-        { title: 'Adjust rollers + interlock', body: 'Each roller (usually 2 per sliding panel) has an adjustment screw. Level the panel top edge, then adjust the interlock jamb closure so the sliding + fixed interlock meets fully.', watchFor: 'Sliding panels that don\'t interlock fully leak air + water at the meeting stile. Adjust until the interlock meets full-height with no gap.' },
-        { title: 'Tape head + jamb flashings + fit weatherseals', body: 'Head + jamb flashing tape over the frame flange + onto wrap (weather-lap direction). Fit the compression weatherseal into the frame channels.', watchFor: 'Missing head flashing tape is one of the top-3 sources of leaks in sliding doors. Head goes ON TOP OF jambs — check the water-shed direction.' },
-      ],
-    },
-    au: {
-      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Sealant gun', 'Utility knife', 'Rubber mallet', 'Screwdriver (roller adjust)'],
-      materials: ['Sliding door unit (aluminium, 2- or 3-panel) — BAL-rated in bushfire zones', 'Sill flashing (extruded, colour-matched)', 'Sill flashing tape (butyl)', 'Head flashing tape', 'Packers', 'Sealant (neutral-cure)', '75 mm Type 17 through frame flange', 'Handle + lock hardware (supplied)'],
-      steps: [
-        { title: 'Read the plan + manufacturer guide', body: 'Sliding orientations (which panel slides) vary — confirm plan matches ordered unit before fitting.', watchFor: '"Reverse-hand" mistake = sliding panel on wrong side = remove + re-order. Confirm before install.' },
-        { title: 'Verify rough opening', body: 'Frame external + 15 mm clearance each side. Diagonals match to 3 mm. Threshold dead level along full length.', watchFor: 'Un-level threshold = door rolls uphill one way. Every mm out matters.' },
-        { title: 'Fit sill flashing + tape', body: 'Extruded metal sill flashing, sloped OUT 15°+. Butyl flashing tape over flashing + up jambs 250 mm.', watchFor: 'Sliding door thresholds collect water. Get flashing right or the frame rusts.' },
-        { title: 'Position frame in opening', body: 'Lift into opening (3-panel frame is 40–60 kg). Sit on sill packers. Plumb jambs, level head + threshold both directions.', watchFor: 'Frames flex during install — prop while plumbing. Twisted frame = panels don\'t seal.' },
-        { title: 'Screw frame flange to framing', body: 'Type 17s through flange at 300 mm c/c. Start bottom corner, work around checking plumb + level.', watchFor: 'Overdriving warps flange + cracks seal. Snug, not pulled tight.' },
-        { title: 'Install fixed panels + sliding panel', body: 'Fixed panels into head + sill tracks first with brackets. Sliding panel INTO head track first, then DROPS into sill (bottom-rolling) or hangs (top-hung).', watchFor: 'Trying to install sliding panel by lifting into sill first won\'t work — head track first, then drop.' },
-        { title: 'Adjust rollers + interlock', body: 'Each roller has adjustment screw. Level panel top edge, adjust interlock jamb closure so sliding + fixed interlock meets fully.', watchFor: 'Un-fully-interlocked panels leak air + water at meeting stile. Full-height meet, no gap.' },
-        { title: 'Tape head + jamb flashings + weatherseals', body: 'Head + jamb flashing tape over frame flange onto wrap (weather-lap direction). Compression weatherseal into frame channels.', watchFor: 'Missing head flashing tape = top-3 leak source in sliding doors. Head goes ON TOP OF jambs — check water-shed direction.' },
-      ],
-    },
-  },
 
   // ─── Wet areas — install-side work (waterproofing is a licensed trade) ──
   {

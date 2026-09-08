@@ -973,38 +973,6 @@ const JOBS: Job[] = [
     },
   },
   {
-    id: 'install-tile-roof',
-    category: 'roofing-cladding',
-    label: 'Install a tile roof',
-    summary: 'Batten spacing to tile spec, courses up, ridge + hip caps.',
-    nz: {
-      tools: ['Tape', 'Chalk line', 'Wet saw or angle grinder with diamond blade', 'Hammer', 'Cordless drill', 'Ladder + edge protection', 'Trowel (if mortar-bedded ridge)'],
-      materials: ['Roof tiles: concrete (Monier, Bristile) or clay (Marley, Redland), profile per plan', 'Tile nails: hot-dipped galv 50×3.15 or manufacturer-spec\'d clip', 'Hip + ridge tiles (matching profile)', 'Valley trays (colorsteel or metal-lined)', 'Ridge / hip fixing: mortar bed OR dry-fix ridge system (Marley DryVent)', 'Sarking / underlay (breather type)', 'Anti-ponding board at eave'],
-      steps: [
-        { title: 'Confirm batten spacing matches tile', body: 'Every tile profile has its own batten gauge — concrete Monier is typically 335 mm, some clay tiles are 380 mm. Confirm from the tile spec sheet before ordering battens.', watchFor: 'Wrong batten gauge = whole roof of exposed courses that don\'t align. Order battens after confirming tile profile, not before.' },
-        { title: 'Install anti-ponding board at eave', body: 'The bottom row of tiles overhangs the underlay a little; anti-ponding board sits under the first tile to prevent water pooling on the underlay behind. Fix along eave line, level.', watchFor: 'Skipping the anti-ponding board = puddle behind first course = underlay rots out early.' },
-        { title: 'Position first course of tiles', body: 'Start at one end at eave. Overhang fascia by 40–50 mm (check spec). Check level — the tile bottom edge must sit dead level along the row.', watchFor: 'A crooked first course means every course above is crooked. Use a long spirit level.' },
-        { title: 'Lay tiles up the roof', body: 'Stagger course joints so each tile centres over the join of the course below (broken-bond pattern). Push each tile up until it hooks over the batten and sits on the tile below.', watchFor: 'Tiles laid without broken bond concentrate water down consistent lines. Broken bond distributes load and water shed.' },
-        { title: 'Nail or clip tiles per spec', body: 'Concrete tiles: typically nail every 4th tile in Low wind zones; every tile in High + Extra High. Clay: often clipped. Check the tile spec against NZS 3604 wind zones.', watchFor: 'Under-nailing in a high wind zone = tiles pop off in the first big storm. Follow the wind-zone schedule.' },
-        { title: 'Cut tiles at hips + valleys', body: 'Mark the cut line where tiles meet the hip or valley. Wet saw or angle grinder with a diamond blade. Wear PPE — cutting concrete tiles throws silica dust.', watchFor: 'Silica dust is a real occupational hazard. Wear an FFP3 mask + eye protection; wet-cut where possible.' },
-        { title: 'Fit valley trays + ridge / hip caps', body: 'Valley trays sit UNDER tiles at internal roof intersections. Ridge + hip caps sit ON TOP, either mortar-bedded (traditional) or dry-fix (modern, more common now).', watchFor: 'Mortar-bedded ridges crack over time as roof moves. Dry-fix systems are more expensive but avoid the callback.' },
-      ],
-    },
-    au: {
-      tools: ['Tape', 'Chalk line', 'Wet saw or angle grinder with diamond blade', 'Hammer', 'Cordless drill', 'Ladder + edge protection', 'Trowel (mortar-bedded ridge)'],
-      materials: ['Roof tiles: concrete (Boral, Monier CSR) or clay (Bristile, La Escandella), profile per plan', 'Tile nails: hot-dipped galv 50×3.15 or spec\'d clip', 'Hip + ridge tiles (matching profile)', 'Valley trays (COLORBOND or metal-lined)', 'Ridge / hip fixing: mortar bed OR dry-fix system', 'Sarking / underlay per AS 4200', 'Anti-ponding board at eave'],
-      steps: [
-        { title: 'Confirm batten spacing matches tile', body: 'Every tile has its own batten gauge — Boral concrete typically 335 mm, some clay 380 mm. Confirm from tile spec before ordering battens.', watchFor: 'Wrong gauge = whole roof of misaligned courses. Confirm tile before battens.' },
-        { title: 'Install anti-ponding board at eave', body: 'Bottom tile row overhangs underlay; anti-ponding board sits under first tile to prevent water pooling on underlay behind.', watchFor: 'Skipping = puddle behind first course = underlay rots.' },
-        { title: 'Position first course', body: 'Start one end at eave. Overhang fascia 40–50 mm (spec). Dead level along the row.', watchFor: 'Crooked first course cascades. Long spirit level.' },
-        { title: 'Lay tiles up the roof', body: 'Broken-bond pattern — each tile centres over the join below. Push each up until it hooks over batten and sits on tile below.', watchFor: 'Non-broken-bond concentrates water down consistent lines. Broken bond distributes water shed.' },
-        { title: 'Nail or clip tiles per spec + wind class', body: 'AS 2050 covers tile roof installation. Concrete tiles: nail every 4th in N1–N3, every tile in N4+ and cyclonic. Clay: often clipped. Check schedule.', watchFor: 'Under-nailed roof in cyclonic zone = tiles fly off first big storm. Follow the wind-class schedule.' },
-        { title: 'Cut tiles at hips + valleys', body: 'Mark cut where tiles meet hip or valley. Wet saw or angle grinder with diamond blade. PPE for silica.', watchFor: 'Silica is regulated occupational hazard. FFP3 mask + eye pro; wet-cut where possible.' },
-        { title: 'Fit valley trays + ridge / hip caps', body: 'Valley trays UNDER tiles at internal intersections. Ridge + hip caps ON TOP, mortar-bedded or dry-fix.', watchFor: 'Mortar-bedded ridges crack as roof moves. Dry-fix is dearer but avoids the callback.' },
-      ],
-    },
-  },
-  {
     id: 'install-soffit',
     category: 'roofing-cladding',
     label: 'Install soffit lining',

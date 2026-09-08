@@ -1207,7 +1207,7 @@ const JOBS: Job[] = [
         { title: 'Fix hinge-side jamb', body: 'Through packers into stud with countersunk screws (pre-drilled, heads sunk for filling) — one behind each hinge, one at top, one at bottom. Recheck plumb after each screw.', watchFor: 'Overdriving screws pulls the jamb toward the stud and bows the packer. Snug, not driven.' },
         { title: 'Check door swings freely', body: 'Test the door — should swing smoothly, not bind on jamb, sag open or closed, or catch on the floor. If it binds, hinge-side isn\'t plumb.', watchFor: 'A door that swings open or closed by itself = jamb tilted forward or back. Re-plumb before fixing latch side.' },
         { title: 'Pack + fix latch-side jamb', body: 'Close door. Pack latch-side jamb to a consistent 3 mm gap all the way top to bottom. Fix through packers with countersunk screws — one at top, one at bottom, one in the middle (avoid the strike area — that gets chiselled out later).', watchFor: 'Inconsistent gap looks amateur and can catch the door. 3 mm dead all the way.' },
-        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along the wall face to trim protruding packers flush with the jamb. Vacuum any debris. Architraves fit after the wall linings are done.', watchFor: 'Leaving packers proud stops the architrave sitting flush. Trim before you leave the room.' },
+        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along the wall face to trim protruding packers flush with the jamb. Vacuum any debris. Architraves fit after the wall linings are done.', watchFor: 'Leaving packers proud can interfere with the gib install. Trim before you leave the room.' },
       ],
     },
     au: {
@@ -1220,7 +1220,7 @@ const JOBS: Job[] = [
         { title: 'Fix hinge-side jamb', body: 'Through packers with countersunk screws (pre-drilled, heads sunk for filling) — behind each hinge, top, bottom. Recheck plumb after each screw.', watchFor: 'Overdriving pulls jamb toward stud and bows the packer. Snug, not driven.' },
         { title: 'Check door swings freely', body: 'Test door — smooth swing, no bind, no self-close, no floor catch. If binds, hinge-side isn\'t plumb.', watchFor: 'Door swings open/closed by itself = jamb tilted forward or back. Re-plumb before latch side.' },
         { title: 'Pack + fix latch-side jamb', body: 'Close door. Pack latch-side to 3 mm consistent gap top to bottom. Fix with countersunk screws — one top, one bottom, one middle (avoid the strike area — gets chiselled out later).', watchFor: 'Inconsistent gap looks amateur + can catch. 3 mm dead all the way.' },
-        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along wall face to trim protruding packers flush with the jamb. Vacuum debris. Architraves after linings.', watchFor: 'Packers proud stop architrave sitting flush. Trim before leaving room.' },
+        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along wall face to trim protruding packers flush with the jamb. Vacuum debris. Architraves after linings.', watchFor: 'Packers proud can interfere with the plasterboard install. Trim before leaving room.' },
       ],
     },
   },

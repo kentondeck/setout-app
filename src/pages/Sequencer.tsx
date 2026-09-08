@@ -978,12 +978,12 @@ const JOBS: Job[] = [
     label: 'Install soffit lining',
     summary: 'Ribbon plate to wall, cut sheets, fix to ribbon plate + fascia, vent.',
     nz: {
-      tools: ['Tape', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Staple gun', 'Chalk line', 'Utility knife', 'Ladder / trestle'],
+      tools: ['Tape', 'Circular saw', 'Fibre-cement shears', 'Cordless drill / impact driver', 'Hammer', 'Staple gun', 'Chalk line', 'Utility knife', 'Ladder / trestle'],
       materials: ['Soffit lining: HardieSoffit (fibre-cement, pre-primed), or plywood (marine or exterior), or PVC', 'Ribbon plate: 40×20 or 90×45 H3.2 pine, screwed to wall studs', 'Fixings: 30 mm bugle screws or stainless steel staples for FC / ply', 'Sealant (paintable acrylic) for joins', 'Soffit vents (round or slot type) if roof needs ventilation'],
       steps: [
         { title: 'Set out the ribbon plate along the wall', body: 'Transfer the fascia level across to the wall at both ends of the run, then chalk a line between the two marks. Fix the ribbon plate along that chalk line into wall studs with 100 mm bugle screws.', watchFor: 'If the ends aren\'t level to each other, the soffit tilts. Sight along after fixing.' },
         { title: 'Confirm soffit width', body: 'Measure from wall face to inside of fascia. That\'s your soffit sheet width. If unsupported span is > 450 mm, add intermediate support (rafter tail block or intermediate ribbon).', watchFor: 'Long unsupported spans sag over time. Add intermediate support for anything over 600 mm.' },
-        { title: 'Cut sheets to width', body: 'Rip HardieSoffit or plywood on the drop saw or circular saw. Wear PPE for FC — silica dust. Cut lengths to run along the eave.', watchFor: 'FC dust is regulated occupational hazard in NZ (WorkSafe). Wet-cut or vac-attach; FFP3 mask.' },
+        { title: 'Cut sheets to width', body: 'Rip HardieSoffit or plywood with a circular saw or fibre-cement shears. Wear PPE for FC — silica dust. Cut lengths to run along the eave.', watchFor: 'FC dust is regulated occupational hazard in NZ (WorkSafe). Wet-cut or vac-attach; FFP3 mask.' },
         { title: 'Fix sheets to ribbon plate + fascia', body: 'Push sheet up between ribbon plate and fascia. Fix into the ribbon plate with 30 mm bugle screws or staples at 200 mm c/c. Fix into fascia with same spacing.', watchFor: 'FC sheet edges are brittle. Pre-drill if fixing close to edge (within 15 mm) to avoid cracking.' },
         { title: 'Join sheet ends over a support', body: 'Any sheet-to-sheet join must land ON the ribbon plate or a rafter tail — never mid-span. Seal the join with paintable acrylic sealant.', watchFor: 'A mid-span join telegraphs a visible bump forever. Line up joins over supports only.' },
         { title: 'Cut in soffit vents', body: 'If the roof needs ventilation (most NZ roofs do — E3 requires airflow into skillion / cathedral roofs), cut round or slot vents through the soffit at spacing per manufacturer.', watchFor: 'Un-vented sarking roofs cook in summer + condense in winter. If E3 requires vents, don\'t skip them.' },
@@ -991,12 +991,12 @@ const JOBS: Job[] = [
       ],
     },
     au: {
-      tools: ['Tape', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Staple gun', 'Chalk line', 'Utility knife', 'Ladder / trestle'],
+      tools: ['Tape', 'Circular saw', 'Fibre-cement shears', 'Cordless drill / impact driver', 'Hammer', 'Staple gun', 'Chalk line', 'Utility knife', 'Ladder / trestle'],
       materials: ['Soffit lining: HardieSoffit (fibre-cement), plywood (marine / exterior), or PVC', 'Ribbon plate: 40×20 or 90×45 H3-treated pine, screwed to wall studs', 'Fixings: 30 mm Type 17 or stainless staples for FC / ply', 'Sealant (paintable acrylic) for joins', 'Soffit vents (per NCC requirements + wind class)'],
       steps: [
         { title: 'Set out the ribbon plate along the wall', body: 'Transfer the fascia level across to the wall at both ends of the run, then chalk a line between the two marks. Fix the ribbon plate along that chalk line into wall studs with 100 mm Type 17s.', watchFor: 'If the ends aren\'t level to each other, the soffit tilts. Sight along after fixing.' },
         { title: 'Confirm soffit width', body: 'Measure wall face to inside of fascia. That\'s your sheet width. Unsupported span > 450 mm needs intermediate support.', watchFor: 'Long unsupported spans sag. Intermediate support over 600 mm.' },
-        { title: 'Cut sheets to width', body: 'Rip HardieSoffit or ply on drop / circular saw. PPE for FC — silica dust. Cut lengths to run along eave.', watchFor: 'FC dust is regulated (SafeWork). Wet-cut or vac-attach; FFP3 mask.' },
+        { title: 'Cut sheets to width', body: 'Rip HardieSoffit or ply with a circular saw or fibre-cement shears. PPE for FC — silica dust. Cut lengths to run along eave.', watchFor: 'FC dust is regulated (SafeWork). Wet-cut or vac-attach; FFP3 mask.' },
         { title: 'Fix sheets to ribbon plate + fascia', body: 'Push sheet up between ribbon plate + fascia. Type 17s or staples at 200 mm c/c into ribbon plate + fascia.', watchFor: 'FC edges brittle. Pre-drill within 15 mm of edge to avoid cracking.' },
         { title: 'Join sheet ends over a support', body: 'Sheet-to-sheet joins land ON the ribbon plate or a rafter tail — never mid-span. Seal join with paintable acrylic.', watchFor: 'Mid-span join telegraphs a permanent bump. Join over supports only.' },
         { title: 'Cut in soffit vents', body: 'Roof ventilation per NCC — sarked / cathedral roofs typically need airflow. Cut round or slot vents through soffit per manufacturer spacing.', watchFor: 'Un-vented sarking roofs cook in summer + condense in winter. If NCC requires vents, don\'t skip.' },

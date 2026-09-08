@@ -1198,7 +1198,7 @@ const JOBS: Job[] = [
     label: 'Hang an internal pre-hung door',
     summary: 'Frame into opening, plumb, screw, check swing.',
     nz: {
-      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Chisel', 'Hammer', 'Handsaw or drop saw', 'Utility knife'],
+      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Oscillating multi-tool', 'Chisel', 'Hammer', 'Handsaw or drop saw', 'Utility knife'],
       materials: ['Pre-hung internal door (hollow-core or solid, jamb + head pre-assembled)', 'Timber packers (thin cedar or hardwood)', 'Countersunk screws (jamb to stud, heads filled before paint)', 'Architrave stock (fit after wall linings)'],
       steps: [
         { title: 'Check opening size against jamb', body: 'Rough opening = jamb width + 10 mm clearance total (5 mm each side). Head height = jamb height + 10 mm.', watchFor: 'Over-sized opening + jamb too small = long packers needed on both sides. Under-size = jamb won\'t fit. Measure both before ordering.' },
@@ -1207,11 +1207,11 @@ const JOBS: Job[] = [
         { title: 'Fix hinge-side jamb', body: 'Through packers into stud with countersunk screws (pre-drilled, heads sunk for filling) — one behind each hinge, one at top, one at bottom. Recheck plumb after each screw.', watchFor: 'Overdriving screws pulls the jamb toward the stud and bows the packer. Snug, not driven.' },
         { title: 'Check door swings freely', body: 'Test the door — should swing smoothly, not bind on jamb, sag open or closed, or catch on the floor. If it binds, hinge-side isn\'t plumb.', watchFor: 'A door that swings open or closed by itself = jamb tilted forward or back. Re-plumb before fixing latch side.' },
         { title: 'Pack + fix latch-side jamb', body: 'Close door. Pack latch-side jamb to a consistent 3 mm gap all the way top to bottom. Fix through packers with countersunk screws — one at top, one at bottom, one in the middle (avoid the strike area — that gets chiselled out later).', watchFor: 'Inconsistent latch gap looks amateur and can catch the door. 3 mm dead all the way.' },
-        { title: 'Cut packers flush + tidy', body: 'Utility knife along the wall face to snap off protruding packers. Vacuum any debris. Architraves fit after the wall linings are done.', watchFor: 'Leaving packers proud stops the architrave sitting flush. Trim before you leave the room.' },
+        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along the wall face to trim protruding packers flush with the jamb. Vacuum any debris. Architraves fit after the wall linings are done.', watchFor: 'Leaving packers proud stops the architrave sitting flush. Trim before you leave the room.' },
       ],
     },
     au: {
-      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Chisel', 'Hammer', 'Handsaw or drop saw', 'Utility knife'],
+      tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Oscillating multi-tool', 'Chisel', 'Hammer', 'Handsaw or drop saw', 'Utility knife'],
       materials: ['Pre-hung internal door (hollow-core or solid, jamb + head pre-assembled)', 'Timber packers', 'Countersunk screws (heads filled before paint)', 'Architrave stock (fit after linings)'],
       steps: [
         { title: 'Check opening size against jamb', body: 'Rough opening = jamb width + 10 mm total (5 mm each side). Head height = jamb + 10 mm.', watchFor: 'Over-sized = long packers both sides. Under-size = won\'t fit. Measure both before ordering.' },
@@ -1220,7 +1220,7 @@ const JOBS: Job[] = [
         { title: 'Fix hinge-side jamb', body: 'Through packers with countersunk screws (pre-drilled, heads sunk for filling) — behind each hinge, top, bottom. Recheck plumb after each screw.', watchFor: 'Overdriving pulls jamb toward stud and bows the packer. Snug, not driven.' },
         { title: 'Check door swings freely', body: 'Test door — smooth swing, no bind, no self-close, no floor catch. If binds, hinge-side isn\'t plumb.', watchFor: 'Door swings open/closed by itself = jamb tilted forward or back. Re-plumb before latch side.' },
         { title: 'Pack + fix latch-side jamb', body: 'Close door. Pack latch-side to 3 mm consistent gap top to bottom. Fix with countersunk screws — one top, one bottom, one middle (avoid the strike area — gets chiselled out later).', watchFor: 'Inconsistent gap looks amateur + can catch. 3 mm dead all the way.' },
-        { title: 'Cut packers flush + tidy', body: 'Utility knife along wall face to snap off protruding packers. Vacuum debris. Architraves after linings.', watchFor: 'Packers proud stop architrave sitting flush. Trim before leaving room.' },
+        { title: 'Cut packers flush + tidy', body: 'Oscillating multi-tool along wall face to trim protruding packers flush with the jamb. Vacuum debris. Architraves after linings.', watchFor: 'Packers proud stop architrave sitting flush. Trim before leaving room.' },
       ],
     },
   },

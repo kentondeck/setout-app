@@ -876,7 +876,7 @@ const JOBS: Job[] = [
     label: 'Install roof battens / purlins',
     summary: 'Underlay first, then battens at manufacturer spacing.',
     nz: {
-      tools: ['Tape', 'Chalk line', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Spirit level', 'String line', 'Story rod'],
+      tools: ['Tape', 'Chalk line', 'Drop / circular saw', 'Cordless drill / impact driver', 'Nail gun', 'Hammer', 'Spirit level', 'String line', 'Story rod'],
       materials: ['Battens: 70×45 SG8 H3.2 (typical for long-run steel)', '100 mm bugle screws or 90×3.15 hot-dipped galv nails', 'Roofing underlay (breather-type, self-supporting): Vapor Barrier, Sisalation, or similar per E2/AS1', 'Underlay staples or clout nails', 'Edge closure / end caps per roofing spec'],
       steps: [
         { title: 'Confirm batten spacing from roofing spec', body: 'Spacing depends on the specific profile + BMT (base metal thickness) + pitch + wind zone. Read the roofing manufacturer\'s span table for the profile on your job. Tile spec is different again — usually 335–380 mm gauge depending on tile.', watchFor: 'Roofing manufacturers void warranty if batten spacing exceeds their spec. Print the spec sheet and keep on site — don\'t guess a "typical" spacing.' },
@@ -890,7 +890,7 @@ const JOBS: Job[] = [
       ],
     },
     au: {
-      tools: ['Tape', 'Chalk line', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Spirit level', 'String line', 'Story rod'],
+      tools: ['Tape', 'Chalk line', 'Drop / circular saw', 'Cordless drill / impact driver', 'Nail gun', 'Hammer', 'Spirit level', 'String line', 'Story rod'],
       materials: ['Battens: 70×45 F14 hardwood or 70×45 MGP12 pine (H3 exterior)', '100 mm Type 17 screws or 90×3.15 hot-dipped galv nails', 'Roofing underlay (foil-faced sarking or breather): per AS 4200', 'Underlay staples or clout nails', 'Edge closure per roofing spec'],
       steps: [
         { title: 'Confirm batten spacing from roofing spec', body: 'Spacing depends on the specific profile + BMT + pitch + wind classification. Read the roofing manufacturer\'s span table for the profile on your job. Tile spec is different — gauge per tile profile.', watchFor: 'Roofing manufacturers void warranty if spacing exceeds spec. Print + keep on site — don\'t guess a "typical" number.' },

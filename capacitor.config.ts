@@ -1,5 +1,9 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// `npm run ios:live` sets this to point the native shell at the local dev
+// server instead of production.
+const isLiveDev = !!process.env.CAP_SERVER_URL;
+
 const config: CapacitorConfig = {
   appId: 'com.setout.app',
   appName: 'Setout',
@@ -9,7 +13,12 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     scrollEnabled: false,
     allowsLinkPreview: false,
-    limitsNavigationsToAppBoundDomains: true,
+    // Restricts the WKWebView to WKAppBoundDomains (setoutapp.com.au) so
+    // the service worker can register there for offline caching. Enforcing
+    // this in live-dev mode would block the app from loading the LAN dev
+    // server at all — WebKit silently refuses the main-frame navigation
+    // with "attempting to navigate away from an app-bound domain".
+    limitsNavigationsToAppBoundDomains: !isLiveDev,
   },
   plugins: {
     // resize:'native' actually shrinks the WKWebView's own frame when the

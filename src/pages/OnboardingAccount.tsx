@@ -4,10 +4,9 @@ import type { Settings } from '../types';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
-const MUTED = '#8a8a8a';
+const MUTED = '#999';
 const BG = '#f5f5f3';
 const FONT = "Inter, -apple-system, sans-serif";
-const DISPLAY = "'Big Shoulders Display', sans-serif";
 const MONO = "'JetBrains Mono', monospace";
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
@@ -15,67 +14,33 @@ function risen(delay: string) {
   return `riseIn 650ms ${EASE} ${delay} both`;
 }
 
-// Grid-paper backdrop — a nod to a builder's plan sheet, not decoration for
-// its own sake. Very faint so it reads as texture, not pattern.
-const gridBackground: React.CSSProperties = {
-  backgroundImage:
-    'linear-gradient(rgba(10,10,10,0.045) 1px, transparent 1px), ' +
-    'linear-gradient(90deg, rgba(10,10,10,0.045) 1px, transparent 1px)',
-  backgroundSize: '26px 26px',
-};
-
-function StepBadge({ step, label }: { step: 1 | 2 | 3; label: string }) {
+// Matches the "mm" unit-subscript treatment from the diagram design system —
+// small mono caption at reduced opacity, not a dominant typographic voice.
+function StepIndicator({ step }: { step: 1 | 2 | 3 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 320, animation: risen('120ms') }}>
-      <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: ORANGE }}>
-        0{step}/03
-      </span>
-      <div style={{ flex: 1, height: 1, background: 'rgba(0,0,0,0.1)', position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, width: `${(step / 3) * 100}%`, background: ORANGE }} />
-      </div>
-      <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', color: MUTED, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-        {label}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, animation: risen('120ms') }}>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{
+          width: i === step ? 18 : 6, height: 6, borderRadius: 3,
+          background: i <= step ? ORANGE : 'rgba(0,0,0,0.12)',
+          transition: 'width 200ms ease, background 200ms ease',
+        }} />
+      ))}
+      <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED, opacity: 0.72, marginLeft: 4 }}>
+        {step}/3
       </span>
     </div>
   );
-}
-
-function fieldLabelStyle(): React.CSSProperties {
-  return {
-    display: 'block', fontFamily: MONO, fontSize: 10, fontWeight: 600,
-    letterSpacing: '0.12em', color: MUTED, textTransform: 'uppercase',
-    marginBottom: 7, paddingLeft: 2,
-  };
-}
-
-function corner(pos: 'tl' | 'br'): React.CSSProperties {
-  const base: React.CSSProperties = { position: 'absolute', width: 12, height: 12, pointerEvents: 'none' };
-  return pos === 'tl'
-    ? { ...base, top: -1, left: -1, borderTop: `2px solid ${ORANGE}`, borderLeft: `2px solid ${ORANGE}` }
-    : { ...base, bottom: -1, right: -1, borderBottom: `2px solid ${ORANGE}`, borderRight: `2px solid ${ORANGE}` };
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', height: 52,
-  borderRadius: 4, background: '#fff',
-  border: '1px solid rgba(0,0,0,0.1)',
-  padding: '0 18px', fontSize: 16,
+  width: '100%', height: 56,
+  borderRadius: 16, background: '#fff',
+  border: '1.5px solid rgba(0,0,0,0.08)',
+  padding: '0 20px', fontSize: 17,
   fontFamily: FONT, color: DARK, outline: 'none',
-  letterSpacing: '-0.1px', boxSizing: 'border-box',
+  letterSpacing: '-0.3px', boxSizing: 'border-box',
 };
-
-function Field({ label, delay, children }: { label: string; delay: string; children: React.ReactNode }) {
-  return (
-    <div style={{ width: '100%', maxWidth: 320, animation: risen(delay) }}>
-      <label style={fieldLabelStyle()}>{label}</label>
-      <div style={{ position: 'relative' }}>
-        <div style={corner('tl')} />
-        <div style={corner('br')} />
-        {children}
-      </div>
-    </div>
-  );
-}
 
 interface Props {
   onComplete: () => void;
@@ -161,7 +126,7 @@ export function OnboardingAccount({ onComplete, updateSettings }: Props) {
     : email.trim() && password.length > 0;
 
   return (
-    <div style={{ position: 'absolute', inset: 0, background: BG, ...gridBackground, zIndex: 9997, overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, background: BG, zIndex: 9997 }}>
       <div style={{
         position: 'absolute', inset: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -175,33 +140,27 @@ export function OnboardingAccount({ onComplete, updateSettings }: Props) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
           <div style={{ animation: risen('0ms') }}>
-            <span style={{ fontWeight: 500, letterSpacing: '-0.8px', fontSize: 26, lineHeight: 1, fontFamily: FONT }}>
+            <span style={{ fontWeight: 500, letterSpacing: '-0.8px', fontSize: 28, lineHeight: 1, fontFamily: FONT }}>
               <span style={{ color: DARK }}>set</span>
               <span style={{ color: ORANGE }}>out</span>
             </span>
           </div>
 
-          <svg width="56" height="10" viewBox="0 0 56 10" style={{ marginTop: 14, animation: risen('60ms') }}>
-            <line x1="1" y1="5" x2="55" y2="5" stroke={ORANGE} strokeWidth="1.5" strokeDasharray="48" style={{ animation: 'drawLine 900ms 480ms cubic-bezier(0.65,0,0.35,1) both' }} />
-            <circle cx="55" cy="5" r="2.5" fill={ORANGE} style={{ animation: 'fadeIn 300ms 1380ms both' }} />
-          </svg>
+          <div style={{ width: 24, height: 1.5, background: ORANGE, marginTop: 16, animation: risen('80ms') }} />
 
           {sent ? (
             <>
-              <div style={{ marginTop: 44 }}>
-                <StepBadge step={1} label="Pending" />
-              </div>
               <h1 style={{
-                margin: '28px 0 0',
-                fontFamily: DISPLAY, fontSize: 40, fontWeight: 800,
-                letterSpacing: '-0.5px', color: DARK, textTransform: 'uppercase',
-                textAlign: 'center', lineHeight: 0.95,
+                margin: '40px 0 0',
+                fontFamily: FONT, fontSize: 32, fontWeight: 600,
+                letterSpacing: '-1px', color: DARK,
+                textAlign: 'center', lineHeight: 1.15,
               }}>
-                Confirm your<br />email
+                Confirm your email
               </h1>
               <p style={{
-                margin: '18px 0 0',
-                fontFamily: FONT, fontSize: 15, lineHeight: 1.65,
+                margin: '20px 0 0',
+                fontFamily: FONT, fontSize: 16, lineHeight: 1.65,
                 color: MUTED, textAlign: 'center', maxWidth: 300,
               }}>
                 We sent a confirmation link to <strong style={{ color: DARK }}>{email.trim()}</strong>. Tap it to finish creating your account.
@@ -209,10 +168,9 @@ export function OnboardingAccount({ onComplete, updateSettings }: Props) {
               <button
                 onClick={() => setSent(false)}
                 style={{
-                  marginTop: 28, background: 'none', border: 'none',
-                  color: MUTED, fontSize: 13, fontFamily: MONO,
-                  cursor: 'pointer', letterSpacing: '0.06em', textDecoration: 'underline',
-                  textTransform: 'uppercase',
+                  marginTop: 32, background: 'none', border: 'none',
+                  color: MUTED, fontSize: 15, fontFamily: FONT,
+                  cursor: 'pointer', letterSpacing: '-0.2px', textDecoration: 'underline',
                 }}
               >
                 Back
@@ -220,67 +178,61 @@ export function OnboardingAccount({ onComplete, updateSettings }: Props) {
             </>
           ) : (
             <>
-              <div style={{ marginTop: 40 }}>
-                <StepBadge step={1} label="Account" />
+              <div style={{ marginTop: 32 }}>
+                <StepIndicator step={1} />
               </div>
 
               <h1 style={{
-                margin: '22px 0 0',
-                fontFamily: DISPLAY, fontSize: 46, fontWeight: 800,
-                letterSpacing: '-0.5px', color: DARK, textTransform: 'uppercase',
-                textAlign: 'center', lineHeight: 0.95,
+                margin: '24px 0 0',
+                fontFamily: FONT, fontSize: 36, fontWeight: 600,
+                letterSpacing: '-1.2px', color: DARK,
+                textAlign: 'center', lineHeight: 1.15,
                 animation: risen('160ms'),
               }}>
                 {mode === 'signup' ? <>Create your<br />account</> : <>Welcome<br />back</>}
               </h1>
 
               <p style={{
-                margin: '16px 0 0',
-                fontFamily: FONT, fontSize: 15, lineHeight: 1.6,
+                margin: '20px 0 0',
+                fontFamily: FONT, fontSize: 16, lineHeight: 1.65,
                 color: MUTED, textAlign: 'center', maxWidth: 280,
-                animation: risen('220ms'),
+                animation: risen('240ms'),
               }}>
-                {mode === 'signup' ? "Let's get you set up on site." : 'Log in to your Setout account.'}
+                {mode === 'signup' ? "Let's get you set up." : 'Log in to your Setout account.'}
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 32, width: '100%', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 40, width: '100%', alignItems: 'center' }}>
                 {mode === 'signup' && (
-                  <Field label="Name" delay="280ms">
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                      placeholder="First name"
-                      autoComplete="given-name"
-                      style={inputStyle}
-                    />
-                  </Field>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Your first name"
+                    autoComplete="given-name"
+                    style={{ ...inputStyle, maxWidth: 320, animation: risen('300ms') }}
+                  />
                 )}
-                <Field label="Email" delay="320ms">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    autoComplete="email"
-                    style={inputStyle}
-                  />
-                </Field>
-                <Field label={mode === 'signup' ? 'Password · min. 6 characters' : 'Password'} delay="360ms">
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (mode === 'signup' ? handleSignUp() : handleLogIn())}
-                    placeholder="••••••••"
-                    autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                    style={inputStyle}
-                  />
-                </Field>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  autoComplete="email"
+                  style={{ ...inputStyle, maxWidth: 320, animation: risen('340ms') }}
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (mode === 'signup' ? handleSignUp() : handleLogIn())}
+                  placeholder={mode === 'signup' ? 'Password (min. 6 characters)' : 'Password'}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  style={{ ...inputStyle, maxWidth: 320, animation: risen('380ms') }}
+                />
               </div>
 
               {error && (
-                <p style={{ margin: '14px 0 0', fontSize: 13, color: '#e53e3e', textAlign: 'center', maxWidth: 320, fontFamily: FONT }}>
+                <p style={{ margin: '12px 0 0', fontSize: 13, color: '#e53e3e', textAlign: 'center', maxWidth: 320 }}>
                   {error}
                 </p>
               )}
@@ -289,44 +241,37 @@ export function OnboardingAccount({ onComplete, updateSettings }: Props) {
                 onClick={mode === 'signup' ? handleSignUp : handleLogIn}
                 disabled={submitting || !canSubmit}
                 style={{
-                  marginTop: 20, width: '100%', maxWidth: 320, height: 54,
-                  borderRadius: 6,
+                  marginTop: 12, width: '100%', maxWidth: 320, height: 56,
+                  borderRadius: 16,
                   background: ORANGE,
                   border: 'none',
                   color: '#fff',
-                  fontSize: 15, fontWeight: 600, fontFamily: FONT,
+                  fontSize: 16, fontWeight: 500, fontFamily: FONT,
                   cursor: submitting || !canSubmit ? 'default' : 'pointer',
-                  letterSpacing: '0.02em',
-                  textTransform: 'uppercase',
-                  opacity: submitting || !canSubmit ? 0.5 : 1,
+                  letterSpacing: '-0.2px',
+                  opacity: submitting || !canSubmit ? 0.6 : 1,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   transition: 'transform 180ms ease, opacity 180ms ease',
                   animation: risen('420ms'),
                 }}
-                onPointerDown={e => { if (!submitting && canSubmit) { e.currentTarget.style.transform = 'scale(0.98)'; } }}
+                onPointerDown={e => { if (!submitting && canSubmit) { e.currentTarget.style.transform = 'scale(0.97)'; } }}
                 onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                 onPointerLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
               >
-                {submitting ? 'Please wait' : mode === 'signup' ? 'Create account' : 'Log in'}
-                {!submitting && (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
-                )}
+                {submitting ? 'Please wait…' : mode === 'signup' ? 'Create account' : 'Log in'}
               </button>
 
               <button
                 onClick={() => { setMode(m => m === 'signup' ? 'login' : 'signup'); setError(null); }}
                 style={{
-                  marginTop: 20, background: 'none', border: 'none',
-                  color: MUTED, fontSize: 13, fontFamily: MONO,
-                  cursor: 'pointer', letterSpacing: '0.04em',
+                  marginTop: 16, background: 'none', border: 'none',
+                  color: MUTED, fontSize: 15, fontFamily: FONT,
+                  cursor: 'pointer', letterSpacing: '-0.2px',
                   animation: risen('460ms'),
                 }}
               >
-                {mode === 'signup' ? 'ALREADY HAVE AN ACCOUNT? ' : 'NEED AN ACCOUNT? '}
-                <span style={{ color: ORANGE, fontWeight: 700, textDecoration: 'underline' }}>{mode === 'signup' ? 'LOG IN' : 'SIGN UP'}</span>
+                {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+                <span style={{ color: ORANGE, fontWeight: 500 }}>{mode === 'signup' ? 'Log in' : 'Sign up'}</span>
               </button>
             </>
           )}

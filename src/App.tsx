@@ -7,10 +7,9 @@ import { useJobs } from './hooks/useJobs';
 import { useKeyboardInset } from './lib/useKeyboardInset';
 import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from './contexts';
 import { SplashScreen } from './components/SplashScreen';
-import { OnboardingName } from './pages/OnboardingName';
+import { OnboardingAccount } from './pages/OnboardingAccount';
 import { OnboardingRegion } from './pages/OnboardingRegion';
 import { OnboardingRole } from './pages/OnboardingRole';
-import { OnboardingEmail } from './pages/OnboardingEmail';
 import { BottomNav } from './components/BottomNav';
 import { UpdateBanner } from './components/UpdateBanner';
 import { KeyboardDoneBar } from './components/KeyboardDoneBar';
@@ -110,7 +109,7 @@ if (_params.has('reset')) {
 export function App() {
   const [splashDone, setSplashDone] = useState(false);
 
-  const [nameDone, setNameDone] = useState(() => {
+  const [accountDone, setAccountDone] = useState(() => {
     return !!localStorage.getItem('setout_user_name');
   });
 
@@ -122,35 +121,27 @@ export function App() {
     return !!localStorage.getItem('setout_role');
   });
 
-  const [emailDone, setEmailDone] = useState(() => {
-    return localStorage.getItem('setout_email_done') === 'true';
-  });
-
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
   const keyboardInset = useKeyboardInset();
 
-  const onboardingDone = splashDone && nameDone && regionDone && roleDone && emailDone;
+  const onboardingDone = splashDone && accountDone && regionDone && roleDone;
 
   return (
     <>
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
-      {splashDone && !nameDone && (
-        <OnboardingName onComplete={() => setNameDone(true)} updateSettings={updateSettings} />
+      {splashDone && !accountDone && (
+        <OnboardingAccount onComplete={() => setAccountDone(true)} updateSettings={updateSettings} />
       )}
 
-      {splashDone && nameDone && !regionDone && (
+      {splashDone && accountDone && !regionDone && (
         <OnboardingRegion onComplete={() => setRegionDone(true)} updateSettings={updateSettings} />
       )}
 
-      {splashDone && nameDone && regionDone && !roleDone && (
+      {splashDone && accountDone && regionDone && !roleDone && (
         <OnboardingRole onComplete={() => setRoleDone(true)} updateSettings={updateSettings} />
-      )}
-
-      {splashDone && nameDone && regionDone && roleDone && !emailDone && (
-        <OnboardingEmail onComplete={() => setEmailDone(true)} />
       )}
 
       {onboardingDone && (

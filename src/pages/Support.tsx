@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { CalcHeader } from '../components/CalcHeader';
 
-const CONTACT_EMAIL = 'setoutapp@gmail.com';
+const CONTACT_EMAIL = 'setouttheapp@gmail.com';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -179,7 +179,7 @@ export function Support() {
             Privacy Policy
           </button>
           <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
-            Setout PTY Ltd
+            Setout Holdings Limited
           </p>
         </div>
       </div>

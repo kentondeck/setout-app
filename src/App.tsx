@@ -6,6 +6,8 @@ import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
 import { useKeyboardInset } from './lib/useKeyboardInset';
 import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from './contexts';
+import { SubscriptionProvider } from './lib/SubscriptionContext';
+import { Paywall } from './components/Paywall';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingName } from './pages/OnboardingName';
 import { OnboardingRegion } from './pages/OnboardingRegion';
@@ -44,6 +46,8 @@ const EqualSpacingCalc = lazy(() => import('./pages/EqualSpacingCalc').then(m =>
 const FencingCalc = lazy(() => import('./pages/FencingCalc').then(m => ({ default: m.FencingCalc })));
 const Sequencer = lazy(() => import('./pages/Sequencer').then(m => ({ default: m.Sequencer })));
 const PhotoQuoteCalc = lazy(() => import('./pages/PhotoQuoteCalc').then(m => ({ default: m.PhotoQuoteCalc })));
+const ReceiptsPage = lazy(() => import('./pages/ReceiptsPage').then(m => ({ default: m.ReceiptsPage })));
+const ToolsPage = lazy(() => import('./pages/ToolsPage').then(m => ({ default: m.ToolsPage })));
 
 
 
@@ -86,6 +90,8 @@ function AppShell() {
           <Route path="/calc/fencing" element={<FencingCalc />} />
           <Route path="/calc/sequencer" element={<Sequencer />} />
           <Route path="/calc/photoquote" element={<PhotoQuoteCalc />} />
+          <Route path="/calc/receipts" element={<ReceiptsPage />} />
+          <Route path="/calc/tools" element={<ToolsPage />} />
           <Route path="/calc/:id" element={<CalcPlaceholder />} />
         </Routes>
         </Suspense>
@@ -160,9 +166,12 @@ export function App() {
           <HistoryContext.Provider value={{ history, addEntry, updateEntry, deleteEntry, clearAll }}>
             <JobsContext.Provider value={jobsApi}>
               <KeyboardContext.Provider value={{ inset: keyboardInset }}>
-                <HashRouter>
-                  <AppShell />
-                </HashRouter>
+                <SubscriptionProvider>
+                  <HashRouter>
+                    <AppShell />
+                  </HashRouter>
+                  <Paywall />
+                </SubscriptionProvider>
               </KeyboardContext.Provider>
             </JobsContext.Provider>
           </HistoryContext.Provider>

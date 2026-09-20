@@ -15,6 +15,16 @@ if (!Capacitor.isNativePlatform()) {
   document.head.appendChild(s);
 }
 
+// Ask the browser / WebView not to evict our stored data under storage
+// pressure. Without this, WebKit silently clears PWA localStorage after ~7
+// days of inactivity — a tradie who forgets about the app for a fortnight
+// comes back to an empty history. Once granted, the origin's storage stays
+// until the user explicitly clears it. Fire-and-forget: no-op on browsers
+// that don't support it, and the request never harms anything if it fails.
+if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
+  navigator.storage.persist().catch(() => { /* best-effort */ });
+}
+
 // Force the iOS software keyboard to render its light theme at runtime.
 // The static `Keyboard.style: 'LIGHT'` in capacitor.config.ts only sets the
 // initial value — some iOS versions revert to system-follow shortly after the

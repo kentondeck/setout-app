@@ -13,6 +13,8 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
@@ -37,6 +39,8 @@ const DEFAULTS: Inputs = {
 export function FramingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [includeNoggins, setIncludeNoggins] = useState(true);
@@ -75,9 +79,26 @@ export function FramingCalc() {
       return;
     }
 
+    // Subscription gate — Pro users always pass, free users get 1/day.
+    // Consume BEFORE the calc runs so a locked user never sees a fresh result.
+    if (!gate.tryUse()) {
+      setError('');
+      showPaywall();
+      return;
+    }
+
     setError('');
 
-    const calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds, doubleTopPlate });
+    // Stud face-width along the wall drives noggin length: NZ 90×45 → 45 mm,
+    // AU default 70×35 → 35 mm. Kept in sync with the region toggle in Settings.
+    const studFaceWidthMm = settings.region === 'AU' ? 35 : 45;
+    let calc: ReturnType<typeof calculateFraming>;
+    try {
+      calc = calculateFraming({ wallLength, wallHeight, studSpacing, includeNoggins, nogginRows: nogginRows || 1, doubleStuds, doubleTopPlate, studFaceWidthMm });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
     setCalcNogginRows(includeNoggins ? (nogginRows || 1) : 0);
 

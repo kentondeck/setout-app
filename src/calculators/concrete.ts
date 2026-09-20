@@ -217,8 +217,8 @@ export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutpu
   const sheetsWidthwise = Math.ceil(widthM / (MESH_SHEET_WIDTH_M - MESH_LAP_M));
   const meshSheets = sheetsLengthwise * sheetsWidthwise;
 
-  const chairsLengthwise = Math.floor(lengthM / BAR_CHAIR_SPACING_M) + 1;
-  const chairsWidthwise = Math.floor(widthM / BAR_CHAIR_SPACING_M) + 1;
+  const chairsLengthwise = Math.ceil(lengthM / BAR_CHAIR_SPACING_M) + 1;
+  const chairsWidthwise = Math.ceil(widthM / BAR_CHAIR_SPACING_M) + 1;
   const barChairs = chairsLengthwise * chairsWidthwise;
   const barChairPacks = Math.ceil(barChairs / BAR_CHAIRS_PER_PACK);
 
@@ -254,7 +254,7 @@ export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutpu
     {
       label: 'Bar chairs',
       explanation: `Support the mesh at the correct cover height — roughly ${BAR_CHAIR_SPACING_M}m centres each way`,
-      calculation: `(⌊${lengthM} ÷ ${BAR_CHAIR_SPACING_M}⌋ + 1) × (⌊${widthM} ÷ ${BAR_CHAIR_SPACING_M}⌋ + 1)`,
+      calculation: `(⌈${lengthM} ÷ ${BAR_CHAIR_SPACING_M}⌉ + 1) × (⌈${widthM} ÷ ${BAR_CHAIR_SPACING_M}⌉ + 1)`,
       result: `${chairsLengthwise} × ${chairsWidthwise} = ${barChairs} chairs → ${barChairPacks} × ${BAR_CHAIRS_PER_PACK}-pack${barChairPacks !== 1 ? 's' : ''}`,
     },
     {

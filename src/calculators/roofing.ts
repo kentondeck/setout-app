@@ -1,7 +1,11 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
 
 export type RoofType = 'gable' | 'hip' | 'skillion';
-export type RoofProfile = 'corrugate' | 'trimdek' | 'hirib';
+// Three profile families that cover the vast majority of NZ + AU residential
+// steel roofing. Each has different manufacturer names either side of the
+// Tasman — labels are region-aware (see ROOFING_PROFILES.labels), the profile
+// key stays region-neutral so calc history remains portable.
+export type RoofProfile = 'corrugate' | 'trapezoidal' | 'tray';
 
 export interface RoofingInputs {
   roofType: RoofType;
@@ -31,16 +35,30 @@ export interface RoofingResult {
   steps: WorkingStep[];
 }
 
+// Cover width and fixing rates. Screw counts are approximations for a
+// typical residential fix — real jobs follow the roofing manufacturer's
+// fixing schedule (varies by profile, BMT, wind zone).
+//
+// `tray` is clip-fixed rather than through-screwed; the lap/field counts
+// here approximate the clip count per purlin crossing. Cover width for
+// tray varies significantly by manufacturer (~300–500 mm typical); 400 mm
+// is a sensible middle-ground default — check the actual product spec.
 export const ROOFING_PROFILES: Record<RoofProfile, {
-  label: string;
+  labels: { NZ: string; AU: string };
   coverMm: number;
   lapScrews: number;
   fieldScrews: number;
 }> = {
-  corrugate: { label: 'Corrugate', coverMm: 762, lapScrews: 11, fieldScrews: 6 },
-  trimdek:   { label: 'Trimdek',   coverMm: 762, lapScrews: 4,  fieldScrews: 4 },
-  hirib:     { label: 'Hi-Rib',    coverMm: 762, lapScrews: 5,  fieldScrews: 3 },
+  corrugate:   { labels: { NZ: 'Corrugate', AU: 'Corrugate' },     coverMm: 762, lapScrews: 11, fieldScrews: 6 },
+  trapezoidal: { labels: { NZ: 'Trimline',  AU: 'Trimdek' },       coverMm: 762, lapScrews: 4,  fieldScrews: 4 },
+  tray:        { labels: { NZ: 'Tray',      AU: 'Standing Seam' }, coverMm: 400, lapScrews: 2,  fieldScrews: 2 },
 };
+
+export type Region = 'NZ' | 'AU';
+
+export function profileLabel(profile: RoofProfile, region: Region): string {
+  return ROOFING_PROFILES[profile].labels[region];
+}
 
 const r1 = (n: number) => parseFloat(n.toFixed(1));
 const r2 = (n: number) => parseFloat(n.toFixed(2));

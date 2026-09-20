@@ -10,6 +10,8 @@ import { calculateExcavation } from '../calculators/excavation';
 import type { ExcavationResult } from '../calculators/excavation';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
@@ -139,6 +141,8 @@ function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, label }
 export function ExcavationCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [sloped, setSloped] = useState(false);
@@ -171,6 +175,8 @@ export function ExcavationCalc() {
 
     const effectiveTruckSize = customTruck && parseFloat(customTruck) > 0 ? parseFloat(customTruck) : truckSize;
     if (effectiveTruckSize <= 0) { setError('Enter a truck capacity.'); return; }
+
+    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
 
     setError('');
     const calc = calculateExcavation({

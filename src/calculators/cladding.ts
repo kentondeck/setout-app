@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface CladdingInputs {
   wallHeight: number;   // mm
@@ -33,14 +34,25 @@ export interface CladdingResult {
 export function calculateCladding(inputs: CladdingInputs): CladdingResult {
   const { wallHeight, wallWidth, boardWidth, lap, boardLength, startOffset } = inputs;
 
+  // Lap ≥ board width would give a zero-or-negative face cover — every board
+  // would be entirely hidden by the one above, which is nonsense.
+  if (lap >= boardWidth) {
+    throw new CalcInputError('Lap must be less than the board width.');
+  }
+  // Start offset ≥ wall height leaves nothing to clad.
+  if (startOffset >= wallHeight) {
+    throw new CalcInputError('Start offset must be less than the wall height.');
+  }
+
   const nominalFace = boardWidth - lap;
 
-  // Spread courses evenly across wall height above start offset
+  // Spread courses evenly across wall height above start offset.
+  // Rounding UP the course count is critical: the user enters the lap they want
+  // as a minimum. More courses ⇒ smaller face cover ⇒ larger actual lap. Rounding
+  // down (with Math.round) can drop lap below spec and fail weatherproofing.
   const availableHeight = wallHeight - startOffset;
   const rawCourseCount = availableHeight / nominalFace;
-  // At least one course whenever there's any wall height above the start
-  // offset — rounding a short wall down to 0 courses would divide by zero below.
-  const courseCount = Math.max(1, Math.round(rawCourseCount));
+  const courseCount = Math.max(1, Math.ceil(rawCourseCount));
   const faceCover = parseFloat((availableHeight / courseCount).toFixed(1));
 
   // Rod marks: one per course line (bottom edge of each board) — keep 1dp
@@ -81,8 +93,8 @@ export function calculateCladding(inputs: CladdingInputs): CladdingResult {
     },
     {
       label: 'Course count',
-      formula: 'round( available height ÷ nominal face )',
-      result: `round( ${availableHeight} ÷ ${nominalFace} ) = ${courseCount} courses`,
+      formula: 'ceil( available height ÷ nominal face ) — rounds up so lap stays ≥ spec',
+      result: `ceil( ${availableHeight} ÷ ${nominalFace} ) = ${courseCount} courses`,
     },
     {
       label: 'Adjusted face cover',

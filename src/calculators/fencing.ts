@@ -52,12 +52,13 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
   const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm, postWidthMm } = inputs;
   const steps: WorkingStep[] = [];
 
-  // Posts
-  const postCount = Math.floor(runLength / postSpacing) + 1;
+  // Posts. ceil(L/s) + 1 gives the right count regardless of whether the run
+  // length is an exact multiple of spacing — one at each end plus intermediates.
+  const postCount = Math.ceil(runLength / postSpacing) + 1;
   steps.push({
     label: 'Post count',
-    explanation: 'Divide run by post spacing, add 1 for the end post',
-    calculation: `⌊${runLength} ÷ ${postSpacing}⌋ + 1`,
+    explanation: 'Divide run by post spacing, round up and add 1 for the end post',
+    calculation: `⌈${runLength} ÷ ${postSpacing}⌉ + 1`,
     result: `${postCount} posts`,
   });
 

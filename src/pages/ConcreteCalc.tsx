@@ -8,6 +8,8 @@ import { ShareCalcButton } from '../components/ShareCalcButton';
 import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { calculateSlab, calculatePostHoles, calculateConcreteMix, calculateSlabReo } from '../calculators/concrete';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -35,6 +37,8 @@ const MIX_PRESETS: { label: string; ratio: MixRatio; hint: string }[] = [
 export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastageMode, setWastageMode] = useState<number | 'custom'>(0.10);
@@ -99,6 +103,8 @@ export function ConcreteCalc() {
       if (!width || width <= 0) { setError('Enter a width to calculate.'); return; }
       if (!thickness || thickness <= 0) { setError('Enter a thickness to calculate.'); return; }
 
+      if (!gate.tryUse()) { showPaywall(); return; }
+
       const calc = calculateSlab({ length, width, thickness, wastage });
       const reoCalc = calculateSlabReo({ length, width });
       setSlabResult(calc);
@@ -136,6 +142,9 @@ export function ConcreteCalc() {
         setError('Enter a post size to deduct, or turn off "Deduct post".');
         return;
       }
+
+      if (!gate.tryUse()) { showPaywall(); return; }
+
       const calc = calculatePostHoles({
         holeType, diameter, sideWidth, depth, numHoles, wastage,
         ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize }),
@@ -160,6 +169,8 @@ export function ConcreteCalc() {
     } else {
       const volume = parseFloat(mixVolume);
       if (!volume || volume <= 0) { setError('Enter a concrete volume to calculate.'); return; }
+
+      if (!gate.tryUse()) { showPaywall(); return; }
 
       const calc = calculateConcreteMix({ volumeM3: volume, ratio: resolvedMixRatio });
       setMixResult(calc);

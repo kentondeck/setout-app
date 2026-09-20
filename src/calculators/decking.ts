@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface DeckingInputs {
   deckLength: number;   // metres
@@ -40,6 +41,17 @@ const BOARD_STOCK_LENGTHS = [3000, 3600, 4200, 4800, 5400, 6000];
 export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const { deckLength, deckWidth, boardWidth, boardGap, joistSpacing, bearerSpacing } = inputs;
 
+  // Deck dimensions are entered in METRES. Anything over 100 m almost certainly
+  // means the tradie typed mm as m (e.g. 6000 for a 6 m deck).
+  if (deckLength > 100 || deckWidth > 100) {
+    throw new CalcInputError('Deck dimensions look too large — enter length and width in metres (e.g. 6, not 6000).');
+  }
+  // Gap wider than the board itself is open-decking territory but still valid;
+  // gap wider than 2× the board is guaranteed data-entry error.
+  if (boardGap >= boardWidth * 2) {
+    throw new CalcInputError('Board gap is larger than the board — check the values.');
+  }
+
   // Convention: joists run parallel to deck LENGTH (the long structural members),
   // boards run perpendicular across deck WIDTH (each board spans the width).
   const effectiveBoardWidth = boardWidth + boardGap;
@@ -56,12 +68,14 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const boardStockMm = BOARD_STOCK_LENGTHS.find(s => s >= boardLengthMm) ?? boardLengthMm;
   const boardLinealMetres = parseFloat(((boardCount * boardStockMm) / 1000).toFixed(2));
 
-  // Joists span the deck length, spaced across the width
-  const joistCount = Math.floor((deckWidth * 1000) / joistSpacing) + 1;
+  // Joists span the deck length, spaced across the width.
+  // ceil(L/s) + 1 gives the right count regardless of whether the deck width
+  // is an exact multiple of spacing — one at each edge plus intermediates.
+  const joistCount = Math.ceil((deckWidth * 1000) / joistSpacing) + 1;
   const joistLinealMetres = parseFloat((joistCount * deckLength).toFixed(2));
 
   // Bearers run perpendicular to joists (span the width), spaced along the length
-  const bearerCount = Math.floor((deckLength * 1000) / bearerSpacing) + 1;
+  const bearerCount = Math.ceil((deckLength * 1000) / bearerSpacing) + 1;
   const bearerLinealMetres = parseFloat((bearerCount * deckWidth).toFixed(2));
 
   // All structural timber for the job, not just boards — keeps this calculator
@@ -97,13 +111,13 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     },
     {
       label: 'Joist count',
-      formula: 'floor( deck width (mm) ÷ joist spacing ) + 1',
-      result: `floor( ${deckWidth * 1000} ÷ ${joistSpacing} ) + 1 = ${joistCount} joists (${joistLinealMetres}lm)`,
+      formula: 'ceil( deck width (mm) ÷ joist spacing ) + 1',
+      result: `ceil( ${deckWidth * 1000} ÷ ${joistSpacing} ) + 1 = ${joistCount} joists (${joistLinealMetres}lm)`,
     },
     {
       label: 'Bearer count',
-      formula: 'floor( deck length (mm) ÷ bearer spacing ) + 1',
-      result: `floor( ${deckLength * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers (${bearerLinealMetres}lm)`,
+      formula: 'ceil( deck length (mm) ÷ bearer spacing ) + 1',
+      result: `ceil( ${deckLength * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers (${bearerLinealMetres}lm)`,
     },
     {
       label: 'Total lineal metres',

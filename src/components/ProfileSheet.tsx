@@ -2,6 +2,7 @@ import { useContext, useState, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
 import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
+import { useSubscription } from '../lib/SubscriptionContext';
 
 interface Props {
   onClose: () => void;
@@ -20,6 +21,7 @@ export function ProfileSheet({ onClose }: Props) {
   const { history } = useContext(HistoryContext);
   const { jobs } = useContext(JobsContext);
   const { inset: keyboardInset } = useContext(KeyboardContext);
+  const { isPro, showPaywall } = useSubscription();
 
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState(settings.userName);
@@ -209,15 +211,15 @@ export function ProfileSheet({ onClose }: Props) {
                   display: 'inline-block',
                   fontSize: 11,
                   fontWeight: 500,
-                  color: 'var(--color-muted)',
+                  color: isPro ? '#fff' : 'var(--color-muted)',
                   letterSpacing: '0.3px',
-                  background: 'var(--color-bg)',
-                  border: '0.5px solid var(--color-border)',
+                  background: isPro ? 'var(--color-orange)' : 'var(--color-bg)',
+                  border: isPro ? '0.5px solid var(--color-orange)' : '0.5px solid var(--color-border)',
                   borderRadius: 6,
                   padding: '2px 7px',
                 }}
               >
-                Free plan
+                {isPro ? 'Pro plan' : 'Free plan'}
               </span>
             </div>
           </div>
@@ -323,42 +325,50 @@ export function ProfileSheet({ onClose }: Props) {
           )}
         </div>
 
-        {/* Upgrade banner */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #863bff 0%, #5b21b6 100%)',
-            borderRadius: 14,
-            padding: '16px 18px',
-            marginBottom: 20,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.2px' }}>
-              Setout Pro
-            </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 }}>
-              Unlimited jobs · PDF export · Priority support
-            </div>
-          </div>
-          <div
+        {/* Upgrade banner — only for non-Pro users */}
+        {!isPro && (
+          <button
+            onClick={() => { onClose(); showPaywall(); }}
             style={{
-              background: '#fff',
-              color: '#863bff',
-              fontSize: 12,
-              fontWeight: 600,
-              borderRadius: 8,
-              padding: '7px 12px',
-              flexShrink: 0,
-              letterSpacing: '-0.1px',
+              background: 'linear-gradient(135deg, var(--color-orange) 0%, #863bff 100%)',
+              borderRadius: 14,
+              padding: '16px 18px',
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+              border: 'none',
+              width: '100%',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              textAlign: 'left',
             }}
           >
-            Upgrade
-          </div>
-        </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: '-0.2px' }}>
+                Setout Pro
+              </div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+                All calculators · unlimited use
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#fff',
+                color: 'var(--color-orange)',
+                fontSize: 12,
+                fontWeight: 600,
+                borderRadius: 8,
+                padding: '7px 12px',
+                flexShrink: 0,
+                letterSpacing: '-0.1px',
+              }}
+            >
+              Upgrade
+            </div>
+          </button>
+        )}
 
         {/* Version */}
         <div style={{ textAlign: 'center', marginBottom: 14 }}>

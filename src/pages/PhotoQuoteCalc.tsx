@@ -3,6 +3,7 @@ import { hapticMedium } from '../lib/haptics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { PhotoQuoteGate } from '../components/PhotoQuoteGate';
 import { hasPhotoQuoteAccess, getPhotoQuoteToken } from '../lib/photoQuoteAccess';
+import { useSubscription } from '../lib/SubscriptionContext';
 import { upload } from '@vercel/blob/client';
 import { CalcHeader } from '../components/CalcHeader';
 import { ResultCard } from '../components/ResultCard';
@@ -12,7 +13,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { FEATURES } from '../lib/features';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf, formatDateInput } from '../lib/quotePdf';
-import type { QuoteDocType, PdfLogo } from '../lib/quotePdf';
+import type { QuoteDocType, PdfLogo, PdfPhoto } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey, getRememberedIsSelf, rememberIsSelf } from '../lib/priceMemory';
 import { lookupCachedPrices, normalizeItemKey, isCheapFixing } from '../lib/priceLookup';
@@ -139,6 +140,10 @@ interface QuoteStateSnapshot {
   travelQty: string;
   materialMarginPct: string;
   labourMarginPct: string;
+  // Optional — photos attached to the quote/invoice by the user. Empty when
+  // no photos have been added. Uses PdfPhoto shape directly so it round-trips
+  // straight into buildQuotePdf without further conversion.
+  photos?: PdfPhoto[];
 }
 
 const MAX_DIMENSION = 1568;
@@ -178,7 +183,33 @@ function uploadPlansFile(file: File): Promise<string> {
     .then(blob => blob.url);
 }
 
-const MAX_LOGO_DIMENSION = 320;
+const MAX_LOGO_DIMENSION = 2000;
+// Photos in a quote/invoice sit at ~200pt wide in the PDF; 1600px source
+// covers print-DPI without bloating localStorage (each photo ~150–400KB
+// after JPEG re-encode at 0.8 quality).
+const MAX_QUOTE_PHOTO_DIMENSION = 1600;
+
+function fileToQuotePhoto(file: File): Promise<PdfPhoto> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, MAX_QUOTE_PHOTO_DIMENSION / Math.max(img.width, img.height));
+      const width = Math.round(img.width * scale);
+      const height = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { reject(new Error('Canvas not supported')); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve({ dataUrl: canvas.toDataURL('image/jpeg', 0.8), width, height });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read photo — try a different image')); };
+    img.src = url;
+  });
+}
 
 function fileToLogo(file: File): Promise<PdfLogo> {
   return new Promise((resolve, reject) => {
@@ -203,11 +234,13 @@ function fileToLogo(file: File): Promise<PdfLogo> {
 }
 
 export function PhotoQuoteCalc() {
+  const { isPro } = useSubscription();
   const [hasAccess, setHasAccess] = useState(() => hasPhotoQuoteAccess());
 
   // Only enforce the invite-code gate when SmartQuote (AI takeoff) is enabled —
   // blank/manual quotes and calc handoffs must work without the code.
-  if (FEATURES.smartQuote && !hasAccess) {
+  // Pro subscribers bypass the invite-code gate — Photo Quote is a paid feature.
+  if (FEATURES.smartQuote && !hasAccess && !isPro) {
     return <PhotoQuoteGate onUnlocked={() => setHasAccess(true)} />;
   }
 
@@ -264,9 +297,16 @@ function PhotoQuoteCalcInner() {
     const stored = localStorage.getItem('setout_photoquote_logo');
     try { return stored ? (JSON.parse(stored) as PdfLogo) : null; } catch { return null; }
   });
+  // Photos attached to this quote/invoice — printed on the PDF and persisted
+  // in the QuoteStateSnapshot so re-opening the quote from History restores
+  // them. Deliberately per-quote (not global like the logo) so photos travel
+  // with the specific job.
+  const [photos, setPhotos] = useState<PdfPhoto[]>([]);
+  const [photoError, setPhotoError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const plansInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const quotePhotoInputRef = useRef<HTMLInputElement>(null);
   // What the AI actually proposed for the current takeoff, captured right after a generate — diffed
   // against materialsList when the tradie finalizes (download/share) to learn their build habits.
   // Only set for AI-generated quotes, not calculator handoffs (those are exact math, nothing to learn).
@@ -287,6 +327,7 @@ function PhotoQuoteCalcInner() {
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
       quoteNumber, notes, dueDate, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
+      photos: photos.length > 0 ? photos : undefined,
     };
     updateEntry(lastEntryId, {
       outputs: {
@@ -302,6 +343,7 @@ function PhotoQuoteCalcInner() {
     materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
     quoteNumber, notes, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    photos,
   ]);
 
   async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -317,6 +359,47 @@ function PhotoQuoteCalcInner() {
   function handleRemoveLogo() {
     setLogo(null);
     localStorage.removeItem('setout_photoquote_logo');
+  }
+
+  // Multi-photo picker for the quote/invoice. Uses accept="image/*" +
+  // multiple + capture="environment" so mobile Safari / Chrome offer the
+  // native camera or library picker. Photos compress to JPEG @ 0.8, max
+  // 1600px, then get appended to the current list (preserving any already
+  // added).
+  async function handleQuotePhotosChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setPhotoError('');
+    try {
+      const added: PdfPhoto[] = [];
+      for (const f of files) {
+        // Skip anything obviously not an image so a wrong pick doesn't blow up.
+        if (!f.type.startsWith('image/')) continue;
+        try {
+          const p = await fileToQuotePhoto(f);
+          added.push(p);
+        } catch {
+          // A single unreadable file (dead HEIC, corrupt PNG) shouldn't fail
+          // the whole batch — swallow, keep going, flag at end if all failed.
+        }
+      }
+      if (added.length === 0) {
+        setPhotoError('Could not read any of the selected photos. Try again with different files.');
+      } else {
+        setPhotos(prev => [...prev, ...added]);
+      }
+    } finally {
+      // Reset so selecting the same file again re-fires the change event.
+      if (quotePhotoInputRef.current) quotePhotoInputRef.current.value = '';
+    }
+  }
+
+  function handleRemoveQuotePhoto(index: number) {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+  }
+
+  function handleQuotePhotoCaption(index: number, caption: string) {
+    setPhotos(prev => prev.map((p, i) => i === index ? { ...p, caption } : p));
   }
 
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -503,6 +586,7 @@ function PhotoQuoteCalcInner() {
       setTravelQty(snap.travelQty);
       setMaterialMarginPct(snap.materialMarginPct);
       setLabourMarginPct(snap.labourMarginPct);
+      setPhotos(snap.photos ?? []);
       setJobName(entry?.jobName ?? '');
       setLastEntryId(state.resumeEntryId);
       habitsCapturedRef.current = true; // don't re-learn build habits from a quote that's just being reopened, not freshly generated
@@ -778,6 +862,7 @@ function PhotoQuoteCalcInner() {
       jobDescription: result.scopeSummary,
       notes: notes.trim(),
       logo,
+      photos: photos.length > 0 ? photos : undefined,
       region: totals.region,
       businessName: settings.businessName,
       businessNumber: settings.businessNumber,
@@ -1146,15 +1231,20 @@ function PhotoQuoteCalcInner() {
         {result && (
           <>
             {fromCalculator ? (
-              result.scopeSummary.trim() && (
-                <div style={{
-                  background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-                  borderRadius: 'var(--radius-card)', padding: '14px 16px',
-                }}>
-                  <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>FROM CALCULATOR</p>
-                  <p style={{ margin: '4px 0 0', fontSize: 14.5, color: 'var(--color-text)', lineHeight: 1.4 }}>{result.scopeSummary}</p>
-                </div>
-              )
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>JOB DESCRIPTION</p>
+                <textarea
+                  value={result.scopeSummary}
+                  onChange={e => setResult(r => (r ? { ...r, scopeSummary: e.target.value } : r))}
+                  placeholder="Describe the job — this prints on the client-facing document"
+                  rows={3}
+                  style={{
+                    width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                    borderRadius: 12, padding: '12px 14px', fontSize: 15, fontFamily: 'inherit',
+                    color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
+                  }}
+                />
+              </div>
             ) : isManual ? (
               <div>
                 <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>JOB DESCRIPTION</p>
@@ -1948,6 +2038,85 @@ function PhotoQuoteCalcInner() {
                 }}
               />
             </div>
+
+            {/* Photos — attached to the quote, printed on the PDF */}
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>
+                PHOTOS <span style={{ textTransform: 'none', fontWeight: 400 }}>(shown on PDF{photos.length > 0 ? ` · ${photos.length}` : ''})</span>
+              </p>
+              <input
+                ref={quotePhotoInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                capture="environment"
+                onChange={handleQuotePhotosChange}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => quotePhotoInputRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  width: '100%', padding: '12px 14px', borderRadius: 12,
+                  border: '0.5px dashed var(--color-border)', background: 'var(--color-card)',
+                  color: 'var(--color-text)', fontSize: 14, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />
+                </svg>
+                {photos.length === 0 ? 'Take or upload photos' : 'Add more photos'}
+              </button>
+              {photoError && (
+                <p style={{ margin: '6px 0 0', fontSize: 12, color: '#c1272d' }}>{photoError}</p>
+              )}
+              {photos.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+                  {photos.map((p, i) => (
+                    <div key={i} style={{
+                      background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                      borderRadius: 10, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                    }}>
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '75%', background: '#000' }}>
+                        <img
+                          src={p.dataUrl}
+                          alt={`Quote photo ${i + 1}`}
+                          style={{
+                            position: 'absolute', inset: 0, width: '100%', height: '100%',
+                            objectFit: 'cover', display: 'block',
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveQuotePhoto(i)}
+                          aria-label="Remove photo"
+                          style={{
+                            position: 'absolute', top: 6, right: 6,
+                            background: 'rgba(0,0,0,0.7)', color: '#fff',
+                            border: 'none', width: 28, height: 28, borderRadius: 999,
+                            fontSize: 18, lineHeight: 1, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >×</button>
+                      </div>
+                      <input
+                        type="text"
+                        value={p.caption ?? ''}
+                        onChange={e => handleQuotePhotoCaption(i, e.target.value)}
+                        placeholder="Caption (optional)"
+                        style={{
+                          width: '100%', border: 'none', borderTop: '0.5px solid var(--color-border)',
+                          background: 'transparent', padding: '8px 10px', fontSize: 12,
+                          fontFamily: 'inherit', color: 'var(--color-text)',
+                          outline: 'none', boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             </>
             )}
 
@@ -1997,7 +2166,7 @@ function PhotoQuoteCalcInner() {
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
               {fromCalculator
-                ? 'Materials and quantities came from the calculator, not a SmartQuote estimate. Prices are starting figures — check before ordering or quoting a client.'
+                ? 'Materials and quantities came from the calculator. Prices are starting figures — check before ordering or quoting a client.'
                 : isManual
                 ? 'Entered manually — check all materials, hours, and prices before sending.'
                 : COMPLIANCE_NOTES.photoquote[settings.region]}

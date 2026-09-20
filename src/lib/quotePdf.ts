@@ -16,6 +16,15 @@ export interface PdfLogo {
   height: number;
 }
 
+export interface PdfPhoto {
+  // Compressed JPEG data URL (produced by compressImageFile in useJobPhotos).
+  dataUrl: string;
+  width: number;
+  height: number;
+  // Optional short caption printed under the photo.
+  caption?: string;
+}
+
 export interface PdfQuoteInput {
   docType: QuoteDocType;
   quoteNumber: string;
@@ -29,6 +38,7 @@ export interface PdfQuoteInput {
   jobDescription: string;
   notes: string;
   logo?: PdfLogo | null;
+  photos?: PdfPhoto[];
   region: Region;
   businessName: string;
   businessNumber: string; // ABN (AU) or GST number (NZ)
@@ -100,7 +110,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     const logoW = (q.logo.width / q.logo.height) * headerLogoHeight;
     const logoTopY = 28;
     try {
-      doc.addImage(q.logo.dataUrl, 'PNG', (pageWidth - logoW) / 2, logoTopY, logoW, headerLogoHeight);
+      doc.addImage(q.logo.dataUrl, 'PNG', (pageWidth - logoW) / 2, logoTopY, logoW, headerLogoHeight, undefined, 'NONE');
       headerBottomY = logoTopY + headerLogoHeight + 14;
     } catch { /* unsupported image data — skip logo rather than fail the whole PDF */ }
   }
@@ -321,6 +331,75 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     ensureSpace(notesLines.length * 13 + 10);
     doc.text(notesLines, marginX, y);
     y += notesLines.length * 13 + 4;
+  }
+
+  // Photos — optional block, one section header + 2-up grid. Each photo is
+  // scaled to fit its cell keeping aspect ratio; a caption prints underneath
+  // when set. New pages break as needed so a photo never straddles the fold.
+  if (q.photos && q.photos.length > 0) {
+    ensureSpace(50);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(140, 140, 140);
+    doc.text('PHOTOS', marginX, y);
+    y += 6;
+    doc.setDrawColor(225, 225, 225);
+    doc.setLineWidth(0.75);
+    doc.line(marginX, y, pageWidth - marginX, y);
+    y += 16;
+
+    const gap = 12;
+    const cellW = (pageWidth - marginX * 2 - gap) / 2;
+    const maxCellH = 170; // pt — keeps 4+ photos on the same page comfortably
+
+    for (let i = 0; i < q.photos.length; i += 2) {
+      const left = q.photos[i];
+      const right = q.photos[i + 1];
+
+      // Row height = tallest scaled photo in this pair + caption line(s).
+      // Both photos scale to fit the cell, then we take the max.
+      function cellHeight(p: PdfPhoto | undefined): number {
+        if (!p) return 0;
+        const ratio = Math.min(cellW / p.width, maxCellH / p.height);
+        const imgH = p.height * ratio;
+        const captionLines = p.caption?.trim()
+          ? doc.splitTextToSize(p.caption.trim(), cellW).length
+          : 0;
+        return imgH + (captionLines > 0 ? captionLines * 11 + 6 : 0);
+      }
+      const rowH = Math.max(cellHeight(left), cellHeight(right));
+      ensureSpace(rowH + 14);
+
+      function renderCell(p: PdfPhoto | undefined, colX: number) {
+        if (!p) return;
+        const ratio = Math.min(cellW / p.width, maxCellH / p.height);
+        const imgW = p.width * ratio;
+        const imgH = p.height * ratio;
+        // Centre the photo horizontally within its cell.
+        const imgX = colX + (cellW - imgW) / 2;
+        try {
+          // 'JPEG' hint — compressImageFile always produces JPEG dataUrls.
+          doc.addImage(p.dataUrl, 'JPEG', imgX, y, imgW, imgH, undefined, 'FAST');
+        } catch {
+          // Unsupported / corrupt image — silently skip so a bad photo
+          // doesn't kill the whole PDF.
+          return;
+        }
+        if (p.caption?.trim()) {
+          const capY = y + imgH + 12;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(80, 80, 80);
+          const lines: string[] = doc.splitTextToSize(p.caption.trim(), cellW);
+          doc.text(lines, colX, capY);
+        }
+      }
+
+      renderCell(left, marginX);
+      renderCell(right, marginX + cellW + gap);
+      y += rowH + 14;
+    }
+    y += 4;
   }
 
   // Footer — disclaimer, with a small Setout credit line below it

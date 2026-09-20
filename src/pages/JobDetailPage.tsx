@@ -606,12 +606,13 @@ function OrderGroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function OrderCard({ entries, job, updateJob }: {
+function OrderCard({ entries, job, updateJob, bufferPct, setBufferPct }: {
   entries: HistoryEntry[];
   job: SavedJob;
   updateJob: (id: string, updates: Partial<SavedJob>) => void;
+  bufferPct: number;
+  setBufferPct: (pct: number) => void;
 }) {
-  const [bufferPct, setBufferPct] = useState(0);
   const [copied, setCopied] = useState(false);
   const [listExpanded, setListExpanded] = useState(false);
 
@@ -854,6 +855,54 @@ function OrderCard({ entries, job, updateJob }: {
   );
 }
 
+// ─── Section header (collapsible on the Job Detail page) ────────────────────
+
+function SectionHeader({
+  label, summary, open, onToggle,
+}: {
+  label: string;
+  summary?: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-expanded={open}
+      style={{
+        width: '100%',
+        background: 'var(--color-card)',
+        border: '0.5px solid var(--color-border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '14px 16px',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 16px',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{
+        fontSize: 15, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px',
+      }}>{label}</span>
+      {summary && (
+        <span style={{
+          fontSize: 12, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '-0.05px',
+        }}>{summary}</span>
+      )}
+      <svg
+        width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+  );
+}
+
 // ─── Group header ─────────────────────────────────────────────────────────────
 
 function GroupHeader({ label, count }: { label: string; count: number }) {
@@ -1082,6 +1131,8 @@ export function JobDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showNotesSheet, setShowNotesSheet] = useState(false);
   const [notesDraft, setNotesDraft] = useState(job?.notes ?? '');
+  const [openSection, setOpenSection] = useState<'order' | 'calcs' | null>(null);
+  const [bufferPct, setBufferPct] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -1145,6 +1196,38 @@ export function JobDetailPage() {
   function handleAddCalc() {
     sessionStorage.setItem('setout_pending_job', job!.id);
     navigate('/');
+  }
+
+  // Send the aggregated materials into the quote/invoice editor. Same shape
+  // as OrderCard's original flow — apply the currently-selected buffer (m³
+  // stays raw), pass source calcs as a per-line note. Lives at the page
+  // level so the button doesn't get hidden inside the collapsed Order card.
+  function handleSendToQuote() {
+    const order = applyManualEdits(buildJobOrder(calculations), job!);
+    const flatten = (lines: OrderLine[]) => lines.map(l => ({
+      item: l.name,
+      quantity: l.unit === 'm³' ? l.qty : applyBuffer(l.qty, bufferPct),
+      unit: l.unit,
+      note: l.sources.length > 0 ? l.sources.join(' + ') : undefined,
+    }));
+    const materials = [
+      ...flatten(order.timber),
+      ...flatten(order.concrete),
+      ...flatten(order.fixings),
+      ...flatten(order.other),
+    ].filter(m => m.item.trim() && m.quantity > 0);
+
+    const scopeSummary = job!.name.trim() || 'Job';
+
+    navigate('/calc/photoquote', {
+      state: {
+        fromCalculator: true,
+        scopeSummary,
+        materials,
+        jobName: job!.name,
+        docType: 'quote',
+      },
+    });
   }
 
   return (
@@ -1233,33 +1316,71 @@ export function JobDetailPage() {
       {/* Photos + comments */}
       <JobPhotosSection jobId={job.id} />
 
-      {/* Consolidated order */}
-      {calculations.length > 0 && <OrderCard entries={calculations} job={job} updateJob={updateJob} />}
+      {/* Collapsible sections */}
+      {calculations.length > 0 && (
+        <div style={{ padding: '8px 18px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader
+            label="Order"
+            summary={`${calculations.length} ${calculations.length === 1 ? 'calc' : 'calcs'}`}
+            open={openSection === 'order'}
+            onToggle={() => setOpenSection(openSection === 'order' ? null : 'order')}
+          />
+          {openSection === 'order' && (
+            <div style={{ margin: '-4px -18px 4px' }}>
+              <OrderCard entries={calculations} job={job} updateJob={updateJob} bufferPct={bufferPct} setBufferPct={setBufferPct} />
+            </div>
+          )}
 
-      {/* Calc list */}
+          <SectionHeader
+            label="Calculations"
+            summary={`${calculations.length}`}
+            open={openSection === 'calcs'}
+            onToggle={() => setOpenSection(openSection === 'calcs' ? null : 'calcs')}
+          />
+          {openSection === 'calcs' && (
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 4 }}>
+              {GROUP_ORDER.map(g => {
+                const group = grouped[g];
+                if (group.length === 0) return null;
+                return (
+                  <div key={g}>
+                    <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                      {group.map(entry => (
+                        <CalcEntryCard
+                          key={entry.id}
+                          entry={entry}
+                          onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button
+            onClick={handleSendToQuote}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-card)', cursor: 'pointer',
+              background: 'var(--color-card)', color: 'var(--color-text)',
+              border: '0.5px solid var(--color-border)',
+              fontSize: 15, fontWeight: 500, fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Send to quote / estimate
+          </button>
+        </div>
+      )}
+
+      {/* Empty state (no calcs yet) */}
       <div style={{ flex: 1, padding: '14px 18px 100px', display: 'flex', flexDirection: 'column' }}>
-        {calculations.length === 0 ? (
-          <EmptyState onAdd={handleAddCalc} />
-        ) : (
-          GROUP_ORDER.map(g => {
-            const group = grouped[g];
-            if (group.length === 0) return null;
-            return (
-              <div key={g}>
-                <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {group.map(entry => (
-                    <CalcEntryCard
-                      key={entry.id}
-                      entry={entry}
-                      onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
+        {calculations.length === 0 && <EmptyState onAdd={handleAddCalc} />}
       </div>
 
       {/* FAB */}

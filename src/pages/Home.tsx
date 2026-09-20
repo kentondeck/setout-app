@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { SettingsContext, HistoryContext } from '../contexts';
+import { SettingsContext } from '../contexts';
 import { TopBar } from '../components/TopBar';
 import { ReorderableCalcGrid } from '../components/ReorderableCalcGrid';
 import { QuoteTile } from '../components/QuoteTile';
@@ -23,11 +23,8 @@ function replaceGroupOrder(fullOrder: CalculatorId[], groupIds: Set<CalculatorId
 
 export function Home() {
   const { settings, updateSettings } = useContext(SettingsContext);
-  const { history } = useContext(HistoryContext);
 
   const { greeting, sub } = getGreeting(settings.userName);
-  const lastEntry = history[0] ?? null;
-  const highlightedId = lastEntry?.calculatorId ?? 'decking';
   const pinned = settings.pinnedCalcs ?? [];
 
   function handlePinToggle(id: string) {
@@ -84,7 +81,7 @@ export function Home() {
             </p>
             <ReorderableCalcGrid
               calcs={pinnedCalcs}
-              highlightedId={highlightedId}
+              highlightedId=""
               pinnedIds={pinnedSet}
               onPinToggle={handlePinToggle}
               onReorder={handleReorderPinned}
@@ -100,7 +97,7 @@ export function Home() {
           )}
           <ReorderableCalcGrid
             calcs={restCalcs}
-            highlightedId={highlightedId}
+            highlightedId=""
             pinnedIds={pinnedSet}
             onPinToggle={handlePinToggle}
             onReorder={handleReorderRest}

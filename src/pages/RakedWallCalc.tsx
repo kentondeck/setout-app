@@ -12,6 +12,8 @@ import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -42,6 +44,8 @@ const DEFAULTS: Inputs = {
 export function RakedWallCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('heights');
@@ -83,11 +87,19 @@ export function RakedWallCalc() {
       highHeight = Math.round(lowHeight + Math.tan(pitch * Math.PI / 180) * wallLength);
     }
 
+    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+
     setError('');
 
     const timberThickness = parseFloat(inputs.timberThickness) || 45;
     const nogginRows = parseInt(inputs.nogginRows) || 1;
-    const calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows });
+    let calc: ReturnType<typeof calculateRakedWall>;
+    try {
+      calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
 
     const id = uuid();

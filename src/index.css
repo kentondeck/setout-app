@@ -19,6 +19,10 @@
      Home) and needs a shadow instead of --color-bg contrast to read as a card. */
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.05);
   font-family: 'Inter', system-ui, sans-serif;
+  /* Pin the WebView (and every form control inside it) to the light colour
+     scheme so iOS doesn't render a dark keyboard when the phone is in
+     system-wide dark mode. Info.plist locks the native shell to the same. */
+  color-scheme: light;
 }
 
 *, *::before, *::after {

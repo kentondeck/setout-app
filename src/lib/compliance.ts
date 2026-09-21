@@ -65,6 +65,14 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     AU: 'Assumes a 3mm saw kerf and standard mill lengths. Confirm actual stock lengths and tolerances with your timber supplier before cutting.',
     NZ: 'Assumes a 3mm saw kerf and standard mill lengths. Confirm actual stock lengths and tolerances with your timber supplier before cutting.',
   },
+  receipts: {
+    AU: 'Records are stored on this device. Back up regularly (Settings → Backup) — losing your phone means losing your records unless you have a backup.',
+    NZ: 'Records are stored on this device. Back up regularly (Settings → Backup) — losing your phone means losing your records unless you have a backup.',
+  },
+  tools: {
+    AU: 'Records are stored on this device. Back up regularly (Settings → Backup) — losing your phone means losing the proof if you need to make an insurance claim.',
+    NZ: 'Records are stored on this device. Back up regularly (Settings → Backup) — losing your phone means losing the proof if you need to make an insurance claim.',
+  },
 };
 
 export interface StairLimits {

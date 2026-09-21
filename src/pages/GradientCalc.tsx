@@ -11,6 +11,8 @@ import { JobNameInput } from '../components/JobNameInput';
 import type { GradientResult } from '../calculators/gradient';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
 import type { Region } from '../types';
@@ -40,6 +42,8 @@ function getRampPresets(region: Region) {
 export function GradientCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   // Primary mode: know gradient + distance → find fall
   // Reverse mode: know fall + distance → find gradient
@@ -84,6 +88,7 @@ export function GradientCalc() {
 
     if (!reverse) {
       if (!activeRatio || activeRatio <= 0) { setError('Select or enter a gradient.'); return; }
+      if (!gate.tryUse()) { setError(''); showPaywall(); return; }
       setError('');
       const calc = calculateGradient({ mode: 'findRise', run: distVal, rise: 0, gradientRatio: activeRatio });
       setResult(calc);
@@ -92,6 +97,7 @@ export function GradientCalc() {
       addEntry({ id, calculatorId: 'gradient', timestamp: Date.now(), inputs: { mode: 'findRise', run: distVal, gradientRatio: activeRatio }, outputs: calc.outputs });
     } else {
       if (!fallVal || fallVal <= 0) { setError('Enter the fall.'); return; }
+      if (!gate.tryUse()) { setError(''); showPaywall(); return; }
       setError('');
       const calc = calculateGradient({ mode: 'findGradient', run: distVal, rise: fallVal, gradientRatio: 0 });
       setResult(calc);

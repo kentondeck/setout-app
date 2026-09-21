@@ -161,7 +161,7 @@ export function buildJobOrder(entries: HistoryEntry[]): JobOrder {
         try { items = JSON.parse(raw); } catch { break; }
         for (const m of items) {
           if (!m.item?.trim() || !(m.quantity > 0)) continue;
-          other.push({ id: `photoquote-${e.id}-${m.item}`, name: m.item.trim(), qty: m.quantity, unit: m.unit?.trim() || 'each', sources: ['SmartQuote'] });
+          other.push({ id: `photoquote-${e.id}-${m.item}`, name: m.item.trim(), qty: m.quantity, unit: m.unit?.trim() || 'each', sources: ['Quote'] });
         }
         break;
       }

@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { KeyboardContext } from '../contexts';
 import { hapticLight } from '../lib/haptics';
@@ -73,12 +73,37 @@ export function BottomNav({ onReselect }: Props) {
   const { pathname } = useLocation();
   const { inset } = useContext(KeyboardContext);
 
+  // Belt-and-braces: also watch focus events. In live-reload dev builds the
+  // Capacitor Keyboard plugin's show/hide events don't always fire (Capacitor
+  // sees the LAN URL as `platform: 'web'` and ignores plugin calls), so `inset`
+  // stays 0 and the nav would sit above the keyboard. Focus on any editable
+  // input is a reliable proxy for "keyboard is up".
+  const [focusOpen, setFocusOpen] = useState(false);
+  useEffect(() => {
+    const isEditable = (el: EventTarget | null) =>
+      el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ||
+      (el instanceof HTMLElement && el.isContentEditable);
+    const onFocusIn = (e: FocusEvent) => { if (isEditable(e.target)) setFocusOpen(true); };
+    const onFocusOut = (e: FocusEvent) => {
+      if (!isEditable(e.target)) return;
+      setTimeout(() => {
+        if (!isEditable(document.activeElement)) setFocusOpen(false);
+      }, 50);
+    };
+    document.addEventListener('focusin', onFocusIn);
+    document.addEventListener('focusout', onFocusOut);
+    return () => {
+      document.removeEventListener('focusin', onFocusIn);
+      document.removeEventListener('focusout', onFocusOut);
+    };
+  }, []);
+
   // Being sticky (in-flow), not fixed, means this doesn't share a
   // containing block with the fixed-position sheets that sit over it —
   // with the keyboard open it was turning up stranded between a sheet
   // and the keyboard instead of hidden behind either. Simplest correct
   // behaviour: it's not useful to tap a tab while typing anyway.
-  if (inset > 0) return null;
+  if (inset > 0 || focusOpen) return null;
 
   return (
     <nav

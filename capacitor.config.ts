@@ -13,11 +13,12 @@ const config: CapacitorConfig = {
     contentInset: 'never',
     scrollEnabled: false,
     allowsLinkPreview: false,
-    // Restricts the WKWebView to WKAppBoundDomains (setoutapp.com.au) so
-    // the service worker can register there for offline caching. Enforcing
-    // this in live-dev mode would block the app from loading the LAN dev
-    // server at all — WebKit silently refuses the main-frame navigation
-    // with "attempting to navigate away from an app-bound domain".
+    // Locks WKWebView to WKAppBoundDomains (setoutapp.com.au per Info.plist)
+    // so the service worker can register there for offline caching.
+    // `npm run ios:live` points at the Mac's LAN IP, which can't be an app-bound
+    // domain — WebKit silently refuses the main-frame navigation with
+    // "attempting to navigate away from an app-bound domain". Relax the lock
+    // only in dev-server mode; production builds ship with it on.
     limitsNavigationsToAppBoundDomains: !isLiveDev,
   },
   plugins: {
@@ -36,6 +37,11 @@ const config: CapacitorConfig = {
     // truth instead of two resize mechanisms fighting each other.
     Keyboard: {
       resize: 'none',
+      // Force the light on-screen keyboard theme so it doesn't render dark
+      // when the phone is set to system-wide dark mode. Pairs with
+      // UIUserInterfaceStyle=Light in Info.plist which locks the entire app
+      // to light mode at the native level.
+      style: 'LIGHT',
     },
   },
   server: {

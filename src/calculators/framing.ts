@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface FramingInputs {
   wallLength: number;   // metres
@@ -8,6 +9,10 @@ export interface FramingInputs {
   nogginRows: number;   // number of noggin rows (typically 1–2)
   doubleStuds: boolean;
   doubleTopPlate: boolean;
+  // Face-width of the stud along the wall length — 45 mm for NZ 90×45,
+  // 35 mm for AU 70×35. Drives noggin length between studs (spacing − face).
+  // Optional so existing callers keep working; defaults to 45 mm.
+  studFaceWidthMm?: number;
 }
 
 export interface FramingOutputs extends Record<string, number> {
@@ -30,9 +35,27 @@ export interface FramingResult {
 
 export function calculateFraming(inputs: FramingInputs): FramingResult {
   const { wallLength, wallHeight, studSpacing, includeNoggins, nogginRows, doubleStuds, doubleTopPlate } = inputs;
+  const studFaceWidthMm = inputs.studFaceWidthMm ?? 45;
 
-  // Studs: one at each end + intermediate studs spaced at studSpacing
-  const baseStudCount = Math.floor((wallLength * 1000) / studSpacing) + 1;
+  // Unit-scale sanity — wall dimensions are in metres. > 100 almost certainly
+  // means mm typed as m (e.g. 4800 instead of 4.8).
+  if (wallLength > 100 || wallHeight > 100) {
+    throw new CalcInputError('Wall dimensions look too large — enter length and height in metres (e.g. 4.8, not 4800).');
+  }
+  // Stud spacing is in mm. Anything outside real trade practice means the
+  // user entered the wrong unit or a bad number.
+  if (studSpacing < 100 || studSpacing > 1200) {
+    throw new CalcInputError('Stud spacing should be between 100 and 1200 mm.');
+  }
+  if (studSpacing <= studFaceWidthMm) {
+    throw new CalcInputError('Stud spacing must be greater than the stud face width.');
+  }
+
+  // Studs: one at each end + intermediate studs spaced at studSpacing.
+  // `ceil(L/s) + 1` gives the right count for any wall length — for an exact
+  // multiple it matches `floor + 1`; for non-multiples it adds the extra
+  // end stud that floor+1 misses.
+  const baseStudCount = Math.ceil((wallLength * 1000) / studSpacing) + 1;
   const studCount = doubleStuds ? baseStudCount * 2 : baseStudCount;
 
   const topPlateLineal = parseFloat((wallLength * (doubleTopPlate ? 2 : 1)).toFixed(2));
@@ -44,7 +67,7 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
   // Studs lineal metres + plates + noggins
   const studsLineal = parseFloat((studCount * wallHeight).toFixed(2));
   const nogginsLineal = includeNoggins
-    ? parseFloat((nogginCount * ((studSpacing - 90) / 1000)).toFixed(2))
+    ? parseFloat((nogginCount * ((studSpacing - studFaceWidthMm) / 1000)).toFixed(2))
     : 0;
   const totalLinealMetres = parseFloat(
     (studsLineal + topPlateLineal + bottomPlateLineal + nogginsLineal).toFixed(2)
@@ -53,8 +76,8 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
   const steps: WorkingStep[] = [
     {
       label: 'Stud positions',
-      formula: 'floor( wall length (mm) ÷ stud spacing ) + 1',
-      result: `floor( ${wallLength * 1000} ÷ ${studSpacing} ) + 1 = ${baseStudCount} positions`,
+      formula: 'ceil( wall length (mm) ÷ stud spacing ) + 1',
+      result: `ceil( ${wallLength * 1000} ÷ ${studSpacing} ) + 1 = ${baseStudCount} positions`,
     },
     ...(doubleStuds
       ? [{
@@ -82,8 +105,8 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
           },
           {
             label: 'Nogs lineal metres',
-            formula: 'nog count × (stud spacing − 90mm stud width)',
-            result: `${nogginCount} × ${((studSpacing - 90) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
+            formula: `nog count × (stud spacing − ${studFaceWidthMm}mm stud face)`,
+            result: `${nogginCount} × ${((studSpacing - studFaceWidthMm) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
           },
         ]
       : []),

@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { shareOrPreviewImage } from '../lib/saveImage';
 
 export type DeckingDiagramProps = {
   deckLength: number;   // mm
@@ -91,16 +92,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
       canvas.toBlob(async blob => {
         if (!blob) return;
         const name = `deck-${Math.round(deckLength)}x${Math.round(deckWidth)}.png`;
-        const file = new File([blob], name, { type: 'image/png' });
-        if (navigator.share && navigator.canShare?.({ files: [file] })) {
-          try { await navigator.share({ files: [file], title: 'Deck Layout' }); return; } catch { /**/ }
-        }
-        // Fallback for WKWebView / iOS Safari where <a download> is ignored:
-        // open the image so the user can long-press → Save Image to Photos.
-        const blobUrl = URL.createObjectURL(blob);
-        const opened = window.open(blobUrl, '_blank');
-        if (!opened) window.location.href = blobUrl;
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+        await shareOrPreviewImage(blob, name, 'Deck Layout');
       }, 'image/png');
     };
     img.src = url;

@@ -1,9 +1,11 @@
-import { useContext, useState } from 'react';
+import { useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 import type { Employee } from '../types';
 import { uuid } from '../lib/uuid';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { exportBackup, parseBackup, applyBackup } from '../lib/backup';
 
 const textInputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10,
@@ -29,10 +31,76 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Collapsible section — header row with a chevron, tap to expand/collapse.
+// Used for long blocks (Business details, Your team) so the Settings page
+// stays scannable at first glance instead of a wall of inputs.
+function Collapsible({
+  title,
+  subtitle,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div style={{
+      background: 'var(--color-card)',
+      border: '0.5px solid var(--color-border)',
+      borderRadius: 'var(--radius-card)',
+      overflow: 'hidden',
+    }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '16px 16px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          textAlign: 'left',
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
+            {title}
+          </div>
+          {subtitle && (
+            <div style={{ marginTop: 2, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0 16px 16px', borderTop: '0.5px solid var(--color-border)', paddingTop: 14 }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useContext(SettingsContext);
+  const subscription = useSubscription();
   const [nameInput, setNameInput] = useState(settings.userName);
   const [nameSaved, setNameSaved] = useState(false);
 
@@ -117,6 +185,50 @@ export function Settings() {
   }
 
   const [nextQuoteNumberInput, setNextQuoteNumberInput] = useState(String(settings.nextQuoteNumber));
+
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+  const [backupBusy, setBackupBusy] = useState<'export' | 'import' | null>(null);
+  const [backupMessage, setBackupMessage] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
+
+  async function handleExport() {
+    setBackupBusy('export');
+    setBackupMessage(null);
+    try {
+      await exportBackup();
+      setBackupMessage({ text: 'Backup saved. Keep a copy in Files, iCloud, or emailed to yourself.', tone: 'success' });
+    } catch (err) {
+      setBackupMessage({ text: (err as Error)?.message || 'Backup failed.', tone: 'error' });
+    } finally {
+      setBackupBusy(null);
+    }
+  }
+
+  function triggerImport() {
+    importFileRef.current?.click();
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const confirmed = window.confirm(
+      'Restoring will replace your history, jobs, photos and price memory with the backup file. Continue?',
+    );
+    if (!confirmed) return;
+    setBackupBusy('import');
+    setBackupMessage(null);
+    try {
+      const text = await file.text();
+      const backup = parseBackup(text);
+      const { restored, photosRestored } = await applyBackup(backup);
+      const photoBit = photosRestored > 0 ? ` and ${photosRestored} photo${photosRestored === 1 ? '' : 's'}` : '';
+      setBackupMessage({ text: `Restored ${restored} item${restored === 1 ? '' : 's'}${photoBit}. Reloading…`, tone: 'success' });
+      setTimeout(() => window.location.reload(), 900);
+    } catch (err) {
+      setBackupMessage({ text: (err as Error)?.message || 'Restore failed.', tone: 'error' });
+      setBackupBusy(null);
+    }
+  }
 
   return (
     <div
@@ -267,11 +379,10 @@ export function Settings() {
         </div>
       </div>
 
-      <div>
-        <SectionLabel>Business details</SectionLabel>
-        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-          Printed on every quote/estimate PDF — {settings.region === 'AU' ? 'your ABN is required for a valid tax invoice' : 'your GST number is required if you\'re GST-registered'}.
-        </p>
+      <Collapsible
+        title="Business details"
+        subtitle={`Printed on every quote/estimate PDF — ${settings.region === 'AU' ? 'ABN required for a valid tax invoice' : 'GST number required if you\'re GST-registered'}.`}
+      >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <input
             type="text"
@@ -369,7 +480,7 @@ export function Settings() {
             {businessSaved ? '✓ Saved' : 'Save business details'}
           </button>
         </div>
-      </div>
+      </Collapsible>
 
       <div>
         <SectionLabel>Invoice numbering</SectionLabel>
@@ -507,7 +618,125 @@ export function Settings() {
         )}
       </div>
 
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <div>
+        <SectionLabel>Backup</SectionLabel>
+        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+          Save your history, jobs, photos, and price memory to a single file — keep a copy in Files, iCloud, or emailed to yourself. Restore it any time on this device or a new phone.
+        </p>
+        <div style={{
+          padding: 14, borderRadius: 'var(--radius-card)',
+          background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handleExport}
+              disabled={backupBusy !== null}
+              style={{
+                flex: 1, padding: '12px 14px',
+                background: 'var(--color-orange)', color: '#fff',
+                border: 'none', borderRadius: 'var(--radius-tile)',
+                fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+                cursor: backupBusy ? 'default' : 'pointer',
+                opacity: backupBusy === 'export' ? 0.7 : 1,
+              }}
+            >
+              {backupBusy === 'export' ? 'Saving…' : 'Save backup'}
+            </button>
+            <button
+              onClick={triggerImport}
+              disabled={backupBusy !== null}
+              style={{
+                flex: 1, padding: '12px 14px',
+                background: 'transparent', color: 'var(--color-text)',
+                border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-tile)',
+                fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
+                cursor: backupBusy ? 'default' : 'pointer',
+                opacity: backupBusy === 'import' ? 0.7 : 1,
+              }}
+            >
+              {backupBusy === 'import' ? 'Restoring…' : 'Restore backup'}
+            </button>
+          </div>
+          <input
+            ref={importFileRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+          {backupMessage && (
+            <p style={{
+              margin: 0, fontSize: 12, lineHeight: 1.4,
+              color: backupMessage.tone === 'success' ? '#16a34a' : '#dc2626',
+            }}>
+              {backupMessage.text}
+            </p>
+          )}
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+            Backing up before uninstalling — or every few weeks as insurance — means nothing gets lost.
+          </p>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+        {subscription.isPro ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '8px 12px', borderRadius: 999,
+            background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+          }}>
+            <span style={{
+              display: 'inline-block', width: 6, height: 6, borderRadius: 999,
+              background: '#22c55e',
+            }} />
+            <span style={{ fontSize: 12, color: 'var(--color-text)' }}>Setout Pro active</span>
+            <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>·</span>
+            <button
+              onClick={subscription.openManageSubscription}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                fontSize: 12, color: 'var(--color-orange)', fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Manage
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+            <button
+              onClick={subscription.showPaywall}
+              style={{
+                background: 'none', border: 'none', padding: '4px 0',
+                fontSize: 13, color: 'var(--color-orange)', fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Start free trial
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>·</span>
+            <button
+              onClick={subscription.presentCodeRedemption}
+              style={{
+                background: 'none', border: 'none', padding: '4px 0',
+                fontSize: 13, color: 'var(--color-muted)', fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Redeem code
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>·</span>
+            <button
+              onClick={subscription.restorePurchases}
+              style={{
+                background: 'none', border: 'none', padding: '4px 0',
+                fontSize: 13, color: 'var(--color-muted)', fontFamily: 'inherit', cursor: 'pointer',
+              }}
+            >
+              Restore
+            </button>
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
           <button
             onClick={() => navigate('/support')}

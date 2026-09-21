@@ -116,10 +116,34 @@ export const CALCULATORS: CalcMeta[] = [
     svgPath: 'M4 4v16M10 4v16M16 4v16M22 4v16M2 9h22M2 15h22',
   },
   {
-    id: 'photoquote',
-    label: 'SmartQuote',
-    subtitle: 'Job estimate & project feasibility',
+    id: 'sequencer',
+    label: 'Sequencer',
+    subtitle: 'Step-by-step job guides',
     number: '17',
+    // Checklist icon
+    svgPath: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
+  },
+  {
+    id: 'photoquote',
+    label: 'Quotes',
+    subtitle: 'Estimates, quotes & invoices',
+    number: '18',
     svgPath: 'M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h4l2 3h3a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  },
+  {
+    id: 'receipts',
+    label: 'Receipts',
+    subtitle: 'Log for accountant',
+    number: '19',
+    // Document/receipt icon — sheet with a torn bottom edge
+    svgPath: 'M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM14 2v6h6M8 13h8M8 17h5',
+  },
+  {
+    id: 'tools',
+    label: 'Tools',
+    subtitle: 'Inventory for insurance',
+    number: '20',
+    // Wrench icon
+    svgPath: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2-2 2.9-2.9z',
   },
 ];

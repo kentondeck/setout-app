@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface RakedWallInputs {
   wallLength: number;       // mm — horizontal length of wall
@@ -33,6 +34,18 @@ export interface RakedWallResult {
 export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   const { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows = 1 } = inputs;
 
+  // Guard against swapped high / low — a negative rise means the calc silently
+  // produces a wall that gets SHORTER across its length, which is either
+  // upside down or a data-entry mistake.
+  if (highHeight <= lowHeight) {
+    throw new CalcInputError('High end must be taller than the low end — check the values.');
+  }
+  // Deducting both plates (bottom + rake) has to leave something for the stud.
+  const studDeductionCheck = timberThickness + timberThickness / Math.cos(Math.atan2(highHeight - lowHeight, wallLength));
+  if (lowHeight - studDeductionCheck <= 0) {
+    throw new CalcInputError('Low end is too short for the plate thicknesses — check heights or timber.');
+  }
+
   const rise = highHeight - lowHeight;
   const pitchRad = Math.atan2(rise, wallLength);
   const pitchAngle = parseFloat(((pitchRad * 180) / Math.PI).toFixed(1));
@@ -47,12 +60,18 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   // Extra mm on the high side of each stud top cut: t × tan(θ)
   const studCutExtra = parseFloat((timberThickness * Math.tan(pitchRad)).toFixed(1));
 
-  const studCount = Math.floor(wallLength / studSpacing) + 1;
+  // `ceil(L/s) + 1` gives the right stud count for any wall length. For an
+  // exact multiple it matches `floor + 1`; for non-multiples it adds the
+  // end stud that floor+1 would drop.
+  const studCount = Math.ceil(wallLength / studSpacing) + 1;
 
-  // Stud lengths: interpolate total height at each position, then deduct both plates
+  // Stud lengths: interpolate total height at each position, then deduct both plates.
+  // The last stud always sits at the wall end (not at studCount × spacing, which
+  // may fall short for non-multiple walls), so the tallest stud is dimensioned to
+  // the actual wall's high-end height.
   const studHeights: number[] = [];
   for (let i = 0; i < studCount; i++) {
-    const position = i * studSpacing;
+    const position = i === studCount - 1 ? wallLength : i * studSpacing;
     const totalHeight = lowHeight + (rise * position) / wallLength;
     studHeights.push(parseFloat((totalHeight - studDeduction).toFixed(1)));
   }
@@ -67,10 +86,12 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     (studHeights.reduce((s, h) => s + h, 0) / 1000).toFixed(2)
   );
 
-  // Noggins run between stud positions, same convention as the flat framing calculator
+  // Noggins run between stud positions, same convention as the flat framing calculator.
+  // Length between two studs = spacing − stud face-width (timberThickness is that
+  // face along the wall length: 45 mm for NZ 90×45, 35 mm for AU 70×35).
   const nogginCount = includeNoggins ? (studCount - 1) * nogginRows : 0;
   const nogginsLineal = includeNoggins
-    ? parseFloat((nogginCount * ((studSpacing - 90) / 1000)).toFixed(2))
+    ? parseFloat((nogginCount * ((studSpacing - timberThickness) / 1000)).toFixed(2))
     : 0;
 
   const totalLinealMetres = parseFloat(
@@ -95,8 +116,8 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     },
     {
       label: 'Stud count',
-      formula: 'floor( wall length ÷ stud spacing ) + 1',
-      result: `floor( ${wallLength} ÷ ${studSpacing} ) + 1 = ${studCount} studs`,
+      formula: 'ceil( wall length ÷ stud spacing ) + 1',
+      result: `ceil( ${wallLength} ÷ ${studSpacing} ) + 1 = ${studCount} studs`,
     },
     {
       label: 'Stud lengths',
@@ -122,8 +143,8 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
           },
           {
             label: 'Nogs lineal metres',
-            formula: 'nog count × (stud spacing − 90mm stud width)',
-            result: `${nogginCount} × ${((studSpacing - 90) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
+            formula: `nog count × (stud spacing − ${timberThickness}mm stud face)`,
+            result: `${nogginCount} × ${((studSpacing - timberThickness) / 1000).toFixed(3)}m = ${nogginsLineal}lm`,
           },
         ]
       : []),

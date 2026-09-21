@@ -8,7 +8,9 @@ import { ShareCalcButton } from '../components/ShareCalcButton';
 import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { calculateRoofing, ROOFING_PROFILES } from '../calculators/roofing';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
+import { calculateRoofing, ROOFING_PROFILES, profileLabel } from '../calculators/roofing';
 import { JobNameInput } from '../components/JobNameInput';
 import type { RoofType, RoofProfile, RoofingResult } from '../calculators/roofing';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -52,6 +54,8 @@ const btnBase: React.CSSProperties = {
 export function RoofingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [roofType, setRoofType] = useState<RoofType>('gable');
   const [profile, setProfile] = useState<RoofProfile>('corrugate');
@@ -80,6 +84,8 @@ export function RoofingCalc() {
     if (!pitchDegrees || pitchDegrees <= 0 || pitchDegrees >= 90) { setError('Pitch must be between 1° and 89°.'); return; }
     if (purlinSpacingMm <= 0) { setError('Enter a valid purlin spacing.'); return; }
     if (roofType === 'hip' && planWidth >= planLength) { setError('Plan length must exceed plan width for a hip roof.'); return; }
+
+    if (!gate.tryUse()) { showPaywall(); return; }
 
     const calc = calculateRoofing({ roofType, planLength, planWidth, pitchDegrees, profile, eaveOverhangMm, purlinSpacingMm });
     setResult(calc);
@@ -150,7 +156,7 @@ export function RoofingCalc() {
                     color: profile === p ? '#fff' : 'var(--color-text)',
                   }}
                 >
-                  {ROOFING_PROFILES[p].label}
+                  {profileLabel(p, settings.region)}
                 </button>
               ))}
             </div>
@@ -244,7 +250,7 @@ export function RoofingCalc() {
 
         {result && o && (() => {
           const shopRows = [
-            { qty: `${o.sheetCount}`, name: `${ROOFING_PROFILES[profile].label} sheets`, meta: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover · ${o.slopeAreaM2} m² total` },
+            { qty: `${o.sheetCount}`, name: `${profileLabel(profile, settings.region)} sheets`, meta: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover · ${o.slopeAreaM2} m² total` },
             { qty: `${o.purlinCount * (roofType === 'gable' || roofType === 'hip' ? 2 : 1)}`, name: 'Purlins (per face × faces)', meta: `${o.purlinCount} per face · ${roofType === 'skillion' ? '1 face' : '2 faces'}` },
             ...(roofType !== 'skillion' ? [{ qty: `${o.ridgeCapM}`, name: 'Ridge cap (lm)', meta: 'incl. 10% for laps' }] : []),
             ...(roofType === 'hip' ? [{ qty: `${o.hipCapM}`, name: 'Hip caps (lm)', meta: 'incl. 10% for laps' }] : []),
@@ -253,7 +259,7 @@ export function RoofingCalc() {
             { qty: `${o.screwBoxes}`, name: 'Roofing screw boxes (×250)', meta: `${o.screwCount} screws · incl. 10% waste` },
           ];
           const quoteMaterials = [
-            { item: `${ROOFING_PROFILES[profile].label} roofing sheets`, quantity: o.sheetCount, unit: 'each', note: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover` },
+            { item: `${profileLabel(profile, settings.region)} roofing sheets`, quantity: o.sheetCount, unit: 'each', note: `${sheetLengthDisplay} each · ${ROOFING_PROFILES[profile].coverMm}mm cover` },
             { item: 'Purlins', quantity: o.purlinCount * (roofType === 'skillion' ? 1 : 2), unit: 'each', note: `${o.purlinCount} per face` },
             ...(roofType !== 'skillion' ? [{ item: 'Ridge cap', quantity: o.ridgeCapM, unit: 'lineal metre', note: 'incl. 10% for laps' }] : []),
             ...(roofType === 'hip' ? [{ item: 'Hip caps', quantity: o.hipCapM, unit: 'lineal metre', note: 'incl. 10% for laps' }] : []),
@@ -267,7 +273,7 @@ export function RoofingCalc() {
             <ResultHero
               label="You'll need"
               value={o.sheetCount}
-              unit={`${ROOFING_PROFILES[profile].label} sheets`}
+              unit={`${profileLabel(profile, settings.region)} sheets`}
               spec={`${ROOF_TYPE_LABELS[roofType]} roof · ${fields.planLength}m × ${fields.planWidth}m plan · ${fields.pitch}° pitch · ${sheetLengthDisplay} sheets`}
               stats={[
                 { label: `${o.slopeAreaM2} m² slope` },
@@ -284,7 +290,7 @@ export function RoofingCalc() {
               borderRadius: 10, padding: '12px 14px',
             }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                {ROOFING_PROFILES[profile].label} — {ROOFING_PROFILES[profile].coverMm}mm cover width.
+                {profileLabel(profile, settings.region)} — {ROOFING_PROFILES[profile].coverMm}mm cover width.
                 All flashing quantities include 10% for laps and joins.
                 {roofType === 'hip' ? ' Hip-end sheets include waste for diagonal cuts.' : ''}
               </p>

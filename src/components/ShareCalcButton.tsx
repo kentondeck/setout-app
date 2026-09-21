@@ -100,12 +100,31 @@ export function ShareCalcButton({ calculationId, shareBody, shareTitle }: ShareC
     const title = shareTitle ?? defaults.title;
     const body = shareBody ?? defaults.body;
 
+    // On the native app, use Capacitor's Share plugin — it pops the real iOS
+    // share sheet (Messages, Mail, WhatsApp, AirDrop, Notes, Save to Files…)
+    // regardless of transport or secure-context rules.
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { Share } = await import('@capacitor/share');
+        await Share.share({ title, text: body, dialogTitle: title });
+      } catch (err) {
+        const msg = (err as Error)?.message ?? '';
+        if (msg.toLowerCase().includes('cancel')) return;
+        console.warn('[ShareCalcButton] native Share plugin failed', err);
+        setToast('Share unavailable — hit Run in Xcode');
+        setTimeout(() => setToast(null), 2500);
+      }
+      // Never fall through to clipboard on native; the plugin should always work.
+      return;
+    }
+
+    // Browser path — modern Web Share API (HTTPS only).
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({ title, text: body });
         return;
       } catch (err) {
-        // User cancelled — silent. Any other error → fall through to clipboard.
         if ((err as Error)?.name === 'AbortError') return;
       }
     }

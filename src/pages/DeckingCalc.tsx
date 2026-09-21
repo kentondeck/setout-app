@@ -12,6 +12,8 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
@@ -41,6 +43,8 @@ const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<DeckingResult | null>(null);
@@ -83,9 +87,17 @@ export function DeckingCalc() {
       return;
     }
 
+    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+
     setError('');
 
-    const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
+    let calc: ReturnType<typeof calculateDecking>;
+    try {
+      calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
 
     setPersistedSuggestions(
@@ -285,8 +297,8 @@ export function DeckingCalc() {
           const deckAreaM2 = parseFloat(((deckLengthMm * deckWidthMm) / 1_000_000).toFixed(1));
           const boardsToBuy = result.outputs.boardCount * boardPieces;
           const specLine = boardPieces > 1
-            ? `${bw}mm decking · mixed lengths`
-            : `${bw}mm decking · ${(deckWidthMm / 1000).toFixed(2)}m each`;
+            ? `${bw}mm decking · ${boardPieces} per run or RLP`
+            : `${bw}mm decking · ${(deckWidthMm / 1000).toFixed(2)}m each or RLP`;
 
           // The shopping list — same data as the old Order This card, restyled
           const shopRows = [
@@ -383,7 +395,10 @@ export function DeckingCalc() {
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {persistedSuggestions.items.map(s => {
-                    const active = originalGap === s.gap;
+                    // Compare against the CURRENT applied gap, not the original,
+                    // so the tile you tap goes orange (and stays orange until
+                    // you tap it again to revert or pick a different one).
+                    const active = parseFloat(inputs.boardGap) === s.gap;
                     return (
                       <button
                         key={s.boardCount}
@@ -403,7 +418,7 @@ export function DeckingCalc() {
                           gap: 2,
                         }}
                       >
-                        <span style={{ fontWeight: 600 }}>{s.boardCount} boards</span>
+                        <span style={{ fontWeight: 600 }}>{s.boardCount} runs</span>
                         <span style={{ color: active ? 'rgba(255,255,255,0.8)' : 'var(--color-muted)', fontSize: 12 }}>{s.gap}mm gap</span>
                       </button>
                     );

@@ -12,6 +12,8 @@ import type { CladdingOutputs } from '../calculators/cladding';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -36,6 +38,8 @@ const DEFAULTS: Inputs = {
 export function CladdingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [result, setResult] = useState<{ outputs: CladdingOutputs; rodMarks: number[]; steps: WorkingStep[] } | null>(null);
@@ -63,9 +67,17 @@ export function CladdingCalc() {
     if (!boardLength || boardLength <= 0) { setError('Enter a board length.'); return; }
     if (startOffset < 0) { setError('Start offset must be 0 or greater.'); return; }
 
+    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+
     setError('');
 
-    const calc = calculateCladding({ wallHeight, wallWidth, boardWidth, lap, boardLength, startOffset });
+    let calc: ReturnType<typeof calculateCladding>;
+    try {
+      calc = calculateCladding({ wallHeight, wallWidth, boardWidth, lap, boardLength, startOffset });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
 
     const id = uuid();

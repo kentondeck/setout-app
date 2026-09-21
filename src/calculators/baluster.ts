@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface BalusterInputs {
   totalLength: number;    // mm (clear span between posts)
@@ -21,6 +22,16 @@ export interface BalusterResult {
 
 export function calculateBaluster(inputs: BalusterInputs): BalusterResult {
   const { totalLength, balusterWidth, maxGap } = inputs;
+
+  // The span has to fit at least one baluster with a gap either side —
+  // otherwise the calc produces 0 balusters and a nonsense "compliant" result.
+  if (balusterWidth + 2 * 1 > totalLength) {
+    throw new CalcInputError('Baluster width is larger than the span — nothing to fit.');
+  }
+  // A span less than one max-gap doesn't need balusters at all.
+  if (totalLength <= maxGap) {
+    throw new CalcInputError(`Span is smaller than the max gap (${maxGap} mm) — no balusters needed.`);
+  }
 
   // n balusters create (n+1) gaps
   // Minimum n such that each gap ≤ maxGap:
@@ -50,8 +61,8 @@ export function calculateBaluster(inputs: BalusterInputs): BalusterResult {
     },
     {
       label: 'Compliance check',
-      formula: `Gap must be ≤ ${maxGap}mm (AS 1657 / NCC)`,
-      result: `${actualGap}mm ${actualGap <= maxGap ? '✓ compliant' : '✗ exceeds limit'}`,
+      formula: `Gap must be ≤ ${maxGap}mm — check the applicable barrier standard for your region`,
+      result: `${actualGap}mm ${actualGap <= maxGap ? '✓ within the entered limit' : '✗ exceeds the entered limit'}`,
     },
   ];
 

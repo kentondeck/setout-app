@@ -7,7 +7,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        // Paint the underlying UIWindow the app's light background colour so the
+        // area behind the WKWebView (visible when Capacitor's resize:native
+        // shrinks the WebView to make room for the keyboard) doesn't render as
+        // black cutouts at the keyboard's rounded top corners.
+        let bg = UIColor(red: 245/255.0, green: 245/255.0, blue: 243/255.0, alpha: 1.0)
+        UIWindow.appearance().backgroundColor = bg
+        window?.backgroundColor = bg
         return true
     }
 

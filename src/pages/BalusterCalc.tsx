@@ -11,6 +11,8 @@ import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -25,6 +27,8 @@ interface Inputs {
 export function BalusterCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(() => ({
     totalLength: '',
@@ -82,9 +86,22 @@ export function BalusterCalc() {
       return;
     }
 
+    // Subscription gate — Pro users always pass, free users get 1/day.
+    if (!gate.tryUse()) {
+      setError('');
+      showPaywall();
+      return;
+    }
+
     setError('');
 
-    const calc = calculateBaluster({ totalLength, balusterWidth, maxGap });
+    let calc: ReturnType<typeof calculateBaluster>;
+    try {
+      calc = calculateBaluster({ totalLength, balusterWidth, maxGap });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
 
     const id = uuid();

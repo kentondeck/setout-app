@@ -1,20 +1,19 @@
 # Privacy Policy
 
-**Effective date:** 20 August 2026
-**Last updated:** 20 August 2026
+**Effective date:** 17 September 2026
+**Last updated:** 17 September 2026
 
 This is the privacy policy for **Setout** — the construction calculator app for tradies in New Zealand and Australia. This document explains what data Setout collects, why, and what your rights are.
 
-Setout is operated by **Setout PTY Ltd** (referred to as "we", "us", or "our" throughout). Contact: **setoutapp@gmail.com**.
+Setout is operated by **Setout Holdings Limited** (referred to as "we", "us", or "our" throughout). Contact: **setouttheapp@gmail.com**.
 
 ---
 
 ## The short version (plain English)
 
-- Your **calculations, jobs, and notes stay on your phone.** They're saved in your browser or app's local storage. We don't have a copy.
+- Your **calculations, jobs, notes, and photos stay on your phone.** They're saved in your browser or app's local storage. We don't have a copy.
 - We collect **basic analytics** (which pages you use, roughly where in the world you're using it from) via a privacy-friendly analytics tool. No personal information.
 - If you **submit feedback**, we get your feedback text plus the name you set during onboarding — so we can reply.
-- If you use **Smart Quote** or **Code Check**, the photo or question you provide is sent to a third-party AI service to process, then returned. It's not stored beyond what's needed to give you the answer.
 - We **do not sell your data**, ever. We don't run ads.
 - You can **delete everything** at any time by clearing the app's data or by contacting us.
 
@@ -33,9 +32,6 @@ This policy applies to everyone who uses Setout — through the website ([setout
 | Your first name | During onboarding | So we can greet you personally and label your feedback |
 | Your region (AU or NZ) | During onboarding | So we show the right building codes and units |
 | Feedback text | When you tap the Feedback tile and submit | So we can read and respond to your suggestions and bug reports |
-| Smart Quote access code | If you have one and enter it | To unlock the Smart Quote feature |
-| Photos of plans | When you use Smart Quote to price a job | To have our AI extract measurements and give you a materials list |
-| Questions about codes | When you use Code Check | To answer your question with a citation from the relevant standard |
 
 ### 2.2 Information collected automatically
 
@@ -49,21 +45,20 @@ This policy applies to everyone who uses Setout — through the website ([setout
 
 - Your last name, address, or phone number.
 - Your GPS location.
-- Your contact list, camera roll (except the specific photo you choose to upload to Smart Quote), microphone, or files.
-- Credit card or payment details. Setout is free at time of writing.
+- Your contact list, camera roll, microphone, or files. (Photos you attach to a saved job stay on your device — they're not uploaded to us.)
 - Data about other apps on your phone.
 
 ---
 
 ## 3. Where your data lives
 
-- **On your device:** every calculation, saved job, and note stays in your browser's local storage or the app's local storage. Nothing about the numbers you calculate ever leaves your device.
-- **On our hosting (Vercel):** the app itself, static images and files, and the small API endpoints that power Smart Quote, Code Check, and feedback submission. Vercel's servers are in Sydney (Australia). See [Vercel's privacy policy](https://vercel.com/legal/privacy-policy).
-- **With third-party services** (only when you use the relevant feature):
-  - **Formspree** — receives feedback text and your first name when you submit feedback ([privacy policy](https://formspree.io/legal/privacy-policy/))
-  - **Anthropic (Claude AI)** — receives the photo you upload to Smart Quote, or the question you ask Code Check ([privacy policy](https://www.anthropic.com/legal/privacy))
+- **On your device:** every calculation, saved job, note, and job photo stays in your browser's local storage or the app's local storage. Nothing about the numbers you calculate — or the photos you attach to a job — ever leaves your device.
+- **On our hosting (Vercel):** the app itself, plus static images and files. Vercel's servers are in Sydney (Australia). See [Vercel's privacy policy](https://vercel.com/legal/privacy-policy).
+- **With third-party services** (only when the relevant feature is used):
   - **Umami** — receives anonymous analytics events ([privacy policy](https://umami.is/privacy))
   - **Apple** (App Store / TestFlight) — receives standard app store analytics if you install via TestFlight or App Store ([privacy policy](https://www.apple.com/legal/privacy/))
+  - **Google Play** — receives standard Play Store analytics if you install via Google Play ([privacy policy](https://policies.google.com/privacy))
+  - **RevenueCat** — if you take up a Setout Pro subscription, RevenueCat handles subscription state and receipt validation on our behalf ([privacy policy](https://www.revenuecat.com/privacy))
 
 We don't share data with anyone else. We don't sell any of it. We don't share it with advertisers.
 
@@ -71,11 +66,10 @@ We don't share data with anyone else. We don't sell any of it. We don't share it
 
 ## 4. How long we keep it
 
-- **On-device data (calculations, jobs, name, region)** stays until you clear the app's data or uninstall.
+- **On-device data (calculations, jobs, photos, name, region)** stays until you clear the app's data or uninstall.
 - **Feedback submissions** are kept in our email inbox indefinitely so we can go back and see patterns, unless you ask us to delete a specific one.
-- **Smart Quote photos** are processed by AI and stored temporarily on our hosting for up to 30 days so you can revisit the result, then automatically deleted.
-- **Code Check questions** are sent to the AI provider to answer and are not stored on our side.
 - **Analytics data** is aggregated and kept for up to 12 months.
+- **Subscription records** (via RevenueCat and the app store providers) are kept for as long as required by tax and consumer law, typically at least 7 years.
 
 ---
 
@@ -85,11 +79,11 @@ Under the New Zealand Privacy Act 2020 and Australian Privacy Principles, you ca
 
 - **See** what personal information we have about you
 - **Correct** anything that's wrong
-- **Delete** your personal information (this includes on-device data — clear your app data — and any feedback / photo submissions we have)
+- **Delete** your personal information (this includes on-device data — clear your app data — and any feedback submissions we have)
 - **Withdraw consent** to us processing your data — usually by uninstalling the app or deleting your name in Settings
 - **Complain** to the New Zealand Privacy Commissioner ([privacy.org.nz](https://privacy.org.nz)) or the Office of the Australian Information Commissioner ([oaic.gov.au](https://oaic.gov.au)) if you think we've mishandled your data
 
-To exercise any of these rights, email us at **setoutapp@gmail.com**. We'll respond within 20 working days.
+To exercise any of these rights, email us at **setouttheapp@gmail.com**. We'll respond within 20 working days.
 
 ---
 
@@ -97,7 +91,7 @@ To exercise any of these rights, email us at **setoutapp@gmail.com**. We'll resp
 
 Setout does **not** use tracking cookies.
 
-It does use your browser's **local storage** to save your name, region, settings, calculation history, jobs, and other on-device data. This is essential for the app to work — without it every calc would be lost when you close the tab. Nothing in local storage is sent to us.
+It does use your browser's **local storage** (and, on the native app, the app's own storage) to save your name, region, settings, calculation history, saved jobs, and photos attached to jobs. This is essential for the app to work — without it every calc would be lost when you close the tab. Nothing in local storage is sent to us.
 
 Umami analytics runs without cookies — it uses only anonymous, aggregated data.
 
@@ -116,7 +110,6 @@ We take reasonable steps to protect the data we hold:
 - All data in transit is encrypted (HTTPS)
 - Access to our hosting and email is protected by two-factor authentication
 - We keep the amount of personal data we collect to the absolute minimum
-- Feedback and Smart Quote uploads are on servers with industry-standard security
 
 No system is 100% secure, but we work to make a breach as unlikely and as small in impact as possible.
 
@@ -138,5 +131,5 @@ If we change this policy in a way that affects how your data is used, we'll bump
 
 Questions, concerns, or requests about your data:
 
-**Email:** setoutapp@gmail.com
+**Email:** setouttheapp@gmail.com
 **Website:** [setoutapp.com.au](https://setoutapp.com.au)

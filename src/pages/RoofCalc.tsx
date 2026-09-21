@@ -12,6 +12,8 @@ import type { RoofOutputs } from '../calculators/roof';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
+import { useCalcGate } from '../lib/useCalcGate';
 import { RoofDiagram } from '../components/RoofDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
@@ -66,6 +68,8 @@ const parseOpt = (s: string): number | undefined => {
 export function RoofCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
+  const { showPaywall } = useSubscription();
+  const gate = useCalcGate();
 
   const [roofType, setRoofType] = useState<RoofType>('gabled');
   const [mode, setMode] = useState<Mode>('span-pitch');
@@ -88,6 +92,12 @@ export function RoofCalc() {
     const b = parseOpt(inputs[bKey]);
     if (a === undefined || b === undefined) {
       setError(`Enter ${FIELD_META[aKey].label.toLowerCase()} and ${FIELD_META[bKey].label.toLowerCase()}.`);
+      return;
+    }
+    // Subscription gate — Pro users always pass, free users get 1/day.
+    if (!gate.tryUse()) {
+      setError('');
+      showPaywall();
       return;
     }
     try {

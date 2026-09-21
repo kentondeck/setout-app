@@ -6,6 +6,7 @@ import { CALCULATORS } from '../lib/calculators';
 import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
+import { useJobPhotos, compressImageFile } from '../lib/useJobPhotos';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
@@ -605,16 +606,19 @@ function OrderGroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function OrderCard({ entries, job, updateJob }: {
+function OrderCard({ entries, job, updateJob, bufferPct, setBufferPct }: {
   entries: HistoryEntry[];
   job: SavedJob;
   updateJob: (id: string, updates: Partial<SavedJob>) => void;
+  bufferPct: number;
+  setBufferPct: (pct: number) => void;
 }) {
-  const [bufferPct, setBufferPct] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [listExpanded, setListExpanded] = useState(false);
 
   const order = applyManualEdits(buildJobOrder(entries), job);
-  const hasLines = order.timber.length + order.concrete.length + order.fixings.length + order.other.length > 0;
+  const itemCount = order.timber.length + order.concrete.length + order.fixings.length + order.other.length;
+  const hasLines = itemCount > 0;
 
   function handleLineChange(id: string, changes: { name?: string; unit?: string; qty?: number }) {
     const updates: Partial<SavedJob> = {};
@@ -653,19 +657,82 @@ function OrderCard({ entries, job, updateJob }: {
   const orderText = formatOrderText(order, job.name, bufferPct);
 
   async function handleShare() {
+    const subject = `Order — ${job.name || 'Job'}`;
+
+    // 1) Native iOS/Android share sheet via Capacitor — lets tradie pick
+    //    Mail / Messages / WhatsApp / AirDrop. Even in dev mode (LAN URL,
+    //    platform reports 'web'), the plugin bridge is injected and the
+    //    call routes through it.
+    try {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({ title: subject, text: orderText, dialogTitle: subject });
+      return;
+    } catch (err) {
+      const msg = (err as Error)?.message ?? '';
+      if (msg.toLowerCase().includes('cancel')) return;
+      // Plugin missing or unimplemented — fall through to browser paths.
+    }
+
+    // 2) Web Share API (Safari + Chrome mobile, some desktops)
     if (navigator.share) {
       try {
-        await navigator.share({ text: orderText });
+        await navigator.share({ title: subject, text: orderText });
         return;
-      } catch { /* user cancelled — fall through to copy */ }
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
     }
-    handleCopy();
+
+    // 3) Desktop web + anywhere Share isn't available — open the user's
+    //    email client with the order pre-filled. They add the supplier's
+    //    address in the To: field and hit send. "Send to supplier" should
+    //    do something send-like everywhere; silently copying isn't that.
+    const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(orderText)}`;
+    window.location.href = mailto;
   }
 
-  function handleCopy() {
-    navigator.clipboard?.writeText(orderText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  async function handleCopy() {
+    let ok = false;
+
+    // Preferred path — needs a secure context (HTTPS or localhost).
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(orderText);
+        ok = true;
+      } catch {
+        // Permission denied / not focused / etc. — fall through to legacy.
+      }
+    }
+
+    // Legacy fallback for HTTP dev + older WebViews. execCommand is
+    // deprecated but still works everywhere the modern API doesn't.
+    if (!ok) {
+      const ta = document.createElement('textarea');
+      ta.value = orderText;
+      ta.setAttribute('readonly', '');
+      // Keep it off-screen but not display:none, or the browser won't
+      // select from it.
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(ta);
+    }
+
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      // Both paths failed — surface it so the user isn't fooled by a
+      // fake success indicator. Rare on the actual app (HTTPS + real
+      // WebView) but possible in dev-mode preview.
+      alert('Could not copy to clipboard on this device — try Send to supplier instead.');
+    }
   }
 
   return (
@@ -693,40 +760,59 @@ function OrderCard({ entries, job, updateJob }: {
       </div>
 
       <div style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-card)', boxShadow: '0 1px 2px rgba(0,0,0,0.025)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '13px 14px 8px' }}>
-          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--color-text)' }}>Order</span>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-orange)' }}>
-            {bufferPct === 0 ? 'No buffer' : `+${bufferPct}% buffer applied`}
+        <button
+          onClick={() => setListExpanded(v => !v)}
+          aria-expanded={listExpanded}
+          style={{
+            width: '100%', background: 'none', border: 'none',
+            padding: '13px 14px', cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.8px', textTransform: 'uppercase', color: 'var(--color-text)' }}>
+            Order · {itemCount} {itemCount === 1 ? 'item' : 'items'}
           </span>
-        </div>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-orange)' }}>
+              {bufferPct === 0 ? 'No buffer' : `+${bufferPct}% buffer`}
+            </span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: listExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </button>
 
-        {order.timber.length > 0 && (
+        {listExpanded && (
           <>
-            <OrderGroupLabel>Timber</OrderGroupLabel>
-            {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.concrete.length > 0 && (
-          <>
-            <OrderGroupLabel>Concrete</OrderGroupLabel>
-            {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.fixings.length > 0 && (
-          <>
-            <OrderGroupLabel>Fixings</OrderGroupLabel>
-            {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
-          </>
-        )}
-        {order.other.length > 0 && (
-          <>
-            <OrderGroupLabel>Other</OrderGroupLabel>
-            {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+            {order.timber.length > 0 && (
+              <>
+                <OrderGroupLabel>Timber</OrderGroupLabel>
+                {order.timber.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.concrete.length > 0 && (
+              <>
+                <OrderGroupLabel>Concrete</OrderGroupLabel>
+                {order.concrete.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.fixings.length > 0 && (
+              <>
+                <OrderGroupLabel>Fixings</OrderGroupLabel>
+                {order.fixings.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
+            {order.other.length > 0 && (
+              <>
+                <OrderGroupLabel>Other</OrderGroupLabel>
+                {order.other.map(l => <OrderRow key={l.id} line={l} bufferPct={bufferPct} onLineChange={handleLineChange} onRemove={handleRemove} />)}
+              </>
+            )}
           </>
         )}
 
         {order.timberLinealM > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: 'rgba(255,90,31,0.05)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', background: 'rgba(255,90,31,0.05)', borderTop: listExpanded ? 'none' : '0.5px solid var(--color-border)' }}>
             <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.4px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>Timber total</span>
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>
               {applyBuffer(order.timberLinealM, bufferPct)} lm
@@ -766,6 +852,54 @@ function OrderCard({ entries, job, updateJob }: {
         </button>
       </div>
     </div>
+  );
+}
+
+// ─── Section header (collapsible on the Job Detail page) ────────────────────
+
+function SectionHeader({
+  label, summary, open, onToggle,
+}: {
+  label: string;
+  summary?: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-expanded={open}
+      style={{
+        width: '100%',
+        background: 'var(--color-card)',
+        border: '0.5px solid var(--color-border)',
+        borderRadius: 'var(--radius-card)',
+        padding: '14px 16px',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 16px',
+        alignItems: 'center',
+        gap: 12,
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        textAlign: 'left',
+      }}
+    >
+      <span style={{
+        fontSize: 15, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.2px',
+      }}>{label}</span>
+      {summary && (
+        <span style={{
+          fontSize: 12, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '-0.05px',
+        }}>{summary}</span>
+      )}
+      <svg
+        width="16" height="16" viewBox="0 0 24 24" fill="none"
+        stroke="var(--color-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}
+      >
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
   );
 }
 
@@ -997,6 +1131,8 @@ export function JobDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showNotesSheet, setShowNotesSheet] = useState(false);
   const [notesDraft, setNotesDraft] = useState(job?.notes ?? '');
+  const [openSection, setOpenSection] = useState<'order' | 'calcs' | null>(null);
+  const [bufferPct, setBufferPct] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -1062,6 +1198,38 @@ export function JobDetailPage() {
     navigate('/');
   }
 
+  // Send the aggregated materials into the quote/invoice editor. Same shape
+  // as OrderCard's original flow — apply the currently-selected buffer (m³
+  // stays raw), pass source calcs as a per-line note. Lives at the page
+  // level so the button doesn't get hidden inside the collapsed Order card.
+  function handleSendToQuote() {
+    const order = applyManualEdits(buildJobOrder(calculations), job!);
+    const flatten = (lines: OrderLine[]) => lines.map(l => ({
+      item: l.name,
+      quantity: l.unit === 'm³' ? l.qty : applyBuffer(l.qty, bufferPct),
+      unit: l.unit,
+      note: l.sources.length > 0 ? l.sources.join(' + ') : undefined,
+    }));
+    const materials = [
+      ...flatten(order.timber),
+      ...flatten(order.concrete),
+      ...flatten(order.fixings),
+      ...flatten(order.other),
+    ].filter(m => m.item.trim() && m.quantity > 0);
+
+    const scopeSummary = job!.name.trim() || 'Job';
+
+    navigate('/calc/photoquote', {
+      state: {
+        fromCalculator: true,
+        scopeSummary,
+        materials,
+        jobName: job!.name,
+        docType: 'quote',
+      },
+    });
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
 
@@ -1117,7 +1285,7 @@ export function JobDetailPage() {
       </div>
 
       {/* Notes card */}
-      <div style={{ padding: '16px 18px 14px' }}>
+      <div style={{ padding: '16px 18px 8px' }}>
         <button
           onClick={openNotesSheet}
           onPointerDown={e => (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
@@ -1145,34 +1313,74 @@ export function JobDetailPage() {
         </button>
       </div>
 
+      {/* Photos + comments */}
+      <JobPhotosSection jobId={job.id} />
 
-      {/* Consolidated order */}
-      {calculations.length > 0 && <OrderCard entries={calculations} job={job} updateJob={updateJob} />}
+      {/* Collapsible sections */}
+      {calculations.length > 0 && (
+        <div style={{ padding: '8px 18px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <SectionHeader
+            label="Order"
+            summary={`${calculations.length} ${calculations.length === 1 ? 'calc' : 'calcs'}`}
+            open={openSection === 'order'}
+            onToggle={() => setOpenSection(openSection === 'order' ? null : 'order')}
+          />
+          {openSection === 'order' && (
+            <div style={{ margin: '-4px -18px 4px' }}>
+              <OrderCard entries={calculations} job={job} updateJob={updateJob} bufferPct={bufferPct} setBufferPct={setBufferPct} />
+            </div>
+          )}
 
-      {/* Calc list */}
+          <SectionHeader
+            label="Calculations"
+            summary={`${calculations.length}`}
+            open={openSection === 'calcs'}
+            onToggle={() => setOpenSection(openSection === 'calcs' ? null : 'calcs')}
+          />
+          {openSection === 'calcs' && (
+            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 4 }}>
+              {GROUP_ORDER.map(g => {
+                const group = grouped[g];
+                if (group.length === 0) return null;
+                return (
+                  <div key={g}>
+                    <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                      {group.map(entry => (
+                        <CalcEntryCard
+                          key={entry.id}
+                          entry={entry}
+                          onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <button
+            onClick={handleSendToQuote}
+            style={{
+              width: '100%', padding: '14px', borderRadius: 'var(--radius-card)', cursor: 'pointer',
+              background: 'var(--color-card)', color: 'var(--color-text)',
+              border: '0.5px solid var(--color-border)',
+              fontSize: 15, fontWeight: 500, fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Send to quote / estimate
+          </button>
+        </div>
+      )}
+
+      {/* Empty state (no calcs yet) */}
       <div style={{ flex: 1, padding: '14px 18px 100px', display: 'flex', flexDirection: 'column' }}>
-        {calculations.length === 0 ? (
-          <EmptyState onAdd={handleAddCalc} />
-        ) : (
-          GROUP_ORDER.map(g => {
-            const group = grouped[g];
-            if (group.length === 0) return null;
-            return (
-              <div key={g}>
-                <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {group.map(entry => (
-                    <CalcEntryCard
-                      key={entry.id}
-                      entry={entry}
-                      onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
-                    />
-                  ))}
-                </div>
-              </div>
-            );
-          })
-        )}
+        {calculations.length === 0 && <EmptyState onAdd={handleAddCalc} />}
       </div>
 
       {/* FAB */}
@@ -1248,6 +1456,339 @@ export function JobDetailPage() {
         </>
       )}
     </div>
+  );
+}
+
+// ─── Photos + comments ───────────────────────────────────────────────────────
+
+// Compact trigger button that lives on the Job Detail page, alongside the
+// Notes card. Tapping it opens a full-height bottom sheet with the actual
+// photo management UI — matching the app's existing sheet pattern for
+// Notes / Rename / Delete so the vertical stack on the Job Detail page
+// stays tidy.
+function JobPhotosSection({ jobId }: { jobId: string }) {
+  const { photos, addPhoto, updateComment, removePhoto } = useJobPhotos(jobId);
+  const [showSheet, setShowSheet] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
+  const [pendingComment, setPendingComment] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingDraft, setEditingDraft] = useState('');
+  const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
+
+  // Auto-reset the "tap again to delete" state so a stale confirm doesn't
+  // linger between sheet opens.
+  useEffect(() => {
+    if (!confirmingDeleteId) return;
+    const t = setTimeout(() => setConfirmingDeleteId(null), 3000);
+    return () => clearTimeout(t);
+  }, [confirmingDeleteId]);
+
+  function handleDeleteClick(photoId: string) {
+    if (confirmingDeleteId === photoId) {
+      removePhoto(photoId);
+      setConfirmingDeleteId(null);
+    } else {
+      setConfirmingDeleteId(photoId);
+    }
+  }
+
+  async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setProcessing(true);
+    setError('');
+    try {
+      setPendingPhoto(await compressImageFile(file));
+      setShowSheet(true);
+    } catch {
+      setError('Could not process that image — try another photo');
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  function handleSaveNewPhoto() {
+    if (!pendingPhoto) return;
+    try {
+      addPhoto(pendingPhoto, pendingComment.trim());
+      setPendingPhoto(null);
+      setPendingComment('');
+      setError('');
+    } catch (err) {
+      setError(
+        err instanceof Error && err.name === 'QuotaExceededError'
+          ? 'Storage is full — delete some older photos to add more.'
+          : 'Could not save the photo — try again.'
+      );
+    }
+  }
+
+  function startEdit(photoId: string, current: string) {
+    setEditingId(photoId);
+    setEditingDraft(current);
+  }
+
+  function saveEdit() {
+    if (editingId) updateComment(editingId, editingDraft.trim());
+    setEditingId(null);
+    setEditingDraft('');
+  }
+
+  function closeSheet() {
+    setShowSheet(false);
+    setEditingId(null);
+    setEditingDraft('');
+    setConfirmingDeleteId(null);
+    if (pendingPhoto && !pendingComment) {
+      // If they opened the picker but never saved, treat sheet-dismiss
+      // as discarding the pending photo. Comment-typed drafts survive
+      // so re-opening still has their work.
+      setPendingPhoto(null);
+    }
+  }
+
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handlePhotoFile}
+        style={{ display: 'none' }}
+      />
+
+      {/* Compact trigger row on the Job Detail page */}
+      <div style={{ padding: '0 18px 14px' }}>
+        <button
+          onClick={() => setShowSheet(true)}
+          style={{
+            width: '100%', background: 'var(--color-card)',
+            border: '0.5px solid var(--color-border)',
+            borderRadius: 14, padding: '12px 14px',
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            fontFamily: 'inherit', textAlign: 'left',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.025)',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span style={{
+            flex: 1, fontSize: 13.5, letterSpacing: '-0.2px',
+            color: photos.length ? 'var(--color-text)' : 'var(--color-muted)',
+          }}>
+            {photos.length === 0
+              ? 'Add on-site photos + comments'
+              : `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--color-orange)', fontWeight: 500 }}>Open</span>
+        </button>
+      </div>
+
+      {/* Photos bottom sheet */}
+      {showSheet && (
+        <>
+          <div onClick={closeSheet} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 200 }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '100%', maxWidth: 390, height: '85vh',
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            display: 'flex', flexDirection: 'column',
+            zIndex: 201,
+          }}>
+            {/* Fixed header */}
+            <div style={{ padding: '10px 20px 12px', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center' }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.4px' }}>
+                  Photos {photos.length > 0 && <span style={{ fontWeight: 400, color: 'var(--color-muted)', fontSize: 15 }}>· {photos.length}</span>}
+                </h2>
+                <button
+                  onClick={closeSheet}
+                  aria-label="Close"
+                  style={{
+                    background: 'var(--color-bg)', border: 'none',
+                    width: 36, height: 36, borderRadius: 999,
+                    cursor: 'pointer', color: 'var(--color-text)',
+                    fontSize: 24, lineHeight: 1, fontWeight: 400,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 0,
+                  }}
+                >×</button>
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processing}
+                style={{
+                  padding: '11px', borderRadius: 12, border: 'none',
+                  background: 'var(--color-orange)', color: '#fff',
+                  fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+                  cursor: processing ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                {processing ? 'Processing…' : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Add photo
+                  </>
+                )}
+              </button>
+              {error && <p style={{ margin: 0, fontSize: 12, color: '#c72a2a' }}>{error}</p>}
+            </div>
+
+            {/* Scrollable body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '4px 20px calc(env(safe-area-inset-bottom) + 20px)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Pending photo pre-save form */}
+              {pendingPhoto && (
+                <div style={{ background: 'rgba(255,90,31,0.06)', border: '0.5px solid rgba(255,90,31,0.25)', borderRadius: 12, padding: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ position: 'relative' }}>
+                    <img src={pendingPhoto} alt="Pending" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                    <button
+                      onClick={() => { setPendingPhoto(null); setPendingComment(''); }}
+                      aria-label="Discard photo"
+                      style={{
+                        position: 'absolute', top: 8, right: 8,
+                        width: 28, height: 28, borderRadius: 999,
+                        background: 'rgba(0,0,0,0.65)', color: '#fff',
+                        border: 'none', fontSize: 16, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >×</button>
+                  </div>
+                  <textarea
+                    value={pendingComment}
+                    onChange={e => setPendingComment(e.target.value)}
+                    placeholder="Add a comment (optional)…"
+                    rows={2}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      fontSize: 13.5, fontFamily: 'inherit', color: 'var(--color-text)',
+                      background: '#fff', border: '0.5px solid var(--color-border)',
+                      borderRadius: 8, padding: '8px 10px',
+                      resize: 'vertical', outline: 'none', letterSpacing: '-0.1px', lineHeight: 1.4,
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveNewPhoto}
+                    style={{
+                      padding: '10px 12px', borderRadius: 10,
+                      background: 'var(--color-orange)', color: '#fff', border: 'none',
+                      fontSize: 13, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >Save photo</button>
+                </div>
+              )}
+
+              {photos.length === 0 && !pendingPhoto ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ margin: 0, fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                    No photos yet.<br />Snap a photo of the site or a spec detail — add a comment so future-you remembers what it was for.
+                  </p>
+                </div>
+              ) : (
+                photos.map(photo => (
+                  <div key={photo.id} style={{ background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: 10, display: 'flex', gap: 10 }}>
+                    <button
+                      onClick={() => setViewerPhoto(photo.dataUrl)}
+                      aria-label="View full-screen"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'zoom-in', flexShrink: 0 }}
+                    >
+                      <img src={photo.dataUrl} alt="" style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                    </button>
+
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {editingId === photo.id ? (
+                        <>
+                          <textarea
+                            value={editingDraft}
+                            onChange={e => setEditingDraft(e.target.value)}
+                            rows={3}
+                            autoFocus
+                            style={{
+                              width: '100%', boxSizing: 'border-box',
+                              fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)',
+                              background: 'var(--color-bg)', border: '0.5px solid var(--color-border)',
+                              borderRadius: 8, padding: '6px 8px',
+                              resize: 'vertical', outline: 'none', lineHeight: 1.4,
+                            }}
+                          />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={saveEdit}
+                              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, background: 'var(--color-orange)', color: '#fff', border: 'none', fontSize: 12, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+                            >Save</button>
+                            <button
+                              onClick={() => { setEditingId(null); setEditingDraft(''); }}
+                              style={{ flex: 1, padding: '6px 10px', borderRadius: 6, background: 'none', color: 'var(--color-muted)', border: '0.5px solid var(--color-border)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}
+                            >Cancel</button>
+                          </div>
+                        </>
+                      ) : (
+                        <p
+                          onClick={() => startEdit(photo.id, photo.comment)}
+                          style={{
+                            margin: 0, fontSize: 13, lineHeight: 1.4, letterSpacing: '-0.1px',
+                            color: photo.comment ? 'var(--color-text)' : 'var(--color-muted)',
+                            whiteSpace: 'pre-wrap', cursor: 'text',
+                            flex: 1,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 4,
+                            WebkitBoxOrient: 'vertical' as const,
+                            overflow: 'hidden',
+                          } as React.CSSProperties}
+                        >{photo.comment || 'Tap to add a comment…'}</p>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                        <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                          {new Date(photo.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteClick(photo.id)}
+                          style={{
+                            background: confirmingDeleteId === photo.id ? '#e53e3e' : 'transparent',
+                            border: 'none', padding: '4px 8px', borderRadius: 6,
+                            color: confirmingDeleteId === photo.id ? '#fff' : 'var(--color-muted)',
+                            fontSize: 11.5, fontWeight: confirmingDeleteId === photo.id ? 600 : 400,
+                            cursor: 'pointer', fontFamily: 'inherit',
+                            transition: 'background-color 0.15s ease, color 0.15s ease',
+                          }}
+                        >{confirmingDeleteId === photo.id ? 'Tap again' : 'Delete'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Full-screen photo viewer */}
+      {viewerPhoto && (
+        <div
+          onClick={() => setViewerPhoto(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 'calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px)',
+            cursor: 'zoom-out',
+          }}
+        >
+          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 6 }} />
+        </div>
+      )}
+    </>
   );
 }
 

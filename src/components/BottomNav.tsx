@@ -1,13 +1,20 @@
 import { useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { KeyboardContext } from '../contexts';
+import { hapticLight } from '../lib/haptics';
+
+// #999 on the #f5f5f3 bar is only ~2.6:1 — well under WCAG AA, and genuinely
+// hard to read outdoors, which is where this app gets used. This darker grey
+// is ~4.9:1 and still reads clearly as "not the active tab".
+const INACTIVE = '#6b6b69';
+const ACTIVE = 'var(--color-orange)';
 
 const tabs = [
   {
     path: '/',
     label: 'Home',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    icon: (color: string) => (
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
         <polyline points="9 22 9 12 15 12 15 22" />
       </svg>
@@ -16,8 +23,8 @@ const tabs = [
   {
     path: '/quotes',
     label: 'Quotes',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    icon: (color: string) => (
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
         <polyline points="14 2 14 8 20 8" />
         <line x1="16" y1="13" x2="8" y2="13" />
@@ -28,8 +35,8 @@ const tabs = [
   {
     path: '/jobs',
     label: 'Jobs',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    icon: (color: string) => (
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
       </svg>
     ),
@@ -37,8 +44,8 @@ const tabs = [
   {
     path: '/history',
     label: 'History',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    icon: (color: string) => (
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <polyline points="12 6 12 12 16 14" />
       </svg>
@@ -47,8 +54,8 @@ const tabs = [
   {
     path: '/settings',
     label: 'Settings',
-    icon: (active: boolean) => (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? 'var(--color-orange)' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    icon: (color: string) => (
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
       </svg>
@@ -56,7 +63,12 @@ const tabs = [
   },
 ];
 
-export function BottomNav() {
+interface Props {
+  /** Tapping the tab you're already on scrolls that page back to the top. */
+  onReselect?: () => void;
+}
+
+export function BottomNav({ onReselect }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { inset } = useContext(KeyboardContext);
@@ -70,6 +82,7 @@ export function BottomNav() {
 
   return (
     <nav
+      aria-label="Main"
       style={{
         position: 'sticky',
         bottom: 0,
@@ -85,31 +98,73 @@ export function BottomNav() {
     >
       {tabs.map(tab => {
         const active = tab.path === '/'
-        ? pathname === '/'
-        : pathname === tab.path || pathname.startsWith(tab.path + '/');
+          ? pathname === '/'
+          : pathname === tab.path || pathname.startsWith(tab.path + '/');
+        const color = active ? ACTIVE : INACTIVE;
+
         return (
           <button
             key={tab.path}
-            onClick={() => navigate(tab.path)}
+            onClick={() => {
+              hapticLight();
+              if (active) onReselect?.();
+              else navigate(tab.path);
+            }}
+            aria-current={active ? 'page' : undefined}
             style={{
+              position: 'relative',
               flex: 1,
+              minHeight: 52,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
-              padding: '10px 0 8px',
+              justifyContent: 'center',
+              gap: 4,
+              padding: '9px 0 7px',
               background: 'none',
               border: 'none',
               cursor: 'pointer',
+              // Kills the grey flash WKWebView paints over taps, since we
+              // draw our own press state below.
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'manipulation',
+              transition: 'transform 140ms ease, opacity 140ms ease',
+            }}
+            onPointerDown={e => {
+              e.currentTarget.style.transform = 'scale(0.92)';
+              e.currentTarget.style.opacity = '0.65';
+            }}
+            onPointerUp={e => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.opacity = '1';
+            }}
+            onPointerLeave={e => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.opacity = '1';
             }}
           >
-            {tab.icon(active)}
+            {/* Second, non-colour signal for the active tab — colour alone
+                isn't enough to distinguish it (and fails colour-blind users). */}
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: 0,
+                width: 18,
+                height: 2.5,
+                borderRadius: '0 0 3px 3px',
+                background: active ? 'var(--color-orange)' : 'transparent',
+                transition: 'background 180ms ease',
+              }}
+            />
+            {tab.icon(color)}
             <span
               style={{
-                fontSize: 10,
-                fontWeight: active ? 500 : 400,
-                color: active ? 'var(--color-orange)' : 'var(--color-muted)',
-                letterSpacing: '0.3px',
+                fontSize: 11,
+                fontWeight: active ? 600 : 500,
+                color,
+                letterSpacing: '0.1px',
+                lineHeight: 1,
               }}
             >
               {tab.label}

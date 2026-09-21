@@ -15,6 +15,9 @@
   --color-muted: #999999;
   --radius-tile: 18px;
   --radius-card: 16px;
+  /* Used where a white surface sits directly on a white page (currently just
+     Home) and needs a shadow instead of --color-bg contrast to read as a card. */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.05);
   font-family: 'Inter', system-ui, sans-serif;
 }
 

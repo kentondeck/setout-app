@@ -25,7 +25,7 @@ export function Home() {
   const { settings, updateSettings } = useContext(SettingsContext);
   const { history } = useContext(HistoryContext);
 
-  const { greeting, sub } = getGreeting(settings.userName);
+  const { prefix, name: greetingName, sub } = getGreeting(settings.userName);
   const lastEntry = history[0] ?? null;
   const highlightedId = lastEntry?.calculatorId ?? 'decking';
   const pinned = settings.pinnedCalcs ?? [];
@@ -58,12 +58,16 @@ export function Home() {
   }
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    // background is white here specifically — every other page still sits on
+    // the shared grey --color-bg. Tiles below carry --shadow-card instead of
+    // the usual border-on-grey contrast, since white-on-white needs it.
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
       <TopBar userName={settings.userName} />
 
       <div style={{ padding: '24px 20px 16px' }}>
         <p style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px' }}>
-          {greeting}
+          {prefix}
+          {greetingName && <span style={{ color: 'var(--color-orange)' }}>{greetingName}</span>}
         </p>
         <p style={{ margin: 0, fontSize: 22, fontWeight: 400, color: 'var(--color-muted)', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
           {sub}

@@ -9,10 +9,7 @@ import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from '.
 import { SubscriptionProvider } from './lib/SubscriptionContext';
 import { Paywall } from './components/Paywall';
 import { SplashScreen } from './components/SplashScreen';
-import { OnboardingName } from './pages/OnboardingName';
-import { OnboardingRegion } from './pages/OnboardingRegion';
-import { OnboardingRole } from './pages/OnboardingRole';
-import { OnboardingEmail } from './pages/OnboardingEmail';
+import { OnboardingSetup } from './pages/OnboardingSetup';
 import { BottomNav } from './components/BottomNav';
 import { UpdateBanner } from './components/UpdateBanner';
 import { KeyboardDoneBar } from './components/KeyboardDoneBar';
@@ -96,7 +93,7 @@ function AppShell() {
         </Routes>
         </Suspense>
       </div>
-      <BottomNav />
+      <BottomNav onReselect={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} />
       <UpdateBanner />
       <KeyboardDoneBar />
     </div>
@@ -110,6 +107,7 @@ if (_params.get('reset') === 'true') {
   localStorage.removeItem('setout_thankyou_seen');
   localStorage.removeItem('setout_user_name');
   localStorage.removeItem('setout_region');
+  localStorage.removeItem('setout_settings');
 }
 if (_params.has('reset')) {
   window.history.replaceState({}, '', window.location.pathname);
@@ -118,20 +116,9 @@ if (_params.has('reset')) {
 export function App() {
   const [splashDone, setSplashDone] = useState(false);
 
-  const [nameDone, setNameDone] = useState(() => {
-    return !!localStorage.getItem('setout_user_name');
-  });
-
-  const [regionDone, setRegionDone] = useState(() => {
+  // First launch only — once a region is stored, this never shows again.
+  const [setupDone, setSetupDone] = useState(() => {
     return !!localStorage.getItem('setout_region');
-  });
-
-  const [roleDone, setRoleDone] = useState(() => {
-    return !!localStorage.getItem('setout_role');
-  });
-
-  const [emailDone, setEmailDone] = useState(() => {
-    return localStorage.getItem('setout_email_done') === 'true';
   });
 
   const [settings, updateSettings] = useSettings();
@@ -139,26 +126,14 @@ export function App() {
   const jobsApi = useJobs(history, updateEntry);
   const keyboardInset = useKeyboardInset();
 
-  const onboardingDone = splashDone && nameDone && regionDone && roleDone && emailDone;
+  const onboardingDone = splashDone && setupDone;
 
   return (
     <>
       {!splashDone && <SplashScreen onComplete={() => setSplashDone(true)} />}
 
-      {splashDone && !nameDone && (
-        <OnboardingName onComplete={() => setNameDone(true)} updateSettings={updateSettings} />
-      )}
-
-      {splashDone && nameDone && !regionDone && (
-        <OnboardingRegion onComplete={() => setRegionDone(true)} updateSettings={updateSettings} />
-      )}
-
-      {splashDone && nameDone && regionDone && !roleDone && (
-        <OnboardingRole onComplete={() => setRoleDone(true)} updateSettings={updateSettings} />
-      )}
-
-      {splashDone && nameDone && regionDone && roleDone && !emailDone && (
-        <OnboardingEmail onComplete={() => setEmailDone(true)} />
+      {splashDone && !setupDone && (
+        <OnboardingSetup onComplete={() => setSetupDone(true)} updateSettings={updateSettings} />
       )}
 
       {onboardingDone && (

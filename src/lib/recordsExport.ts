@@ -149,7 +149,7 @@ function drawCard(doc: jsPDF, x: number, y: number, thumb: string | undefined, l
       /* skip broken image */
     }
   } else {
-    doc.setFillColor(245);
+    doc.setFillColor(245, 245, 245);
     doc.rect(px, py, THUMB_W, THUMB_H, 'F');
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
@@ -238,7 +238,7 @@ export function buildReceiptsPdf(items: Hydrated<Receipt>[], periodLabel?: strin
     items,
     { title: 'Receipts', leftSub, rightBig: fmtMoney(total) },
     ({ record, dataUrl }) => ({
-      thumb: dataUrl,
+      thumb: dataUrl ?? undefined,
       lines: [
         { value: record.supplier, bold: true, size: 11, color: 25, gapAfter: 3 },
         { value: record.amount != null ? fmtMoney(record.amount) : undefined, bold: true, size: 13, color: 25, gapAfter: 5 },
@@ -267,7 +267,7 @@ export function buildToolsPdf(items: Hydrated<Tool>[], logoDataUrl: string | nul
     ({ record, dataUrl }) => {
       const brandModel = [record.brand, record.model].filter(Boolean).join(' ');
       return {
-        thumb: dataUrl,
+        thumb: dataUrl ?? undefined,
         lines: [
           { value: record.name, bold: true, size: 11, color: 25, gapAfter: 3 },
           { value: brandModel || undefined, size: 9, color: 100, gapAfter: 4 },

@@ -15,6 +15,9 @@
   --color-muted: #999999;
   --radius-tile: 18px;
   --radius-card: 16px;
+  /* Used where a white surface sits directly on a white page (currently just
+     Home) and needs a shadow instead of --color-bg contrast to read as a card. */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.05);
   font-family: 'Inter', system-ui, sans-serif;
   /* Pin the WebView (and every form control inside it) to the light colour
      scheme so iOS doesn't render a dark keyboard when the phone is in
@@ -64,6 +67,19 @@ input[type='number']::-webkit-outer-spin-button {
 }
 input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* Onboarding staggered entrance — referenced everywhere via risen(delay) but
+   never actually defined, so those animations have silently been no-ops. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Onboarding accent line drawing itself in, like a pen tracing a plan line */
+@keyframes drawLine {
+  from { stroke-dashoffset: 48; }
+  to   { stroke-dashoffset: 0; }
 }
 
 /* Step card fade-in */

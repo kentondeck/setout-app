@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import { Capacitor } from '@capacitor/core'
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
+// Matches the diagram design system's "mm" unit-subscript treatment —
+// small mono captions, not a headline typeface.
+import '@fontsource/jetbrains-mono/400.css'
 import './index.css'
 import { App } from './App.tsx'
 

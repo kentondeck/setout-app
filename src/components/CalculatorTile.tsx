@@ -12,8 +12,8 @@ interface CalculatorTileProps {
 // so this component has no opinion on navigation vs. drag-to-reorder.
 export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle, dragging = false }: CalculatorTileProps) {
   const bg = highlighted ? 'var(--color-orange)' : 'var(--color-card)';
-  const iconBg = highlighted ? '#ffffff' : '#f5f5f3';
-  const iconStroke = highlighted ? 'var(--color-orange)' : 'var(--color-text)';
+  const iconBg = highlighted ? 'rgba(255,255,255,0.2)' : '#f5f5f3';
+  const iconStroke = highlighted ? '#ffffff' : 'var(--color-text)';
   const labelColor = highlighted ? '#ffffff' : 'var(--color-text)';
   const subtitleColor = highlighted ? 'rgba(255,255,255,0.85)' : 'var(--color-muted)';
 
@@ -22,7 +22,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
       style={{
         background: bg,
         borderRadius: 'var(--radius-tile)',
-        border: highlighted ? 'none' : '0.5px solid var(--color-border)',
+        border: 'none',
         minHeight: 130,
         padding: '18px 16px',
         display: 'flex',
@@ -32,7 +32,11 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
         height: '100%',
         boxSizing: 'border-box',
         position: 'relative',
-        boxShadow: dragging ? '0 12px 28px rgba(0,0,0,0.22)' : 'none',
+        boxShadow: dragging
+          ? '0 16px 32px rgba(0,0,0,0.2)'
+          : highlighted
+            ? '0 8px 20px -6px rgba(255,90,31,0.45)'
+            : '0 2px 4px rgba(0,0,0,0.03), 0 8px 20px rgba(0,0,0,0.06)',
         transform: dragging ? 'scale(1.04)' : 'scale(1)',
         transition: dragging ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
       }}
@@ -40,9 +44,9 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
       <div>
         <div
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 10,
+            width: 38,
+            height: 38,
+            borderRadius: 11,
             background: iconBg,
             display: 'flex',
             alignItems: 'center',
@@ -50,10 +54,10 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
             flexShrink: 0,
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d={calc.svgPath} stroke={iconStroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+            <path d={calc.svgPath} stroke={iconStroke} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
             {calc.svgPathAccent && (
-              <path d={calc.svgPathAccent} stroke="var(--color-orange)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={calc.svgPathAccent} stroke={highlighted ? '#ffffff' : 'var(--color-text)'} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
             )}
           </svg>
         </div>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Setout — The Construction Calculator App</title>
-  <meta name="description" content="The ultimate construction calculator app for Australian and NZ tradies. Free to download.">
+  <meta name="description" content="The ultimate construction calculator app for Australian and NZ tradies. Free for 2 weeks, then $2/week.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -62,18 +62,6 @@
       gap: clamp(40px, 6vw, 80px);
     }
     .hero-text { flex: 1; min-width: 0; }
-    .hero-eyebrow {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--orange);
-      background: rgba(255,90,31,0.1);
-      padding: 6px 14px;
-      border-radius: 100px;
-      margin-bottom: 28px;
-    }
     .hero h1 {
       font-size: clamp(40px, 5vw, 64px);
       font-weight: 800;
@@ -99,17 +87,47 @@
     .hero-img {
       flex-shrink: 0;
     }
-    .hero-img img {
-      width: 400px;
-      border-radius: 24px;
-      display: block;
+    .iphone-mockup {
+      position: relative;
+      width: 300px;
+      aspect-ratio: 390 / 844;
+      background: linear-gradient(160deg, #2b2b2b, #0a0a0a);
+      border-radius: 52px;
+      padding: 14px;
       box-shadow:
-        0 40px 100px rgba(0,0,0,0.2),
-        0 12px 32px rgba(0,0,0,0.1);
+        0 40px 100px rgba(0,0,0,0.22),
+        0 12px 32px rgba(0,0,0,0.12),
+        inset 0 0 0 1.5px rgba(255,255,255,0.08);
+    }
+    .iphone-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 40px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .iphone-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+    }
+    .iphone-island {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90px;
+      height: 26px;
+      background: #0a0a0a;
+      border-radius: 16px;
+      z-index: 2;
     }
     @media (max-width: 900px) {
       .hero { flex-direction: column; padding: 60px 24px 48px; }
-      .hero-img img { width: 100%; max-width: 420px; }
+      .iphone-mockup { width: 260px; }
       .hero-btns { justify-content: flex-start; }
     }
     .btn-primary {
@@ -141,6 +159,18 @@
     }
     .hero-free { font-size: 13px; color: var(--muted); }
     .hero-free strong { color: var(--dark); }
+
+    /* Android isn't live yet — same badge shape, just non-interactive and
+       carrying a "coming soon" eyebrow instead of implying you can tap
+       through to a real listing today. */
+    .btn-secondary.is-soon,
+    .btn-white.is-soon {
+      opacity: 0.6;
+      cursor: default;
+      pointer-events: none;
+    }
+    .btn-text-stack { display: flex; flex-direction: column; gap: 1px; line-height: 1.2; }
+    .btn-text-stack .btn-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; opacity: 0.7; }
 
     /* STATS BAR */
     .stats-bar {
@@ -381,23 +411,27 @@
 <!-- HERO -->
 <div class="hero">
   <div class="hero-text">
-    <span class="hero-eyebrow">For Australian &amp; NZ Tradies</span>
     <h1>The construction calc app that <em>just works.</em></h1>
-    <p>Instant results for stairs, decking, framing, roofing and more — no page loads, no subscriptions, no friction. Built specifically for the Australian and New Zealand building industry.</p>
+    <p>Instant results for stairs, decking, framing, roofing and more — no page loads, no friction. Built specifically for the Australian and New Zealand building industry.</p>
     <div class="hero-btns">
       <a href="#download" class="btn-primary">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
         App Store
       </a>
-      <a href="#download" class="btn-secondary">
+      <a href="#" class="btn-secondary is-soon" aria-disabled="true" tabindex="-1">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/></svg>
-        Google Play
+        <span class="btn-text-stack"><span class="btn-eyebrow">Coming soon</span>Google Play</span>
       </a>
     </div>
-    <p class="hero-free"><strong>Completely free</strong> to download — no account required</p>
+    <p class="hero-free"><strong>Free for 2 weeks</strong>, then just $2/week — cancel anytime</p>
   </div>
   <div class="hero-img">
-    <img src="images/hero-bench.jpg" alt="Setout app open on a workbench with construction plans">
+    <div class="iphone-mockup">
+      <div class="iphone-screen">
+        <img src="images/app-screenshot-home.png" alt="Setout app home screen showing a grid of construction calculators">
+      </div>
+      <div class="iphone-island"></div>
+    </div>
   </div>
 </div>
 
@@ -409,8 +443,8 @@
       <div class="stat-label">Calculators</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">$0</div>
-      <div class="stat-label">Completely Free</div>
+      <div class="stat-num">2wks</div>
+      <div class="stat-label">Free Trial</div>
     </div>
     <div class="stat-item">
       <div class="stat-num">100%</div>
@@ -456,10 +490,10 @@
     <div class="features-grid">
       <div class="feat-card">
         <div class="feat-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         </div>
-        <h3>Voice Input</h3>
-        <p>Speak your measurements hands-free. Setout converts your voice to numbers instantly — no typing required.</p>
+        <h3>Export &amp; Share</h3>
+        <p>Send any result as a PDF or share it straight to your team. No re-typing numbers into another app.</p>
       </div>
       <div class="feat-card">
         <div class="feat-icon">
@@ -531,8 +565,8 @@
     <h2>Common questions.</h2>
     <div class="faq-list" style="margin-top:40px;">
       <div class="faq-item">
-        <div class="faq-q">Is Setout really free?</div>
-        <div class="faq-a">Yes — completely free to download and use. No subscription, no in-app purchases, no account required.</div>
+        <div class="faq-q">Is Setout free?</div>
+        <div class="faq-a">You get full access free for 2 weeks. After that it's just $2/week, and you can cancel anytime.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Does it work without internet?</div>
@@ -578,18 +612,18 @@
 <!-- DOWNLOAD CTA -->
 <div id="download">
   <h2>Download Setout today.</h2>
-  <p>Free for iOS and Android. No account needed.</p>
+  <p>Free for 2 weeks. Just $2/week after that.</p>
   <div class="dl-btns">
     <a href="#" class="btn-white">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
       App Store
     </a>
-    <a href="#" class="btn-white">
+    <a href="#" class="btn-white is-soon" aria-disabled="true" tabindex="-1">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5C3.94 21.8 3 21.33 3 20.5z"/></svg>
-      Google Play
+      <span class="btn-text-stack"><span class="btn-eyebrow">Coming soon</span>Google Play</span>
     </a>
   </div>
-  <p class="dl-note">Completely free — no subscription, no account required</p>
+  <p class="dl-note">2-week free trial — cancel anytime</p>
 </div>
 
 <!-- FOOTER -->

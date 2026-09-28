@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { FONT, MONO } from '../lib/fonts';
 
 export type BalusterDiagramProps = {
   totalLength: number;
@@ -13,8 +14,6 @@ const ORANGE = '#FF5A1F';
 const BLACK = '#0a0a0a';
 const MUTED = '#999';
 const STRUCT_FILL = '#e8e8e6';
-const FONT = 'Inter, -apple-system, sans-serif';
-const MONO = "'JetBrains Mono','Courier New',monospace";
 
 // ── Structure geometry (px — illustrative, not proportional) ──────────────────
 const POST_W = 14;

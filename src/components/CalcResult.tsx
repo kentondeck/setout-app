@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { CalcQuoteHandoff } from '../pages/PhotoQuoteCalc';
+import { FONT } from '../lib/fonts';
 
 // Shared post-calculate result components — the "hero + shopping list + CTAs + save"
 // pattern lives here so every calculator page can render the same look without
@@ -153,7 +154,7 @@ export function ShoppingList({ rows, rightSlot, noteSlot }: ShoppingListProps) {
             minWidth: 48, textAlign: 'center',
             background: '#fff0e9', color: 'var(--color-orange)',
             borderRadius: 8, padding: '4px 8px',
-            fontFamily: "'SF Pro Rounded', 'Nunito', system-ui, -apple-system, sans-serif",
+            fontFamily: FONT,
             fontVariantNumeric: 'tabular-nums',
             fontSize: 16, fontWeight: 700,
             letterSpacing: '-0.5px',

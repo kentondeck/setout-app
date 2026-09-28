@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FONT, MONO } from '../lib/fonts';
 
 export type WorkingStep = {
   label: string;
@@ -28,7 +29,6 @@ const C_DARK = '#0a0a0a';
 const C_MUTED = '#999999';
 const C_BG = '#f5f5f3';
 const C_BORDER = 'rgba(0,0,0,0.06)';
-const FONT = "Inter, -apple-system, sans-serif";
 
 export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = true, id, glossary }: Props) {
   const storageKey = id ? `apprentice_working_collapsed_${id}` : null;
@@ -210,7 +210,7 @@ export function ApprenticeWorking({ steps, finalAnswer, finalLabel, visible = tr
                     {step.label}
                   </p>
                   {step.formula && (
-                    <p style={{ margin: '0 0 4px', fontSize: 12, color: C_MUTED, fontFamily: 'ui-monospace, Menlo, monospace' }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 12, color: C_MUTED, fontFamily: MONO }}>
                       {step.formula}
                     </p>
                   )}

@@ -25,6 +25,12 @@
   color-scheme: light;
 }
 
+/* Form controls don't inherit the page font by default (they fall back to the
+   OS UI font). Force Inter so nothing can leak a system font. */
+button, input, textarea, select {
+  font-family: inherit;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -32,6 +38,9 @@
 }
 
 body {
+  /* If a weight ever isn't bundled, snap to the nearest real one instead of
+     letting the browser smear a fake bold/italic. */
+  font-synthesis: none;
   margin: 0;
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -80,6 +89,20 @@ input[type='number'] {
 @keyframes drawLine {
   from { stroke-dashoffset: 48; }
   to   { stroke-dashoffset: 0; }
+}
+
+/* Screen change: every route's root element fades/rises in. Deliberately no
+   fill-mode — a lingering transform would become the containing block for
+   position:fixed sheets inside the page. */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.route-scroller > * {
+  animation: pageIn 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-scroller > * { animation: none; }
 }
 
 /* Step card fade-in */

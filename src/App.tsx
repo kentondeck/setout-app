@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
+import { lazyPage, prefetchPages } from './lib/lazyPage';
 
 import { useHistory } from './lib/useHistory';
 import { useJobs } from './hooks/useJobs';
@@ -18,33 +19,33 @@ import { Home } from './pages/Home';
 // Every route below is only needed once the user navigates there, and several
 // (PhotoQuoteCalc, JobDetailPage, ConcreteCalc...) are large. Lazy-loading them
 // keeps the initial bundle to just the shell + Home instead of ~1.2MB upfront.
-const History = lazy(() => import('./pages/History').then(m => ({ default: m.History })));
-const JobsPage = lazy(() => import('./pages/JobsPage').then(m => ({ default: m.JobsPage })));
-const QuotesPage = lazy(() => import('./pages/QuotesPage').then(m => ({ default: m.QuotesPage })));
-const JobDetailPage = lazy(() => import('./pages/JobDetailPage').then(m => ({ default: m.JobDetailPage })));
-const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-const Support = lazy(() => import('./pages/Support').then(m => ({ default: m.Support })));
-const CalcPlaceholder = lazy(() => import('./pages/CalcPlaceholder').then(m => ({ default: m.CalcPlaceholder })));
-const DeckingCalc = lazy(() => import('./pages/DeckingCalc').then(m => ({ default: m.DeckingCalc })));
-const FramingCalc = lazy(() => import('./pages/FramingCalc').then(m => ({ default: m.FramingCalc })));
-const StairsCalc = lazy(() => import('./pages/StairsCalc').then(m => ({ default: m.StairsCalc })));
-const RoofCalc = lazy(() => import('./pages/RoofCalc').then(m => ({ default: m.RoofCalc })));
-const CutlistCalc = lazy(() => import('./pages/CutlistCalc').then(m => ({ default: m.CutlistCalc })));
-const BalusterCalc = lazy(() => import('./pages/BalusterCalc').then(m => ({ default: m.BalusterCalc })));
-const ConcreteCalc = lazy(() => import('./pages/ConcreteCalc').then(m => ({ default: m.ConcreteCalc })));
-const RakedWallCalc = lazy(() => import('./pages/RakedWallCalc').then(m => ({ default: m.RakedWallCalc })));
-const CladdingCalc = lazy(() => import('./pages/CladdingCalc').then(m => ({ default: m.CladdingCalc })));
-const SetoutCalc = lazy(() => import('./pages/SetoutCalc').then(m => ({ default: m.SetoutCalc })));
-const RoofingCalc = lazy(() => import('./pages/RoofingCalc').then(m => ({ default: m.RoofingCalc })));
-const ExcavationCalc = lazy(() => import('./pages/ExcavationCalc').then(m => ({ default: m.ExcavationCalc })));
-const GradientCalc = lazy(() => import('./pages/GradientCalc').then(m => ({ default: m.GradientCalc })));
-const EqualSpacingCalc = lazy(() => import('./pages/EqualSpacingCalc').then(m => ({ default: m.EqualSpacingCalc })));
-const FencingCalc = lazy(() => import('./pages/FencingCalc').then(m => ({ default: m.FencingCalc })));
-const Sequencer = lazy(() => import('./pages/Sequencer').then(m => ({ default: m.Sequencer })));
-const PhotoQuoteCalc = lazy(() => import('./pages/PhotoQuoteCalc').then(m => ({ default: m.PhotoQuoteCalc })));
-const ReceiptsPage = lazy(() => import('./pages/ReceiptsPage').then(m => ({ default: m.ReceiptsPage })));
-const ToolsPage = lazy(() => import('./pages/ToolsPage').then(m => ({ default: m.ToolsPage })));
+const History = lazyPage(() => import('./pages/History'), 'History');
+const JobsPage = lazyPage(() => import('./pages/JobsPage'), 'JobsPage');
+const QuotesPage = lazyPage(() => import('./pages/QuotesPage'), 'QuotesPage');
+const JobDetailPage = lazyPage(() => import('./pages/JobDetailPage'), 'JobDetailPage');
+const SettingsPage = lazyPage(() => import('./pages/Settings'), 'Settings');
+const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
+const Support = lazyPage(() => import('./pages/Support'), 'Support');
+const CalcPlaceholder = lazyPage(() => import('./pages/CalcPlaceholder'), 'CalcPlaceholder');
+const DeckingCalc = lazyPage(() => import('./pages/DeckingCalc'), 'DeckingCalc');
+const FramingCalc = lazyPage(() => import('./pages/FramingCalc'), 'FramingCalc');
+const StairsCalc = lazyPage(() => import('./pages/StairsCalc'), 'StairsCalc');
+const RoofCalc = lazyPage(() => import('./pages/RoofCalc'), 'RoofCalc');
+const CutlistCalc = lazyPage(() => import('./pages/CutlistCalc'), 'CutlistCalc');
+const BalusterCalc = lazyPage(() => import('./pages/BalusterCalc'), 'BalusterCalc');
+const ConcreteCalc = lazyPage(() => import('./pages/ConcreteCalc'), 'ConcreteCalc');
+const RakedWallCalc = lazyPage(() => import('./pages/RakedWallCalc'), 'RakedWallCalc');
+const CladdingCalc = lazyPage(() => import('./pages/CladdingCalc'), 'CladdingCalc');
+const SetoutCalc = lazyPage(() => import('./pages/SetoutCalc'), 'SetoutCalc');
+const RoofingCalc = lazyPage(() => import('./pages/RoofingCalc'), 'RoofingCalc');
+const ExcavationCalc = lazyPage(() => import('./pages/ExcavationCalc'), 'ExcavationCalc');
+const GradientCalc = lazyPage(() => import('./pages/GradientCalc'), 'GradientCalc');
+const EqualSpacingCalc = lazyPage(() => import('./pages/EqualSpacingCalc'), 'EqualSpacingCalc');
+const FencingCalc = lazyPage(() => import('./pages/FencingCalc'), 'FencingCalc');
+const Sequencer = lazyPage(() => import('./pages/Sequencer'), 'Sequencer', { prefetch: false });
+const PhotoQuoteCalc = lazyPage(() => import('./pages/PhotoQuoteCalc'), 'PhotoQuoteCalc', { prefetch: false });
+const ReceiptsPage = lazyPage(() => import('./pages/ReceiptsPage'), 'ReceiptsPage');
+const ToolsPage = lazyPage(() => import('./pages/ToolsPage'), 'ToolsPage');
 
 
 
@@ -58,7 +59,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+      <div ref={scrollRef} className="route-scroller" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         <Suspense fallback={<div style={{ background: 'var(--color-bg)', minHeight: '100%' }} />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -127,6 +128,10 @@ export function App() {
   const keyboardInset = useKeyboardInset();
 
   const onboardingDone = splashDone && setupDone;
+
+  useEffect(() => {
+    if (onboardingDone) prefetchPages();
+  }, [onboardingDone]);
 
   return (
     <>

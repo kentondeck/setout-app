@@ -88,7 +88,7 @@ function showImagePreview(blob: Blob, filename: string): void {
 
   const hint = document.createElement('div');
   hint.textContent = 'Long-press the image → Save Image';
-  hint.style.cssText = 'color:#fff;font-size:13px;font-weight:500;margin-bottom:14px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:-0.2px;';
+  hint.style.cssText = 'color:#fff;font-size:13px;font-weight:500;margin-bottom:14px;text-align:center;font-family:Inter,system-ui,sans-serif;letter-spacing:-0.2px;';
 
   const img = document.createElement('img');
   img.src = url;
@@ -99,7 +99,7 @@ function showImagePreview(blob: Blob, filename: string): void {
   const close = document.createElement('button');
   close.type = 'button';
   close.textContent = 'Close';
-  close.style.cssText = 'margin-top:18px;padding:12px 24px;border-radius:12px;background:#fff;color:#0a0a0a;border:none;font-size:15px;font-weight:500;font-family:-apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;letter-spacing:-0.2px;';
+  close.style.cssText = 'margin-top:18px;padding:12px 24px;border-radius:12px;background:#fff;color:#0a0a0a;border:none;font-size:15px;font-weight:500;font-family:Inter,system-ui,sans-serif;cursor:pointer;letter-spacing:-0.2px;';
 
   const cleanup = () => {
     URL.revokeObjectURL(url);

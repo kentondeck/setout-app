@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { detectRegion } from '../lib/detectRegion';
 import type { Region, Settings } from '../types';
+import { FONT } from '../lib/fonts';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
 const MUTED = '#999';
 const BG = '#f5f5f3';
-const FONT = "Inter, -apple-system, sans-serif";
 const EASE = 'cubic-bezier(0.16, 1, 0.3, 1)';
 
 function risen(delay: string) {

@@ -1,25 +1,14 @@
-import { useContext, useState, useRef, useMemo } from 'react';
+import { useContext, useState, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from '../contexts';
-import { CALCULATORS } from '../lib/calculators';
+import { SettingsContext, KeyboardContext } from '../contexts';
 import { useSubscription } from '../lib/SubscriptionContext';
 
 interface Props {
   onClose: () => void;
 }
 
-function statLabel(text: string) {
-  return (
-    <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 3 }}>
-      {text}
-    </div>
-  );
-}
-
 export function ProfileSheet({ onClose }: Props) {
   const { settings, updateSettings } = useContext(SettingsContext);
-  const { history } = useContext(HistoryContext);
-  const { jobs } = useContext(JobsContext);
   const { inset: keyboardInset } = useContext(KeyboardContext);
   const { isPro, showPaywall } = useSubscription();
 
@@ -40,38 +29,6 @@ export function ProfileSheet({ onClose }: Props) {
     if (trimmed) updateSettings({ userName: trimmed });
     setEditingName(false);
   }
-
-  const stats = useMemo(() => {
-    const now = new Date();
-    const thisMonthCount = history.filter(e => {
-      const d = new Date(e.timestamp);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
-
-    // top calculator
-    const freq: Record<string, number> = {};
-    for (const e of history) freq[e.calculatorId] = (freq[e.calculatorId] ?? 0) + 1;
-    const topId = Object.entries(freq).sort((a, b) => b[1] - a[1])[0]?.[0];
-    const topCalc = topId ? CALCULATORS.find(c => c.id === topId) : null;
-    const topCount = topId ? freq[topId] : 0;
-
-    // using since
-    let usingSince = '';
-    if (history.length > 0) {
-      const oldest = Math.min(...history.map(e => e.timestamp));
-      usingSince = new Date(oldest).toLocaleDateString('en-AU', { month: 'long', year: 'numeric' });
-    }
-
-    // most active month
-    const monthFreq: Record<string, number> = {};
-    for (const e of history) {
-      const key = new Date(e.timestamp).toLocaleDateString('en-AU', { month: 'short', year: 'numeric' });
-      monthFreq[key] = (monthFreq[key] ?? 0) + 1;
-    }
-    const bestMonth = Object.entries(monthFreq).sort((a, b) => b[1] - a[1])[0];
-
-    return { thisMonthCount, topCalc, topCount, usingSince, bestMonth };
-  }, [history]);
 
   const initial = (settings.userName || 'U').trim().charAt(0).toUpperCase();
 
@@ -223,106 +180,6 @@ export function ProfileSheet({ onClose }: Props) {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.6px', textTransform: 'uppercase', marginBottom: 10 }}>
-            Your activity
-          </div>
-
-          {/* Row 1: total calcs + active jobs */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px' }}>
-              <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-1px', lineHeight: 1 }}>
-                {history.length}
-              </div>
-              {statLabel('Total calculations')}
-            </div>
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px' }}>
-              <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-1px', lineHeight: 1 }}>
-                {jobs.length}
-              </div>
-              {statLabel('Active jobs')}
-            </div>
-          </div>
-
-          {/* Row 2: this month + using since */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px' }}>
-              <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-1px', lineHeight: 1 }}>
-                {stats.thisMonthCount}
-              </div>
-              {statLabel('This month')}
-            </div>
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px' }}>
-              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
-                {stats.usingSince || '—'}
-              </div>
-              {statLabel('Using since')}
-            </div>
-          </div>
-
-          {/* Row 3: top calculator (full width) */}
-          {stats.topCalc && (
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-                  {stats.topCalc.label}
-                </div>
-                {statLabel('Most used calculator')}
-              </div>
-              <div
-                style={{
-                  background: 'rgba(255,90,31,0.08)',
-                  color: 'var(--color-orange)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  padding: '5px 10px',
-                  flexShrink: 0,
-                  letterSpacing: '-0.2px',
-                }}
-              >
-                {stats.topCount}×
-              </div>
-            </div>
-          )}
-
-          {/* Best month */}
-          {stats.bestMonth && stats.bestMonth[1] > 1 && (
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 }}>
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>
-                  {stats.bestMonth[0]}
-                </div>
-                {statLabel('Most active month')}
-              </div>
-              <div
-                style={{
-                  background: 'rgba(255,90,31,0.08)',
-                  color: 'var(--color-orange)',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  padding: '5px 10px',
-                  flexShrink: 0,
-                  letterSpacing: '-0.2px',
-                }}
-              >
-                {stats.bestMonth[1]} calcs
-              </div>
-            </div>
-          )}
-
-          {/* Empty state */}
-          {history.length === 0 && (
-            <div style={{ background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 14, padding: '18px 16px', textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
-                Run your first calculation to see stats here.
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Upgrade banner — only for non-Pro users */}

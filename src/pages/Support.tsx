@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { CalcHeader } from '../components/CalcHeader';
 
-const CONTACT_EMAIL = 'setouttheapp@gmail.com';
+const CONTACT_EMAIL = 'info@setoutapp.co.nz';
 
 const FAQS: { q: string; a: string }[] = [
   {
@@ -34,7 +34,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: 'Something\'s wrong — how do I report it?',
-    a: 'Use the Feedback tile on the home screen, or email ' + CONTACT_EMAIL + '. Tell us what you were doing, what happened, and what you expected. Screenshots help.',
+    a: 'Email us at ' + CONTACT_EMAIL + '. Tell us what you were doing, what happened, and what you expected. Screenshots help.',
   },
 ];
 
@@ -61,47 +61,29 @@ export function Support() {
             Got a problem or an idea?
           </p>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-            The fastest way to reach us is via feedback in the app, or straight to <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'var(--color-orange)', textDecoration: 'none' }}>{CONTACT_EMAIL}</a>.
+            The fastest way to reach us is straight to <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: 'var(--color-orange)', textDecoration: 'none' }}>{CONTACT_EMAIL}</a>.
           </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button
-              onClick={() => navigate('/calc/feedback')}
-              style={{
-                flex: 1,
-                padding: '12px',
-                borderRadius: 12,
-                border: 'none',
-                background: 'var(--color-orange)',
-                color: '#fff',
-                fontSize: 14,
-                fontWeight: 500,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-              }}
-            >
-              Send feedback
-            </button>
-            <a
-              href={`mailto:${CONTACT_EMAIL}?subject=Setout%20support`}
-              style={{
-                flex: 1,
-                padding: '12px',
-                borderRadius: 12,
-                border: '0.5px solid var(--color-border)',
-                background: 'var(--color-bg)',
-                color: 'var(--color-text)',
-                fontSize: 14,
-                fontWeight: 500,
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-                textAlign: 'center',
-                textDecoration: 'none',
-                lineHeight: 1.2,
-              }}
-            >
-              Email us
-            </a>
-          </div>
+          <a
+            href={`mailto:${CONTACT_EMAIL}?subject=Setout%20support`}
+            style={{
+              display: 'block',
+              marginTop: 4,
+              padding: '12px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'var(--color-orange)',
+              color: '#fff',
+              fontSize: 14,
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              textAlign: 'center',
+              textDecoration: 'none',
+              lineHeight: 1.2,
+            }}
+          >
+            Email us
+          </a>
         </div>
 
         {/* FAQs */}
@@ -164,20 +146,37 @@ export function Support() {
           gap: 8,
           padding: '20px 0 8px',
         }}>
-          <button
-            onClick={() => navigate('/privacy')}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 4,
-              fontSize: 12,
-              color: 'var(--color-muted)',
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-            }}
-          >
-            Privacy Policy
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={() => navigate('/privacy')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 4,
+                fontSize: 12,
+                color: 'var(--color-muted)',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Privacy Policy
+            </button>
+            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>·</span>
+            <button
+              onClick={() => navigate('/terms')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 4,
+                fontSize: 12,
+                color: 'var(--color-muted)',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Terms &amp; Disclaimer
+            </button>
+          </div>
           <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
             Setout Holdings Limited
           </p>

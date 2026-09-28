@@ -11,7 +11,6 @@ import { JobNameInput } from '../components/JobNameInput';
 import type { FenceType, PalingStyle, FencingResult } from '../calculators/fencing';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { uuid } from '../lib/uuid';
@@ -29,7 +28,6 @@ const TRUCK_RATE_PER_M3 = 300;
 export function FencingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [fenceType, setFenceType] = useState<FenceType>('paling');
@@ -95,7 +93,7 @@ export function FencingCalc() {
     if (!resolvedHoleDiameter || resolvedHoleDiameter <= 0) { setError('Enter a post hole diameter.'); return; }
     if (!resolvedPostWidth || resolvedPostWidth <= 0) { setError('Enter a post size.'); return; }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('fencing', () => setResult(null));
 
     setError('');
 

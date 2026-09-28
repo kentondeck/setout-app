@@ -15,7 +15,6 @@ import { useSubscription } from '../lib/SubscriptionContext';
 const FEATURES = [
   'Every calculator, unlimited use',
   'Full Sequencer job library (NZ + AU)',
-  'Photo Quote with saved prices',
   'Save jobs, photos, and quotes offline',
 ];
 
@@ -196,7 +195,7 @@ export function Paywall() {
           </p>
           <div style={{ display: 'flex', gap: 16, justifyContent: 'center', fontSize: 12 }}>
             <a href="#/privacy" onClick={hidePaywall} style={{ color: 'var(--color-muted)', textDecoration: 'underline' }}>Privacy Policy</a>
-            <a href="https://setoutapp.com.au/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-muted)', textDecoration: 'underline' }}>Terms of Use</a>
+            <a href="#/terms" onClick={hidePaywall} style={{ color: 'var(--color-muted)', textDecoration: 'underline' }}>Terms of Use</a>
           </div>
         </div>
       </div>

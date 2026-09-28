@@ -5,7 +5,7 @@
 
 This is the privacy policy for **Setout** — the construction calculator app for tradies in New Zealand and Australia. This document explains what data Setout collects, why, and what your rights are.
 
-Setout is operated by **Setout Holdings Limited** (referred to as "we", "us", or "our" throughout). Contact: **setouttheapp@gmail.com**.
+Setout is operated by **Setout Holdings Limited** (referred to as "we", "us", or "our" throughout). Contact: **info@setoutapp.co.nz**.
 
 ---
 
@@ -21,7 +21,7 @@ Setout is operated by **Setout Holdings Limited** (referred to as "we", "us", or
 
 ## 1. Who this policy covers
 
-This policy applies to everyone who uses Setout — through the website ([setoutapp.com.au](https://setoutapp.com.au)), the installed PWA on your phone, or the native iOS app on TestFlight or the App Store.
+This policy applies to everyone who uses Setout — through the website ([www.setoutapp.co.nz](https://www.setoutapp.co.nz)), the installed PWA on your phone, or the native iOS app on TestFlight or the App Store.
 
 ## 2. What we collect and why
 
@@ -83,7 +83,7 @@ Under the New Zealand Privacy Act 2020 and Australian Privacy Principles, you ca
 - **Withdraw consent** to us processing your data — usually by uninstalling the app or deleting your name in Settings
 - **Complain** to the New Zealand Privacy Commissioner ([privacy.org.nz](https://privacy.org.nz)) or the Office of the Australian Information Commissioner ([oaic.gov.au](https://oaic.gov.au)) if you think we've mishandled your data
 
-To exercise any of these rights, email us at **setouttheapp@gmail.com**. We'll respond within 20 working days.
+To exercise any of these rights, email us at **info@setoutapp.co.nz**. We'll respond within 20 working days.
 
 ---
 
@@ -131,5 +131,5 @@ If we change this policy in a way that affects how your data is used, we'll bump
 
 Questions, concerns, or requests about your data:
 
-**Email:** setouttheapp@gmail.com
-**Website:** [setoutapp.com.au](https://setoutapp.com.au)
+**Email:** info@setoutapp.co.nz
+**Website:** [www.setoutapp.co.nz](https://www.setoutapp.co.nz)

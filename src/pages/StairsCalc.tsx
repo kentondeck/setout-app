@@ -11,7 +11,6 @@ import type { StairsOutputs, StairsWarnings } from '../calculators/stairs';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, STAIR_LIMITS } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { StairDiagram } from '../components/StairDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -39,7 +38,6 @@ const DEFAULTS: Inputs = {
 export function StairsCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -70,13 +68,9 @@ export function StairsCalc() {
       return;
     }
 
-    // Subscription gate — Pro users always pass, free users get 1/day.
+    // Subscription gate — one free run per calculator, then flash-and-paywall.
     // Consume BEFORE the calc runs so a locked user never sees a fresh result.
-    if (!gate.tryUse()) {
-      setError('');
-      showPaywall();
-      return;
-    }
+    gate.gateCalc('stairs', () => setResult(null));
 
     setError('');
 

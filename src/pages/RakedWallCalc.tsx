@@ -12,7 +12,6 @@ import type { RakedWallOutputs } from '../calculators/raked-wall';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
@@ -44,7 +43,6 @@ const DEFAULTS: Inputs = {
 export function RakedWallCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -87,7 +85,7 @@ export function RakedWallCalc() {
       highHeight = Math.round(lowHeight + Math.tan(pitch * Math.PI / 180) * wallLength);
     }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('raked', () => setResult(null));
 
     setError('');
 

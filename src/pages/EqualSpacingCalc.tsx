@@ -12,7 +12,6 @@ import type { EqualSpacingOutputs } from '../calculators/equalspacing';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { uuid } from '../lib/uuid';
@@ -34,7 +33,6 @@ const DEFAULTS: Inputs = {
 export function EqualSpacingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -67,7 +65,7 @@ export function EqualSpacingCalc() {
       return;
     }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('equalspacing', () => setResult(null));
 
     setError('');
 

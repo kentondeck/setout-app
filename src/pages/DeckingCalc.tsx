@@ -12,7 +12,6 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
@@ -43,7 +42,6 @@ const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -87,7 +85,7 @@ export function DeckingCalc() {
       return;
     }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('decking', () => setResult(null));
 
     setError('');
 

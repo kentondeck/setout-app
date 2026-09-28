@@ -36,7 +36,7 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
           ? '0 16px 32px rgba(0,0,0,0.2)'
           : highlighted
             ? '0 8px 20px -6px rgba(255,90,31,0.45)'
-            : '0 2px 4px rgba(0,0,0,0.03), 0 8px 20px rgba(0,0,0,0.06)',
+            : '0 2px 8px rgba(0,0,0,0.08), 0 12px 28px rgba(0,0,0,0.13)',
         transform: dragging ? 'scale(1.04)' : 'scale(1)',
         transition: dragging ? 'none' : 'transform 0.15s ease, box-shadow 0.15s ease',
       }}

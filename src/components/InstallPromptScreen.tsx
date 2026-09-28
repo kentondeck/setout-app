@@ -37,7 +37,7 @@ function SafariBottomBar() {
       <path d="M26,26 L26,23.5 Q26,21 29,21 Q32,21 32,23.5 L32,26 Z" fill="none" stroke="#8e8e93" strokeWidth="1.2" />
       <rect x="25" y="26" width="8" height="6" rx="1.2" fill="#8e8e93" />
       {/* URL — stays well inside the pill */}
-      <text x="40" y="30" fontFamily="Inter,system-ui,sans-serif" fontSize="12" fill="#3c3c43">setoutapp.com.au</text>
+      <text x="40" y="30" fontFamily="Inter,system-ui,sans-serif" fontSize="12" fill="#3c3c43">setoutapp.co.nz</text>
 
       {/* ••• button */}
       <rect x="292" y="9" width="56" height="32" rx="9" fill="rgba(255,90,31,0.10)" />
@@ -189,7 +189,7 @@ function ChromeTopBar() {
       <rect x="29" y="28" width="8" height="7" rx="1.5" fill="#5f6368" />
       {/* URL */}
       <text x="44" y="33" fontFamily="Inter,system-ui,sans-serif" fontSize="13" fill="#3c4043">
-        setoutapp.com.au
+        setoutapp.co.nz
       </text>
 
       {/* ── Three-dot menu at x=332 ── */}

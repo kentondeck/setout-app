@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { PDF_FONT, registerPdfFonts } from './pdfFonts';
 import type { Region } from '../types';
 
 export type QuoteDocType = 'quote' | 'estimate' | 'invoice';
@@ -87,6 +88,7 @@ export function formatDateInput(dateStr: string, region: Region): string {
 
 export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  registerPdfFonts(doc);
   const marginX = 48;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -116,7 +118,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   }
 
   y = Math.max(y, headerBottomY);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(18);
   doc.setTextColor(10, 10, 10);
   doc.text(docTitle, pageWidth / 2, y, { align: 'center' });
@@ -142,7 +144,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   if (q.businessAddress) businessLines.push(q.businessAddress);
 
   if (businessLines.length > 0) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(100, 100, 100);
     for (const line of businessLines) {
@@ -153,18 +155,18 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   }
 
   // Job / client
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(15);
   doc.setTextColor(10, 10, 10);
   doc.text(q.jobName || `Job ${docTitle.toLowerCase()}`, marginX, y);
   if (q.quoteNumber.trim()) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(10.5);
     doc.setTextColor(100, 100, 100);
     doc.text(`#${q.quoteNumber.trim()}`, pageWidth - marginX, y, { align: 'right' });
   }
   y += 18;
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setFontSize(10.5);
   doc.setTextColor(100, 100, 100);
   if (q.clientName) { doc.text(`For: ${q.clientName}`, marginX, y); y += 14; }
@@ -201,7 +203,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
 
   // Line items table header
   const col = { item: marginX, qty: marginX + 260, price: marginX + 340, total: pageWidth - marginX };
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(140, 140, 140);
   doc.text('ITEM', col.item, y);
@@ -214,7 +216,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.line(marginX, y, pageWidth - marginX, y);
   y += 16;
 
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setFontSize(10.5);
 
   // Materials — one summary line, not itemised
@@ -238,11 +240,11 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   }
   if (q.labour.length > 1) {
     ensureSpace(20);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setTextColor(10, 10, 10);
     doc.text('Labour total', col.item, y);
     doc.text(money(q.labourSubtotal), col.total, y, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     y += 20;
   }
 
@@ -263,7 +265,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   // Totals
   ensureSpace(120);
   function totalRow(label: string, value: string, opts?: { bold?: boolean; accent?: boolean }) {
-    doc.setFont('helvetica', opts?.bold ? 'bold' : 'normal');
+    doc.setFont(PDF_FONT, opts?.bold ? 'bold' : 'normal');
     doc.setFontSize(opts?.bold ? 12.5 : 10.5);
     doc.setTextColor(opts?.accent ? 255 : opts?.bold ? 10 : 100, opts?.accent ? 90 : opts?.bold ? 10 : 100, opts?.accent ? 31 : opts?.bold ? 10 : 100);
     doc.text(label, col.price, y);
@@ -287,7 +289,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
 
   if (q.paymentTerms.trim() || bankParts) {
     ensureSpace(50);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(140, 140, 140);
     doc.text('PAYMENT', marginX, y);
@@ -297,7 +299,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     doc.line(marginX, y, pageWidth - marginX, y);
     y += 16;
 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     if (q.paymentTerms.trim()) {
@@ -314,7 +316,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   // Notes — freeform, shown once as its own block
   if (q.notes.trim()) {
     ensureSpace(50);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(140, 140, 140);
     doc.text('NOTES', marginX, y);
@@ -324,7 +326,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     doc.line(marginX, y, pageWidth - marginX, y);
     y += 16;
 
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(10);
     doc.setTextColor(60, 60, 60);
     const notesLines: string[] = doc.splitTextToSize(q.notes.trim(), pageWidth - marginX * 2);
@@ -338,7 +340,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   // when set. New pages break as needed so a photo never straddles the fold.
   if (q.photos && q.photos.length > 0) {
     ensureSpace(50);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(140, 140, 140);
     doc.text('PHOTOS', marginX, y);
@@ -387,7 +389,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
         }
         if (p.caption?.trim()) {
           const capY = y + imgH + 12;
-          doc.setFont('helvetica', 'normal');
+          doc.setFont(PDF_FONT, 'normal');
           doc.setFontSize(9);
           doc.setTextColor(80, 80, 80);
           const lines: string[] = doc.splitTextToSize(p.caption.trim(), cellW);
@@ -408,12 +410,12 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   const disclaimerY = wordmarkY - 16 - (disclaimerLines.length - 1) * 11;
   ensureSpace(30);
 
-  doc.setFont('helvetica', 'italic');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(150, 150, 150);
   doc.text(disclaimerLines, marginX, disclaimerY);
 
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(10);
   doc.setTextColor(10, 10, 10);
   doc.text('Set', marginX, wordmarkY);

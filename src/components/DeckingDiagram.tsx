@@ -1,5 +1,7 @@
 import { memo, useRef } from 'react';
 import { shareOrPreviewImage } from '../lib/saveImage';
+import { FONT, MONO } from '../lib/fonts';
+import { embedSvgFonts } from '../lib/embedSvgFonts';
 
 export type DeckingDiagramProps = {
   deckLength: number;   // mm
@@ -14,8 +16,6 @@ export type DeckingDiagramProps = {
 const ORANGE = '#FF5A1F';
 const BLACK  = '#0a0a0a';
 const FILL   = '#e8e8e6';
-const FONT   = 'Inter, -apple-system, sans-serif';
-const MONO   = "'JetBrains Mono','Courier New',monospace";
 
 const VB_W = 380;
 const VB_H = 320;
@@ -78,6 +78,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', '#F5F5F3');
     clone.insertBefore(bg, clone.firstChild);
+    await embedSvgFonts(clone);
     const url = URL.createObjectURL(
       new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }),
     );

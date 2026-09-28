@@ -16,6 +16,7 @@ import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { uuid } from '../lib/uuid';
+import { MONO } from '../lib/fonts';
 
 interface Inputs {
   totalLength: string;
@@ -248,7 +249,7 @@ export function BalusterCalc() {
                       padding: '6px 8px',
                       background: 'var(--color-bg)',
                       borderRadius: 8,
-                      fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+                      fontFamily: MONO,
                       fontVariantNumeric: 'tabular-nums',
                     }}>
                       <span style={{ fontSize: 11, color: 'var(--color-muted)', minWidth: 18 }}>

@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { PDF_FONT, registerPdfFonts } from './pdfFonts';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
@@ -43,27 +44,27 @@ function fmtDate(iso: string | undefined, fallback: number): string {
 // ── Header / footer ─────────────────────────────────────────────────────────
 
 function drawHeader(doc: jsPDF, title: string, leftSub: string, rightBig: string, rightSub?: string) {
-  doc.setFont('helvetica', 'bold');
+  doc.setFont(PDF_FONT, 'bold');
   doc.setFontSize(20);
   doc.setTextColor(25);
   doc.text(title, MARGIN, MARGIN + 14);
 
   if (leftSub) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(120);
     doc.text(leftSub, MARGIN, MARGIN + 30);
   }
 
   if (rightSub) {
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(9);
     doc.setTextColor(120);
     doc.text(rightSub, PAGE_W - MARGIN, MARGIN + 12, { align: 'right' });
   }
 
   if (rightBig) {
-    doc.setFont('helvetica', 'bold');
+    doc.setFont(PDF_FONT, 'bold');
     doc.setFontSize(16);
     doc.setTextColor(25);
     doc.text(rightBig, PAGE_W - MARGIN, MARGIN + 30, { align: 'right' });
@@ -76,7 +77,7 @@ function drawHeader(doc: jsPDF, title: string, leftSub: string, rightBig: string
 
 function drawFooter(doc: jsPDF, pageNum: number, pageCount: number, logoDataUrl: string | null) {
   const baseline = PAGE_H - 8;
-  doc.setFont('helvetica', 'normal');
+  doc.setFont(PDF_FONT, 'normal');
   doc.setFontSize(8);
   doc.setTextColor(140);
 
@@ -122,7 +123,7 @@ function textLine(
   text: string,
   opts: { bold?: boolean; size: number; color: number; width: number; maxLines?: number; gapAfter?: number },
 ): number {
-  doc.setFont('helvetica', opts.bold ? 'bold' : 'normal');
+  doc.setFont(PDF_FONT, opts.bold ? 'bold' : 'normal');
   doc.setFontSize(opts.size);
   doc.setTextColor(opts.color);
   const wrapped = doc.splitTextToSize(text, opts.width).slice(0, opts.maxLines ?? 1);
@@ -151,7 +152,7 @@ function drawCard(doc: jsPDF, x: number, y: number, thumb: string | undefined, l
   } else {
     doc.setFillColor(245, 245, 245);
     doc.rect(px, py, THUMB_W, THUMB_H, 'F');
-    doc.setFont('helvetica', 'normal');
+    doc.setFont(PDF_FONT, 'normal');
     doc.setFontSize(8);
     doc.setTextColor(170);
     doc.text('No photo', px + THUMB_W / 2, py + THUMB_H / 2, { align: 'center', baseline: 'middle' });
@@ -219,6 +220,7 @@ function renderCards<T>(
 
 export function buildReceiptsPdf(items: Hydrated<Receipt>[], periodLabel?: string, logoDataUrl: string | null = null): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  registerPdfFonts(doc);
   const total = items.reduce((s, h) => s + (h.record.amount ?? 0), 0);
   const countStr = `${items.length} receipt${items.length === 1 ? '' : 's'}`;
 
@@ -257,6 +259,7 @@ export function buildReceiptsPdf(items: Hydrated<Receipt>[], periodLabel?: strin
 
 export function buildToolsPdf(items: Hydrated<Tool>[], logoDataUrl: string | null = null): jsPDF {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  registerPdfFonts(doc);
   const total = items.reduce((s, h) => s + (h.record.replacementValue ?? 0), 0);
   const leftSub = `${items.length} item${items.length === 1 ? '' : 's'}`;
 

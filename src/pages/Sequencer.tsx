@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { SettingsContext } from '../contexts';
+import { FONT } from '../lib/fonts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -2787,7 +2788,7 @@ export function Sequencer() {
                       width: 26, height: 26, borderRadius: 8,
                       background: 'var(--color-orange)', color: '#fff',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: "'SF Pro Rounded', 'Nunito', system-ui, -apple-system, sans-serif",
+                      fontFamily: FONT,
                       fontVariantNumeric: 'tabular-nums',
                       fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.4px',
                     }}>{i + 1}</div>
@@ -2864,7 +2865,7 @@ export function Sequencer() {
                   width: 28, height: 28, borderRadius: 8,
                   background: 'var(--color-orange)', color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'SF Pro Rounded', 'Nunito', system-ui, -apple-system, sans-serif",
+                  fontFamily: FONT,
                   fontVariantNumeric: 'tabular-nums',
                   fontSize: 13, fontWeight: 700, letterSpacing: '-0.4px',
                 }}>{phaseIdx + 1}</div>

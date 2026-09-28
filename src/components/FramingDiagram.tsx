@@ -1,5 +1,7 @@
 import { memo, useRef } from 'react';
 import { shareOrPreviewImage } from '../lib/saveImage';
+import { FONT, MONO } from '../lib/fonts';
+import { embedSvgFonts } from '../lib/embedSvgFonts';
 
 export interface FramingDiagramProps {
   wallLengthMm: number;
@@ -18,8 +20,6 @@ const ORANGE = '#FF5A1F';
 const INK    = '#0A0A0A';
 const FILL   = '#ECECE8';
 const BG     = '#F5F5F3';
-const FONT   = 'Inter, system-ui, sans-serif';
-const MONO   = "'JetBrains Mono','Courier New',monospace";
 
 const WALL_LEFT  = 100;
 const WALL_TOP   = 110;
@@ -81,6 +81,7 @@ export const FramingDiagram = memo(function FramingDiagram({
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', BG);
     clone.insertBefore(bg, clone.firstChild);
+    await embedSvgFonts(clone);
     const url = URL.createObjectURL(
       new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }),
     );

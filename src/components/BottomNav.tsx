@@ -111,9 +111,9 @@ export function BottomNav({ onReselect }: Props) {
       style={{
         position: 'sticky',
         bottom: 0,
-        background: 'rgba(245, 245, 243, 0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        // Solid, not translucent+blurred: a live backdrop blur over scrolling
+        // content is re-rendered every frame and drops frames on older iPhones.
+        background: 'var(--color-bg)',
         borderTop: '0.5px solid var(--color-border)',
         display: 'flex',
         paddingBottom: 'env(safe-area-inset-bottom)',

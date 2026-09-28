@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
+import { FONT } from '../lib/fonts';
 
 const ORANGE = '#FF5A1F';
 const DARK = '#0a0a0a';
 const BG = '#f5f5f3';
-const FONT = "Inter, -apple-system, sans-serif";
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [exiting, setExiting] = useState(false);

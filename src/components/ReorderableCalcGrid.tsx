@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { hapticLight } from '../lib/haptics';
 import { useNavigate } from 'react-router-dom';
 import { CalculatorTile } from './CalculatorTile';
@@ -22,8 +22,6 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
   const navigate = useNavigate();
   const [order, setOrder] = useState<CalculatorId[]>(calcs.map(c => c.id));
   const [dragId, setDragId] = useState<CalculatorId | null>(null);
-  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [dragSize, setDragSize] = useState({ w: 0, h: 0 });
 
   const tileRefs = useRef<Map<CalculatorId, HTMLDivElement>>(new Map());
@@ -32,11 +30,42 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
   const longPressTimer = useRef<number | null>(null);
   const activePointerId = useRef<number | null>(null);
   const dragIdRef = useRef<CalculatorId | null>(null);
+  // The floating tile is moved by writing its transform directly. Routing every
+  // pointermove through React state re-rendered all 19 tiles per finger move.
+  const floatRef = useRef<HTMLDivElement>(null);
+  const dragOffset = useRef({ x: 0, y: 0 });
+  const dragPointer = useRef({ x: 0, y: 0 });
+  const pressedEl = useRef<HTMLDivElement | null>(null);
 
   // Resync local order with the incoming calc list (e.g. pin toggled) whenever not actively dragging.
   useEffect(() => {
     if (!dragId) setOrder(calcs.map(c => c.id));
   }, [calcs, dragId]);
+
+  function placeFloat(x: number, y: number) {
+    dragPointer.current = { x, y };
+    const el = floatRef.current;
+    if (el) el.style.transform = `translate3d(${x - dragOffset.current.x}px, ${y - dragOffset.current.y}px, 0)`;
+  }
+
+  // Immediate press feedback, applied straight to the element (no re-render) so
+  // it lands on the very next frame after touch-down.
+  function press(id: CalculatorId) {
+    release();
+    const el = tileRefs.current.get(id);
+    if (!el) return;
+    el.style.transform = 'scale(0.96)';
+    pressedEl.current = el;
+  }
+
+  function release() {
+    if (pressedEl.current) pressedEl.current.style.transform = '';
+    pressedEl.current = null;
+  }
+
+  useLayoutEffect(() => {
+    if (dragId) placeFloat(dragPointer.current.x, dragPointer.current.y);
+  }, [dragId]);
 
   function clearLongPressTimer() {
     if (longPressTimer.current !== null) {
@@ -49,11 +78,12 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     const el = tileRefs.current.get(id);
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
+    release();
+    dragOffset.current = { x: clientX - rect.left, y: clientY - rect.top };
+    dragPointer.current = { x: clientX, y: clientY };
     setDragSize({ w: rect.width, h: rect.height });
     dragIdRef.current = id;
     setDragId(id);
-    setDragPos({ x: clientX, y: clientY });
     hapticLight();
   }
 
@@ -62,6 +92,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     startPos.current = { x: e.clientX, y: e.clientY };
     moved.current = false;
     activePointerId.current = e.pointerId;
+    press(id);
     clearLongPressTimer();
     longPressTimer.current = window.setTimeout(() => {
       longPressTimer.current = null;
@@ -77,11 +108,12 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     if (Math.hypot(dx, dy) > MOVE_CANCEL_PX) {
       moved.current = true;
       if (longPressTimer.current !== null) clearLongPressTimer();
+      if (!dragIdRef.current) release();
     }
 
     if (!dragIdRef.current) return;
     e.preventDefault();
-    setDragPos({ x: e.clientX, y: e.clientY });
+    placeFloat(e.clientX, e.clientY);
 
     let hoveredId: CalculatorId | null = null;
     for (const [id, el] of tileRefs.current) {
@@ -107,12 +139,13 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
 
   function endInteraction(id: CalculatorId) {
     clearLongPressTimer();
+    release();
     if (dragIdRef.current) {
       onReorder(order);
       dragIdRef.current = null;
       setDragId(null);
-      setDragPos(null);
     } else if (!moved.current) {
+      hapticLight();
       navigate(`/calc/${id}`);
     }
   }
@@ -128,9 +161,9 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
 
   function handlePointerCancel() {
     clearLongPressTimer();
+    release();
     dragIdRef.current = null;
     setDragId(null);
-    setDragPos(null);
     setOrder(calcs.map(c => c.id));
     activePointerId.current = null;
   }
@@ -159,6 +192,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
             style={{
               touchAction: 'pan-y',
               opacity: dragId === calc.id ? 0 : 1,
+              transition: 'transform 120ms ease',
               cursor: 'pointer',
               userSelect: 'none',
             }}
@@ -173,12 +207,14 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
         ))}
       </div>
 
-      {draggedCalc && dragPos && (
+      {draggedCalc && (
         <div
+          ref={floatRef}
           style={{
             position: 'fixed',
-            left: dragPos.x - dragOffset.x,
-            top: dragPos.y - dragOffset.y,
+            left: 0,
+            top: 0,
+            willChange: 'transform',
             width: dragSize.w,
             height: dragSize.h,
             zIndex: 1000,

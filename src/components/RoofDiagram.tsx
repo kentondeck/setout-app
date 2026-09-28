@@ -1,5 +1,7 @@
 import { memo, useRef } from 'react';
 import { shareOrPreviewImage } from '../lib/saveImage';
+import { FONT, MONO } from '../lib/fonts';
+import { embedSvgFonts } from '../lib/embedSvgFonts';
 
 export interface RoofDiagramProps {
   buildingWidthMm: number;
@@ -18,8 +20,6 @@ const INK    = '#0A0A0A';
 const WOOD   = '#ECECE8';
 const TIMBER = '#C9A870';
 const WALL   = '#C0C0BC';
-const FONT   = 'Inter, system-ui, sans-serif';
-const MONO   = "'JetBrains Mono','Courier New',monospace";
 
 const VB_W = 760;
 const VB_H = 420;
@@ -177,6 +177,7 @@ export const RoofDiagram = memo(function RoofDiagram({
     bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%');
     bg.setAttribute('fill', '#F5F5F3');
     clone.insertBefore(bg, clone.firstChild);
+    await embedSvgFonts(clone);
     const url = URL.createObjectURL(
       new Blob([new XMLSerializer().serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }),
     );

@@ -4,9 +4,10 @@ interface JobNameInputProps {
   value: string;
   onChange: (value: string) => void;
   onSave?: (value: string) => void;
+  label?: string;
 }
 
-export function JobNameInput({ value, onChange, onSave }: JobNameInputProps) {
+export function JobNameInput({ value, onChange, onSave, label = 'Job name' }: JobNameInputProps) {
   const [saved, setSaved] = useState(false);
 
   function handleSave() {
@@ -32,7 +33,7 @@ export function JobNameInput({ value, onChange, onSave }: JobNameInputProps) {
           letterSpacing: '-0.1px',
         }}
       >
-        Job name
+        {label}
         <span style={{ fontWeight: 400, color: 'var(--color-muted)', marginLeft: 6 }}>
           optional
         </span>

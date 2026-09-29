@@ -1230,6 +1230,7 @@ function PhotoQuoteCalcInner() {
 
         {result && (
           <>
+            <JobNameInput label={`${docTypeLabel(docType)} name`} value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             {fromCalculator ? (
               <div>
                 <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>JOB DESCRIPTION</p>
@@ -2120,7 +2121,6 @@ function PhotoQuoteCalcInner() {
             </>
             )}
 
-            <JobNameInput value={jobName} onChange={setJobName} onSave={name => updateEntry(lastEntryId, { jobName: name })} />
             <AddToJobPrompt calculationId={lastEntryId} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

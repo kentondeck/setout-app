@@ -3,6 +3,11 @@ import { Keyboard } from '@capacitor/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { KeyboardContext } from '../contexts';
 
+// Height of the Done bar. Sheets that lift with the keyboard add this to their
+// bottom padding so their controls clear the bar — it renders on top of the
+// keyboard (bottom: inset) at a higher z-index than the sheets.
+export const DONE_BAR_HEIGHT = 44;
+
 // iOS's decimal/number keypad — what almost every input in this app uses —
 // has no Return or Done key of its own, and scrollEnabled:false (see
 // capacitor.config.ts) also disables the usual "drag down to dismiss"
@@ -46,7 +51,7 @@ export function KeyboardDoneBar() {
         left: 0,
         right: 0,
         bottom: inset,
-        height: 44,
+        height: DONE_BAR_HEIGHT,
         background: 'var(--color-bg)',
         borderTop: '0.5px solid var(--color-border)',
         display: 'flex',

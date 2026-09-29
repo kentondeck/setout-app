@@ -1,6 +1,7 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { JobsContext, KeyboardContext } from '../contexts';
+import { DONE_BAR_HEIGHT } from './KeyboardDoneBar';
 import type { SavedJob } from '../types';
 
 interface AddToJobSheetProps {
@@ -54,6 +55,13 @@ export function AddToJobSheet({
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   const orderedJobs = preselected ? [preselected, ...rest] : rest;
 
+  // When the keyboard's up, the Done bar (KeyboardDoneBar) sits on top of it at
+  // a higher z-index and would overlap this sheet's bottom controls. Pad the
+  // sheet bottom by the bar height so Create/Cancel clear it.
+  const padBottom = keyboardInset > 0
+    ? `${DONE_BAR_HEIGHT + 20}px`
+    : 'calc(env(safe-area-inset-bottom) + 20px)';
+
   return (
     <>
       {/* Backdrop */}
@@ -80,7 +88,7 @@ export function AddToJobSheet({
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: `20px 20px ${keyboardInset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
+          padding: `20px 20px ${padBottom}`,
           zIndex: 201,
           maxHeight: '72vh',
           display: 'flex',

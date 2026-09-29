@@ -14,7 +14,6 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
-import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
@@ -426,17 +425,6 @@ export function FramingCalc() {
                 { term: 'Noggin / Nog', definition: 'Horizontal blocking fitted between studs mid-height. Braces the wall and provides a fixing point for sheets and linings.' },
                 { term: 'C/C (centre-to-centre)', definition: 'The distance measured from the centre of one stud to the centre of the next. Standard spacings are 450mm and 600mm.' },
               ]}
-            />
-
-            <FramingDiagram
-              wallLengthMm={wallLengthMm}
-              wallHeightMm={wallHeightMm}
-              studCount={result.outputs.studCount}
-              studSpacingMm={studSpacingMm}
-              nogginRows={calcNogginRows}
-              doubleTopPlate={doubleTopPlate}
-              doubleStuds={doubleStuds}
-              label={jobName}
             />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

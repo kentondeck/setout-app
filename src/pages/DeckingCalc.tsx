@@ -13,7 +13,6 @@ import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
-import { DeckingDiagram } from '../components/DeckingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
@@ -438,16 +437,6 @@ export function DeckingCalc() {
                 { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order long materials like decking and framing timber.' },
                 { term: 'Board gap', definition: 'The space left between adjacent decking boards for drainage and seasonal timber movement. Typically 5–8mm.' },
               ]}
-            />
-
-            <DeckingDiagram
-              deckLength={deckLengthMm}
-              deckWidth={deckWidthMm}
-              boardWidth={bw}
-              boardGap={bg}
-              boardCount={result.outputs.boardCount}
-              joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
-              label={jobName}
             />
 
             <p

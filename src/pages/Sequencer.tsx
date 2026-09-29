@@ -220,7 +220,7 @@ const JOBS: Job[] = [
         { title: 'Get water on site', body: 'Either use the permanent water meter (once connected) + fit a tap, or run a temporary hose off the neighbour\'s tap by agreement. Standpipe hire from council is another option for developed sites.', watchFor: 'No water on site = no dust suppression + no clean-up. Sort this in the first week.' },
         { title: 'Fence + signage', body: 'Perimeter barrier mesh (or timber hoardings for street-facing sites) around the work area. Signs at entries: contractor name, contact number, consent number, "No unauthorised entry", after-hours contact.', watchFor: 'Signage is often a consent condition. Check the conditions sheet + comply — not just because it looks pro, but because council will check.' },
         { title: 'First-aid + fire extinguisher', body: 'Kit stocked + accessible. Fire extinguisher (dry powder, 4.5 kg min) near the work area. Both signed as location markers.', watchFor: 'An empty first-aid kit is worse than none — nobody thinks to check. Assign one person to maintain it weekly.' },
-        { title: 'Site induction for every worker', body: 'Every sub who steps on site gets a 5-min induction: where facilities are, emergency contact, evacuation point, hazards, PPE required. Sign them in.', watchFor: 'An un-inducted worker + an incident = liability on the head contractor. Sign-in book is your legal defence.' },
+        { title: 'Site induction for every worker', body: 'Every sub who steps on site gets an induction: where facilities are, emergency contact, evacuation point, hazards, PPE required. Sign them in.', watchFor: 'An un-inducted worker + an incident = liability on the head contractor. Sign-in book is your legal defence.' },
       ],
     },
     au: {
@@ -232,7 +232,7 @@ const JOBS: Job[] = [
         { title: 'Get water on site', body: 'Use the permanent water meter (once connected) + fit a tap, or run a temporary hose off the neighbour\'s tap by agreement. Council standpipe hire is another option for developed sites.', watchFor: 'No water = no dust suppression + no clean-up. Sort in the first week.' },
         { title: 'Fence + signage', body: 'Perimeter barrier mesh (or timber hoardings for street-facing sites). Signs at entries: contractor name, contact, permit number, "No unauthorised entry", after-hours contact.', watchFor: 'Signage is often a permit condition. Check + comply — council will inspect.' },
         { title: 'First-aid + fire extinguisher', body: 'Kit stocked + accessible. Fire extinguisher (dry powder, 4.5 kg min) near work area. Both signed as location markers.', watchFor: 'Empty first-aid kit is worse than none — no one thinks to check. Assign one person weekly.' },
-        { title: 'Site induction for every worker', body: 'Every sub gets a 5-min induction: facility locations, emergency contact, evacuation point, hazards, PPE required. Sign them in per WHS Regs.', watchFor: 'Un-inducted worker + incident = head-contractor liability. Sign-in book is your legal defence.' },
+        { title: 'Site induction for every worker', body: 'Every sub gets an induction: facility locations, emergency contact, evacuation point, hazards, PPE required. Sign them in per WHS Regs.', watchFor: 'Un-inducted worker + incident = head-contractor liability. Sign-in book is your legal defence.' },
       ],
     },
   },

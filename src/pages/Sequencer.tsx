@@ -1188,7 +1188,7 @@ const JOBS: Job[] = [
     summary: 'Vermin strip / cavity closer, vertical battens, cavity closer top + bottom.',
     nz: {
       tools: ['Tape', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Utility knife', 'Sealant gun', 'Straight edge'],
-      materials: ['Battens: 20 mm × 45 mm H3.2 kiln-dried pine (per E2/AS1 cavity depth)', 'Fastenings per the cladding manufacturer\'s spec (through batten + wrap into stud)', 'Vermin strip / cavity closer at cavity base', 'Neutral-cure sealant'],
+      materials: ['Battens: H3.2 kiln-dried pine (size per the cladding system / E2/AS1 cavity depth)', 'Fastenings per the cladding manufacturer\'s spec (through batten + wrap into stud)', 'Vermin strip / cavity closer at cavity base', 'Neutral-cure sealant'],
       steps: [
         { title: 'Confirm cavity depth requirement', body: 'E2/AS1 requires a drained + ventilated cavity for absorbent claddings (weatherboards, most fibre-cement, natural stone). Cavity depth 20 mm is the standard NZ minimum.', watchFor: 'Direct-fix (no cavity) is only allowed for specific claddings + only in some risk zones. Check the E2 risk matrix — assuming direct-fix is OK where cavity is required is a common consent-failure.' },
         { title: 'Fit vermin strip / cavity closer at cavity base', body: 'Fix the vermin strip / cavity closer along the bottom of the cavity, over the bottom plate + wrap. Closes the cavity at the base while still allowing drainage + airflow, and stops rodents + insects getting into the cavity.', watchFor: 'Uncovered cavity base = mice + wasps nest in the wall. Use the closer that matches your cladding system — some suppliers spec a specific product.' },
@@ -1200,7 +1200,7 @@ const JOBS: Job[] = [
     },
     au: {
       tools: ['Tape', 'Drop / circular saw', 'Cordless drill / impact driver', 'Hammer', 'Utility knife', 'Sealant gun', 'Straight edge'],
-      materials: ['Battens: 20 mm × 45 mm H3-treated pine (some states + wind classes 40 mm)', 'Fastenings per the cladding manufacturer\'s spec (through batten + wrap into stud)', 'Vermin strip / cavity closer at cavity base', 'Neutral-cure sealant'],
+      materials: ['Battens: H3-treated pine (size per the cladding system)', 'Fastenings per the cladding manufacturer\'s spec (through batten + wrap into stud)', 'Vermin strip / cavity closer at cavity base', 'Neutral-cure sealant'],
       steps: [
         { title: 'Confirm cavity depth + requirement', body: 'NCC Vol 2 3.5 covers weatherproofing; some cladding systems (weatherboards over sarking, most FC systems) require cavity for drainage. Depth 20 mm min, more in high-exposure climate zones.', watchFor: 'Direct-fix vs cavity is cladding-specific. Check the cladding manufacturer\'s install guide — assuming direct-fix where cavity is spec\'d fails the compliance.' },
         { title: 'Fit vermin strip / cavity closer at cavity base', body: 'Fix the vermin strip / cavity closer along the bottom of the cavity, over the bottom plate + wrap. Closes the cavity at the base while still allowing drainage + airflow, and stops rodents + insects getting into the cavity.', watchFor: 'Uncovered cavity base = mice + wasps + termite pathway. Use the closer that matches your cladding system — some suppliers spec a specific product.' },

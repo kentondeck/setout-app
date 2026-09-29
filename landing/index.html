@@ -380,6 +380,16 @@
       #download h2 { font-size: 36px; }
       footer { padding: 32px 20px; flex-direction: column; align-items: flex-start; }
     }
+
+    /* Phone: the full anchor-link nav (Features/Calculators/FAQ/About) never
+       wraps and forces the layout viewport wider than the device — the page
+       renders zoomed out and everything looks tiny. Drop the links and keep
+       just the Download CTA; every section is one scroll away regardless. */
+    @media (max-width: 640px) {
+      .nav-links a:not(.btn) { display: none; }
+      .nav-links { gap: 0; }
+      .nav-links .btn { padding: 11px 18px; font-size: 13px; }
+    }
   </style>
 </head>
 <body>

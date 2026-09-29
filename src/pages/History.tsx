@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HistoryContext, JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
+import { formatOutputValue, prettifyOutputLabel } from '../lib/outputUnits';
 import { AddToJobSheet } from '../components/AddToJobSheet';
 import { Toast } from '../components/Toast';
 import type { HistoryEntry } from '../types';
@@ -185,8 +186,8 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
                 .filter(([key]) => key !== 'materialsJson' && key !== 'quoteStateJson')
                 .map(([key, val]) => (
                 <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                  <span style={{ color: 'var(--color-muted)' }}>{key}</span>
-                  <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{String(val)}</span>
+                  <span style={{ color: 'var(--color-muted)' }}>{prettifyOutputLabel(key)}</span>
+                  <span style={{ color: 'var(--color-text)', fontWeight: 500 }}>{formatOutputValue(entry.calculatorId, key, val)}</span>
                 </div>
               ))}
             </div>

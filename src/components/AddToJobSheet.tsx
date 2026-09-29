@@ -1,6 +1,7 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { JobsContext, KeyboardContext } from '../contexts';
+import { JobsContext } from '../contexts';
+import { useSheetKeyboardOffset } from '../lib/useSheetKeyboardOffset';
 import type { SavedJob } from '../types';
 
 interface AddToJobSheetProps {
@@ -18,7 +19,7 @@ export function AddToJobSheet({
   onAdded,
 }: AddToJobSheetProps) {
   const { jobs, createJob, addCalculationToJob } = useContext(JobsContext);
-  const { inset: keyboardInset } = useContext(KeyboardContext);
+  const sheetOffset = useSheetKeyboardOffset();
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
   const newJobInputRef = useRef<HTMLInputElement>(null);
@@ -75,12 +76,12 @@ export function AddToJobSheet({
           left: '50%',
           // translateY (not animating `bottom`) keeps the keyboard-open shift
           // on the compositor instead of forcing layout every frame.
-          transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
+          transform: `translateX(-50%) translateY(-${sheetOffset}px)`,
           width: '100%',
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: `20px 20px ${keyboardInset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
+          padding: `20px 20px ${sheetOffset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
           zIndex: 201,
           maxHeight: '72vh',
           display: 'flex',

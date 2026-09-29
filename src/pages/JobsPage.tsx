@@ -1,11 +1,12 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { JobsContext, KeyboardContext } from '../contexts';
+import { JobsContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
+import { useSheetKeyboardOffset } from '../lib/useSheetKeyboardOffset';
 
 export function JobsPage() {
   const { jobs, createJob, updateJob, deleteJob, getJobCalculations } = useContext(JobsContext);
-  const { inset: keyboardInset } = useContext(KeyboardContext);
+  const sheetOffset = useSheetKeyboardOffset();
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -177,12 +178,12 @@ export function JobsPage() {
               position: 'fixed',
               bottom: 0,
               left: '50%',
-              transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
+              transform: `translateX(-50%) translateY(-${sheetOffset}px)`,
               width: '100%',
               maxWidth: 390,
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              padding: `20px 20px ${keyboardInset > 0 ? '24px' : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
+              padding: `20px 20px ${sheetOffset > 0 ? '24px' : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
               zIndex: 201,
               display: 'flex',
               flexDirection: 'column',
@@ -250,6 +251,21 @@ export function JobsPage() {
               onPointerLeave={e => (e.currentTarget.style.opacity = '1')}
             >
               Create job
+            </button>
+            <button
+              onClick={handleDismiss}
+              style={{
+                padding: '14px',
+                borderRadius: 14,
+                border: '0.5px solid rgba(0,0,0,0.08)',
+                background: 'none',
+                color: '#999',
+                fontSize: 15,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
             </button>
           </div>
         </>

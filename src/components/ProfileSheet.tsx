@@ -1,8 +1,9 @@
 import { useContext, useState, useRef, useMemo } from 'react';
 import { flushSync } from 'react-dom';
-import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from '../contexts';
+import { SettingsContext, HistoryContext, JobsContext } from '../contexts';
 import { CALCULATORS } from '../lib/calculators';
 import { useSubscription } from '../lib/SubscriptionContext';
+import { useSheetKeyboardOffset } from '../lib/useSheetKeyboardOffset';
 
 interface Props {
   onClose: () => void;
@@ -20,7 +21,7 @@ export function ProfileSheet({ onClose }: Props) {
   const { settings, updateSettings } = useContext(SettingsContext);
   const { history } = useContext(HistoryContext);
   const { jobs } = useContext(JobsContext);
-  const { inset: keyboardInset } = useContext(KeyboardContext);
+  const sheetOffset = useSheetKeyboardOffset();
   const { isPro, showPaywall } = useSubscription();
 
   const [editingName, setEditingName] = useState(false);
@@ -87,12 +88,12 @@ export function ProfileSheet({ onClose }: Props) {
           position: 'fixed',
           bottom: 0,
           left: '50%',
-          transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
+          transform: `translateX(-50%) translateY(-${sheetOffset}px)`,
           width: '100%',
           maxWidth: 390,
           background: '#fff',
           borderRadius: '20px 20px 0 0',
-          padding: `20px 20px ${keyboardInset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
+          padding: `20px 20px ${sheetOffset > 0 ? '20px' : 'calc(env(safe-area-inset-bottom) + 20px)'}`,
           zIndex: 201,
           maxHeight: '85vh',
           display: 'flex',

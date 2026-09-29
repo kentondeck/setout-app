@@ -8,6 +8,13 @@ import { KeyboardContext } from '../contexts';
 // capacitor.config.ts) also disables the usual "drag down to dismiss"
 // fallback. Without this bar there was no way to close the keyboard
 // anywhere in the app short of tapping into a different field.
+// Every fixed-bottom sheet that shifts up to clear the keyboard needs to clear
+// this bar too — it sits on top of the keyboard whenever a sheet's own input
+// is focused, so a sheet that only accounts for keyboard height gets its
+// bottom (usually the primary button) covered by this bar. useSheetKeyboardOffset
+// is the one place both numbers are combined.
+export const DONE_BAR_HEIGHT = 44;
+
 function isTextEntry(el: EventTarget | null): boolean {
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {

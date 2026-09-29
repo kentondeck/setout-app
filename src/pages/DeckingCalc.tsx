@@ -12,9 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
-import { DeckingDiagram } from '../components/DeckingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
@@ -43,7 +41,6 @@ const fmt = (n: number): string => (Number.isFinite(n) ? String(n) : '—');
 export function DeckingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -87,7 +84,7 @@ export function DeckingCalc() {
       return;
     }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('decking', () => setResult(null));
 
     setError('');
 
@@ -440,16 +437,6 @@ export function DeckingCalc() {
                 { term: 'Lineal metre (lm)', definition: 'A measurement of length regardless of width. Used to price and order long materials like decking and framing timber.' },
                 { term: 'Board gap', definition: 'The space left between adjacent decking boards for drainage and seasonal timber movement. Typically 5–8mm.' },
               ]}
-            />
-
-            <DeckingDiagram
-              deckLength={deckLengthMm}
-              deckWidth={deckWidthMm}
-              boardWidth={bw}
-              boardGap={bg}
-              boardCount={result.outputs.boardCount}
-              joistSpacing={parseFloat(inputs.joistSpacing) || undefined}
-              label={jobName}
             />
 
             <p

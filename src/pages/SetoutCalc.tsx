@@ -13,7 +13,6 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
@@ -30,7 +29,6 @@ const DEFAULTS: Inputs = { sideA: '', sideB: '', measured: '' };
 export function SetoutCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -63,7 +61,7 @@ export function SetoutCalc() {
       if (!measured || measured <= 0) { setError('Enter your measured diagonal.'); return; }
     }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('setout', () => setResult(null));
 
     setError('');
 

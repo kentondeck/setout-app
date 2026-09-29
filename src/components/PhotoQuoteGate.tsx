@@ -141,7 +141,7 @@ export function PhotoQuoteGate({ onUnlocked }: Props) {
 
         <p style={{ fontSize: 13, color: 'var(--color-muted)', textAlign: 'center', lineHeight: 1.5 }}>
           Don't have a code?{' '}
-          <a href="mailto:setouttheapp@gmail.com" style={{ color: 'var(--color-orange)', textDecoration: 'none' }}>
+          <a href="mailto:info@setoutapp.co.nz" style={{ color: 'var(--color-orange)', textDecoration: 'none' }}>
             Contact us
           </a>
         </p>

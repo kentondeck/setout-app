@@ -12,12 +12,12 @@ Then set two env vars, sync Capacitor, and ship.
 
 - **`src/lib/subscription.ts`** — constants for the entitlement ID (`pro`), product ID (`setout_pro_weekly`), and env-var-driven runtime detection.
 - **`src/lib/SubscriptionContext.tsx`** — provider that boots RevenueCat, tracks `isPro`, and exposes `purchaseWeekly` / `restorePurchases` / `presentCodeRedemption` / `openManageSubscription` / `showPaywall`.
-- **`src/lib/useCalcGate.ts`** — free-tier gate: 1 calculation per day, resets at local midnight. Pro users always pass.
+- **`src/lib/useCalcGate.ts`** — free-tier gate: **two free runs per calculator**, tracked as a per-calc count in localStorage (`{ counts: { [calcId]: n } }`). Once a calculator's free runs are spent, the next run still computes + shows the answer for ~700 ms, then the result is cleared and the paywall opens (the "so close" tease). Pro users always pass. (`FREE_RUNS` constant controls the allowance.)
 - **`src/components/Paywall.tsx`** — bottom-sheet paywall with plan card, CTA, restore, redeem, and the Apple-required auto-renewal disclosure.
 - **`src/pages/Settings.tsx`** — "Setout Pro" section showing active status (with Manage Subscription button) or the paywall entry (with Redeem / Restore).
-- **`src/pages/StairsCalc.tsx`** — one calculator wired to the gate as a reference. Copy the pattern into every other calc page (see below).
+- **All 15 calculator pages** — wired to the gate via `gate.gateCalc(...)` (see the reference below).
 
-The app runs unchanged on the web (setoutapp.com.au in a browser) — subscription enforcement is native-shell only. On dev builds without env vars set, everyone is treated as Pro so nothing gets in the way.
+The app runs unchanged on the web (www.setoutapp.co.nz in a browser) — subscription enforcement is native-shell only. On dev builds without env vars set, everyone is treated as Pro so nothing gets in the way.
 
 ## Step 1 — App Store Connect
 
@@ -128,8 +128,8 @@ npm run build && npx cap sync android && npx cap open android
 ## Step 6 — Test the flow
 
 1. **TestFlight (iOS)** — add yourself + a couple of tradesperson mates as internal testers. Purchases in TestFlight use sandbox accounts (no real money). Verify:
-   - 1st free calc runs
-   - 2nd free calc same day hits paywall
+   - 1st + 2nd run of a calc show the answer (free)
+   - 3rd run of the same calc flashes the answer, then hits the paywall
    - "Start free trial" enters purchase flow → completes → `isPro` flips → gate opens
    - Restore purchases works from a fresh install
    - Redeem code opens the App Store sheet
@@ -137,22 +137,20 @@ npm run build && npx cap sync android && npx cap open android
 
 ## Reference — gating a calculator
 
-Copy this pattern into every calculator that should be paywalled. Currently only Stairs is gated (as the reference).
+All 15 calculators are already wired. The pattern for any new calc:
 
 ```tsx
 // 1. Import
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 
 // 2. In the component
-const { showPaywall } = useSubscription();
 const gate = useCalcGate();
 
-// 3. In handleCalculate, right after input validation
-if (!gate.tryUse()) {
-  showPaywall();
-  return;
-}
+// 3. In handleCalculate, right after input validation + before you compute:
+//    pass the calc id + a callback that clears this page's result.
+gate.gateCalc('mycalcid', () => setResult(null));
+// ...then compute + setResult(...) exactly as normal. On a gated run the
+// answer shows briefly, then the callback clears it and the paywall opens.
 ```
 
 Free calculators (Home, Settings, History, Support, Privacy) don't need this.

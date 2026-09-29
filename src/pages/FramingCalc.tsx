@@ -13,9 +13,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
-import { FramingDiagram } from '../components/FramingDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
@@ -39,7 +37,6 @@ const DEFAULTS: Inputs = {
 export function FramingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -49,7 +46,6 @@ export function FramingCalc() {
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
-  const [calcNogginRows, setCalcNogginRows] = useState(0);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -79,13 +75,9 @@ export function FramingCalc() {
       return;
     }
 
-    // Subscription gate — Pro users always pass, free users get 1/day.
+    // Subscription gate — one free run per calculator, then flash-and-paywall.
     // Consume BEFORE the calc runs so a locked user never sees a fresh result.
-    if (!gate.tryUse()) {
-      setError('');
-      showPaywall();
-      return;
-    }
+    gate.gateCalc('framing', () => setResult(null));
 
     setError('');
 
@@ -100,7 +92,6 @@ export function FramingCalc() {
       return;
     }
     setResult(calc);
-    setCalcNogginRows(includeNoggins ? (nogginRows || 1) : 0);
 
     const id = uuid();
     setLastEntryId(id);
@@ -432,17 +423,6 @@ export function FramingCalc() {
                 { term: 'Noggin / Nog', definition: 'Horizontal blocking fitted between studs mid-height. Braces the wall and provides a fixing point for sheets and linings.' },
                 { term: 'C/C (centre-to-centre)', definition: 'The distance measured from the centre of one stud to the centre of the next. Standard spacings are 450mm and 600mm.' },
               ]}
-            />
-
-            <FramingDiagram
-              wallLengthMm={wallLengthMm}
-              wallHeightMm={wallHeightMm}
-              studCount={result.outputs.studCount}
-              studSpacingMm={studSpacingMm}
-              nogginRows={calcNogginRows}
-              doubleTopPlate={doubleTopPlate}
-              doubleStuds={doubleStuds}
-              label={jobName}
             />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>

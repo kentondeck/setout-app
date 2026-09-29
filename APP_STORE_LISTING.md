@@ -6,6 +6,9 @@ Setout
 ## Subtitle (30 chars max)
 Construction Calculator
 
+## Promotional Text (170 chars max — editable anytime without resubmitting)
+Try every calculator free. Fast, on-site numbers for stairs, decking, framing, roofs and concrete — then save to jobs and quote in seconds.
+
 ## Primary Category
 Business
 
@@ -18,51 +21,67 @@ Utilities
 
 Setout is the construction calculator built for tradies who need fast, accurate numbers on site — not back at the office.
 
-Whether you're pricing a deck, cutting stairs, working out roof pitch, or planning a concrete pour, Setout gives you the answer in seconds. No internet required.
+Pricing a deck, cutting stairs, working out roof pitch, planning a concrete pour — Setout gives you the answer in seconds, and keeps working when there's no signal.
 
-**14 CALCULATORS ON SITE**
+**15 CALCULATORS**
 • Decking — board count, lineal metres, waste factor
 • Wall Framing — studs, plates, noggins, full cut list
-• Stairs — rise, run, string length, AS 1657 compliance check
-• Roof Pitch — rafter length, ridge height, hip and valley
+• Stairs — rise, run, string length, code check
+• Roof Pitch — rafter length, ridge height, hips and valleys
+• Roofing — sheet count and lap allowances
 • Concrete — slab volume, footings, number of bags
-• Baluster Spacing — equal gap calculator with rail lengths
+• Baluster Spacing — equal gaps with rail lengths
 • Cladding — sheet count and waste
-• Cut List — optimise your timber cuts to minimise waste
+• Cut List — optimise timber cuts to cut waste
 • Fencing — posts, rails, palings
 • Excavation — volume and truck loads
 • Equal Spacing — any object, any gap, always even
-• Gradient — fall over run, drain and slab slopes
-• Raked Wall — variable stud heights for sloping top plates
-• Roofing — sheet count and lap allowances
+• Gradient — fall over run for drains and slabs
+• Raked Wall — variable stud heights for sloping plates
+• Setout — square up with diagonals and offsets
 
-**JOBS AND QUOTES**
-Save calculations to a job, then build a quote or invoice with labour and materials. Export a professional PDF in seconds — client-ready, with your business name and ABN.
+**BUILD SEQUENCER**
+Step-by-step guides for 80+ common builds — foundations, framing, weathertightness, wet areas, decks and more — written for NZ and AU practice. Know what comes next, and what to watch for on every step.
 
-**BUILT FOR AUSTRALIA AND NEW ZEALAND**
-Full metric and imperial support. Covers both AU and NZ building codes. Toggle your unit system any time.
+**JOBS & QUOTES**
+Save calculations to a job, add labour and materials, and export a clean, client-ready quote PDF with your business details.
+
+**BUILT FOR NEW ZEALAND & AUSTRALIA**
+Covers NZ and AU building codes and trade practice — pick your region on setup.
 
 **WORKS OFFLINE**
-No login. No subscription. No internet needed on site. Your data stays on your device.
+Run the numbers on site with no signal. Your jobs, notes and photos stay on your device.
 
 **APPRENTICE MODE**
-Turn on step-by-step working to show the maths behind every result — great for training.
+Show the step-by-step working behind every result — handy for teaching an apprentice.
+
+**SETOUT PRO**
+Try every calculator free. Upgrade to Setout Pro for:
+• Every calculator, unlimited use
+• The full Build Sequencer library (NZ + AU)
+• Save jobs, photos and quotes
+
+Setout Pro is a weekly auto-renewing subscription with a 14-day free trial. The price is shown in the app in your local currency. Payment is charged to your Apple ID at confirmation of purchase, and the subscription renews automatically unless cancelled at least 24 hours before the end of the current period. You can manage or cancel anytime in your App Store account settings.
+
+Terms of Use: https://www.setoutapp.co.nz/terms
+Privacy Policy: https://www.setoutapp.co.nz/privacy
 
 ---
 
 ## Keywords (100 chars max — separate with commas, no spaces after commas)
-construction calculator,builder,tradie,decking,framing,stairs,roof pitch,concrete,carpenter,setout
+## Note: "Setout" (name) + "Construction Calculator" (subtitle) are indexed separately — don't repeat them here.
+builder,carpenter,chippie,tradie,decking,framing,stairs,roof,pitch,concrete,cladding,fencing,quote
 
 ## Support URL
-https://setoutapp.com.au
+https://www.setoutapp.co.nz
 
 ## Privacy Policy URL
-https://setoutapp.com.au/privacy
+https://www.setoutapp.co.nz/privacy
 
 ---
 
 ## Version Release Notes (What's New — for 1.0)
-First release. 14 construction calculators built for tradies on site — stairs, decking, framing, roof pitch, concrete and more. Save to jobs, build quotes, export PDFs. Works offline.
+First release. 15 construction calculators for tradies on site — stairs, decking, framing, roof pitch, concrete and more — plus a step-by-step build sequencer for NZ and AU. Save jobs, build quotes, export PDFs. Works offline.
 
 ---
 
@@ -72,13 +91,13 @@ First release. 14 construction calculators built for tradies on site — stairs,
 - None
 
 **Data not linked to you:**
-- None
+- Usage Data (product interaction) — via privacy-friendly, cookieless analytics (Umami), used for app functionality/analytics, NOT for tracking
+- Contact Info (name) — only if the user submits feedback, used to reply
 
 **Data used to track you:**
 - None
 
-> All data (name, region, jobs, settings) is stored locally on the device only.
-> No data is transmitted to any server. The app works fully offline.
+> Calculations, jobs, settings and photos are stored locally on the device. Subscription status is handled by Apple / RevenueCat. The app is not used to track users across other companies' apps or websites.
 
 ---
 
@@ -86,4 +105,4 @@ First release. 14 construction calculators built for tradies on site — stairs,
 4+ (no objectionable content)
 
 ## Pricing
-Free (or set your price here)
+Free to download. **Setout Pro** is a weekly auto-renewing subscription (14-day free trial) offered as an in-app purchase, priced per local storefront (e.g. AUD/NZD 1.99/week).

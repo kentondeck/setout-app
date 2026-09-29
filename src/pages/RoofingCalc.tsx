@@ -8,7 +8,6 @@ import { ShareCalcButton } from '../components/ShareCalcButton';
 import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } from '../components/CalcResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { calculateRoofing, ROOFING_PROFILES, profileLabel } from '../calculators/roofing';
 import { JobNameInput } from '../components/JobNameInput';
@@ -54,7 +53,6 @@ const btnBase: React.CSSProperties = {
 export function RoofingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [roofType, setRoofType] = useState<RoofType>('gable');
@@ -85,7 +83,7 @@ export function RoofingCalc() {
     if (purlinSpacingMm <= 0) { setError('Enter a valid purlin spacing.'); return; }
     if (roofType === 'hip' && planWidth >= planLength) { setError('Plan length must exceed plan width for a hip roof.'); return; }
 
-    if (!gate.tryUse()) { showPaywall(); return; }
+    gate.gateCalc('roofing', () => setResult(null));
 
     const calc = calculateRoofing({ roofType, planLength, planWidth, pitchDegrees, profile, eaveOverhangMm, purlinSpacingMm });
     setResult(calc);

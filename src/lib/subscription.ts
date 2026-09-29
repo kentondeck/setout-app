@@ -3,7 +3,7 @@
 // The app runs in two contexts:
 //   1. Native (iOS / Android via Capacitor) — RevenueCat SDK handles the
 //      IAP flow, gives us the entitlement state.
-//   2. Web (setoutapp.com.au in a browser) — no IAP, treat every user as Pro
+//   2. Web (www.setoutapp.co.nz in a browser) — no IAP, treat every user as Pro
 //      so nothing is paywalled on the web. Subscription enforcement lives
 //      inside the app stores' native shell only.
 //

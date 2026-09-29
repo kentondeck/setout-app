@@ -3,18 +3,16 @@ import { Keyboard } from '@capacitor/keyboard';
 import { Capacitor } from '@capacitor/core';
 import { KeyboardContext } from '../contexts';
 
+// Height of the Done bar. Sheets that lift with the keyboard add this to their
+// bottom padding so their controls clear the bar — it renders on top of the
+// keyboard (bottom: inset) at a higher z-index than the sheets.
+export const DONE_BAR_HEIGHT = 44;
+
 // iOS's decimal/number keypad — what almost every input in this app uses —
 // has no Return or Done key of its own, and scrollEnabled:false (see
 // capacitor.config.ts) also disables the usual "drag down to dismiss"
 // fallback. Without this bar there was no way to close the keyboard
 // anywhere in the app short of tapping into a different field.
-// Every fixed-bottom sheet that shifts up to clear the keyboard needs to clear
-// this bar too — it sits on top of the keyboard whenever a sheet's own input
-// is focused, so a sheet that only accounts for keyboard height gets its
-// bottom (usually the primary button) covered by this bar. useSheetKeyboardOffset
-// is the one place both numbers are combined.
-export const DONE_BAR_HEIGHT = 44;
-
 function isTextEntry(el: EventTarget | null): boolean {
   if (el instanceof HTMLTextAreaElement) return true;
   if (el instanceof HTMLInputElement) {
@@ -53,7 +51,7 @@ export function KeyboardDoneBar() {
         left: 0,
         right: 0,
         bottom: inset,
-        height: 44,
+        height: DONE_BAR_HEIGHT,
         background: 'var(--color-bg)',
         borderTop: '0.5px solid var(--color-border)',
         display: 'flex',

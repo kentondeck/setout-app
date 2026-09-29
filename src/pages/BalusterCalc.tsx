@@ -11,7 +11,6 @@ import type { BalusterOutputs } from '../calculators/baluster';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
@@ -28,7 +27,6 @@ interface Inputs {
 export function BalusterCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(() => ({
@@ -87,12 +85,8 @@ export function BalusterCalc() {
       return;
     }
 
-    // Subscription gate — Pro users always pass, free users get 1/day.
-    if (!gate.tryUse()) {
-      setError('');
-      showPaywall();
-      return;
-    }
+    // Subscription gate — one free run per calculator, then flash-and-paywall.
+    gate.gateCalc('baluster', () => setResult(null));
 
     setError('');
 

@@ -11,6 +11,8 @@ import { SubscriptionProvider } from './lib/SubscriptionContext';
 import { Paywall } from './components/Paywall';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingSetup } from './pages/OnboardingSetup';
+import { TermsGate } from './components/TermsGate';
+import { isTermsAccepted } from './lib/terms';
 import { BottomNav } from './components/BottomNav';
 import { UpdateBanner } from './components/UpdateBanner';
 import { KeyboardDoneBar } from './components/KeyboardDoneBar';
@@ -25,6 +27,7 @@ const QuotesPage = lazyPage(() => import('./pages/QuotesPage'), 'QuotesPage');
 const JobDetailPage = lazyPage(() => import('./pages/JobDetailPage'), 'JobDetailPage');
 const SettingsPage = lazyPage(() => import('./pages/Settings'), 'Settings');
 const PrivacyPolicy = lazyPage(() => import('./pages/PrivacyPolicy'), 'PrivacyPolicy');
+const Terms = lazyPage(() => import('./pages/Terms'), 'Terms');
 const Support = lazyPage(() => import('./pages/Support'), 'Support');
 const CalcPlaceholder = lazyPage(() => import('./pages/CalcPlaceholder'), 'CalcPlaceholder');
 const DeckingCalc = lazyPage(() => import('./pages/DeckingCalc'), 'DeckingCalc');
@@ -70,6 +73,7 @@ function AppShell() {
 
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="/support" element={<Support />} />
           <Route path="/calc/decking" element={<DeckingCalc />} />
           <Route path="/calc/framing" element={<FramingCalc />} />
@@ -109,6 +113,7 @@ if (_params.get('reset') === 'true') {
   localStorage.removeItem('setout_user_name');
   localStorage.removeItem('setout_region');
   localStorage.removeItem('setout_settings');
+  localStorage.removeItem('setout_terms_accepted');
 }
 if (_params.has('reset')) {
   window.history.replaceState({}, '', window.location.pathname);
@@ -122,12 +127,16 @@ export function App() {
     return !!localStorage.getItem('setout_region');
   });
 
+  // Terms of Use + disclaimer must be accepted before the app is usable. Also
+  // re-shows if TERMS_VERSION is bumped (existing users re-accept updated terms).
+  const [termsDone, setTermsDone] = useState(() => isTermsAccepted());
+
   const [settings, updateSettings] = useSettings();
   const { history, addEntry, updateEntry, deleteEntry, clearAll } = useHistory();
   const jobsApi = useJobs(history, updateEntry);
   const keyboardInset = useKeyboardInset();
 
-  const onboardingDone = splashDone && setupDone;
+  const onboardingDone = splashDone && setupDone && termsDone;
 
   useEffect(() => {
     if (onboardingDone) prefetchPages();
@@ -139,6 +148,10 @@ export function App() {
 
       {splashDone && !setupDone && (
         <OnboardingSetup onComplete={() => setSetupDone(true)} updateSettings={updateSettings} />
+      )}
+
+      {splashDone && setupDone && !termsDone && (
+        <TermsGate onAccept={() => setTermsDone(true)} />
       )}
 
       {onboardingDone && (

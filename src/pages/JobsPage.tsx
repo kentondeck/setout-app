@@ -1,12 +1,12 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
-import { JobsContext } from '../contexts';
+import { JobsContext, KeyboardContext } from '../contexts';
 import { JobCard } from '../components/JobCard';
-import { useSheetKeyboardOffset } from '../lib/useSheetKeyboardOffset';
+import { DONE_BAR_HEIGHT } from '../components/KeyboardDoneBar';
 
 export function JobsPage() {
   const { jobs, createJob, updateJob, deleteJob, getJobCalculations } = useContext(JobsContext);
-  const sheetOffset = useSheetKeyboardOffset();
+  const { inset: keyboardInset } = useContext(KeyboardContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
   const [editMode, setEditMode] = useState(false);
@@ -178,12 +178,12 @@ export function JobsPage() {
               position: 'fixed',
               bottom: 0,
               left: '50%',
-              transform: `translateX(-50%) translateY(-${sheetOffset}px)`,
+              transform: `translateX(-50%) translateY(-${keyboardInset}px)`,
               width: '100%',
               maxWidth: 390,
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              padding: `20px 20px ${sheetOffset > 0 ? '24px' : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
+              padding: `20px 20px ${keyboardInset > 0 ? `${DONE_BAR_HEIGHT + 24}px` : 'calc(env(safe-area-inset-bottom) + 24px)'}`,
               zIndex: 201,
               display: 'flex',
               flexDirection: 'column',

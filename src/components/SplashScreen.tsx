@@ -34,7 +34,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           <span
             style={{
               fontSize: 72,
-              fontWeight: 800,
+              fontWeight: 700,
               color: DARK,
               fontFamily: FONT,
               letterSpacing: '-3px',
@@ -46,7 +46,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           <span
             style={{
               fontSize: 72,
-              fontWeight: 800,
+              fontWeight: 700,
               color: ORANGE,
               fontFamily: FONT,
               letterSpacing: '-3px',

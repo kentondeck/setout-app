@@ -12,7 +12,6 @@ import type { CladdingOutputs } from '../calculators/cladding';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 
@@ -38,7 +37,6 @@ const DEFAULTS: Inputs = {
 export function CladdingCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
@@ -67,7 +65,7 @@ export function CladdingCalc() {
     if (!boardLength || boardLength <= 0) { setError('Enter a board length.'); return; }
     if (startOffset < 0) { setError('Start offset must be 0 or greater.'); return; }
 
-    if (!gate.tryUse()) { setError(''); showPaywall(); return; }
+    gate.gateCalc('cladding', () => setResult(null));
 
     setError('');
 

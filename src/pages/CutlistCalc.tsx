@@ -12,7 +12,6 @@ import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
 import type { CutlistOutputs, CutlistPlan, MaterialItem } from '../calculators/cutlist';
 import type { WorkingStep } from '../components/ApprenticeWorking';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { useCalcGate } from '../lib/useCalcGate';
 import { uuid } from '../lib/uuid';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
@@ -45,7 +44,6 @@ function fmtLength(mm: number): string {
 export function CutlistCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
-  const { showPaywall } = useSubscription();
   const gate = useCalcGate();
 
   const [forcedStock, setForcedStock] = useState('');
@@ -92,12 +90,8 @@ export function CutlistCalc() {
       return;
     }
 
-    // Subscription gate — Pro users always pass, free users get 1/day.
-    if (!gate.tryUse()) {
-      setError('');
-      showPaywall();
-      return;
-    }
+    // Subscription gate — one free run per calculator, then flash-and-paywall.
+    gate.gateCalc('cutlist', () => setResult(null));
 
     setError('');
 

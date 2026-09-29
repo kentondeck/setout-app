@@ -106,3 +106,45 @@ First release. 15 construction calculators for tradies on site — stairs, decki
 
 ## Pricing
 Free to download. **Setout Pro** is a weekly auto-renewing subscription (14-day free trial) offered as an in-app purchase, priced per local storefront (e.g. AUD/NZD 1.99/week).
+
+---
+
+## App Review Notes (App Store Connect → App Review Information → Notes)
+
+```
+Setout is a construction calculator for tradies (New Zealand + Australia).
+
+FREEMIUM MODEL — how to reach the paywall:
+- Every calculator is free for its first TWO runs.
+- On the THIRD run of the same calculator, the answer shows briefly, then
+  the Setout Pro paywall is presented.
+- The paywall is also reachable any time from Settings → Setout Pro.
+
+TESTING THE SUBSCRIPTION:
+- No account or login is required.
+- Tap "Start 14-day free trial" and complete the purchase with a Sandbox
+  Apple ID — this unlocks Pro and all calculators become unlimited.
+- "Restore Purchases" and "Redeem Code" are both on the paywall.
+
+Setout Pro is an auto-renewable subscription (1 week, 14-day free trial),
+managed via RevenueCat. All user data (calculations, jobs, photos) is
+stored locally on the device.
+```
+
+**Review screenshot for the subscription:** attach a screenshot of the paywall (trigger it via a calculator's 3rd run, or Settings → Setout Pro).
+
+---
+
+## Subscription Metadata (App Store Connect → Subscriptions → `setout_pro_weekly`)
+
+- **Subscription Group — Display Name:** Setout Pro
+- **Reference Name (internal):** Setout Pro Weekly
+- **Duration:** 1 week · **Intro offer:** Free, 2 weeks (14-day trial), new subscribers
+- **Display Name (shown to users, ≤30 chars):** Setout Pro
+- **Description (shown at purchase):**
+
+```
+Unlock every calculator with unlimited use, the full NZ + AU build
+sequencer, and unlimited saved jobs, photos and quotes. Weekly plan
+with a 14-day free trial.
+```

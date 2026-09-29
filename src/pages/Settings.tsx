@@ -769,7 +769,7 @@ export function Settings() {
           </button>
         </div>
         <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-          Setout v0.1.0 — built for builders
+          Setout v1.0.0 — built for builders
         </p>
       </div>
     </div>

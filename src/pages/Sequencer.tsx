@@ -1060,7 +1060,7 @@ const JOBS: Job[] = [
     category: 'roofing-cladding',
     phase: 'weather-tight',
     label: 'Install soffit lining',
-    summary: 'Ribbon plate to wall, cut sheets, fix to ribbon plate + fascia, vent.',
+    summary: 'Plate to wall, cut sheets, fix to plate + fascia, vent.',
     nz: {
       tools: ['Tape', 'Circular saw', 'Fibre-cement shears', 'Cordless drill / impact driver', 'Hammer', 'Staple gun', 'Chalk line', 'Utility knife', 'Ladder / trestle'],
       materials: ['Soffit lining: HardieSoffit (fibre-cement, pre-primed), or plywood (marine or exterior), or PVC', 'Ribbon plate: 40×20 or 90×45 H3.2 pine, screwed to wall studs', 'Fixings: FC nails for HardieSoffit (per Hardie spec); other linings per manufacturer spec', 'Sealant (paintable acrylic) for joins', 'Soffit vents (round or slot type) if roof needs ventilation'],
@@ -1124,7 +1124,7 @@ const JOBS: Job[] = [
     summary: 'Threshold, weatherseal, plumb jamb, latch + lock.',
     nz: {
       tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Chisel', 'Hammer', 'Drop saw', 'Sealant gun', 'Utility knife', 'Screwdriver', 'Hole saw kit (54 mm + 25 mm for lockset)'],
-      materials: ['External door slab (solid core, exterior-grade) or pre-hung set', 'Door jamb + head (H3.2 or dry-treated pine, weatherproofed)', 'Threshold / sill (aluminium extruded, weatherstrip-ready)', 'Weatherseal strip (compression seal for jambs + head)', 'Packers', 'Countersunk screws through jamb (heads filled before paint)', 'Sealant (neutral-cure)', 'Butt hinges (3 per door, 100 × 75 × 3 mm heavy-duty)'],
+      materials: ['Pre-hung external door set (solid-core, exterior-grade — door hung in a weatherproofed frame)', 'Threshold / sill (aluminium extruded, weatherstrip-ready)', 'Weatherseal strip (compression seal for jambs + head)', 'Packers', 'Countersunk screws through jamb (heads filled before paint)', 'Sealant (neutral-cure)'],
       steps: [
         { title: 'Confirm opening + door dimensions', body: 'Rough opening = jamb width + door width + 15 mm clearance each side. Head height = door + jamb + 10 mm clearance. Confirm threshold detail matches what\'s spec\'d.', watchFor: 'External openings often need reinforced jamb studs. Check the framing plan — under-sized studs to a heavy exterior door will bow.' },
         { title: 'Position the pre-hung jamb', body: 'Stand the pre-hung set in the opening, get the threshold level and the hinge-side jamb plumb, then pack under the sill and behind the jambs.', watchFor: 'A pre-hung external door + frame is 30+ kg. Solo works but awkward to hold vertical + push into a snug opening — a hand keeps it from tipping.' },
@@ -1135,7 +1135,7 @@ const JOBS: Job[] = [
     },
     au: {
       tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Chisel', 'Hammer', 'Drop saw', 'Sealant gun', 'Utility knife', 'Screwdriver', 'Hole saw kit (54 mm + 25 mm for lockset)'],
-      materials: ['External door slab (solid core, exterior-grade — BAL-rated in bushfire zones) or pre-hung set', 'Door jamb + head (H3-treated pine or weatherproofed hardwood)', 'Threshold / sill (aluminium extruded)', 'Weatherseal strip', 'Packers', 'Countersunk screws through jamb (heads filled before paint)', 'Sealant (neutral-cure)', 'Butt hinges (3 per door, 100 × 75 × 3 mm heavy-duty)'],
+      materials: ['Pre-hung external door set (solid-core, exterior-grade — BAL-rated in bushfire zones — door hung in a weatherproofed frame)', 'Threshold / sill (aluminium extruded)', 'Weatherseal strip', 'Packers', 'Countersunk screws through jamb (heads filled before paint)', 'Sealant (neutral-cure)'],
       steps: [
         { title: 'Confirm opening + door dimensions', body: 'Rough opening = jamb width + door width + 15 mm clearance each side. Head height = door + jamb + 10 mm. In BAL zones, confirm door slab is BAL-rated (solid timber or metal, no glazing above BAL 29 for most doors).', watchFor: 'External openings often need reinforced jamb studs. Check framing plan — under-sized studs bow under a heavy exterior door.' },
         { title: 'Position the pre-hung jamb', body: 'Stand the pre-hung set in the opening, get the threshold level and the hinge-side jamb plumb, then pack under the sill and behind the jambs.', watchFor: 'Pre-hung external door + frame is 30+ kg. Solo works but awkward — a hand keeps it from tipping into a snug opening.' },
@@ -1487,7 +1487,7 @@ const JOBS: Job[] = [
     label: 'Install insulation',
     summary: 'Wall batts between studs, ceiling batts over joists.',
     nz: {
-      tools: ['Utility knife or insulation saw', 'Straight edge', 'Tape', 'PPE: FFP2 mask, gloves, long sleeves', 'Ladder / trestle for ceiling batts'],
+      tools: ['Utility knife or insulation saw', 'Straight edge', 'Tape', 'PPE: correctly fitting and rated mask, gloves, long sleeves', 'Ladder / trestle for ceiling batts'],
       materials: ['Wall batts: fibreglass or polyester (Pink Batts, Autex, Terra Lana), R-value per H1 schedule method or plan', 'Ceiling batts: same range, higher R-value (typically R3.6–R6.6 depending on climate zone)', 'Insulation tape (for holding loose batts across studs if needed)'],
       steps: [
         { title: 'Confirm R-values from the plan / H1 schedule', body: 'H1 (energy efficiency) sets minimum R-values by climate zone — walls, ceilings, and floor. Read the R-values off the plan or the H1 schedule for your zone before ordering.', watchFor: 'Wrong R-values = fails CCC. H1 requirements were increased in 2022/23 — don\'t assume older-project figures still apply.' },
@@ -2673,7 +2673,7 @@ const JOBS: Job[] = [
     summary: 'Check fixing method, unfix old, install new, re-flash + refit trims.',
     nz: {
       tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Reciprocating saw', 'Utility knife', 'Pry bar / flat bar', 'Sealant gun', 'Multi-tool', 'Staple gun', 'Ladder / trestle', 'PPE'],
-      materials: ['New window unit (measured to fit existing opening, or new opening framing planned)', 'Sill flashing (extruded metal, colour-matched)', 'Sill flashing tape (butyl, 300 mm wide)', 'Head flashing tape', 'Building wrap patch (for repair of existing wrap)', 'Countersunk screws through window jamb (per manufacturer)', 'Neutral-cure sealant', 'Timber packers'],
+      materials: ['New window unit (measured to fit existing opening, or new opening framing planned)', 'Sill flashing (extruded metal, colour-matched)', 'Sill flashing tape (300 mm wide)', 'Head flashing tape', 'Building wrap patch (for repair of existing wrap)', 'Countersunk screws through window jamb (per manufacturer)', 'Neutral-cure sealant', 'Timber packers'],
       steps: [
         { title: 'Measure the existing opening + confirm new window fits', body: 'Measure stud-to-stud + head-to-sill of the framed opening. New window should be 10–15 mm smaller each side. If ordering a bigger window = opening modification (extra job).', watchFor: 'Ordering a window without confirming the ROUGH opening (not the current window unit size) is a common cause of week-long delays. Measure the frame, not the visible window.' },
         { title: 'Remove internal architrave', body: 'Pry off internal architrave carefully — often reusable. This exposes the internal edge of the window frame + the wall lining edge.', watchFor: 'Prying architrave with force cracks it. Slide a putty knife behind first to break the paint seal, then pry gently.' },
@@ -2688,7 +2688,7 @@ const JOBS: Job[] = [
     },
     au: {
       tools: ['Tape', 'Spirit level (long)', 'Cordless drill / impact driver', 'Reciprocating saw', 'Utility knife', 'Pry bar / flat bar', 'Sealant gun', 'Multi-tool', 'Staple gun', 'Ladder / trestle', 'PPE'],
-      materials: ['New window unit (measured to fit existing opening — BAL-rated in bushfire zones)', 'Sill flashing (extruded, colour-matched)', 'Sill flashing tape (butyl, 300 mm wide)', 'Head flashing tape', 'Building wrap patch', 'Countersunk screws through window jamb (per manufacturer)', 'Neutral-cure sealant', 'Timber packers'],
+      materials: ['New window unit (measured to fit existing opening — BAL-rated in bushfire zones)', 'Sill flashing (extruded, colour-matched)', 'Sill flashing tape (300 mm wide)', 'Head flashing tape', 'Building wrap patch', 'Countersunk screws through window jamb (per manufacturer)', 'Neutral-cure sealant', 'Timber packers'],
       steps: [
         { title: 'Measure the existing opening + confirm new window fits', body: 'Measure stud-to-stud + head-to-sill of framed opening. New window should be 10–15 mm smaller each side. Bigger window = opening modification (extra job). In BAL zones, confirm new unit is BAL-rated.', watchFor: 'Ordering without confirming ROUGH opening (not current window unit) = week-long delays. Measure the frame, not the visible window.' },
         { title: 'Remove internal architrave + reveals', body: 'Pry off internal architrave carefully — often reusable. Remove reveal timber. Exposes internal edge of window frame + lining edge.', watchFor: 'Prying with force cracks architrave. Putty knife behind first to break paint seal, then pry gently.' },

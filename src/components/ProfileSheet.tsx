@@ -229,7 +229,7 @@ export function ProfileSheet({ onClose }: Props) {
 
         {/* Version */}
         <div style={{ textAlign: 'center', marginBottom: 14 }}>
-          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>Setout v0.1.0 — built for builders</span>
+          <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>Setout v1.0.0 — built for builders</span>
         </div>
 
         {/* Close */}

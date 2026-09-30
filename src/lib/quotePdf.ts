@@ -38,6 +38,7 @@ export interface PdfQuoteInput {
   jobName: string;
   jobDescription: string;
   notes: string;
+  footer?: string; // overrides the default footer disclaimer when set
   logo?: PdfLogo | null;
   photos?: PdfPhoto[];
   region: Region;
@@ -64,7 +65,7 @@ export interface PdfQuoteInput {
   total: number;
 }
 
-const DISCLAIMERS: Record<QuoteDocType, string> = {
+export const DISCLAIMERS: Record<QuoteDocType, string> = {
   quote: 'Valid for 30 days from the date above.',
   estimate: 'This is a preliminary estimate, not a fixed price. A formal quote will be provided following an on-site assessment.',
   invoice: 'Please arrange payment by the due date above. Contact us if you have any questions about this invoice.',
@@ -405,7 +406,8 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   }
 
   // Footer — disclaimer, with a small Setout credit line below it
-  const disclaimerLines: string[] = doc.splitTextToSize(DISCLAIMERS[q.docType], pageWidth - marginX * 2);
+  const footerText = q.footer?.trim() || DISCLAIMERS[q.docType];
+  const disclaimerLines: string[] = doc.splitTextToSize(footerText, pageWidth - marginX * 2);
   const wordmarkY = pageHeight - 22;
   const disclaimerY = wordmarkY - 16 - (disclaimerLines.length - 1) * 11;
   ensureSpace(30);

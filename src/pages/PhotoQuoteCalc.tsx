@@ -12,7 +12,7 @@ import { JobNameInput } from '../components/JobNameInput';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { FEATURES } from '../lib/features';
 import { SettingsContext, HistoryContext } from '../contexts';
-import { buildQuotePdf, formatDateInput } from '../lib/quotePdf';
+import { buildQuotePdf, formatDateInput, DISCLAIMERS } from '../lib/quotePdf';
 import type { QuoteDocType, PdfLogo, PdfPhoto } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey, getRememberedIsSelf, rememberIsSelf } from '../lib/priceMemory';
@@ -134,6 +134,7 @@ interface QuoteStateSnapshot {
   siteAddress: string;
   quoteNumber: string;
   notes: string;
+  footer: string;
   dueDate: string;
   travelMode: TravelMode;
   travelRate: string;
@@ -275,6 +276,7 @@ function PhotoQuoteCalcInner() {
   const [siteAddress, setSiteAddress] = useState('');
   const [quoteNumber, setQuoteNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [footer, setFooter] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
@@ -325,7 +327,7 @@ function PhotoQuoteCalcInner() {
     const snapshot: QuoteStateSnapshot = {
       fromCalculator, isManual, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-      quoteNumber, notes, dueDate, travelMode, travelRate, travelQty,
+      quoteNumber, notes, footer, dueDate, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
       photos: photos.length > 0 ? photos : undefined,
     };
@@ -342,7 +344,7 @@ function PhotoQuoteCalcInner() {
   }, [
     materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-    quoteNumber, notes, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    quoteNumber, notes, footer, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
     photos,
   ]);
 
@@ -580,6 +582,7 @@ function PhotoQuoteCalcInner() {
       setSiteAddress(snap.siteAddress);
       setQuoteNumber(snap.quoteNumber);
       setNotes(snap.notes);
+      setFooter(snap.footer ?? '');
       setDueDate(snap.dueDate ?? '');
       setTravelMode(snap.travelMode);
       setTravelRate(snap.travelRate);
@@ -861,6 +864,7 @@ function PhotoQuoteCalcInner() {
       jobName: jobName.trim(),
       jobDescription: result.scopeSummary,
       notes: notes.trim(),
+      footer: footer.trim(),
       logo,
       photos: photos.length > 0 ? photos : undefined,
       region: totals.region,
@@ -956,9 +960,11 @@ function PhotoQuoteCalcInner() {
     }
     lines.push('');
     lines.push(
-      docType === 'quote' ? 'Valid for 30 days.' :
-      docType === 'invoice' ? 'Please arrange payment by the due date above.' :
-      'This is a preliminary estimate, not a fixed price. A formal quote follows a site visit.'
+      footer.trim() || (
+        docType === 'quote' ? 'Valid for 30 days.' :
+        docType === 'invoice' ? 'Please arrange payment by the due date above.' :
+        'This is a preliminary estimate, not a fixed price. A formal quote follows a site visit.'
+      )
     );
     return lines.join('\n');
   }
@@ -2032,6 +2038,21 @@ function PhotoQuoteCalcInner() {
                 onChange={e => setNotes(e.target.value)}
                 placeholder="e.g. Client to arrange council permit. Excludes removal of existing structure."
                 rows={3}
+                style={{
+                  width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+                  borderRadius: 12, padding: '12px 14px', fontSize: 14, fontFamily: 'inherit',
+                  color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
+                }}
+              />
+            </div>
+
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>FOOTER <span style={{ textTransform: 'none', fontWeight: 400 }}>(bottom of PDF — leave blank for the default)</span></p>
+              <textarea
+                value={footer}
+                onChange={e => setFooter(e.target.value)}
+                placeholder={DISCLAIMERS[docType]}
+                rows={2}
                 style={{
                   width: '100%', background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
                   borderRadius: 12, padding: '12px 14px', fontSize: 14, fontFamily: 'inherit',

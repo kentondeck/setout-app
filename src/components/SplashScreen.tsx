@@ -67,7 +67,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             animation: 'splashSubtitle 550ms ease-out 820ms both',
           }}
         >
-          build better.
+          build smarter.
         </span>
       </div>
     </div>

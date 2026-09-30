@@ -74,8 +74,14 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   const joistCount = Math.ceil((deckWidth * 1000) / joistSpacing) + 1;
   const joistLinealMetres = parseFloat((joistCount * deckLength).toFixed(2));
 
-  // Bearers run perpendicular to joists (span the width), spaced along the length
-  const bearerCount = Math.ceil((deckLength * 1000) / bearerSpacing) + 1;
+  // Bearers run perpendicular to joists (span the width), spaced along the length.
+  // Bearers aren't placed hard at the ends — they sit in ~200mm from each end so
+  // the joists cantilever slightly past them. So the count covers the span
+  // BETWEEN the two end bearers (deck length − 2 × setback), divided into equal
+  // gaps no bigger than the max bearer spacing, plus the two end bearers. Min 2.
+  const BEARER_END_SETBACK = 200; // mm in from each deck end
+  const bearerSpanMm = Math.max((deckLength * 1000) - 2 * BEARER_END_SETBACK, 0);
+  const bearerCount = Math.max(2, Math.ceil(bearerSpanMm / bearerSpacing) + 1);
   const bearerLinealMetres = parseFloat((bearerCount * deckWidth).toFixed(2));
 
   // All structural timber for the job, not just boards — keeps this calculator
@@ -116,8 +122,8 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
     },
     {
       label: 'Bearer count',
-      formula: 'ceil( deck length (mm) ÷ bearer spacing ) + 1',
-      result: `ceil( ${deckLength * 1000} ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers (${bearerLinealMetres}lm)`,
+      formula: 'bearers sit ~200mm in from each end; ceil( (deck length − 2×200mm) ÷ bearer spacing ) + 1',
+      result: `ceil( (${deckLength * 1000} − ${2 * BEARER_END_SETBACK}) ÷ ${bearerSpacing} ) + 1 = ${bearerCount} bearers (${bearerLinealMetres}lm)`,
     },
     {
       label: 'Total lineal metres',

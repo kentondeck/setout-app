@@ -1,203 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-AU">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy — Setout</title>
-  <meta name="description" content="Privacy policy for the Setout construction calculator app.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --orange: #FF5A1F;
-      --dark: #0a0a0a;
-      --bg: #f5f5f3;
-      --card: #ffffff;
-      --muted: #787878;
-      --border: rgba(0,0,0,0.07);
-      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--dark);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(245,245,243,0.88);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 clamp(20px, 5vw, 48px);
-    }
-
-    .nav-logo {
-      font-size: 22px;
-      font-weight: 800;
-      letter-spacing: -1.2px;
-      text-decoration: none;
-      line-height: 1;
-    }
-    .nav-logo .s { color: var(--dark); }
-    .nav-logo .o { color: var(--orange); }
-
-    main {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 64px clamp(20px, 5vw, 48px) 96px;
-    }
-
-    .eyebrow {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: var(--orange);
-      margin-bottom: 16px;
-    }
-
-    h1 {
-      font-size: clamp(32px, 5vw, 48px);
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      line-height: 1.1;
-      margin-bottom: 12px;
-    }
-
-    .updated {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 48px;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 32px;
-      margin-bottom: 16px;
-    }
-
-    h2 {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.4px;
-      margin-bottom: 12px;
-    }
-
-    p {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #333;
-      margin-bottom: 12px;
-    }
-
-    p:last-child { margin-bottom: 0; }
-
-    ul {
-      padding-left: 20px;
-      margin-bottom: 12px;
-    }
-
-    li {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #333;
-      margin-bottom: 4px;
-    }
-
-    a {
-      color: var(--orange);
-      text-decoration: none;
-    }
-
-    a:hover { text-decoration: underline; }
-
-    footer {
-      text-align: center;
-      padding: 32px;
-      font-size: 13px;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy | Setout</title>
+<meta name="description" content="How Setout handles your information in the app and on this website.">
+<link rel="canonical" href="https://setoutapp.co.nz/privacy">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --orange:#ff5a1f; --ink:#111; --body:#444; --bg:#f5f5f3; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--body); line-height:1.7; }
+  header, main, footer { max-width:720px; margin:0 auto; padding:0 20px; }
+  header { padding-top:28px; }
+  .logo { font-weight:800; font-size:22px; color:var(--ink); text-decoration:none; letter-spacing:-0.02em; }
+  .logo span { color:var(--orange); }
+  h1 { font-size:36px; letter-spacing:-0.03em; color:var(--ink); margin:40px 0 4px; }
+  h2 { font-size:20px; color:var(--ink); margin:36px 0 8px; }
+  p, li { font-size:16px; }
+  a { color:var(--orange); }
+  .updated { color:#595959; font-size:14px; margin:0 0 24px; }
+  mark { background:#ffe3d6; padding:1px 4px; border-radius:3px; }
+  footer { padding-top:40px; padding-bottom:48px; font-size:14px; color:#595959; }
+</style>
 </head>
 <body>
+<header><a class="logo" href="/">set<span>out</span></a></header>
+<main>
+<h1>Privacy Policy</h1>
+<p class="updated">Last updated: 29 September 2026</p>
 
-  <nav>
-    <a href="/" class="nav-logo"><span class="s">Set</span><span class="o">out</span></a>
-  </nav>
+<p>This policy explains what information Setout collects and how we handle it, both in the Setout app and on this website (setoutapp.co.nz). We built Setout to work on your phone without an account, so we collect very little.</p>
 
-  <main>
-    <p class="eyebrow">Legal</p>
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: August 2025</p>
+<h2>Who we are</h2>
+<p>Setout is operated by Setout Holdings Limited. You can contact us at <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
 
-    <div class="card">
-      <h2>The short version</h2>
-      <p>Setout stores everything on your device. We don't collect your data, don't track you, and don't sell anything to anyone. The app works fully offline and no information about you or your work ever leaves your phone.</p>
-    </div>
+<h2>The app</h2>
+<p>You don't need an account to use Setout. Your calculations, saved jobs, receipts and tool log are stored on your own device. We do not receive or store this content on our servers.</p>
+<p><strong>Camera, photos and files.</strong> Setout may ask for access to your camera, photo library or files when you use a feature that needs it. Anything you add stays on your device, and it is only shared if you choose to share it, for example by sending a PDF to your team.</p>
+<p><strong>Analytics and crash reports.</strong> The web version of Setout uses Umami, a privacy-focused analytics service, to count visits. The iPhone app does not use analytics. We may use Sentry to receive crash and error reports from the app; these reports do not include your name or email and are used only to fix bugs. Setout does not use advertising trackers.</p>
 
-    <div class="card">
-      <h2>What we collect</h2>
-      <p>Setout collects minimal information to make the app work:</p>
-      <ul>
-        <li><strong>Your first name</strong> — entered during onboarding, used only to personalise the greeting on the home screen.</li>
-        <li><strong>Your region</strong> (Australia or New Zealand) — used to show the correct building code references and tax terminology.</li>
-        <li><strong>Your calculator results and jobs</strong> — saved locally so you can access your history and saved jobs.</li>
-        <li><strong>Your app settings</strong> — preferences like unit system (metric/imperial) and pinned calculators.</li>
-      </ul>
-      <p>All of this information is stored only on your device using standard iOS local storage. None of it is ever transmitted to us or any third party. The app works fully offline.</p>
-    </div>
+<h2>Subscriptions and payments</h2>
+<p>Subscriptions are handled by the Apple App Store or Google Play, and we never see or store your card details. We use RevenueCat (revenuecat.com) to manage subscriptions and unlock features. RevenueCat receives purchase information from the store, such as your subscription status and an anonymous identifier, and handles it under its own privacy policy. RevenueCat is a US-based service, so this information may be processed in the United States.</p>
 
-    <div class="card">
-      <h2>What we don't collect</h2>
-      <ul>
-        <li>We do not collect your location.</li>
-        <li>We do not collect your contacts, photos, or any other device data.</li>
-        <li>We do not use analytics or tracking SDKs.</li>
-        <li>We do not serve ads.</li>
-        <li>We do not create accounts or require sign-in.</li>
-        <li>We do not share any data with third parties.</li>
-      </ul>
-    </div>
+<h2>This website</h2>
+<p>Our website is hosted by Vercel, which keeps standard server logs (such as IP address and browser type) for security and performance. The site loads the Inter font from Google Fonts, which means your IP address is sent to Google when the page loads.</p>
+<p>If you join our launch list, we collect your email address to tell you when Setout launches and to send you launch offers such as an early-bird discount. We won't sell it or share it for other purposes, and every email will include an unsubscribe link. Our launch list is run by Kit (kit.com), a US-based email service, so your email address may be stored and processed in the United States. The sign-up form loads a script from Kit, and Kit receives your email address and technical details such as your IP address when you submit it.</p>
 
-    <div class="card">
-      <h2>Quotes and PDFs</h2>
-      <p>When you generate a quote or invoice PDF, the document is created entirely on your device. If you choose to share it, that is done through iOS's standard share sheet — Setout does not transmit the PDF anywhere.</p>
-    </div>
+<h2>Sharing your information</h2>
+<p>We don't sell your personal information. We share it only with the service providers named above, where needed to run the website and the launch list, or where the law requires it.</p>
 
-    <div class="card">
-      <h2>Children</h2>
-      <p>Setout is designed for use by construction professionals and is not directed at children under 13. We do not knowingly collect information from children.</p>
-    </div>
+<h2>Your rights</h2>
+<p>You can ask us to access, correct or delete personal information we hold about you, including your launch list email, by writing to <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>. We handle requests in line with the Privacy Act 1988 (Australia) and the Privacy Act 2020 (New Zealand). If you're unhappy with how we respond, you can contact the Office of the Australian Information Commissioner or the NZ Office of the Privacy Commissioner.</p>
 
-    <div class="card">
-      <h2>Changes to this policy</h2>
-      <p>If we make material changes to this policy, we'll update the date at the top of this page. Continued use of the app after changes are posted means you accept the updated policy.</p>
-    </div>
+<h2>Children</h2>
+<p>Setout is a tool for people working in construction and is not aimed at children under 13. We don't knowingly collect information from children.</p>
 
-    <div class="card">
-      <h2>Contact</h2>
-      <p>Questions about this policy? Email us at <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a></p>
-    </div>
-  </main>
+<h2>Changes</h2>
+<p>If we change this policy, we'll update the date at the top of this page.</p>
 
-  <footer>
-    &copy; 2025 Setout. All rights reserved. &nbsp;·&nbsp; <a href="/">Home</a>
-  </footer>
-
+<h2>Contact</h2>
+<p>Questions? Email <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
+</main>
+<footer>
+  <a href="/">Home</a> &middot; <a href="/terms">Terms of Use</a> &middot; &copy; 2026 Setout
+</footer>
 </body>
 </html>

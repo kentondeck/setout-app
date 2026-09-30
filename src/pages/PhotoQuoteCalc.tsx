@@ -361,11 +361,11 @@ function PhotoQuoteCalcInner() {
     localStorage.removeItem('setout_photoquote_logo');
   }
 
-  // Multi-photo picker for the quote/invoice. Uses accept="image/*" +
-  // multiple + capture="environment" so mobile Safari / Chrome offer the
-  // native camera or library picker. Photos compress to JPEG @ 0.8, max
-  // 1600px, then get appended to the current list (preserving any already
-  // added).
+  // Multi-photo picker for the quote/invoice. Uses accept="image/*" + multiple
+  // (no `capture`, so iOS offers the full chooser — Photo Library / Take Photo —
+  // and lets you pick several from the camera roll). Photos compress to JPEG @
+  // 0.8, max 1600px, then get appended to the current list (preserving any
+  // already added).
   async function handleQuotePhotosChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
@@ -2050,7 +2050,6 @@ function PhotoQuoteCalcInner() {
                 type="file"
                 accept="image/*"
                 multiple
-                capture="environment"
                 onChange={handleQuotePhotosChange}
                 style={{ display: 'none' }}
               />

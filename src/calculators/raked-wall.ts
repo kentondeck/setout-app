@@ -60,10 +60,15 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   // Extra mm on the high side of each stud top cut: t × tan(θ)
   const studCutExtra = parseFloat((timberThickness * Math.tan(pitchRad)).toFixed(1));
 
-  // `ceil(L/s) + 1` gives the right stud count for any wall length. For an
-  // exact multiple it matches `floor + 1`; for non-multiples it adds the
-  // end stud that floor+1 would drop.
-  const studCount = Math.ceil(wallLength / studSpacing) + 1;
+  // Studs sit at 0 (flush), then exact centres across, with a stud forced onto
+  // the wall end — so the final bay is whatever's left over. If that leftover
+  // would be a tiny sliver (wall length only just past a spacing multiple), fold
+  // it into the end stud instead of doubling up two studs a few mm apart.
+  const fullBays = Math.floor(wallLength / studSpacing);
+  const endBay = wallLength - fullBays * studSpacing; // leftover past the last full centre
+  const MIN_END_BAY = 50; // mm — below this, the end stud absorbs the last centre
+  const studCount = Math.max(2, endBay < MIN_END_BAY ? fullBays + 1 : fullBays + 2);
+  const lastBayMm = Math.round(wallLength - (studCount - 2) * studSpacing);
 
   // Stud lengths: interpolate total height at each position, then deduct both plates.
   // The last stud always sits at the wall end (not at studCount × spacing, which
@@ -116,8 +121,8 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     },
     {
       label: 'Stud count',
-      formula: 'ceil( wall length ÷ stud spacing ) + 1',
-      result: `ceil( ${wallLength} ÷ ${studSpacing} ) + 1 = ${studCount} studs`,
+      formula: 'stud at each end + centres between (final bay takes the remainder)',
+      result: `${studCount} studs — ${studSpacing}mm centres, last bay ${lastBayMm}mm`,
     },
     {
       label: 'Stud lengths',

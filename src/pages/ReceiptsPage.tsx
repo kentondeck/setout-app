@@ -20,6 +20,14 @@ function formatMoney(n: number | undefined): string {
   return `$${n.toFixed(2)}`;
 }
 
+// Local date as YYYY-MM-DD for <input type="date"> — defaults the purchase
+// date to today so a real date is always captured (the tradie edits it for an
+// older receipt). Without this the PDF falls back to the upload timestamp.
+function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 // "1 April 2026 – 31 March 2027" — subtract a day from `to` (exclusive end) to
 // get the last day actually included in the tax year.
 function formatTaxYearDates(range: TaxYearRange): string {
@@ -33,6 +41,10 @@ const inputStyle: React.CSSProperties = {
   border: '0.5px solid var(--color-border)', background: 'var(--color-bg)',
   fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)',
   outline: 'none', boxSizing: 'border-box', WebkitAppearance: 'none',
+};
+
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', letterSpacing: '0.2px',
 };
 
 type TaxFilter = 'all' | 'current' | 'previous';
@@ -118,7 +130,7 @@ export function ReceiptsPage() {
     setError('');
     try {
       setPendingPhoto(await compressImageFile(file));
-      setForm({});
+      setForm({ date: todayISO() });
     } catch {
       setError('Could not process that image — try another photo.');
     } finally {
@@ -272,21 +284,27 @@ export function ReceiptsPage() {
               style={inputStyle}
             />
             <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 12px' }}>
-                <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={fieldLabelStyle}>Amount</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 12px' }}>
+                  <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
+                  <input
+                    type="number" inputMode="decimal" step="0.01" placeholder="Amount"
+                    value={form.amount ?? ''}
+                    onChange={e => setForm(f => ({ ...f, amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                    style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                  />
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={fieldLabelStyle}>Date purchased</label>
                 <input
-                  type="number" inputMode="decimal" step="0.01" placeholder="Amount"
-                  value={form.amount ?? ''}
-                  onChange={e => setForm(f => ({ ...f, amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                  style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                  type="date"
+                  value={form.date ?? ''}
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                  style={{ ...inputStyle, minWidth: 0 }}
                 />
               </div>
-              <input
-                type="date"
-                value={form.date ?? ''}
-                onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                style={{ ...inputStyle, flex: 1, minWidth: 0 }}
-              />
             </div>
             <select
               value={form.category ?? ''}

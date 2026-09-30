@@ -161,7 +161,7 @@ export function ReceiptsPage() {
 
   // Edit reopens the same full form (photo + all fields, including the date)
   // rather than a cramped inline row — so the purchase date can be changed.
-  function beginEdit(r: Receipt, dataUrl?: string) {
+  function beginEdit(r: Receipt, dataUrl?: string | null) {
     setEditingId(r.id);
     setEditingPhoto(dataUrl ?? null);
     setForm({

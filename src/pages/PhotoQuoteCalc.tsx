@@ -1784,32 +1784,32 @@ function PhotoQuoteCalcInner() {
                   <div style={{ height: 0.5, background: 'var(--color-border)' }} />
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Materials</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.materialsSubtotal)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.materialsSubtotal)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Labour</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.labourSubtotal)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.labourSubtotal)}</span>
                     </div>
                     {totals.travel > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                         <span style={{ color: 'var(--color-muted)' }}>Travel</span>
-                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.travel)}</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.travel)}</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>GST ({totals.gstPct}%)</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.gstAmount)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.gstAmount)}</span>
                     </div>
                   </div>
 
                   <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                    paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
+                    gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)' }}>{docType === 'invoice' ? 'Total due' : 'Total inc. GST'}</span>
-                    <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>{docType === 'invoice' ? 'Total due' : 'Total inc. GST'}</span>
+                    <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
                       {fmt.format(totals.total)}
                     </span>
                   </div>
@@ -1833,23 +1833,23 @@ function PhotoQuoteCalcInner() {
                 }}>
                   <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>YOUR PROFIT — NOT SENT TO CLIENT</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Materials margin</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(materialMarginAmount)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(materialMarginAmount)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Labour margin</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(labourMarginAmount)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(labourMarginAmount)}</span>
                     </div>
                     {selfLabourAmount > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                         <span style={{ color: 'var(--color-muted)' }}>Your own time (all profit)</span>
-                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(selfLabourAmount)}</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(selfLabourAmount)}</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
                       <span style={{ color: 'var(--color-muted)' }}>Total cost (materials + team + travel)</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums' }}>{fmt.format(totals.totalCost)}</span>
+                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.totalCost)}</span>
                     </div>
                   </div>
                   <div style={{

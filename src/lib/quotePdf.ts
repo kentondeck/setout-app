@@ -269,7 +269,9 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     doc.setFont(PDF_FONT, opts?.bold ? 'bold' : 'normal');
     doc.setFontSize(opts?.bold ? 12.5 : 10.5);
     doc.setTextColor(opts?.accent ? 255 : opts?.bold ? 10 : 100, opts?.accent ? 90 : opts?.bold ? 10 : 100, opts?.accent ? 31 : opts?.bold ? 10 : 100);
-    doc.text(label, col.price, y);
+    // Label sits at the qty column (not price) so a large right-aligned value
+    // has room to grow left without colliding with the label.
+    doc.text(label, col.qty, y);
     doc.text(value, col.total, y, { align: 'right' });
     y += opts?.bold ? 22 : 18;
   }
@@ -277,7 +279,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   y += 4;
   doc.setDrawColor(10, 10, 10);
   doc.setLineWidth(1);
-  doc.line(col.price - 10, y - 14, pageWidth - marginX, y - 14);
+  doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
   totalRow(q.docType === 'invoice' ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: true });
   y += 20;
 

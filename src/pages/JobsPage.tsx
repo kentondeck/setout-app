@@ -252,6 +252,21 @@ export function JobsPage() {
             >
               Create job
             </button>
+            <button
+              onClick={handleDismiss}
+              style={{
+                padding: '14px',
+                borderRadius: 14,
+                border: '0.5px solid rgba(0,0,0,0.08)',
+                background: 'none',
+                color: '#999',
+                fontSize: 15,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
           </div>
         </>
       )}

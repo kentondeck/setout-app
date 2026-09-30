@@ -11,6 +11,11 @@ import '@fontsource/inter/800.css'
 import '@fontsource/jetbrains-mono/400.css'
 import './index.css'
 import { App } from './App.tsx'
+import { initErrorReporting } from './lib/errorReporting'
+
+// As early as possible so startup errors are caught too. No-ops if
+// VITE_SENTRY_DSN isn't set.
+initErrorReporting();
 
 // Only load analytics in browser context — Capacitor WebView skips this
 if (!Capacitor.isNativePlatform()) {

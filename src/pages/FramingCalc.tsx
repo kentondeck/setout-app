@@ -46,7 +46,6 @@ export function FramingCalc() {
   const [plateStock, setPlateStock] = useState(4800);
   const [result, setResult] = useState<{ outputs: FramingOutputs; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
-  const [calcNogginRows, setCalcNogginRows] = useState(0);
   const [lastEntryId, setLastEntryId] = useState('');
   const [error, setError] = useState('');
   const [jobName, setJobName] = useState('');
@@ -93,7 +92,6 @@ export function FramingCalc() {
       return;
     }
     setResult(calc);
-    setCalcNogginRows(includeNoggins ? (nogginRows || 1) : 0);
 
     const id = uuid();
     setLastEntryId(id);

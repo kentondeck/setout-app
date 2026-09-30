@@ -59,7 +59,7 @@ export function Home() {
     // the shared grey --color-bg. Tiles below carry --shadow-card instead of
     // the usual border-on-grey contrast, since white-on-white needs it.
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#ffffff' }}>
-      <TopBar userName={settings.userName} />
+      <TopBar />
 
       <div style={{ padding: '24px 20px 16px' }}>
         <p style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.5px' }}>

@@ -956,7 +956,7 @@ function PhotoQuoteCalcInner() {
     }
     lines.push('');
     lines.push(
-      docType === 'quote' ? 'Final price may vary if site conditions differ. Valid for 30 days.' :
+      docType === 'quote' ? 'Valid for 30 days.' :
       docType === 'invoice' ? 'Please arrange payment by the due date above.' :
       'This is a preliminary estimate, not a fixed price. A formal quote follows a site visit.'
     );

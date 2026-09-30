@@ -65,7 +65,7 @@ export interface PdfQuoteInput {
 }
 
 const DISCLAIMERS: Record<QuoteDocType, string> = {
-  quote: 'Final price may vary if actual site conditions differ from those assessed. Valid for 30 days from the date above.',
+  quote: 'Valid for 30 days from the date above.',
   estimate: 'This is a preliminary estimate, not a fixed price. A formal quote will be provided following an on-site assessment.',
   invoice: 'Please arrange payment by the due date above. Contact us if you have any questions about this invoice.',
 };

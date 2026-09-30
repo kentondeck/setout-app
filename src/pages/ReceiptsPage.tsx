@@ -91,6 +91,7 @@ export function ReceiptsPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingPhoto, setEditingPhoto] = useState<string | null>(null);
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -138,6 +139,13 @@ export function ReceiptsPage() {
     }
   }
 
+  function closeForm() {
+    setPendingPhoto(null);
+    setEditingId(null);
+    setEditingPhoto(null);
+    setForm({});
+  }
+
   async function handleSave() {
     if (!pendingPhoto) return;
     await add(pendingPhoto, {
@@ -147,13 +155,15 @@ export function ReceiptsPage() {
       category: form.category || undefined,
       notes: form.notes?.trim() || undefined,
     });
-    setPendingPhoto(null);
-    setForm({});
+    closeForm();
     hapticMedium();
   }
 
-  function beginEdit(r: Receipt) {
+  // Edit reopens the same full form (photo + all fields, including the date)
+  // rather than a cramped inline row — so the purchase date can be changed.
+  function beginEdit(r: Receipt, dataUrl?: string) {
     setEditingId(r.id);
+    setEditingPhoto(dataUrl ?? null);
     setForm({
       supplier: r.supplier,
       amount: r.amount,
@@ -172,9 +182,12 @@ export function ReceiptsPage() {
       category: form.category || undefined,
       notes: form.notes?.trim() || undefined,
     });
-    setEditingId(null);
-    setForm({});
+    closeForm();
+    hapticMedium();
   }
+
+  const formOpen = pendingPhoto !== null || editingId !== null;
+  const formPhoto = pendingPhoto ?? editingPhoto;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -186,7 +199,7 @@ export function ReceiptsPage() {
         </p>
 
         {/* Tax-year filter chips */}
-        {!pendingPhoto && items.length > 0 && (
+        {!formOpen && items.length > 0 && (
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
             {([
               { key: 'all', label: 'All', count: items.length },
@@ -216,7 +229,7 @@ export function ReceiptsPage() {
         )}
 
         {/* Add + Send buttons */}
-        {!pendingPhoto && (
+        {!formOpen && (
           <>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
@@ -266,17 +279,22 @@ export function ReceiptsPage() {
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
         {/* Pending photo form */}
-        {pendingPhoto && (
+        {formOpen && (
           <div style={{
             background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
             borderRadius: 'var(--radius-card)', padding: 14,
             display: 'flex', flexDirection: 'column', gap: 10,
           }}>
-            <img
-              src={pendingPhoto}
-              alt=""
-              style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
-            />
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
+              {editingId ? 'Edit receipt' : 'New receipt'}
+            </p>
+            {formPhoto && (
+              <img
+                src={formPhoto}
+                alt=""
+                style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
+              />
+            )}
             <input
               type="text" placeholder="Supplier (e.g. Bunnings)"
               value={form.supplier ?? ''}
@@ -325,7 +343,7 @@ export function ReceiptsPage() {
             />
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { setPendingPhoto(null); setForm({}); }}
+                onClick={closeForm}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 10, border: '0.5px solid var(--color-border)',
                   background: 'var(--color-bg)', color: 'var(--color-muted)', fontSize: 14, fontWeight: 500,
@@ -335,21 +353,21 @@ export function ReceiptsPage() {
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                onClick={editingId ? saveEdit : handleSave}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 10, border: 'none',
                   background: 'var(--color-orange)', color: '#fff', fontSize: 14, fontWeight: 500,
                   fontFamily: 'inherit', cursor: 'pointer',
                 }}
               >
-                Save
+                {editingId ? 'Save changes' : 'Save'}
               </button>
             </div>
           </div>
         )}
 
         {/* Groups */}
-        {grouped.length === 0 && !pendingPhoto && (
+        {grouped.length === 0 && !formOpen && (
           <p style={{ margin: '20px 4px', fontSize: 13, color: 'var(--color-muted)', textAlign: 'center' }}>
             {items.length === 0
               ? 'No receipts yet.'
@@ -385,48 +403,9 @@ export function ReceiptsPage() {
                     )}
                   </button>
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    {editingId === record.id ? (
-                      <>
-                        <input
-                          type="text" placeholder="Supplier"
-                          value={form.supplier ?? ''}
-                          onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))}
-                          style={{ ...inputStyle, padding: '8px 10px', fontSize: 13 }}
-                        />
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 3, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 8, padding: '0 8px' }}>
-                            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>$</span>
-                            <input
-                              type="number" step="0.01" placeholder="Amount"
-                              value={form.amount ?? ''}
-                              onChange={e => setForm(f => ({ ...f, amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
-                              style={{ flex: 1, minWidth: 0, padding: '8px 0', border: 'none', background: 'transparent', fontSize: 13, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
-                            />
-                          </div>
-                          <select
-                            value={form.category ?? ''}
-                            onChange={e => setForm(f => ({ ...f, category: e.target.value || undefined }))}
-                            style={{ ...inputStyle, padding: '8px 8px', fontSize: 13, flex: 1 }}
-                          >
-                            <option value="">Cat</option>
-                            {RECEIPT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button
-                            onClick={() => { setEditingId(null); setForm({}); }}
-                            style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', color: 'var(--color-muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer' }}
-                          >Cancel</button>
-                          <button
-                            onClick={saveEdit}
-                            style={{ flex: 1, padding: '8px 0', borderRadius: 8, border: 'none', background: 'var(--color-orange)', color: '#fff', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer' }}
-                          >Save</button>
-                        </div>
-                      </>
-                    ) : (
                       <>
                         <button
-                          onClick={() => beginEdit(record)}
+                          onClick={() => beginEdit(record, dataUrl)}
                           style={{ padding: 0, border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 2, fontFamily: 'inherit' }}
                         >
                           <p style={{ margin: 0, fontSize: 14, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.1px' }}>
@@ -461,7 +440,6 @@ export function ReceiptsPage() {
                           {confirmDeleteId === record.id ? 'Tap again' : 'Delete'}
                         </button>
                       </>
-                    )}
                   </div>
                 </div>
               ))}

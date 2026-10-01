@@ -52,10 +52,14 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
   }
 
   // Studs: one at each end + intermediate studs spaced at studSpacing.
-  // `ceil(L/s) + 1` gives the right count for any wall length — for an exact
-  // multiple it matches `floor + 1`; for non-multiples it adds the extra
-  // end stud that floor+1 misses.
-  const baseStudCount = Math.ceil((wallLength * 1000) / studSpacing) + 1;
+  // Studs at both ends + centres between; the final bay takes the remainder.
+  // If that leftover would be a sliver (wall length only just past a spacing
+  // multiple), fold it into the end stud instead of counting a near-duplicate.
+  const wallLengthMm = wallLength * 1000;
+  const fullBays = Math.floor(wallLengthMm / studSpacing);
+  const endBay = wallLengthMm - fullBays * studSpacing;
+  const MIN_END_BAY = 50; // mm
+  const baseStudCount = Math.max(2, endBay < MIN_END_BAY ? fullBays + 1 : fullBays + 2);
   const studCount = doubleStuds ? baseStudCount * 2 : baseStudCount;
 
   const topPlateLineal = parseFloat((wallLength * (doubleTopPlate ? 2 : 1)).toFixed(2));
@@ -76,8 +80,8 @@ export function calculateFraming(inputs: FramingInputs): FramingResult {
   const steps: WorkingStep[] = [
     {
       label: 'Stud positions',
-      formula: 'ceil( wall length (mm) ÷ stud spacing ) + 1',
-      result: `ceil( ${wallLength * 1000} ÷ ${studSpacing} ) + 1 = ${baseStudCount} positions`,
+      formula: 'stud at each end + centres between (final bay takes the remainder)',
+      result: `${baseStudCount} positions at ${studSpacing}mm centres`,
     },
     ...(doubleStuds
       ? [{

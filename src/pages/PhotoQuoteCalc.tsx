@@ -137,6 +137,7 @@ interface QuoteStateSnapshot {
   notes: string;
   footer: string;
   deposit: string;
+  depositMode: 'amount' | 'percent';
   dueDate: string;
   travelMode: TravelMode;
   travelRate: string;
@@ -280,6 +281,7 @@ function PhotoQuoteCalcInner() {
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
   const [deposit, setDeposit] = useState('');
+  const [depositMode, setDepositMode] = useState<'amount' | 'percent'>('amount');
   const [dueDate, setDueDate] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
@@ -331,7 +333,7 @@ function PhotoQuoteCalcInner() {
     const snapshot: QuoteStateSnapshot = {
       fromCalculator, isManual, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-      quoteNumber, notes, footer, deposit, dueDate, travelMode, travelRate, travelQty,
+      quoteNumber, notes, footer, deposit, depositMode, dueDate, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
       photos: photos.length > 0 ? photos : undefined,
     };
@@ -348,7 +350,7 @@ function PhotoQuoteCalcInner() {
   }, [
     materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-    quoteNumber, notes, footer, deposit, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    quoteNumber, notes, footer, deposit, depositMode, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
     photos,
   ]);
 
@@ -588,6 +590,7 @@ function PhotoQuoteCalcInner() {
       setNotes(snap.notes);
       setFooter(snap.footer ?? '');
       setDeposit(snap.deposit ?? '');
+      setDepositMode(snap.depositMode ?? 'amount');
       setDueDate(snap.dueDate ?? '');
       setTravelMode(snap.travelMode);
       setTravelRate(snap.travelRate);
@@ -851,8 +854,11 @@ function PhotoQuoteCalcInner() {
     const gstAmount = subtotal * (gstPct / 100);
     const total = subtotal + gstAmount;
 
-    // Deposit already paid (clamped 0..total); the balance is what's still owed.
-    const depositAmount = Math.max(0, Math.min(parseFloat(deposit) || 0, total));
+    // Deposit as a flat amount or a % of the total (clamped 0..total); the
+    // balance is what's left over.
+    const depositInput = parseFloat(deposit) || 0;
+    const rawDeposit = depositMode === 'percent' ? total * (depositInput / 100) : depositInput;
+    const depositAmount = Math.max(0, Math.min(rawDeposit, total));
     const balanceDue = total - depositAmount;
 
     const totalCost = materialsCost + labourCost + travel;
@@ -2156,15 +2162,36 @@ function PhotoQuoteCalcInner() {
 
             <div>
               <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DEPOSIT <span style={{ textTransform: 'none', fontWeight: 400 }}>{docType === 'invoice' ? '(already paid — shows balance due)' : '(due up front — shows balance on completion)'}</span></p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '0 14px' }}>
-                <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>$</span>
-                <input
-                  type="number" inputMode="decimal" step="0.01" placeholder="0.00"
-                  value={deposit}
-                  onChange={e => setDeposit(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
-                />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', borderRadius: 12, overflow: 'hidden', border: '0.5px solid var(--color-border)', flexShrink: 0 }}>
+                  {(['amount', 'percent'] as const).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => setDepositMode(mode)}
+                      style={{
+                        padding: '0 15px', border: 'none', fontSize: 15, fontFamily: 'inherit', cursor: 'pointer',
+                        background: depositMode === mode ? 'var(--color-orange)' : 'var(--color-card)',
+                        color: depositMode === mode ? '#fff' : 'var(--color-muted)', fontWeight: 600,
+                      }}
+                    >
+                      {mode === 'amount' ? '$' : '%'}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '0 14px' }}>
+                  <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>{depositMode === 'amount' ? '$' : '%'}</span>
+                  <input
+                    type="number" inputMode="decimal" step={depositMode === 'amount' ? '0.01' : '1'} placeholder={depositMode === 'amount' ? '0.00' : '30'}
+                    value={deposit}
+                    onChange={e => setDeposit(e.target.value)}
+                    style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                  />
+                </div>
               </div>
+              {depositMode === 'percent' && (parseFloat(deposit) || 0) > 0 && (() => {
+                const t = computeTotals();
+                return t ? <p style={{ margin: '5px 2px 0', fontSize: 11, color: 'var(--color-muted)' }}>= {currencyFmt(t.region).format(t.depositAmount)} of {currencyFmt(t.region).format(t.total)}</p> : null;
+              })()}
             </div>
 
             {/* Photos — attached to the quote, printed on the PDF */}

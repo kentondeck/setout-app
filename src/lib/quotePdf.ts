@@ -283,14 +283,23 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.setLineWidth(1);
   doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
   const hasDeposit = !!q.depositAmount && q.depositAmount > 0;
-  totalRow(q.docType === 'invoice' && !hasDeposit ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: !hasDeposit });
+  const isInvoice = q.docType === 'invoice';
+  // On an invoice the balance due is the headline figure; on a quote/estimate
+  // the total is, and the deposit due + balance are shown beneath it.
+  totalRow(isInvoice && !hasDeposit ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: !(hasDeposit && isInvoice) });
   if (hasDeposit) {
-    totalRow('Deposit paid', `-${money(q.depositAmount!)}`);
-    y += 4;
-    doc.setDrawColor(10, 10, 10);
-    doc.setLineWidth(1);
-    doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
-    totalRow('Balance due', money(q.balanceDue ?? (q.total - q.depositAmount!)), { bold: true, accent: true });
+    const bal = q.balanceDue ?? (q.total - q.depositAmount!);
+    if (isInvoice) {
+      totalRow('Deposit paid', `-${money(q.depositAmount!)}`);
+      y += 4;
+      doc.setDrawColor(10, 10, 10);
+      doc.setLineWidth(1);
+      doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
+      totalRow('Balance due', money(bal), { bold: true, accent: true });
+    } else {
+      totalRow('Deposit due', money(q.depositAmount!));
+      totalRow('Balance on completion', money(bal));
+    }
   }
   y += 20;
 

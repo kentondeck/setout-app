@@ -964,8 +964,13 @@ function PhotoQuoteCalcInner() {
       lines.push('');
       lines.push(`${docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);
       if (totals.depositAmount > 0) {
-        lines.push(`Deposit paid: −${fmt.format(totals.depositAmount)}`);
-        lines.push(`Balance due: ${fmt.format(totals.balanceDue)}`);
+        if (docType === 'invoice') {
+          lines.push(`Deposit paid: −${fmt.format(totals.depositAmount)}`);
+          lines.push(`Balance due: ${fmt.format(totals.balanceDue)}`);
+        } else {
+          lines.push(`Deposit due: ${fmt.format(totals.depositAmount)}`);
+          lines.push(`Balance on completion: ${fmt.format(totals.balanceDue)}`);
+        }
       }
       if (docType === 'invoice' && dueDate.trim()) {
         lines.push(`Due: ${formatDateInput(dueDate, totals.region)}`);
@@ -1829,13 +1834,20 @@ function PhotoQuoteCalcInner() {
                   {totals.depositAmount > 0 && (
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13 }}>
-                        <span style={{ color: 'var(--color-muted)', minWidth: 0 }}>Deposit paid</span>
-                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>−{fmt.format(totals.depositAmount)}</span>
+                        <span style={{ color: 'var(--color-muted)', minWidth: 0 }}>{docType === 'invoice' ? 'Deposit paid' : 'Deposit due'}</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>{docType === 'invoice' ? '−' : ''}{fmt.format(totals.depositAmount)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)' }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>Balance due</span>
-                        <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>{fmt.format(totals.balanceDue)}</span>
-                      </div>
+                      {docType === 'invoice' ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)' }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>Balance due</span>
+                          <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>{fmt.format(totals.balanceDue)}</span>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13 }}>
+                          <span style={{ color: 'var(--color-muted)', minWidth: 0 }}>Balance on completion</span>
+                          <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmt.format(totals.balanceDue)}</span>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -2087,7 +2099,7 @@ function PhotoQuoteCalcInner() {
             </div>
 
             <div>
-              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DEPOSIT <span style={{ textTransform: 'none', fontWeight: 400 }}>(already paid — shows a balance due)</span></p>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DEPOSIT <span style={{ textTransform: 'none', fontWeight: 400 }}>{docType === 'invoice' ? '(already paid — shows balance due)' : '(due up front — shows balance on completion)'}</span></p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '0 14px' }}>
                 <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>$</span>
                 <input

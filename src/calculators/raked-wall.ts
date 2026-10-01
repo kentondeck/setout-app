@@ -9,6 +9,7 @@ export interface RakedWallInputs {
   timberThickness: number;  // mm — plate/stud thickness (e.g. 45 for 45×90 framing)
   includeNoggins?: boolean;
   nogginRows?: number;      // number of noggin rows (typically 1–2)
+  doubleTopPlate?: boolean; // two rake plates stacked — deducts an extra layer
 }
 
 export interface RakedWallOutputs extends Record<string, number> {
@@ -32,7 +33,7 @@ export interface RakedWallResult {
 }
 
 export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
-  const { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows = 1 } = inputs;
+  const { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows = 1, doubleTopPlate = false } = inputs;
 
   // Guard against swapped high / low — a negative rise means the calc silently
   // produces a wall that gets SHORTER across its length, which is either
@@ -54,8 +55,11 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
   // Keep 1dp on every mm output so cut lengths don't accumulate rounding drift.
   const rakePlateVertical = parseFloat((timberThickness / Math.cos(pitchRad)).toFixed(1));
 
-  // Total deduction from each stud: bottom plate (flat) + rake plate (angled)
-  const studDeduction = timberThickness + rakePlateVertical;
+  // A double top plate stacks two rake plates, so it takes off two angled
+  // layers instead of one.
+  const topPlateLayers = doubleTopPlate ? 2 : 1;
+  // Total deduction from each stud: bottom plate (flat) + rake top plate(s) (angled)
+  const studDeduction = timberThickness + topPlateLayers * rakePlateVertical;
 
   // Extra mm on the high side of each stud top cut: t × tan(θ)
   const studCutExtra = parseFloat((timberThickness * Math.tan(pitchRad)).toFixed(1));
@@ -99,8 +103,11 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     ? parseFloat((nogginCount * ((studSpacing - timberThickness) / 1000)).toFixed(2))
     : 0;
 
+  // Double top plate needs two rake plates' worth of timber.
+  const rakePlateLineal = parseFloat((topPlateLayers * rakePlateLength / 1000).toFixed(2));
+
   const totalLinealMetres = parseFloat(
-    (totalStudLineal + rakePlateLength / 1000 + bottomPlateLineal + nogginsLineal).toFixed(2)
+    (totalStudLineal + rakePlateLineal + bottomPlateLineal + nogginsLineal).toFixed(2)
   );
 
   const steps: WorkingStep[] = [
@@ -116,8 +123,8 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     },
     {
       label: 'Plate deductions',
-      formula: 'bottom plate (flat) + rake plate (t ÷ cos θ)',
-      result: `${timberThickness}mm + ${timberThickness}mm ÷ cos(${pitchAngle}°) = ${timberThickness}mm + ${rakePlateVertical}mm = ${studDeduction}mm total`,
+      formula: `bottom plate (flat) + ${doubleTopPlate ? 'double' : 'single'} rake top plate (t ÷ cos θ)`,
+      result: `${timberThickness}mm + ${topPlateLayers} × ${rakePlateVertical}mm = ${studDeduction}mm total`,
     },
     {
       label: 'Stud count',
@@ -137,7 +144,7 @@ export function calculateRakedWall(inputs: RakedWallInputs): RakedWallResult {
     {
       label: 'Rake plate length',
       formula: '√( wall length² + rise² )',
-      result: `√( ${wallLength}² + ${rise}² ) = ${rakePlateLength}mm`,
+      result: `√( ${wallLength}² + ${rise}² ) = ${rakePlateLength}mm${doubleTopPlate ? ` × 2 plates = ${rakePlateLineal}lm` : ''}`,
     },
     ...(includeNoggins
       ? [

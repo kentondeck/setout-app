@@ -48,6 +48,7 @@ export function RakedWallCalc() {
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [mode, setMode] = useState<InputMode>('heights');
   const [includeNoggins, setIncludeNoggins] = useState(true);
+  const [doubleTopPlate, setDoubleTopPlate] = useState(false);
   const [result, setResult] = useState<{ outputs: RakedWallOutputs; studHeights: number[]; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -93,7 +94,7 @@ export function RakedWallCalc() {
     const nogginRows = parseInt(inputs.nogginRows) || 1;
     let calc: ReturnType<typeof calculateRakedWall>;
     try {
-      calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows });
+      calc = calculateRakedWall({ wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins, nogginRows, doubleTopPlate });
     } catch (err) {
       setError((err as Error).message);
       return;
@@ -106,7 +107,7 @@ export function RakedWallCalc() {
       id,
       calculatorId: 'raked',
       timestamp: Date.now(),
-      inputs: { wallLength, lowHeight, highHeight, studSpacing, timberThickness, includeNoggins: includeNoggins ? 1 : 0, ...(includeNoggins ? { nogginRows } : {}) },
+      inputs: { wallLength, lowHeight, highHeight, studSpacing, timberThickness, doubleTopPlate: doubleTopPlate ? 1 : 0, includeNoggins: includeNoggins ? 1 : 0, ...(includeNoggins ? { nogginRows } : {}) },
       outputs: calc.outputs,
     });
 
@@ -212,6 +213,38 @@ export function RakedWallCalc() {
             )}
           </div>
 
+          {/* Double top plate toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Double top plate</span>
+            <button
+              onClick={() => setDoubleTopPlate(v => !v)}
+              style={{
+                width: 44,
+                height: 26,
+                borderRadius: 13,
+                border: 'none',
+                background: doubleTopPlate ? 'var(--color-orange)' : '#ccc',
+                position: 'relative',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 3,
+                  left: doubleTopPlate ? 21 : 3,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.2s',
+                }}
+              />
+            </button>
+          </div>
+
           {/* Noggins toggle */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Include nogs</span>
@@ -274,13 +307,13 @@ export function RakedWallCalc() {
           const nogMm = Math.round(resolvedSpacing - 90);
           const shopRows = [
             { qty: `${result.outputs.studCount}`, name: 'Studs (varying heights)', meta: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm · cut top @ ${result.outputs.pitchAngle}°` },
-            { qty: '1', name: 'Rake plate', meta: `${result.outputs.rakePlateLength}mm` },
+            { qty: doubleTopPlate ? '2' : '1', name: 'Rake plate', meta: `${result.outputs.rakePlateLength}mm${doubleTopPlate ? ' each' : ''}` },
             { qty: '1', name: 'Bottom plate', meta: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
             ...(includeNoggins && result.outputs.nogginCount > 0 ? [{ qty: `${result.outputs.nogginCount}`, name: 'Noggins', meta: `${nogMm}mm each` }] : []),
           ];
           const quoteMaterials = [
             { item: 'Studs (varying)', quantity: result.outputs.studCount, unit: 'each', note: `${result.outputs.lowStudHeight}–${result.outputs.highStudHeight}mm` },
-            { item: 'Rake plate', quantity: 1, unit: 'each', note: `${result.outputs.rakePlateLength}mm` },
+            { item: 'Rake plate', quantity: doubleTopPlate ? 2 : 1, unit: 'each', note: `${result.outputs.rakePlateLength}mm${doubleTopPlate ? ' each' : ''}` },
             { item: 'Bottom plate', quantity: 1, unit: 'each', note: `${Math.round(result.outputs.bottomPlateLineal * 1000)}mm` },
             ...(includeNoggins && result.outputs.nogginCount > 0 ? [{ item: 'Noggins', quantity: result.outputs.nogginCount, unit: 'each', note: `${nogMm}mm each` }] : []),
           ];
@@ -307,7 +340,7 @@ export function RakedWallCalc() {
                   STUD LENGTHS — short side of top cut
                 </p>
                 <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)' }}>
-                  Cut top at {result.outputs.pitchAngle}° · add {result.outputs.studCutExtra}mm on high side · deducted {parseFloat(inputs.timberThickness) || 45}mm bottom plate + {result.outputs.rakePlateVertical}mm rake plate
+                  Cut top at {result.outputs.pitchAngle}° · add {result.outputs.studCutExtra}mm on high side · deducted {parseFloat(inputs.timberThickness) || 45}mm bottom plate + {doubleTopPlate ? '2 × ' : ''}{result.outputs.rakePlateVertical}mm rake plate{doubleTopPlate ? 's' : ''}
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

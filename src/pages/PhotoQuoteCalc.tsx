@@ -13,6 +13,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { FEATURES } from '../lib/features';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { buildQuotePdf, formatDateInput, DISCLAIMERS } from '../lib/quotePdf';
+import { useSavedLineItems, type SavedMaterial, type SavedLabour } from '../lib/savedLineItems';
 import type { QuoteDocType, PdfLogo, PdfPhoto } from '../lib/quotePdf';
 import { lookupMaterialPrice, lookupLabourRate } from '../lib/materialPricing';
 import { getRememberedMaterialPrice, getRememberedMaterialSource, rememberMaterialPrice, getRememberedLabourRate, rememberLabourRate, fuzzyMaterialKey, getRememberedIsSelf, rememberIsSelf } from '../lib/priceMemory';
@@ -284,6 +285,7 @@ function PhotoQuoteCalcInner() {
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
   const [labourList, setLabourList] = useState<EditableLabour[]>([]);
+  const { savedMaterials, savedLabour, saveMaterial, removeMaterial, saveLabour, removeLabour } = useSavedLineItems();
   const [showTeamPicker, setShowTeamPicker] = useState(false);
   const [teamSearch, setTeamSearch] = useState('');
   const [travelMode, setTravelMode] = useState<TravelMode>(() => {
@@ -767,6 +769,10 @@ function PhotoQuoteCalcInner() {
     setMaterialsList(prev => prev.filter(m => m.id !== id));
   }
 
+  function insertSavedMaterial(sm: SavedMaterial) {
+    setMaterialsList(prev => [...prev, { id: uuid(), item: sm.item, quantity: '1', unit: sm.unit || 'each', unitPrice: sm.unitPrice || '', priceChecked: true }]);
+  }
+
   function updateLabour(id: string, patch: Partial<EditableLabour>) {
     setLabourList(prev => prev.map(l => (l.id === id ? { ...l, ...patch } : l)));
   }
@@ -777,6 +783,10 @@ function PhotoQuoteCalcInner() {
 
   function removeLabourRow(id: string) {
     setLabourList(prev => prev.filter(l => l.id !== id));
+  }
+
+  function insertSavedLabour(sl: SavedLabour) {
+    setLabourList(prev => [...prev, { id: uuid(), role: sl.role, hours: '1', rate: sl.rate || '' }]);
   }
 
   // Adds a role pre-filled from a saved teammate (Settings → Your team) — only pay rate comes
@@ -1342,6 +1352,19 @@ function PhotoQuoteCalcInner() {
                       </span>
                     )}
                     <button
+                      onClick={() => saveMaterial({ item: m.item, unit: m.unit, unitPrice: m.unitPrice })}
+                      aria-label="Save to saved items"
+                      disabled={!m.item.trim()}
+                      style={{
+                        flexShrink: 0, height: 24, padding: '0 8px', borderRadius: 999, border: 'none',
+                        background: 'rgba(255,90,31,0.1)', color: 'var(--color-orange)',
+                        cursor: m.item.trim() ? 'pointer' : 'default', opacity: m.item.trim() ? 1 : 0.4,
+                        fontSize: 11, fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
                       onClick={() => removeMaterialRow(m.id)}
                       aria-label="Remove material"
                       style={{
@@ -1443,6 +1466,16 @@ function PhotoQuoteCalcInner() {
                 </div>
                 );
               })}
+              {savedMaterials.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {savedMaterials.map(sm => (
+                    <span key={sm.item} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 999, overflow: 'hidden' }}>
+                      <button onClick={() => insertSavedMaterial(sm)} style={{ border: 'none', background: 'none', color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', padding: '5px 4px 5px 10px' }}>+ {sm.item}</button>
+                      <button onClick={() => removeMaterial(sm.item)} aria-label="Remove saved item" style={{ border: 'none', background: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '5px 8px 5px 2px' }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <button
                 onClick={addMaterialRow}
                 style={{
@@ -1493,6 +1526,19 @@ function PhotoQuoteCalcInner() {
                         {l.employeeName}
                       </span>
                     )}
+                    <button
+                      onClick={() => saveLabour({ role: l.role, rate: l.rate })}
+                      aria-label="Save to saved items"
+                      disabled={!l.role.trim()}
+                      style={{
+                        flexShrink: 0, height: 24, padding: '0 8px', borderRadius: 999, border: 'none',
+                        background: 'rgba(255,90,31,0.1)', color: 'var(--color-orange)',
+                        cursor: l.role.trim() ? 'pointer' : 'default', opacity: l.role.trim() ? 1 : 0.4,
+                        fontSize: 11, fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center',
+                      }}
+                    >
+                      Save
+                    </button>
                     <button
                       onClick={() => removeLabourRow(l.id)}
                       aria-label="Remove labour role"
@@ -1586,6 +1632,16 @@ function PhotoQuoteCalcInner() {
                 </div>
                 );
               })}
+              {savedLabour.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {savedLabour.map(sl => (
+                    <span key={sl.role} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 999, overflow: 'hidden' }}>
+                      <button onClick={() => insertSavedLabour(sl)} style={{ border: 'none', background: 'none', color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', padding: '5px 4px 5px 10px' }}>+ {sl.role}</button>
+                      <button onClick={() => removeLabour(sl.role)} aria-label="Remove saved role" style={{ border: 'none', background: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '5px 8px 5px 2px' }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={addLabourRow}

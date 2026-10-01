@@ -39,6 +39,8 @@ export interface PdfQuoteInput {
   jobDescription: string;
   notes: string;
   footer?: string; // overrides the default footer disclaimer when set
+  depositAmount?: number; // deposit already paid — when > 0, a balance-due line prints
+  balanceDue?: number;
   logo?: PdfLogo | null;
   photos?: PdfPhoto[];
   region: Region;
@@ -280,7 +282,16 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   doc.setDrawColor(10, 10, 10);
   doc.setLineWidth(1);
   doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
-  totalRow(q.docType === 'invoice' ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: true });
+  const hasDeposit = !!q.depositAmount && q.depositAmount > 0;
+  totalRow(q.docType === 'invoice' && !hasDeposit ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: !hasDeposit });
+  if (hasDeposit) {
+    totalRow('Deposit paid', `-${money(q.depositAmount!)}`);
+    y += 4;
+    doc.setDrawColor(10, 10, 10);
+    doc.setLineWidth(1);
+    doc.line(col.qty - 10, y - 14, pageWidth - marginX, y - 14);
+    totalRow('Balance due', money(q.balanceDue ?? (q.total - q.depositAmount!)), { bold: true, accent: true });
+  }
   y += 20;
 
   // Payment details — terms and bank transfer info, shown once as its own block

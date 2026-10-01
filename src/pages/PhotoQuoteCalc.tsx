@@ -135,6 +135,7 @@ interface QuoteStateSnapshot {
   quoteNumber: string;
   notes: string;
   footer: string;
+  deposit: string;
   dueDate: string;
   travelMode: TravelMode;
   travelRate: string;
@@ -277,6 +278,7 @@ function PhotoQuoteCalcInner() {
   const [quoteNumber, setQuoteNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [footer, setFooter] = useState('');
+  const [deposit, setDeposit] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [lastEntryId, setLastEntryId] = useState('');
   const [copied, setCopied] = useState(false);
@@ -327,7 +329,7 @@ function PhotoQuoteCalcInner() {
     const snapshot: QuoteStateSnapshot = {
       fromCalculator, isManual, docType, result, materialsList, labourList,
       clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-      quoteNumber, notes, footer, dueDate, travelMode, travelRate, travelQty,
+      quoteNumber, notes, footer, deposit, dueDate, travelMode, travelRate, travelQty,
       materialMarginPct, labourMarginPct,
       photos: photos.length > 0 ? photos : undefined,
     };
@@ -344,7 +346,7 @@ function PhotoQuoteCalcInner() {
   }, [
     materialsList, labourList, lastEntryId, fromCalculator, isManual, docType, result,
     clientName, clientPhone, clientEmail, clientAddress, siteAddress,
-    quoteNumber, notes, footer, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
+    quoteNumber, notes, footer, deposit, dueDate, travelMode, travelRate, travelQty, materialMarginPct, labourMarginPct,
     photos,
   ]);
 
@@ -583,6 +585,7 @@ function PhotoQuoteCalcInner() {
       setQuoteNumber(snap.quoteNumber);
       setNotes(snap.notes);
       setFooter(snap.footer ?? '');
+      setDeposit(snap.deposit ?? '');
       setDueDate(snap.dueDate ?? '');
       setTravelMode(snap.travelMode);
       setTravelRate(snap.travelRate);
@@ -838,13 +841,17 @@ function PhotoQuoteCalcInner() {
     const gstAmount = subtotal * (gstPct / 100);
     const total = subtotal + gstAmount;
 
+    // Deposit already paid (clamped 0..total); the balance is what's still owed.
+    const depositAmount = Math.max(0, Math.min(parseFloat(deposit) || 0, total));
+    const balanceDue = total - depositAmount;
+
     const totalCost = materialsCost + labourCost + travel;
     const profit = subtotal - totalCost;
     const profitPct = subtotal > 0 ? (profit / subtotal) * 100 : 0;
 
     return {
       region, gstPct, materialLines, materialsSubtotal, materialsCost, labourLines, labourSubtotal, labourCost,
-      travel, subtotal, gstAmount, total, materialMarginPct: materialMargin, labourMarginPct: labourMargin,
+      travel, subtotal, gstAmount, total, depositAmount, balanceDue, materialMarginPct: materialMargin, labourMarginPct: labourMargin,
       totalCost, profit, profitPct,
     };
   }
@@ -865,6 +872,8 @@ function PhotoQuoteCalcInner() {
       jobDescription: result.scopeSummary,
       notes: notes.trim(),
       footer: footer.trim(),
+      depositAmount: totals.depositAmount,
+      balanceDue: totals.balanceDue,
       logo,
       photos: photos.length > 0 ? photos : undefined,
       region: totals.region,
@@ -953,7 +962,11 @@ function PhotoQuoteCalcInner() {
       }
       if (totals.travel > 0) lines.push(`Travel: ${fmt.format(totals.travel)}`);
       lines.push('');
-      lines.push(`${docType === 'invoice' ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);
+      lines.push(`${docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);
+      if (totals.depositAmount > 0) {
+        lines.push(`Deposit paid: −${fmt.format(totals.depositAmount)}`);
+        lines.push(`Balance due: ${fmt.format(totals.balanceDue)}`);
+      }
       if (docType === 'invoice' && dueDate.trim()) {
         lines.push(`Due: ${formatDateInput(dueDate, totals.region)}`);
       }
@@ -1808,11 +1821,23 @@ function PhotoQuoteCalcInner() {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                     gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>{docType === 'invoice' ? 'Total due' : 'Total inc. GST'}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>{docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : 'Total inc. GST'}</span>
                     <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
                       {fmt.format(totals.total)}
                     </span>
                   </div>
+                  {totals.depositAmount > 0 && (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, fontSize: 13 }}>
+                        <span style={{ color: 'var(--color-muted)', minWidth: 0 }}>Deposit paid</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', flexShrink: 0 }}>−{fmt.format(totals.depositAmount)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>Balance due</span>
+                        <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>{fmt.format(totals.balanceDue)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })()}
@@ -2059,6 +2084,19 @@ function PhotoQuoteCalcInner() {
                   color: 'var(--color-text)', resize: 'none', outline: 'none', boxSizing: 'border-box', lineHeight: 1.5,
                 }}
               />
+            </div>
+
+            <div>
+              <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>DEPOSIT <span style={{ textTransform: 'none', fontWeight: 400 }}>(already paid — shows a balance due)</span></p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-card)', border: '0.5px solid var(--color-border)', borderRadius: 12, padding: '0 14px' }}>
+                <span style={{ fontSize: 14, color: 'var(--color-muted)' }}>$</span>
+                <input
+                  type="number" inputMode="decimal" step="0.01" placeholder="0.00"
+                  value={deposit}
+                  onChange={e => setDeposit(e.target.value)}
+                  style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
+                />
+              </div>
             </div>
 
             {/* Photos — attached to the quote, printed on the PDF */}

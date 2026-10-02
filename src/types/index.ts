@@ -37,6 +37,7 @@ export interface Settings {
   pinnedCalcs: CalculatorId[];
   calcOrder: CalculatorId[]; // tradie's custom drag-reordered tile order; missing/unknown ids fall back to CALCULATORS order
   employees: Employee[];
+  gstRegistered: boolean; // when false, no GST is charged on quotes/invoices
   businessName: string;
   businessNumber: string; // ABN (AU) or GST number (NZ) — label follows region
   businessPhone: string;

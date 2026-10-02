@@ -384,6 +384,23 @@ export function Settings() {
         subtitle={`Printed on every quote/estimate PDF — ${settings.region === 'AU' ? 'ABN required for a valid tax invoice' : 'GST number required if you\'re GST-registered'}.`}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '2px 2px 6px' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, color: 'var(--color-text)', fontWeight: 500 }}>GST registered</div>
+              <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>Off = no GST charged on quotes/invoices</div>
+            </div>
+            <button
+              onClick={() => updateSettings({ gstRegistered: !settings.gstRegistered })}
+              aria-label="Toggle GST registered"
+              style={{
+                width: 44, height: 26, borderRadius: 13, border: 'none', flexShrink: 0,
+                background: settings.gstRegistered ? 'var(--color-orange)' : '#ccc',
+                position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+              }}
+            >
+              <span style={{ position: 'absolute', top: 3, left: settings.gstRegistered ? 21 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+            </button>
+          </div>
           <input
             type="text"
             placeholder="Business name"

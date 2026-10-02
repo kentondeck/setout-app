@@ -23,6 +23,7 @@ export const SettingsContext = createContext<SettingsCtx>({
     pinnedCalcs: [],
     calcOrder: [],
     employees: [],
+    gstRegistered: true,
     businessName: '',
     businessNumber: '',
     businessPhone: '',

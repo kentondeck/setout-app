@@ -814,7 +814,8 @@ function PhotoQuoteCalcInner() {
   function computeTotals() {
     if (!result) return null;
     const region = settings.region;
-    const gstPct = GST_RATE[region];
+    // No GST for tradies under the registration threshold (toggle in Settings).
+    const gstPct = settings.gstRegistered ? GST_RATE[region] : 0;
     const materialMargin = parseFloat(materialMarginPct) || 0;
     const labourMargin = parseFloat(labourMarginPct) || 0;
 
@@ -978,7 +979,7 @@ function PhotoQuoteCalcInner() {
       }
       if (totals.travel > 0) lines.push(`Travel: ${fmt.format(totals.travel)}`);
       lines.push('');
-      lines.push(`${docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : 'Total inc. GST'}: ${fmt.format(totals.total)}`);
+      lines.push(`${docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : totals.gstPct > 0 ? 'Total inc. GST' : 'Total'}: ${fmt.format(totals.total)}`);
       if (totals.depositAmount > 0) {
         if (docType === 'invoice') {
           lines.push(`Deposit paid: −${fmt.format(totals.depositAmount)}`);
@@ -1878,17 +1879,19 @@ function PhotoQuoteCalcInner() {
                         <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.travel)}</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
-                      <span style={{ color: 'var(--color-muted)' }}>GST ({totals.gstPct}%)</span>
-                      <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.gstAmount)}</span>
-                    </div>
+                    {totals.gstPct > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 13 }}>
+                        <span style={{ color: 'var(--color-muted)' }}>GST ({totals.gstPct}%)</span>
+                        <span style={{ color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{fmt.format(totals.gstAmount)}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div style={{
                     display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
                     gap: 12, paddingTop: 6, borderTop: '0.5px solid var(--color-border)',
                   }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>{docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : 'Total inc. GST'}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.3px', textTransform: 'uppercase', color: 'var(--color-orange)', minWidth: 0 }}>{docType === 'invoice' && totals.depositAmount === 0 ? 'Total due' : totals.gstPct > 0 ? 'Total inc. GST' : 'Total'}</span>
                     <span style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-text)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.5px', whiteSpace: 'nowrap', flexShrink: 0, textAlign: 'right' }}>
                       {fmt.format(totals.total)}
                     </span>

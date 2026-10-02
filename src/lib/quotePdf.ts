@@ -277,7 +277,7 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
     doc.text(value, col.total, y, { align: 'right' });
     y += opts?.bold ? 22 : 18;
   }
-  totalRow(`GST (${q.gstPct}%)`, money(q.gstAmount));
+  if (q.gstPct > 0) totalRow(`GST (${q.gstPct}%)`, money(q.gstAmount));
   y += 4;
   doc.setDrawColor(10, 10, 10);
   doc.setLineWidth(1);
@@ -286,7 +286,8 @@ export function buildQuotePdf(q: PdfQuoteInput): jsPDF {
   const isInvoice = q.docType === 'invoice';
   // On an invoice the balance due is the headline figure; on a quote/estimate
   // the total is, and the deposit due + balance are shown beneath it.
-  totalRow(isInvoice && !hasDeposit ? 'Total due' : 'Total inc. GST', money(q.total), { bold: true, accent: !(hasDeposit && isInvoice) });
+  const totalLabel = isInvoice && !hasDeposit ? 'Total due' : q.gstPct > 0 ? 'Total inc. GST' : 'Total';
+  totalRow(totalLabel, money(q.total), { bold: true, accent: !(hasDeposit && isInvoice) });
   if (hasDeposit) {
     const bal = q.balanceDue ?? (q.total - q.depositAmount!);
     if (isInvoice) {

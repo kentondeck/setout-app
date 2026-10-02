@@ -11,6 +11,7 @@ const defaults: Settings = {
   pinnedCalcs: [],
   calcOrder: [],
   employees: [],
+  gstRegistered: true,
   businessName: '',
   businessNumber: '',
   businessPhone: '',

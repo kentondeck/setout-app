@@ -37,8 +37,8 @@ function fmt(n: number): string {
   return Number.isFinite(n) ? String(n) : '—';
 }
 
-function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, label }: {
-  length: number; width: number; depthNear: number; depthFar: number; sloped: boolean; label?: string;
+function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, slopeAxis = 'length', label }: {
+  length: number; width: number; depthNear: number; depthFar: number; sloped: boolean; slopeAxis?: 'length' | 'width'; label?: string;
 }) {
   const ORANGE = '#FF5A1F';
   const INK = '#0A0A0A';
@@ -58,16 +58,20 @@ function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, label }
   const nearH = baseNearH * scale;
   const farH = baseNearH * farRatio * scale;
 
+  const slopeWidth = sloped && slopeAxis === 'width';
+
   const ftl = { x: 40,  y: groundY };
   const ftr = { x: 200, y: groundY };
-  const fbl = { x: 40,  y: groundY + nearH };
-  const fbr = { x: 200, y: groundY + nearH };
-  const bbl = { x: fbl.x + ox, y: fbl.y - oy };
-  const bbr = { x: fbr.x + ox, y: fbr.y - oy };
   const btl = { x: ftl.x + ox, y: ftl.y - oy };
   const btr = { x: ftr.x + ox, y: ftr.y - oy };
-  const bblSloped = { x: bbl.x, y: btl.y + farH };
-  const bbrSloped = { x: bbr.x, y: btr.y + farH };
+  // Front-bottom: left stays at the near depth; the right drops to the far
+  // depth only when the slope runs across the width.
+  const fbl = { x: 40,  y: groundY + nearH };
+  const fbr = { x: 200, y: groundY + (slopeWidth ? farH : nearH) };
+  // Back-bottom: a length slope drops the whole back to the far depth; a width
+  // slope carries the sloped front straight back.
+  const bblSloped = { x: fbl.x + ox, y: slopeWidth ? fbl.y - oy : btl.y + farH };
+  const bbrSloped = { x: fbr.x + ox, y: slopeWidth ? fbr.y - oy : btr.y + farH };
   const p = (pt: { x: number; y: number }) => `${pt.x},${pt.y}`;
 
   return (
@@ -144,6 +148,7 @@ export function ExcavationCalc() {
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
   const [sloped, setSloped] = useState(false);
+  const [slopeAxis, setSlopeAxis] = useState<'length' | 'width'>('length');
   const [swellFactor, setSwellFactor] = useState(0.25);
   const [truckSize, setTruckSize] = useState(8);
   const [customTruck, setCustomTruck] = useState('');
@@ -266,6 +271,28 @@ export function ExcavationCalc() {
           >
             {sloped ? 'Sloped site' : 'Flat site'} — tap to toggle
           </button>
+
+          {sloped && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start' }}>
+              <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>Slope runs along</span>
+              <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '0.5px solid var(--color-border)' }}>
+                {(['length', 'width'] as const).map(axis => (
+                  <button
+                    key={axis}
+                    onClick={() => setSlopeAxis(axis)}
+                    style={{
+                      padding: '7px 14px', border: 'none', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+                      textTransform: 'capitalize', fontWeight: 500,
+                      background: slopeAxis === axis ? 'var(--color-orange)' : 'var(--color-card)',
+                      color: slopeAxis === axis ? '#fff' : 'var(--color-muted)',
+                    }}
+                  >
+                    {axis}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Soil type */}
@@ -413,6 +440,7 @@ export function ExcavationCalc() {
               depthNear={result.outputs.depthNear}
               depthFar={result.outputs.depthFar}
               sloped={sloped}
+              slopeAxis={slopeAxis}
               label={jobName}
             />
 

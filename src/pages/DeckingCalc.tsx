@@ -52,6 +52,7 @@ export function DeckingCalc() {
   const [persistedSuggestions, setPersistedSuggestions] = useState<{ items: GapSuggestion[]; lastBoardWidth: number } | null>(null);
   const [originalGap, setOriginalGap] = useState<number | null>(null);
   const [boardOrderMode, setBoardOrderMode] = useState<'fixed' | 'rlp'>('fixed');
+  const [boardDirection, setBoardDirection] = useState<'length' | 'width'>('length');
   const RLP_BUFFER_PCT = 10;
 
   function set(field: keyof Inputs) {
@@ -90,7 +91,7 @@ export function DeckingCalc() {
 
     let calc: ReturnType<typeof calculateDecking>;
     try {
-      calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing });
+      calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing, boardDirection });
     } catch (err) {
       setError((err as Error).message);
       return;
@@ -110,7 +111,7 @@ export function DeckingCalc() {
       id,
       calculatorId: 'decking',
       timestamp: Date.now(),
-      inputs: { deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing },
+      inputs: { deckLength: length, deckWidth: width, boardWidth, boardGap, joistSpacing, bearerSpacing, boardDirection: boardDirection === 'length' ? 1 : 0 },
       outputs: calc.outputs,
     });
 
@@ -124,7 +125,7 @@ export function DeckingCalc() {
     const joistSpacing = parseFloat(inputs.joistSpacing);
     const bearerSpacing = parseFloat(inputs.bearerSpacing);
     setInputs(prev => ({ ...prev, boardGap: String(gap) }));
-    const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap: gap, joistSpacing, bearerSpacing });
+    const calc = calculateDecking({ deckLength: length, deckWidth: width, boardWidth, boardGap: gap, joistSpacing, bearerSpacing, boardDirection });
     setResult(calc);
   }
 
@@ -258,6 +259,25 @@ export function DeckingCalc() {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Bearer spacing" value={inputs.bearerSpacing} onChange={set('bearerSpacing')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 1300', m: 'e.g. 1.3' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text)' }}>Boards run along</span>
+            <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '0.5px solid var(--color-border)' }}>
+              {(['length', 'width'] as const).map(dir => (
+                <button
+                  key={dir}
+                  onClick={() => setBoardDirection(dir)}
+                  style={{
+                    padding: '8px 16px', border: 'none', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer',
+                    textTransform: 'capitalize', fontWeight: 500,
+                    background: boardDirection === dir ? 'var(--color-orange)' : 'var(--color-card)',
+                    color: boardDirection === dir ? '#fff' : 'var(--color-muted)',
+                  }}
+                >
+                  {dir}
+                </button>
+              ))}
             </div>
           </div>
         </div>

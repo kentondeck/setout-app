@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://setoutapp.co.nz/sitemap.xml
+
+

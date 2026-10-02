@@ -74,6 +74,25 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     }
   }
 
+  // iOS honours `touch-action` at touch-start, so once a vertical pan is allowed
+  // the browser scrolls the page under the drag and preventDefault on a pointer
+  // event won't stop it — only a non-passive touchmove listener will. Lock
+  // scrolling for the life of the drag so the tile tracks the finger cleanly.
+  const scrollLock = useRef<((e: TouchEvent) => void) | null>(null);
+  function lockScroll() {
+    if (scrollLock.current) return;
+    const fn = (e: TouchEvent) => e.preventDefault();
+    scrollLock.current = fn;
+    document.addEventListener('touchmove', fn, { passive: false });
+  }
+  function unlockScroll() {
+    if (scrollLock.current) {
+      document.removeEventListener('touchmove', scrollLock.current);
+      scrollLock.current = null;
+    }
+  }
+  useEffect(() => () => unlockScroll(), []);
+
   function beginDrag(id: CalculatorId, clientX: number, clientY: number) {
     const el = tileRefs.current.get(id);
     if (!el) return;
@@ -84,6 +103,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
     setDragSize({ w: rect.width, h: rect.height });
     dragIdRef.current = id;
     setDragId(id);
+    lockScroll();
     hapticLight();
   }
 
@@ -139,6 +159,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
 
   function endInteraction(id: CalculatorId) {
     clearLongPressTimer();
+    unlockScroll();
     release();
     if (dragIdRef.current) {
       onReorder(order);
@@ -161,6 +182,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
 
   function handlePointerCancel() {
     clearLongPressTimer();
+    unlockScroll();
     release();
     dragIdRef.current = null;
     setDragId(null);

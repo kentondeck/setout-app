@@ -305,20 +305,24 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
     shapeResult = `${s}mm × ${s}mm × ${depth}mm ÷ 1,000,000,000`;
   }
 
-  // Post deduction
+  // Post deduction. The post is stood ~50mm off the bottom of the hole on a pad
+  // of concrete, so it only displaces concrete over (hole depth − 50mm) — the
+  // bottom 50mm stays solid concrete under the post.
+  const POST_BASE_GAP_MM = 50;
   let postVolumeM3 = 0;
   let postFormula = '';
   let postResult = '';
   if (postShape && postSize && postSize > 0) {
+    const postEmbedMm = Math.max(0, depth - POST_BASE_GAP_MM);
     if (postShape === 'round') {
       const pr = postSize / 2;
-      postVolumeM3 = (Math.PI * pr * pr * depth) / 1_000_000_000;
-      postFormula = 'π × (post radius)² × depth ÷ 1,000,000,000';
-      postResult = `π × (${pr}mm)² × ${depth}mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+      postVolumeM3 = (Math.PI * pr * pr * postEmbedMm) / 1_000_000_000;
+      postFormula = 'π × (post radius)² × (depth − 50mm base) ÷ 1,000,000,000';
+      postResult = `π × (${pr}mm)² × (${depth} − 50)mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
     } else {
-      postVolumeM3 = (postSize * postSize * depth) / 1_000_000_000;
-      postFormula = 'post side² × depth ÷ 1,000,000,000';
-      postResult = `${postSize}mm × ${postSize}mm × ${depth}mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+      postVolumeM3 = (postSize * postSize * postEmbedMm) / 1_000_000_000;
+      postFormula = 'post side² × (depth − 50mm base) ÷ 1,000,000,000';
+      postResult = `${postSize}mm × ${postSize}mm × (${depth} − 50)mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
     }
   }
 
@@ -339,7 +343,7 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
       result: `${shapeResult} = ${parseFloat(grossVolumePerHoleM3.toFixed(4))} m³ per hole`,
     },
     ...(postVolumeM3 > 0 ? [{
-      label: 'Deduct post volume',
+      label: 'Deduct post (50 mm off the bottom)',
       formula: postFormula,
       result: `${postResult} → net ${volumePerHole} m³ per hole`,
     }] : []),

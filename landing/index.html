@@ -85,6 +85,8 @@
     .nav-logo { font-size: 22px; font-weight: 800; letter-spacing: -1.2px; text-decoration: none; }
     .nav-logo .s { color: var(--dark); }
     .nav-logo .o { color: var(--orange); }
+    .nav-logo .tag { font-size: 13px; font-weight: 400; letter-spacing: -0.2px; color: var(--muted); margin-left: 10px; }
+    @media (max-width: 1000px) { .nav-logo .tag { display: none; } }
     .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
     .nav-links a { font-size: 14px; font-weight: 500; color: var(--dark); text-decoration: none; opacity: 0.5; }
     .nav-links a:hover { opacity: 1; }
@@ -410,6 +412,7 @@
     .footer-logo { font-size: 20px; font-weight: 800; letter-spacing: -1px; }
     .footer-logo .s { color: white; }
     .footer-logo .o { color: var(--orange); }
+    .footer-logo .tag { display: block; font-size: 13px; font-weight: 400; letter-spacing: -0.2px; color: #a3a3a3; margin-top: 4px; }
     .footer-links { display: flex; gap: 24px; list-style: none; }
     .footer-links a { font-size: 13px; color: rgba(255,255,255,0.6); text-decoration: none; }
     .footer-copy { font-size: 13px; color: rgba(255,255,255,0.5); }
@@ -437,7 +440,7 @@
 
 <!-- NAV -->
 <nav>
-  <a href="#" class="nav-logo"><span class="s">set</span><span class="o">out</span></a>
+  <a href="#" class="nav-logo"><span class="s">set</span><span class="o">out</span><span class="tag">build smarter.</span></a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#calculators">Calculators</a></li>
@@ -649,14 +652,14 @@
 
 <!-- DOWNLOAD CTA -->
 <div id="download">
-  <h2>Launching soon on iPhone.</h2>
+  <h2>Build smarter.<br>Launching soon on iPhone.</h2>
   <p>Android to follow. Questions? Email <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
   <p class="form-note">Free for 2 weeks at launch, then $1.99/week. Cancel anytime.</p>
 </div>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo"><span class="s">set</span><span class="o">out</span></div>
+  <div class="footer-logo"><span class="s">set</span><span class="o">out</span><span class="tag">build smarter.</span></div>
   <ul class="footer-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#calculators">Calculators</a></li>

@@ -126,9 +126,10 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
           title={hint}
           style={{
             fontSize: 11, color: 'var(--color-muted)', visibility: hint ? 'visible' : 'hidden',
-            // Always exactly one line so every input is the same height and the
-            // boxes line up in a row (a wrapping hint used to push its box down).
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+            // Reserve exactly one line always — even with no hint — so every input
+            // is the same height and the boxes line up across a row. (A blank
+            // placeholder collapsed to zero height; a wrapping hint grew too tall.)
+            height: 14, lineHeight: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}
         >
           {hint || ' '}

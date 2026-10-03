@@ -304,11 +304,11 @@
     .step-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
     /* FEATURES */
-    #features { background: var(--dark); padding: 96px 48px; }
+    #features { background: #ffffff; padding: 96px 48px; }
     #features .section-inner { max-width: 1160px; margin: 0 auto; }
     #features .section-eyebrow { color: var(--orange); }
-    #features h2 { color: white; }
-    #features .section-sub { color: rgba(255,255,255,0.45); }
+    #features h2 { color: var(--dark); }
+    #features .section-sub { color: var(--muted); }
 
     .features-grid {
       display: grid;
@@ -316,15 +316,15 @@
       gap: 16px;
     }
     .feat-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--bg);
+      border: 1px solid #e8e8e4;
       border-radius: 20px;
       padding: 32px 28px;
     }
     .feat-icon {
       width: 44px;
       height: 44px;
-      background: rgba(255,90,31,0.15);
+      background: rgba(255,90,31,0.12);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -332,8 +332,8 @@
       margin-bottom: 20px;
       color: var(--orange);
     }
-    .feat-card h3 { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; margin-bottom: 10px; }
-    .feat-card p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; }
+    .feat-card h3 { font-size: 16px; font-weight: 700; color: var(--dark); letter-spacing: -0.3px; margin-bottom: 10px; }
+    .feat-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
     /* CALCULATORS */
     #calculators { background: var(--bg); }
@@ -518,7 +518,7 @@
 <div id="features">
   <div class="section-inner" style="max-width:1160px;margin:0 auto;padding:96px 48px;">
     <p class="section-eyebrow">Features</p>
-    <h2 style="color:white;font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:16px;">Everything you need.<br>Nothing you don't.</h2>
+    <h2 style="font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:16px;">Everything you need.<br>Nothing you don't.</h2>
     <p class="section-sub">Built by tradies, for tradies. Every feature exists because someone on site needed it.</p>
     <div class="features-grid">
       <div class="feat-card">

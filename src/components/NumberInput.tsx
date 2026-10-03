@@ -122,7 +122,15 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
         <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.1px' }}>
           {label}
         </label>
-        <span style={{ fontSize: 11, color: 'var(--color-muted)', visibility: hint ? 'visible' : 'hidden' }}>
+        <span
+          title={hint}
+          style={{
+            fontSize: 11, color: 'var(--color-muted)', visibility: hint ? 'visible' : 'hidden',
+            // Always exactly one line so every input is the same height and the
+            // boxes line up in a row (a wrapping hint used to push its box down).
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}
+        >
           {hint || ' '}
         </span>
       </div>

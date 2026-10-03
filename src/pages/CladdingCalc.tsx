@@ -132,7 +132,7 @@ export function CladdingCalc() {
                 onChange={set('lap')}
                 units={['mm', 'm']}
                 placeholders={{ mm: 'e.g. 35', m: 'e.g. 0.035' }}
-                hint={inputs.boardWidth && inputs.lap ? `${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm face nominal` : 'actual may adjust for whole courses'}
+                hint={inputs.boardWidth && inputs.lap ? `${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm face nominal` : 'adjusts for whole courses'}
               />
             </div>
           </div>
@@ -143,7 +143,7 @@ export function CladdingCalc() {
               <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3600', m: 'e.g. 3.6' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 150', m: 'e.g. 0.15' }} hint="from datum to first course" />
+              <NumberInput label="Start offset" value={inputs.startOffset} onChange={set('startOffset')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 150', m: 'e.g. 0.15' }} hint="datum to first course" />
             </div>
           </div>
         </div>

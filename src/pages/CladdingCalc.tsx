@@ -138,7 +138,7 @@ export function CladdingCalc() {
           </div>
 
           {/* Stock length & start offset */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <NumberInput label="Board length" value={inputs.boardLength} onChange={set('boardLength')} units={['mm', 'm']} placeholders={{ mm: 'e.g. 3600', m: 'e.g. 3.6' }} />
             </div>

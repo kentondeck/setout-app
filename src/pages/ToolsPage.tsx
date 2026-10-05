@@ -5,6 +5,7 @@ import { SettingsContext } from '../contexts';
 import { useTools, TOOL_CATEGORIES, compressImageFile, type Tool } from '../lib/useRecords';
 import { exportTools } from '../lib/recordsExport';
 import { hapticMedium } from '../lib/haptics';
+import { savePhotoToDevice } from '../lib/savePhoto';
 
 function formatMoney(n: number | undefined): string {
   if (n == null || !isFinite(n)) return '';
@@ -24,6 +25,7 @@ export function ToolsPage() {
   const { settings } = useContext(SettingsContext);
   const { items, add, update, remove } = useTools();
 
+  const [adding, setAdding] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Tool>>({});
   const [processing, setProcessing] = useState(false);
@@ -80,7 +82,6 @@ export function ToolsPage() {
     setError('');
     try {
       setPendingPhoto(await compressImageFile(file));
-      setForm({});
     } catch {
       setError('Could not process that image — try another photo.');
     } finally {
@@ -89,7 +90,7 @@ export function ToolsPage() {
   }
 
   async function handleSave() {
-    if (!pendingPhoto) return;
+    if (!form.name?.trim()) { setError('Enter a name.'); return; }
     await add(pendingPhoto, {
       name: form.name?.trim() || undefined,
       brand: form.brand?.trim() || undefined,
@@ -102,6 +103,8 @@ export function ToolsPage() {
     });
     setPendingPhoto(null);
     setForm({});
+    setAdding(false);
+    setError('');
     hapticMedium();
   }
 
@@ -136,7 +139,7 @@ export function ToolsPage() {
 
       <div style={{ padding: '4px 20px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <p style={{ margin: '0 4px 4px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          Photograph each tool with serial + replacement value. If your tools get stolen, the insurer wants this list.
+          Log each tool with its serial + replacement value — add a photo if you can. If your tools get stolen, the insurer wants this list.
         </p>
 
         {items.length > 0 && (
@@ -152,66 +155,89 @@ export function ToolsPage() {
           </div>
         )}
 
-        {!pendingPhoto && (
-          <>
-            <div style={{ display: 'flex', gap: 8 }}>
+        {!adding && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { setAdding(true); setForm({}); setPendingPhoto(null); setError(''); }}
+              style={{
+                flex: items.length > 0 ? 1 : undefined,
+                width: items.length === 0 ? '100%' : undefined,
+                padding: '14px', borderRadius: 14,
+                background: 'var(--color-orange)', color: '#fff',
+                border: 'none', fontSize: 15, fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer',
+                letterSpacing: '-0.2px',
+              }}
+            >
+              + Add tool
+            </button>
+            {items.length > 0 && (
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={processing}
+                onClick={handleSend}
+                disabled={sending}
                 style={{
-                  flex: items.length > 0 ? 1 : undefined,
-                  width: items.length === 0 ? '100%' : undefined,
+                  flex: 1,
                   padding: '14px', borderRadius: 14,
-                  background: 'var(--color-orange)', color: '#fff',
-                  border: 'none', fontSize: 15, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
+                  background: 'transparent', color: 'var(--color-text)',
+                  border: '0.5px solid var(--color-border)',
+                  fontSize: 15, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: sending ? 'default' : 'pointer',
                   letterSpacing: '-0.2px',
+                  opacity: sending ? 0.7 : 1,
                 }}
               >
-                {processing ? 'Processing…' : '+ Add tool'}
+                {sending ? 'Building…' : 'Send for insurance'}
               </button>
-              {items.length > 0 && (
-                <button
-                  onClick={handleSend}
-                  disabled={sending}
-                  style={{
-                    flex: 1,
-                    padding: '14px', borderRadius: 14,
-                    background: 'transparent', color: 'var(--color-text)',
-                    border: '0.5px solid var(--color-border)',
-                    fontSize: 15, fontWeight: 500,
-                    fontFamily: 'inherit', cursor: sending ? 'default' : 'pointer',
-                    letterSpacing: '-0.2px',
-                    opacity: sending ? 0.7 : 1,
-                  }}
-                >
-                  {sending ? 'Building…' : 'Send for insurance'}
-                </button>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              style={{ display: 'none' }}
-            />
-          </>
+            )}
+          </div>
         )}
+        {/* Hidden picker — used by the optional "Add photo" button inside the form. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          style={{ display: 'none' }}
+        />
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
-        {pendingPhoto && (
+        {adding && (
           <div style={{
             background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
             borderRadius: 'var(--radius-card)', padding: 14,
             display: 'flex', flexDirection: 'column', gap: 10,
           }}>
-            <img
-              src={pendingPhoto}
-              alt=""
-              style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
-            />
+            {pendingPhoto ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <img
+                  src={pendingPhoto}
+                  alt=""
+                  style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
+                />
+                <button
+                  onClick={() => setPendingPhoto(null)}
+                  style={{
+                    alignSelf: 'flex-start', padding: '4px 6px', border: 'none', background: 'none',
+                    color: 'var(--color-muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >Remove photo</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processing}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 10,
+                  border: '1px dashed var(--color-border)', background: 'var(--color-bg)',
+                  color: 'var(--color-muted)', fontSize: 14, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                {processing ? 'Processing…' : '+ Add photo'}
+              </button>
+            )}
             <input
               type="text" placeholder="Name (e.g. 18V impact driver)"
               value={form.name ?? ''}
@@ -260,11 +286,11 @@ export function ToolsPage() {
               onChange={e => setForm(f => ({ ...f, category: e.target.value || undefined }))}
               style={inputStyle}
             >
-              <option value="">Category (optional)</option>
+              <option value="">Category</option>
               {TOOL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <textarea
-              placeholder="Notes (optional)"
+              placeholder="Notes"
               value={form.notes ?? ''}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={2}
@@ -272,7 +298,7 @@ export function ToolsPage() {
             />
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => { setPendingPhoto(null); setForm({}); }}
+                onClick={() => { setPendingPhoto(null); setForm({}); setAdding(false); setError(''); }}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 10, border: '0.5px solid var(--color-border)',
                   background: 'var(--color-bg)', color: 'var(--color-muted)', fontSize: 14, fontWeight: 500,
@@ -291,7 +317,7 @@ export function ToolsPage() {
           </div>
         )}
 
-        {grouped.length === 0 && !pendingPhoto && (
+        {grouped.length === 0 && !adding && (
           <p style={{ margin: '20px 4px', fontSize: 13, color: 'var(--color-muted)', textAlign: 'center' }}>
             No tools logged yet.
           </p>
@@ -438,11 +464,28 @@ export function ToolsPage() {
           style={{
             position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(0,0,0,0.92)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
             padding: 'calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)',
           }}
         >
-          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 10 }} />
+          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: 'calc(100% - 64px)', objectFit: 'contain', borderRadius: 10 }} />
+          <button
+            onClick={e => { e.stopPropagation(); savePhotoToDevice(viewerPhoto).catch(() => {}); }}
+            style={{
+              flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
+              padding: '11px 18px', borderRadius: 999,
+              background: 'rgba(255,255,255,0.14)', color: '#fff',
+              border: '0.5px solid rgba(255,255,255,0.3)',
+              fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Save to phone
+          </button>
         </div>
       )}
     </div>

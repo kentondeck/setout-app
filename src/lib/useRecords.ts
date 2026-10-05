@@ -196,7 +196,7 @@ function useRecords<T extends { id: string; filename: string; timestamp: number 
     // Hydrate photos in the background so the list renders instantly.
     (async () => {
       for (let i = 0; i < sorted.length; i++) {
-        const dataUrl = await readPhoto(kind, sorted[i].filename);
+        const dataUrl = sorted[i].filename ? await readPhoto(kind, sorted[i].filename) : null;
         if (!mountedRef.current) return;
         setItems(prev => prev.map(h =>
           h.record.id === sorted[i].id ? { ...h, dataUrl } : h,
@@ -205,14 +205,18 @@ function useRecords<T extends { id: string; filename: string; timestamp: number 
     })();
   }, [kind]);
 
-  const add = useCallback(async (photoDataUrl: string, fields: Omit<T, 'id' | 'filename' | 'timestamp'>) => {
+  const add = useCallback(async (photoDataUrl: string | null, fields: Omit<T, 'id' | 'filename' | 'timestamp'>) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const filename = `${id}.jpg`;
-    try {
-      await writePhoto(kind, filename, photoDataUrl);
-    } catch (err) {
-      console.warn('[records] write failed', err);
-      return;
+    // Photo is optional — a tool (or receipt) can be logged by its details alone.
+    // No photo ⇒ empty filename, and we skip the file write entirely.
+    const filename = photoDataUrl ? `${id}.jpg` : '';
+    if (photoDataUrl) {
+      try {
+        await writePhoto(kind, filename, photoDataUrl);
+      } catch (err) {
+        console.warn('[records] write failed', err);
+        return;
+      }
     }
     const record = { id, filename, timestamp: Date.now(), ...fields } as unknown as T;
     const next = [record, ...loadList<T>(kind)];
@@ -235,7 +239,7 @@ function useRecords<T extends { id: string; filename: string; timestamp: number 
     const target = list.find(r => r.id === id);
     const next = list.filter(r => r.id !== id);
     saveList(kind, next);
-    if (target) await deletePhoto(kind, target.filename).catch(() => { /* best effort */ });
+    if (target?.filename) await deletePhoto(kind, target.filename).catch(() => { /* best effort */ });
     setItems(prev => prev.filter(h => h.record.id !== id));
   }, [kind]);
 

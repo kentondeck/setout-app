@@ -7,7 +7,7 @@ import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
 import { useJobPhotos, compressImageFile } from '../lib/useJobPhotos';
-import { savePhotoToDevice } from '../lib/savePhoto';
+import { PhotoViewer } from '../components/PhotoViewer';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
@@ -1083,33 +1083,17 @@ function CalcEntryCard({ entry, onRemove }: { entry: HistoryEntry; onRemove: (id
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
 function EmptyState({ onAdd }: { onAdd: () => void }) {
+  // Small, unobtrusive hint — the corner + (FAB) is the real add affordance.
   return (
     <button
       onClick={onAdd}
-      onPointerDown={e => (e.currentTarget.style.borderColor = 'rgba(255,90,31,0.4)')}
-      onPointerUp={e => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.18)')}
-      onPointerLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,0,0,0.18)')}
       style={{
-        width: '100%',
-        margin: '8px 0', padding: '40px 20px',
-        background: 'var(--color-card)', border: '0.5px dashed rgba(0,0,0,0.18)', borderRadius: 18,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, textAlign: 'center',
-        fontFamily: 'inherit', cursor: 'pointer',
-        transition: 'border-color 0.15s ease',
+        margin: '14px auto 0', padding: '6px 10px',
+        background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+        fontSize: 13, color: 'var(--color-muted)', textAlign: 'center', letterSpacing: '-0.1px',
       }}
     >
-      <div style={{
-        width: 56, height: 56, borderRadius: 16, background: 'rgba(255,90,31,0.10)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4,
-      }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-orange)" strokeWidth="2.4" strokeLinecap="round">
-          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-      </div>
-      <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.3px' }}>No calcs yet</p>
-      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', maxWidth: 240, lineHeight: 1.5 }}>
-        Tap here or the + button to add your first calculation.
-      </p>
+      Tap <span style={{ color: 'var(--color-orange)', fontWeight: 700 }}>+</span> to add a calculation
     </button>
   );
 }
@@ -1178,6 +1162,12 @@ export function JobDetailPage() {
 
   const grouped: Record<string, HistoryEntry[]> = { today: [], yesterday: [], older: [] };
   for (const c of calculations) grouped[dayGroup(c.timestamp)].push(c);
+
+  // Aggregated materials (calc-derived + manually written-down lines). Drives
+  // the always-available Materials section, so items can be added even before
+  // any calc is attached.
+  const jobOrder = applyManualEdits(buildJobOrder(calculations), job);
+  const materialCount = jobOrder.timber.length + jobOrder.concrete.length + jobOrder.fixings.length + jobOrder.other.length;
 
   function handleRename() {
     if (!renameDraft.trim() || renameDraft.trim() === job!.name) { setShowRename(false); return; }
@@ -1257,8 +1247,8 @@ export function JobDetailPage() {
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--color-muted)' }}>
             {calculations.length === 0
-              ? `No calcs yet · ${relativeTime(job.createdAt)}`
-              : `${calculations.length} ${calculations.length === 1 ? 'calc' : 'calcs'} · last edit ${relativeTime(job.updatedAt)}`}
+              ? `Created ${relativeTime(job.createdAt)}`
+              : `Last edit ${relativeTime(job.updatedAt)}`}
           </p>
         </div>
 
@@ -1318,50 +1308,55 @@ export function JobDetailPage() {
       {/* Photos + comments */}
       <JobPhotosSection jobId={job.id} />
 
-      {/* Collapsible sections */}
-      {calculations.length > 0 && (
-        <div style={{ padding: '8px 18px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <SectionHeader
-            label="Order"
-            summary={`${calculations.length} ${calculations.length === 1 ? 'calc' : 'calcs'}`}
-            open={openSection === 'order'}
-            onToggle={() => setOpenSection(openSection === 'order' ? null : 'order')}
-          />
-          {openSection === 'order' && (
-            <div style={{ margin: '-4px -18px 4px' }}>
-              <OrderCard entries={calculations} job={job} updateJob={updateJob} bufferPct={bufferPct} setBufferPct={setBufferPct} />
-            </div>
-          )}
+      {/* Collapsible sections — Materials is always available (write items down
+          even with no calcs); Calculations + Send to quote appear once there's content. */}
+      <div style={{ padding: '8px 18px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <SectionHeader
+          label="Materials"
+          summary={materialCount > 0 ? `${materialCount} ${materialCount === 1 ? 'item' : 'items'}` : 'Add items'}
+          open={openSection === 'order'}
+          onToggle={() => setOpenSection(openSection === 'order' ? null : 'order')}
+        />
+        {openSection === 'order' && (
+          <div style={{ margin: '-4px -18px 4px' }}>
+            <OrderCard entries={calculations} job={job} updateJob={updateJob} bufferPct={bufferPct} setBufferPct={setBufferPct} />
+          </div>
+        )}
 
-          <SectionHeader
-            label="Calculations"
-            summary={`${calculations.length}`}
-            open={openSection === 'calcs'}
-            onToggle={() => setOpenSection(openSection === 'calcs' ? null : 'calcs')}
-          />
-          {openSection === 'calcs' && (
-            <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 4 }}>
-              {GROUP_ORDER.map(g => {
-                const group = grouped[g];
-                if (group.length === 0) return null;
-                return (
-                  <div key={g}>
-                    <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                      {group.map(entry => (
-                        <CalcEntryCard
-                          key={entry.id}
-                          entry={entry}
-                          onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
-                        />
-                      ))}
+        {calculations.length > 0 && (
+          <>
+            <SectionHeader
+              label="Calculations"
+              summary={`${calculations.length}`}
+              open={openSection === 'calcs'}
+              onToggle={() => setOpenSection(openSection === 'calcs' ? null : 'calcs')}
+            />
+            {openSection === 'calcs' && (
+              <div style={{ display: 'flex', flexDirection: 'column', marginBottom: 4 }}>
+                {GROUP_ORDER.map(g => {
+                  const group = grouped[g];
+                  if (group.length === 0) return null;
+                  return (
+                    <div key={g}>
+                      <GroupHeader label={GROUP_LABELS[g]} count={group.length} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                        {group.map(entry => (
+                          <CalcEntryCard
+                            key={entry.id}
+                            entry={entry}
+                            onRemove={calcId => removeCalculationFromJob(job.id, calcId)}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
+        {(calculations.length > 0 || materialCount > 0) && (
           <button
             onClick={handleSendToQuote}
             style={{
@@ -1377,12 +1372,12 @@ export function JobDetailPage() {
             </svg>
             Send to quote / estimate
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Empty state (no calcs yet) */}
+      {/* Empty state — only when the job is truly empty (no calcs, no materials) */}
       <div style={{ flex: 1, padding: '14px 18px 100px', display: 'flex', flexDirection: 'column' }}>
-        {calculations.length === 0 && <EmptyState onAdd={handleAddCalc} />}
+        {calculations.length === 0 && materialCount === 0 && <EmptyState onAdd={handleAddCalc} />}
       </div>
 
       {/* FAB */}
@@ -1776,37 +1771,8 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
         </>
       )}
 
-      {/* Full-screen photo viewer */}
-      {viewerPhoto && (
-        <div
-          onClick={() => setViewerPhoto(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.92)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-            padding: 'calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px)',
-            cursor: 'zoom-out',
-          }}
-        >
-          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: 'calc(100% - 64px)', objectFit: 'contain', borderRadius: 6 }} />
-          <button
-            onClick={e => { e.stopPropagation(); savePhotoToDevice(viewerPhoto).catch(() => {}); }}
-            style={{
-              flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-              padding: '11px 18px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.14)', color: '#fff',
-              border: '0.5px solid rgba(255,255,255,0.3)',
-              fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Save to phone
-          </button>
-        </div>
-      )}
+      {/* Full-screen photo viewer (pinch-zoom + save/share) */}
+      {viewerPhoto && <PhotoViewer src={viewerPhoto} onClose={() => setViewerPhoto(null)} />}
     </>
   );
 }

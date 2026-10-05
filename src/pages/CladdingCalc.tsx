@@ -133,6 +133,7 @@ export function CladdingCalc() {
                 units={['mm', 'm']}
                 placeholders={{ mm: 'e.g. 35', m: 'e.g. 0.035' }}
                 hint={inputs.boardWidth && inputs.lap ? `${Math.max(0, parseFloat(inputs.boardWidth) - parseFloat(inputs.lap))}mm face nominal` : 'adjusts for whole courses'}
+                hintColor={inputs.boardWidth && inputs.lap ? 'var(--color-orange)' : undefined}
               />
             </div>
           </div>
@@ -168,6 +169,7 @@ export function CladdingCalc() {
           const actualLap = parseFloat((result.outputs.boardWidth - result.outputs.faceCover).toFixed(1));
           const lapDelta = parseFloat((actualLap - result.outputs.desiredLap).toFixed(1));
           const lapAdjusted = Math.abs(lapDelta) >= 0.1;
+          const nominalFace = parseFloat((result.outputs.boardWidth - result.outputs.desiredLap).toFixed(1));
           const shopRows = [
             { qty: `${result.outputs.stockCount}`, name: `${result.outputs.boardWidth}mm cladding boards`, meta: `${inputs.boardLength}mm each · ${result.outputs.totalLm} lm · ${result.outputs.wastePercent}% waste` },
           ];
@@ -180,7 +182,7 @@ export function CladdingCalc() {
               label="You'll need"
               value={result.outputs.stockCount}
               unit="boards"
-              spec={`${inputs.wallHeight}${inputs.wallHeight.includes('.') ? 'm' : 'mm'} × ${inputs.wallWidth}${inputs.wallWidth.includes('.') ? 'm' : 'mm'} wall · ${result.outputs.courseCount} courses @ ${result.outputs.faceCover}mm centres`}
+              spec={`${inputs.wallHeight}${inputs.wallHeight.includes('.') ? 'm' : 'mm'} × ${inputs.wallWidth}${inputs.wallWidth.includes('.') ? 'm' : 'mm'} wall · ${result.outputs.courseCount} courses · ${result.outputs.faceCover}mm face`}
               stats={[
                 { label: `${result.outputs.totalLm} lm` },
                 { label: `${actualLap}mm actual lap` },
@@ -189,18 +191,37 @@ export function CladdingCalc() {
               ]}
             />
 
-            {lapAdjusted && (
-              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4, padding: '0 4px' }}>
-                Overlap adjusted from {result.outputs.desiredLap}mm ({lapDelta > 0 ? '+' : ''}{lapDelta}mm) so courses divide evenly.
+            {/* Actual setout after even division — the face cover is the number you
+                mark on the story rod, so call it out plainly (and show how it moved
+                from the nominal the tradie entered). */}
+            <div style={{
+              background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)', padding: '14px 16px',
+              display: 'flex', flexDirection: 'column', gap: 8,
+            }}>
+              <div style={{ display: 'flex', gap: 28 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-muted)', fontWeight: 500 }}>Actual face</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-orange)', letterSpacing: '-0.6px', fontVariantNumeric: 'tabular-nums' }}>{result.outputs.faceCover}mm</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-muted)', fontWeight: 500 }}>Actual overlap</span>
+                  <span style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.6px', fontVariantNumeric: 'tabular-nums' }}>{actualLap}mm</span>
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+                {lapAdjusted
+                  ? `Evened over ${result.outputs.courseCount} courses — you set ${nominalFace}mm face / ${result.outputs.desiredLap}mm lap, nudged ${lapDelta > 0 ? '+' : ''}${lapDelta}mm so the courses divide exactly.`
+                  : `${result.outputs.courseCount} courses divide the wall exactly at your ${nominalFace}mm face.`}
               </p>
-            )}
+            </div>
 
             <ShoppingList rows={shopRows} />
 
             {/* Story rod */}
             <div style={{ ...cardStyle, gap: 12 }}>
               <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '1.6px', textTransform: 'uppercase' }}>
-                Story rod — {result.outputs.faceCover}mm centres
+                Story rod — {result.outputs.faceCover}mm face
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {result.rodMarks.map((mark, i) => (

@@ -14,7 +14,7 @@ export async function savePhotoToDevice(dataUrl: string): Promise<void> {
     const base64 = dataUrl.includes(',') ? dataUrl.slice(dataUrl.indexOf(',') + 1) : dataUrl;
     await Filesystem.writeFile({ path: name, data: base64, directory: Directory.Cache });
     const { uri } = await Filesystem.getUri({ path: name, directory: Directory.Cache });
-    await Share.share({ url: uri, dialogTitle: 'Save photo' });
+    await Share.share({ url: uri, dialogTitle: 'Save or share photo' });
   } else {
     const a = document.createElement('a');
     a.href = dataUrl;

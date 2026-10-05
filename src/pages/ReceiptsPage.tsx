@@ -6,7 +6,7 @@ import { useReceipts, RECEIPT_CATEGORIES, compressImageFile, type Receipt } from
 import { exportReceipts } from '../lib/recordsExport';
 import { currentTaxYear, previousTaxYear, type TaxYearRange } from '../lib/taxYear';
 import { hapticMedium } from '../lib/haptics';
-import { savePhotoToDevice } from '../lib/savePhoto';
+import { PhotoViewer } from '../components/PhotoViewer';
 
 // Simple month key used to group the list ("Sep 2026") — the tradie sees a
 // running feed newest-first, but section headers give a sense of "this month
@@ -478,36 +478,7 @@ export function ReceiptsPage() {
         </p>
       </div>
 
-      {viewerPhoto && (
-        <div
-          onClick={() => setViewerPhoto(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.92)',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-            padding: 'calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)',
-          }}
-        >
-          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: 'calc(100% - 64px)', objectFit: 'contain', borderRadius: 10 }} />
-          <button
-            onClick={e => { e.stopPropagation(); savePhotoToDevice(viewerPhoto).catch(() => {}); }}
-            style={{
-              flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-              padding: '11px 18px', borderRadius: 999,
-              background: 'rgba(255,255,255,0.14)', color: '#fff',
-              border: '0.5px solid rgba(255,255,255,0.3)',
-              fontSize: 14, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Save to phone
-          </button>
-        </div>
-      )}
+      {viewerPhoto && <PhotoViewer src={viewerPhoto} onClose={() => setViewerPhoto(null)} />}
     </div>
   );
 }

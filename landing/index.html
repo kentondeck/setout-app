@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Setout | Construction Calculators for Tradies in Australia &amp; NZ</title>
-  <meta name="description" content="Offline construction calculators for Australian and NZ tradies: stairs, decking, framing, roofing and more. Free for 2 weeks at launch.">
+  <meta name="description" content="Offline construction calculators for Australian and NZ tradies: stairs, decking, framing, roofing and more. 14-day free trial at launch.">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="canonical" href="https://setoutapp.co.nz/">
   <meta name="robots" content="index, follow">
   <meta property="og:type" content="website">
@@ -130,7 +134,7 @@
     .iphone-mockup {
       position: relative;
       width: 300px;
-      aspect-ratio: 390 / 844;
+      aspect-ratio: 300 / 617;
       background: linear-gradient(160deg, #2b2b2b, #0a0a0a);
       border-radius: 52px;
       padding: 14px;
@@ -150,7 +154,7 @@
     .iphone-screen img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: top;
       display: block;
     }
@@ -221,6 +225,10 @@
     .btn-text-stack .btn-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; text-transform: uppercase; opacity: 0.7; }
 
     /* STATS BAR */
+    .proof { background: var(--bg); padding: 28px 24px 36px; text-align: center; }
+    .proof p { font-size: 13px; color: var(--muted); margin: 0 0 14px; letter-spacing: 0.01em; }
+    .proof img { height: 64px; width: auto; display: inline-block; }
+    @media (max-width: 640px) { .proof img { height: 52px; } }
     .stats-bar {
       background: white;
       border-top: 1px solid var(--border);
@@ -304,11 +312,11 @@
     .step-card p { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
     /* FEATURES */
-    #features { background: var(--dark); padding: 96px 48px; }
+    #features { background: #ffffff; padding: 96px 48px; }
     #features .section-inner { max-width: 1160px; margin: 0 auto; }
     #features .section-eyebrow { color: var(--orange); }
-    #features h2 { color: white; }
-    #features .section-sub { color: rgba(255,255,255,0.45); }
+    #features h2 { color: var(--dark); }
+    #features .section-sub { color: var(--muted); }
 
     .features-grid {
       display: grid;
@@ -316,15 +324,15 @@
       gap: 16px;
     }
     .feat-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--bg);
+      border: 1px solid #e8e8e4;
       border-radius: 20px;
       padding: 32px 28px;
     }
     .feat-icon {
       width: 44px;
       height: 44px;
-      background: rgba(255,90,31,0.15);
+      background: rgba(255,90,31,0.12);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -332,8 +340,8 @@
       margin-bottom: 20px;
       color: var(--orange);
     }
-    .feat-card h3 { font-size: 16px; font-weight: 700; color: white; letter-spacing: -0.3px; margin-bottom: 10px; }
-    .feat-card p { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.7; }
+    .feat-card h3 { font-size: 16px; font-weight: 700; color: var(--dark); letter-spacing: -0.3px; margin-bottom: 10px; }
+    .feat-card p { font-size: 13px; color: var(--muted); line-height: 1.7; }
 
     /* CALCULATORS */
     #calculators { background: var(--bg); }
@@ -456,7 +464,7 @@
     <h1>Not another app, a <em>tool</em>.</h1>
     <p>Instant results for stairs, decking, framing, roofing and more — no page loads, no friction. Built specifically for the Australian and New Zealand building industry.</p>
     <p class="coming-soon">Coming soon to iPhone</p>
-    <p class="hero-free"><strong>Free for 2 weeks</strong>, then just $1.99/week — cancel anytime. Launching first on iPhone, with Android to follow.</p>
+    <p class="hero-free"><strong>14-day free trial</strong>, then just $1.99/week — cancel anytime. Launching first on iPhone, with Android to follow.</p>
   </div>
   <div class="hero-img">
     <div class="iphone-mockup">
@@ -468,6 +476,12 @@
   </div>
 </div>
 
+<!-- SOCIAL PROOF -->
+<div class="proof">
+  <p>Used on site by</p>
+  <img src="images/modern-structure-logo.png" alt="Modern Structure Building Company logo" width="180" height="63">
+</div>
+
 <!-- STATS BAR -->
 <div class="stats-bar">
   <div class="stats-inner">
@@ -476,7 +490,7 @@
       <div class="stat-label">Calculators</div>
     </div>
     <div class="stat-item">
-      <div class="stat-num">2 weeks</div>
+      <div class="stat-num">14 days</div>
       <div class="stat-label">Free Trial</div>
     </div>
     <div class="stat-item">
@@ -518,7 +532,7 @@
 <div id="features">
   <div class="section-inner" style="max-width:1160px;margin:0 auto;padding:96px 48px;">
     <p class="section-eyebrow">Features</p>
-    <h2 style="color:white;font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:16px;">Everything you need.<br>Nothing you don't.</h2>
+    <h2 style="font-size:42px;font-weight:800;letter-spacing:-2px;margin-bottom:16px;">Everything you need.<br>Nothing you don't.</h2>
     <p class="section-sub">Built by tradies, for tradies. Every feature exists because someone on site needed it.</p>
     <div class="features-grid">
       <div class="feat-card">
@@ -603,7 +617,7 @@
     <div class="faq-list" style="margin-top:40px;">
       <div class="faq-item">
         <div class="faq-q">Is Setout free?</div>
-        <div class="faq-a">You get full access free for 2 weeks. After that it's just $1.99/week, and you can cancel anytime.</div>
+        <div class="faq-a">You get full access free for 14 days. After that it's just $1.99/week, and you can cancel anytime.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q">Does it work without internet?</div>
@@ -654,7 +668,7 @@
 <div id="download">
   <h2>Build smarter.<br>Launching soon on iPhone.</h2>
   <p>Android to follow. Questions? Email <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
-  <p class="form-note">Free for 2 weeks at launch, then $1.99/week. Cancel anytime.</p>
+  <p class="form-note">14-day free trial at launch, then $1.99/week. Cancel anytime.</p>
 </div>
 
 <!-- FOOTER -->

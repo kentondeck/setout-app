@@ -56,7 +56,8 @@
     :root {
       --orange: #FF5A1F;
       --dark: #0a0a0a;
-      --bg: #f5f5f3;
+      --bg: #ffffff;
+      --soft: #f5f5f3;
       --card: #ffffff;
       --muted: #595959;
       --border: rgba(0,0,0,0.07);
@@ -77,7 +78,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(245,245,243,0.9);
+      background: rgba(255,255,255,0.92);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
       height: 64px;
@@ -289,7 +290,7 @@
       gap: 24px;
     }
     .step-card {
-      background: white;
+      background: var(--soft);
       border-radius: 20px;
       border: 1px solid var(--border);
       padding: 36px 32px;
@@ -324,7 +325,7 @@
       gap: 16px;
     }
     .feat-card {
-      background: var(--bg);
+      background: var(--soft);
       border: 1px solid #e8e8e4;
       border-radius: 20px;
       padding: 32px 28px;
@@ -351,7 +352,7 @@
       gap: 8px;
     }
     .calc-card {
-      background: white;
+      background: var(--soft);
       border-radius: 18px;
       padding: 18px 16px 16px;
       border: 1px solid var(--border);
@@ -380,7 +381,7 @@
       margin-top: 48px;
     }
     .about-card {
-      background: white;
+      background: var(--soft);
       border-radius: 20px;
       border: 1px solid var(--border);
       padding: 32px 28px;

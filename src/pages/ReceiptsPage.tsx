@@ -6,6 +6,7 @@ import { useReceipts, RECEIPT_CATEGORIES, compressImageFile, type Receipt } from
 import { exportReceipts } from '../lib/recordsExport';
 import { currentTaxYear, previousTaxYear, type TaxYearRange } from '../lib/taxYear';
 import { hapticMedium } from '../lib/haptics';
+import { PhotoViewer } from '../components/PhotoViewer';
 
 // Simple month key used to group the list ("Sep 2026") — the tradie sees a
 // running feed newest-first, but section headers give a sense of "this month
@@ -86,6 +87,7 @@ export function ReceiptsPage() {
     [items, previous],
   );
 
+  const [adding, setAdding] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Receipt>>({});
   const [processing, setProcessing] = useState(false);
@@ -131,7 +133,6 @@ export function ReceiptsPage() {
     setError('');
     try {
       setPendingPhoto(await compressImageFile(file));
-      setForm({ date: todayISO() });
     } catch {
       setError('Could not process that image — try another photo.');
     } finally {
@@ -140,14 +141,16 @@ export function ReceiptsPage() {
   }
 
   function closeForm() {
+    setAdding(false);
     setPendingPhoto(null);
     setEditingId(null);
     setEditingPhoto(null);
     setForm({});
+    setError('');
   }
 
   async function handleSave() {
-    if (!pendingPhoto) return;
+    if (!form.supplier?.trim()) { setError('Enter a supplier.'); return; }
     await add(pendingPhoto, {
       supplier: form.supplier?.trim() || undefined,
       amount: form.amount,
@@ -186,7 +189,7 @@ export function ReceiptsPage() {
     hapticMedium();
   }
 
-  const formOpen = pendingPhoto !== null || editingId !== null;
+  const formOpen = adding || pendingPhoto !== null || editingId !== null;
   const formPhoto = pendingPhoto ?? editingPhoto;
 
   return (
@@ -195,7 +198,7 @@ export function ReceiptsPage() {
 
       <div style={{ padding: '4px 20px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <p style={{ margin: '0 4px 4px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          Snap a receipt, add a few details. Everything stays on your phone — back up regularly.
+          Add a receipt's details — snap a photo if you want. Everything stays on your phone — back up regularly.
         </p>
 
         {/* Tax-year filter chips */}
@@ -230,51 +233,49 @@ export function ReceiptsPage() {
 
         {/* Add + Send buttons */}
         {!formOpen && (
-          <>
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { setAdding(true); setForm({ date: todayISO() }); setPendingPhoto(null); setError(''); }}
+              style={{
+                flex: filteredItems.length > 0 ? 1 : undefined,
+                width: filteredItems.length === 0 ? '100%' : undefined,
+                padding: '14px', borderRadius: 14,
+                background: 'var(--color-orange)', color: '#fff',
+                border: 'none', fontSize: 15, fontWeight: 500,
+                fontFamily: 'inherit', cursor: 'pointer',
+                letterSpacing: '-0.2px',
+              }}
+            >
+              + Add receipt
+            </button>
+            {filteredItems.length > 0 && (
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={processing}
+                onClick={handleSend}
+                disabled={sending}
                 style={{
-                  flex: filteredItems.length > 0 ? 1 : undefined,
-                  width: filteredItems.length === 0 ? '100%' : undefined,
+                  flex: 1,
                   padding: '14px', borderRadius: 14,
-                  background: 'var(--color-orange)', color: '#fff',
-                  border: 'none', fontSize: 15, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
+                  background: 'transparent', color: 'var(--color-text)',
+                  border: '0.5px solid var(--color-border)',
+                  fontSize: 15, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: sending ? 'default' : 'pointer',
                   letterSpacing: '-0.2px',
+                  opacity: sending ? 0.7 : 1,
                 }}
               >
-                {processing ? 'Processing…' : '+ Add receipt'}
+                {sending ? 'Building…' : taxFilter === 'all' ? 'Send to accountant' : `Send ${taxFilter === 'current' ? current.shortLabel : previous.shortLabel}`}
               </button>
-              {filteredItems.length > 0 && (
-                <button
-                  onClick={handleSend}
-                  disabled={sending}
-                  style={{
-                    flex: 1,
-                    padding: '14px', borderRadius: 14,
-                    background: 'transparent', color: 'var(--color-text)',
-                    border: '0.5px solid var(--color-border)',
-                    fontSize: 15, fontWeight: 500,
-                    fontFamily: 'inherit', cursor: sending ? 'default' : 'pointer',
-                    letterSpacing: '-0.2px',
-                    opacity: sending ? 0.7 : 1,
-                  }}
-                >
-                  {sending ? 'Building…' : taxFilter === 'all' ? 'Send to accountant' : `Send ${taxFilter === 'current' ? current.shortLabel : previous.shortLabel}`}
-                </button>
-              )}
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFile}
-              style={{ display: 'none' }}
-            />
-          </>
+            )}
+          </div>
         )}
+        {/* Hidden picker — used by the optional "Add photo" button inside the form. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          style={{ display: 'none' }}
+        />
 
         {error && <p style={{ margin: 0, fontSize: 13, color: '#e53e3e' }}>{error}</p>}
 
@@ -288,13 +289,38 @@ export function ReceiptsPage() {
             <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>
               {editingId ? 'Edit receipt' : 'New receipt'}
             </p>
-            {formPhoto && (
-              <img
-                src={formPhoto}
-                alt=""
-                style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
-              />
-            )}
+            {formPhoto ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <img
+                  src={formPhoto}
+                  alt=""
+                  style={{ width: '100%', maxHeight: 320, objectFit: 'contain', borderRadius: 10, background: '#000' }}
+                />
+                {!editingId && (
+                  <button
+                    onClick={() => setPendingPhoto(null)}
+                    style={{
+                      alignSelf: 'flex-start', padding: '4px 6px', border: 'none', background: 'none',
+                      color: 'var(--color-muted)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >Remove photo</button>
+                )}
+              </div>
+            ) : !editingId ? (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processing}
+                style={{
+                  width: '100%', padding: '12px', borderRadius: 10,
+                  border: '1px dashed var(--color-border)', background: 'var(--color-bg)',
+                  color: 'var(--color-muted)', fontSize: 14, fontWeight: 500,
+                  fontFamily: 'inherit', cursor: 'pointer',
+                }}
+              >
+                {processing ? 'Processing…' : '+ Add photo'}
+              </button>
+            ) : null}
             <input
               type="text" placeholder="Supplier (e.g. Bunnings)"
               value={form.supplier ?? ''}
@@ -329,13 +355,13 @@ export function ReceiptsPage() {
               onChange={e => setForm(f => ({ ...f, category: e.target.value || undefined }))}
               style={inputStyle}
             >
-              <option value="">Category (optional)</option>
+              <option value="">Category</option>
               {RECEIPT_CATEGORIES.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
             <textarea
-              placeholder="Notes (optional)"
+              placeholder="Notes"
               value={form.notes ?? ''}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               rows={2}
@@ -452,19 +478,7 @@ export function ReceiptsPage() {
         </p>
       </div>
 
-      {viewerPhoto && (
-        <div
-          onClick={() => setViewerPhoto(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.92)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 'calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px)',
-          }}
-        >
-          <img src={viewerPhoto} alt="" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 10 }} />
-        </div>
-      )}
+      {viewerPhoto && <PhotoViewer src={viewerPhoto} onClose={() => setViewerPhoto(null)} />}
     </div>
   );
 }

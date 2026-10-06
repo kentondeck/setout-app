@@ -210,7 +210,7 @@ export function JobCard({ job, calculations, onDelete, isEditing = false, onRena
             </p>
           )}
           <p style={{ margin: 0, fontSize: 12, color: '#999' }}>
-            {calculations.length} {calculations.length === 1 ? 'calculation' : 'calculations'} · {formatRelativeTime(job.updatedAt)}
+            {formatRelativeTime(job.updatedAt)}
           </p>
           {uniqueCalcIds.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>

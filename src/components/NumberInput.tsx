@@ -32,9 +32,10 @@ interface NumberInputProps {
   placeholder?: string;
   placeholders?: Record<string, string>;
   hint?: string;
+  hintColor?: string;   // emphasise the hint (e.g. a computed value) — colours it + makes it a touch bigger/bolder
 }
 
-export function NumberInput({ label, value, onChange, unit, units, placeholder, placeholders, hint }: NumberInputProps) {
+export function NumberInput({ label, value, onChange, unit, units, placeholder, placeholders, hint, hintColor }: NumberInputProps) {
   const { settings } = useContext(SettingsContext);
   const imperial = settings.unit === 'imperial';
 
@@ -122,7 +123,22 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
         <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text)', letterSpacing: '-0.1px' }}>
           {label}
         </label>
-        <span style={{ fontSize: 11, color: 'var(--color-muted)', visibility: hint ? 'visible' : 'hidden' }}>
+        <span
+          title={hint}
+          style={{
+            // An emphasised hint (hintColor set) is coloured + a touch bigger/bolder so a
+            // computed value reads clearly; plain hints stay small and muted.
+            fontSize: hintColor ? 12 : 11,
+            color: hintColor ?? 'var(--color-muted)',
+            fontWeight: hintColor ? 600 : 400,
+            visibility: hint ? 'visible' : 'hidden',
+            // Reserve exactly one line always — even with no hint — so every input
+            // is the same height and the boxes line up across a row. (A blank
+            // placeholder collapsed to zero height; a wrapping hint grew too tall.)
+            // 12px still sits inside the 14px line box, so alignment is unaffected.
+            height: 14, lineHeight: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}
+        >
           {hint || ' '}
         </span>
       </div>

@@ -287,7 +287,9 @@ function PhotoQuoteCalcInner() {
   const [copied, setCopied] = useState(false);
   const [materialsList, setMaterialsList] = useState<EditableMaterial[]>([]);
   const [labourList, setLabourList] = useState<EditableLabour[]>([]);
-  const { savedMaterials, savedLabour, saveMaterial, removeMaterial, saveLabour, removeLabour } = useSavedLineItems();
+  const [teamSavedFlash, setTeamSavedFlash] = useState<string | null>(null);
+  const { savedMaterials, savedLabour, saveMaterial, removeMaterial, removeLabour } = useSavedLineItems();
+  const [showSavedMats, setShowSavedMats] = useState(false);
   const [showTeamPicker, setShowTeamPicker] = useState(false);
   const [teamSearch, setTeamSearch] = useState('');
   const [travelMode, setTravelMode] = useState<TravelMode>(() => {
@@ -805,10 +807,43 @@ function PhotoQuoteCalcInner() {
       hours: '1',
       rate: String(emp.payRate),
       employeeName: emp.name,
-      isSelf: getRememberedIsSelf(emp.name),
+      // "This is me" in Settings → Your team wins; otherwise fall back to what
+      // was remembered from toggling "Your own time?" on a past quote.
+      isSelf: emp.isSelf ?? getRememberedIsSelf(emp.name),
     }]);
     setShowTeamPicker(false);
     setTeamSearch('');
+  }
+
+  // Save a labour row to Your Team (Settings → employees) so it's reusable on
+  // every future quote via the team picker — not a one-off per-quote chip, and
+  // it never adds another row to the current quote. Deduped by name (updates the
+  // existing teammate). If the row was marked "your own time", that teammate
+  // becomes the single "This is me" (others cleared, same as Settings).
+  function saveLabourToTeam(l: EditableLabour) {
+    const name = l.employeeName?.trim() || l.role.trim();
+    if (!name) return;
+    const role = l.role.trim();
+    const payRate = parseFloat(l.rate) || 0;
+    const chargeRate = parseFloat(l.rateOverride || '') || 0;
+    const isSelf = l.isSelf ?? false;
+    const clearSelf = (e: Employee): Employee => (isSelf ? { ...e, isSelf: false } : e);
+    const existing = settings.employees.find(e => e.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      updateSettings({
+        employees: settings.employees.map(e =>
+          e.id === existing.id
+            ? { ...e, role: role || e.role, payRate: payRate || e.payRate, chargeRate: chargeRate || e.chargeRate, isSelf }
+            : clearSelf(e)),
+      });
+    } else {
+      updateSettings({
+        employees: [...settings.employees.map(clearSelf), { id: uuid(), name, role, payRate, chargeRate, isSelf }],
+      });
+    }
+    if (!l.employeeName) updateLabour(l.id, { employeeName: name });
+    setTeamSavedFlash(l.id);
+    setTimeout(() => setTeamSavedFlash(f => (f === l.id ? null : f)), 1600);
   }
 
   function computeTotals() {
@@ -1474,13 +1509,31 @@ function PhotoQuoteCalcInner() {
                 );
               })}
               {savedMaterials.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {savedMaterials.map(sm => (
-                    <span key={sm.item} style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 999, overflow: 'hidden' }}>
-                      <button onClick={() => insertSavedMaterial(sm)} style={{ border: 'none', background: 'none', color: 'var(--color-text)', fontSize: 12, fontFamily: 'inherit', cursor: 'pointer', padding: '5px 4px 5px 10px' }}>+ {sm.item}</button>
-                      <button onClick={() => removeMaterial(sm.item)} aria-label="Remove saved item" style={{ border: 'none', background: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '5px 8px 5px 2px' }}>×</button>
-                    </span>
-                  ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <button
+                    onClick={() => setShowSavedMats(v => !v)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                      padding: '9px 12px', borderRadius: 10, border: '0.5px solid var(--color-border)',
+                      background: 'var(--color-bg)', color: 'var(--color-text)', fontSize: 12.5, fontWeight: 500,
+                      fontFamily: 'inherit', cursor: 'pointer',
+                    }}
+                  >
+                    <span>Saved materials · {savedMaterials.length}</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: showSavedMats ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {showSavedMats && (
+                    <div style={{ maxHeight: 220, overflowY: 'auto', WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain', border: '0.5px solid var(--color-border)', borderRadius: 10, background: 'var(--color-bg)' }}>
+                      {[...savedMaterials].sort((a, b) => a.item.localeCompare(b.item)).map((sm, i) => (
+                        <div key={sm.item} style={{ display: 'flex', alignItems: 'center', borderTop: i === 0 ? 'none' : '0.5px solid var(--color-border)' }}>
+                          <button onClick={() => insertSavedMaterial(sm)} style={{ flex: 1, minWidth: 0, border: 'none', background: 'none', color: 'var(--color-text)', fontSize: 13, fontFamily: 'inherit', cursor: 'pointer', textAlign: 'left', padding: '9px 11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>+ {sm.item}</button>
+                          <button onClick={() => removeMaterial(sm.item)} aria-label="Remove saved item" style={{ flexShrink: 0, border: 'none', background: 'none', color: 'var(--color-muted)', cursor: 'pointer', fontSize: 15, lineHeight: 1, padding: '9px 12px' }}>×</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               <button
@@ -1534,17 +1587,17 @@ function PhotoQuoteCalcInner() {
                       </span>
                     )}
                     <button
-                      onClick={() => saveLabour({ role: l.role, rate: l.rate })}
-                      aria-label="Save to saved items"
-                      disabled={!l.role.trim()}
+                      onClick={() => saveLabourToTeam(l)}
+                      aria-label="Save to Your Team"
+                      disabled={!(l.role.trim() || l.employeeName)}
                       style={{
                         flexShrink: 0, height: 24, padding: '0 8px', borderRadius: 999, border: 'none',
                         background: 'rgba(255,90,31,0.1)', color: 'var(--color-orange)',
-                        cursor: l.role.trim() ? 'pointer' : 'default', opacity: l.role.trim() ? 1 : 0.4,
-                        fontSize: 11, fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center',
+                        cursor: (l.role.trim() || l.employeeName) ? 'pointer' : 'default', opacity: (l.role.trim() || l.employeeName) ? 1 : 0.4,
+                        fontSize: 11, fontWeight: 600, fontFamily: 'inherit', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap',
                       }}
                     >
-                      Save
+                      {teamSavedFlash === l.id ? '✓ Team' : '+ Team'}
                     </button>
                     <button
                       onClick={() => removeLabourRow(l.id)}

@@ -116,9 +116,10 @@ export function Settings() {
   const [empRole, setEmpRole] = useState('');
   const [empPayRate, setEmpPayRate] = useState('');
   const [empChargeRate, setEmpChargeRate] = useState('');
+  const [empIsSelf, setEmpIsSelf] = useState(false);
 
   function resetEmployeeForm() {
-    setEmpName(''); setEmpRole(''); setEmpPayRate(''); setEmpChargeRate('');
+    setEmpName(''); setEmpRole(''); setEmpPayRate(''); setEmpChargeRate(''); setEmpIsSelf(false);
     setEditingEmployeeId(null);
     setShowEmployeeForm(false);
   }
@@ -129,6 +130,7 @@ export function Settings() {
     setEmpRole(emp.role);
     setEmpPayRate(String(emp.payRate || ''));
     setEmpChargeRate(String(emp.chargeRate || ''));
+    setEmpIsSelf(!!emp.isSelf);
     setShowEmployeeForm(true);
   }
 
@@ -138,13 +140,16 @@ export function Settings() {
     const role = empRole.trim();
     const payRate = parseFloat(empPayRate) || 0;
     const chargeRate = parseFloat(empChargeRate) || 0;
+    // Only one teammate can be "me" — clear the flag on everyone else when this one is marked.
+    const clearSelf = (e: Employee): Employee => (empIsSelf ? { ...e, isSelf: false } : e);
     if (editingEmployeeId) {
       updateSettings({
-        employees: settings.employees.map(e => e.id === editingEmployeeId ? { ...e, name, role, payRate, chargeRate } : e),
+        employees: settings.employees.map(e =>
+          e.id === editingEmployeeId ? { ...e, name, role, payRate, chargeRate, isSelf: empIsSelf } : clearSelf(e)),
       });
     } else {
       updateSettings({
-        employees: [...settings.employees, { id: uuid(), name, role, payRate, chargeRate }],
+        employees: [...settings.employees.map(clearSelf), { id: uuid(), name, role, payRate, chargeRate, isSelf: empIsSelf }],
       });
     }
     resetEmployeeForm();
@@ -574,7 +579,7 @@ export function Settings() {
               style={textInputStyle}
             />
             <div style={{ display: 'flex', gap: 8 }}>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 12px' }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 3, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 10px' }}>
                 <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
                 <input
                   type="number" inputMode="decimal" min="0" step="1" placeholder="0"
@@ -582,9 +587,9 @@ export function Settings() {
                   onChange={e => setEmpPayRate(e.target.value)}
                   style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
                 />
-                <span style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>/hr pay</span>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>pay</span>
               </div>
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 12px' }}>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 3, background: 'var(--color-bg)', border: '0.5px solid var(--color-border)', borderRadius: 10, padding: '0 10px' }}>
                 <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>$</span>
                 <input
                   type="number" inputMode="decimal" min="0" step="1" placeholder="0"
@@ -592,9 +597,28 @@ export function Settings() {
                   onChange={e => setEmpChargeRate(e.target.value)}
                   style={{ flex: 1, minWidth: 0, padding: '12px 0', border: 'none', background: 'transparent', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
                 />
-                <span style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>/hr charge</span>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>charge</span>
               </div>
             </div>
+            <button
+              onClick={() => setEmpIsSelf(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                padding: '8px 10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                border: empIsSelf ? '1px solid var(--color-orange)' : '0.5px solid var(--color-border)',
+                background: empIsSelf ? 'rgba(255,90,31,0.08)' : 'var(--color-bg)',
+              }}
+            >
+              <span style={{
+                width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                border: empIsSelf ? 'none' : '1.5px solid var(--color-border)',
+                background: empIsSelf ? 'var(--color-orange)' : 'transparent',
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700,
+              }}>{empIsSelf ? '✓' : ''}</span>
+              <span style={{ fontSize: 12.5, color: 'var(--color-text)', lineHeight: 1.3 }}>
+                <span style={{ fontWeight: 600 }}>This is me</span> <span style={{ color: 'var(--color-muted)' }}>— my time is profit, not a cost</span>
+              </span>
+            </button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={resetEmployeeForm}

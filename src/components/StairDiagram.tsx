@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { NotToScale } from './NotToScale';
 import { shareOrPreviewImage } from '../lib/saveImage';
 import { FONT, MONO } from '../lib/fonts';
 import { embedSvgFonts } from '../lib/embedSvgFonts';
@@ -244,6 +245,7 @@ export const StairDiagram = memo(function StairDiagram({
         <text x={baseMidX} y={BASE_Y + 70} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} fillOpacity={0.72} stroke="white" strokeWidth={5} paintOrder="stroke">mm</text>
 
         {label && <text x={888} y={24} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
+        <NotToScale w={VB_W} h={VB_H} />
       </svg>
 
       <button

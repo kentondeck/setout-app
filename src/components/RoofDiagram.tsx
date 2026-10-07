@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { NotToScale } from './NotToScale';
 import { shareOrPreviewImage } from '../lib/saveImage';
 import { FONT, MONO } from '../lib/fonts';
 import { embedSvgFonts } from '../lib/embedSvgFonts';
@@ -33,8 +34,8 @@ const PLATE_Y_TOP   = 236;   // top of plate = seat cut y
 const SEAT_W        = PLATE_W;                   // seat spans the full plate width
 const SEAT_INNER_X  = HEEL_X + SEAT_W;           // inner face of plate (= 354)
 const PLATE_H       = 26;    // thinner plate — closer to real proportions
-const WALL_H        = 70;    // slightly shorter wall
-const RAFTER_PERP   = 46;    // perpendicular rafter depth in px
+const WALL_H        = 52;    // short wall stub — kept small so it doesn't dwarf the rafter/birdsmouth detail
+const RAFTER_PERP   = 60;    // perpendicular rafter depth in px — deeper than the seat so the birdsmouth notch digs less into the rafter
 const ARC_R         = 44;    // pitch arc radius in px
 
 function r(n: number) { return Math.round(n); }
@@ -394,6 +395,7 @@ export const RoofDiagram = memo(function RoofDiagram({
           stroke={ORANGE} strokeWidth={1} markerEnd="url(#roofArr)" />
 
         {label && <text x={748} y={20} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
+        <NotToScale w={VB_W} h={VB_H} />
       </svg>
 
       <button

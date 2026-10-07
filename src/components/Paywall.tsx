@@ -22,13 +22,13 @@ export function Paywall() {
   const {
     paywallOpen,
     hidePaywall,
-    isReady,
     weeklyPriceString,
     purchaseWeekly,
     restorePurchases,
     presentCodeRedemption,
     lastError,
     clearError,
+    purchasing,
   } = useSubscription();
 
   // Prevent body scroll while the sheet is open. Mirrors the pattern used by
@@ -93,7 +93,7 @@ export function Paywall() {
               Every tool, every day.
             </h2>
             <p style={{ margin: 0, fontSize: 15, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-              Start with a 14-day free trial. Cancel anytime.
+              Free for 14 days, then {displayPrice}. Cancel anytime.
             </p>
           </div>
 
@@ -120,28 +120,33 @@ export function Paywall() {
             marginBottom: 14,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)' }}>Weekly</span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>{displayPrice}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>14 days free</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-muted)' }}>then {displayPrice}</span>
             </div>
             <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
-              14-day free trial, then {displayPrice}. Auto-renews weekly.
+              You won't be charged until the trial ends. Auto-renews weekly until cancelled.
             </div>
           </div>
 
           {/* Primary CTA */}
           <button
             onClick={purchaseWeekly}
-            disabled={!isReady && isNative}
+            disabled={isNative ? purchasing : true}
             style={{
               width: '100%', padding: '14px 20px',
               background: 'var(--color-orange)', color: '#fff',
               border: 'none', borderRadius: 'var(--radius-tile)',
-              fontSize: 16, fontWeight: 600, cursor: 'pointer',
+              fontSize: 16, fontWeight: 600,
+              cursor: (isNative && !purchasing) ? 'pointer' : 'default',
               fontFamily: 'inherit',
-              opacity: (!isReady && isNative) ? 0.6 : 1,
+              opacity: purchasing ? 0.7 : 1,
             }}
           >
-            {isNative ? 'Start 14-day free trial' : 'Available in the Setout app'}
+            {!isNative
+              ? 'Available in the Setout app'
+              : purchasing
+                ? 'Opening App Store…'
+                : 'Start 14-day free trial'}
           </button>
 
           {/* Secondary actions */}

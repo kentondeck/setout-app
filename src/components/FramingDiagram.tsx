@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { NotToScale } from './NotToScale';
 import { shareOrPreviewImage } from '../lib/saveImage';
 import { FONT, MONO } from '../lib/fonts';
 import { embedSvgFonts } from '../lib/embedSvgFonts';
@@ -200,6 +201,7 @@ export const FramingDiagram = memo(function FramingDiagram({
         <text x={854} y={studHeightMidY + 36} textAnchor="middle" fontFamily={MONO} fontSize={14} fill={ORANGE} opacity={0.72}>mm</text>
 
         {label && <text x={888} y={24} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={INK} opacity={0.5}>{label}</text>}
+        <NotToScale w={VB_W} h={VB_H} />
       </svg>
 
       <button

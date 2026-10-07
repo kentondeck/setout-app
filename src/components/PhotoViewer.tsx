@@ -115,39 +115,42 @@ export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void
         >×</button>
       </div>
 
-      {/* Zoomable image */}
-      <div
-        onClick={e => e.stopPropagation()}
-        onDoubleClick={toggleZoom}
-        onWheel={handleWheel}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          overflow: 'hidden', touchAction: 'none',
-        }}
-      >
-        <img
-          src={src}
-          alt=""
-          draggable={false}
+      {/* Image + Save/share grouped and centred, so the button sits right below
+          the image rather than stranded at the bottom of the screen. */}
+      <div style={{
+        flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 14,
+      }}>
+        <div
+          onClick={e => e.stopPropagation()}
+          onDoubleClick={toggleZoom}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{
-            maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: 6,
-            transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
-            transition: g.current.mode === 'none' ? 'transform 0.18s ease' : 'none',
-            cursor: scale > 1 ? 'grab' : 'zoom-in',
-            willChange: 'transform',
+            flexShrink: 1, minHeight: 0, maxWidth: '100%',
+            display: 'flex', overflow: 'hidden', touchAction: 'none',
           }}
-        />
-      </div>
-
-      {/* Save / share */}
-      <div style={{ display: 'flex', justifyContent: 'center', flexShrink: 0, marginTop: 14 }}>
+        >
+          <img
+            src={src}
+            alt=""
+            draggable={false}
+            style={{
+              maxWidth: '100%', maxHeight: 'calc(100vh - 200px)', objectFit: 'contain',
+              borderRadius: 6, display: 'block',
+              transform: `translate(${tx}px, ${ty}px) scale(${scale})`,
+              transition: g.current.mode === 'none' ? 'transform 0.18s ease' : 'none',
+              cursor: scale > 1 ? 'grab' : 'zoom-in',
+              willChange: 'transform',
+            }}
+          />
+        </div>
         <button
           onClick={e => { e.stopPropagation(); savePhotoToDevice(src).catch(() => {}); }}
           style={{
-            display: 'flex', alignItems: 'center', gap: 8,
+            flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
             padding: '11px 18px', borderRadius: 999,
             background: 'rgba(255,255,255,0.14)', color: '#fff',
             border: '0.5px solid rgba(255,255,255,0.3)',

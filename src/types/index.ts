@@ -27,6 +27,7 @@ export interface Employee {
   role: string;       // e.g. "2nd year apprentice", "Carpenter"
   payRate: number;    // $/hr — what you pay them
   chargeRate: number; // $/hr — what you charge the client for them
+  isSelf?: boolean;   // "this is me" — their time auto-counts as the owner's own time (profit, not a cash cost)
 }
 
 export interface Settings {

@@ -8,6 +8,7 @@ import type { OrderLine, JobOrder } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
 import { useJobPhotos, compressImageFile } from '../lib/useJobPhotos';
 import { PhotoViewer } from '../components/PhotoViewer';
+import { useSavedLineItems } from '../lib/savedLineItems';
 import { DeckingDiagram } from '../components/DeckingDiagram';
 import { FramingDiagram } from '../components/FramingDiagram';
 import { StairDiagram } from '../components/StairDiagram';
@@ -496,10 +497,29 @@ function AddMaterialForm({ onAdd }: { onAdd: (name: string, qty: number, unit: s
   const [qty, setQty] = useState('');
   const [unit, setUnit] = useState('each');
 
+  const { savedMaterials, rememberMaterial } = useSavedLineItems();
+  // Saved materials, A–Z, filtered by what's typed in the name field (which
+  // doubles as the search). Drop the one that exactly matches (already picked).
+  const query = name.trim().toLowerCase();
+  const suggestions = [...savedMaterials]
+    .sort((a, b) => a.item.localeCompare(b.item))
+    .filter(m => (query ? m.item.toLowerCase().includes(query) : true) && m.item.toLowerCase() !== query);
+
+  // The form sits mid-page, so the on-screen keyboard can cover it. On focus,
+  // scroll the field into the middle of the viewport once the keyboard has
+  // finished animating up.
+  function keepInView(e: React.FocusEvent<HTMLElement>) {
+    const el = e.currentTarget;
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+  }
+
   function handleAdd() {
     const q = parseFloat(qty);
     if (!name.trim() || !Number.isFinite(q) || q <= 0) return;
-    onAdd(name.trim(), q, unit.trim() || 'each');
+    const cleanName = name.trim();
+    const cleanUnit = unit.trim() || 'each';
+    onAdd(cleanName, q, cleanUnit);
+    rememberMaterial(cleanName, cleanUnit); // remember for next time, across all jobs
     setName(''); setQty(''); setUnit('each');
     setShowForm(false);
   }
@@ -526,19 +546,45 @@ function AddMaterialForm({ onAdd }: { onAdd: (name: string, qty: number, unit: s
       padding: '12px', borderRadius: 12, border: '0.5px solid var(--color-border)', background: 'var(--color-card)',
     }}>
       <input
-        type="text" placeholder="Material name" value={name}
+        type="text" placeholder="Material name — search saved or type new" value={name}
         onChange={e => setName(e.target.value)}
+        onFocus={keepInView}
         style={{ padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
       />
+      {suggestions.length > 0 && (
+        <div style={{
+          display: 'flex', flexDirection: 'column', maxHeight: 180, overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain',
+          border: '0.5px solid var(--color-border)', borderRadius: 9, background: 'var(--color-bg)',
+        }}>
+          {suggestions.map((m, i) => (
+            <button
+              key={m.item}
+              onClick={() => { setName(m.item); setUnit(m.unit); }}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+                width: '100%', padding: '9px 11px', background: 'none', border: 'none',
+                borderTop: i === 0 ? 'none' : '0.5px solid var(--color-border)',
+                cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+              }}
+            >
+              <span style={{ fontSize: 13.5, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.item}</span>
+              <span style={{ fontSize: 12, color: 'var(--color-muted)', flexShrink: 0 }}>{m.unit}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           type="number" inputMode="decimal" placeholder="Qty" value={qty}
           onChange={e => setQty(e.target.value)}
+          onFocus={keepInView}
           style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
         />
         <input
           type="text" placeholder="Unit" value={unit}
           onChange={e => setUnit(e.target.value)}
+          onFocus={keepInView}
           style={{ flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 9, border: '0.5px solid var(--color-border)', background: 'var(--color-bg)', fontSize: 14, fontFamily: 'inherit', color: 'var(--color-text)', outline: 'none' }}
         />
       </div>
@@ -638,6 +684,14 @@ function OrderCard({ entries, job, updateJob, bufferPct, setBufferPct }: {
   }
 
   function handleRemove(id: string) {
+    // Manually-added materials live in orderExtraLines and aren't filtered by
+    // orderRemovedIds, so "removing" one means actually deleting it. Calc-derived
+    // lines are hidden via orderRemovedIds instead.
+    const extras = job.orderExtraLines ?? [];
+    if (extras.some(x => x.id === id)) {
+      updateJob(job.id, { orderExtraLines: extras.filter(x => x.id !== id) });
+      return;
+    }
     const removed = job.orderRemovedIds ?? [];
     if (removed.includes(id)) return;
     updateJob(job.id, { orderRemovedIds: [...removed, id] });

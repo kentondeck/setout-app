@@ -13,6 +13,7 @@ import { useScrollToResult } from '../lib/useScrollToResult';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
@@ -44,6 +45,7 @@ export function DeckingCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [result, setResult] = useState<DeckingResult | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');

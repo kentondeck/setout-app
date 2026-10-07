@@ -7,6 +7,12 @@ import { AddToJobSheet } from '../components/AddToJobSheet';
 import { Toast } from '../components/Toast';
 import type { HistoryEntry } from '../types';
 
+// Calculators that re-populate their inputs from a passed `prefill` (via
+// useCalcPrefill) — only these show the "Open" button so it never opens blank.
+const PREFILL_CALCS = new Set<string>([
+  'cladding', 'framing', 'decking', 'baluster', 'roof', 'stairs', 'raked', 'setout', 'excavation',
+]);
+
 function groupByDate(entries: HistoryEntry[]): { label: string; entries: HistoryEntry[] }[] {
   const groups: Map<string, HistoryEntry[]> = new Map();
   const today = new Date();
@@ -192,6 +198,20 @@ function HistoryRow({ entry, onDelete, onUpdate }: HistoryRowProps) {
               ))}
             </div>
           </div>
+
+          {/* Reopen the calculator pre-filled with these inputs */}
+          {PREFILL_CALCS.has(entry.calculatorId) && (
+            <button
+              onClick={() => navigate(`/calc/${entry.calculatorId}`, { state: { prefill: entry.inputs } })}
+              style={{
+                background: 'var(--color-orange)', border: 'none', borderRadius: 10,
+                padding: '10px 14px', fontSize: 13, color: '#fff', fontFamily: 'inherit',
+                cursor: 'pointer', fontWeight: 500, alignSelf: 'flex-start',
+              }}
+            >
+              Open in {meta?.label ?? 'calculator'}
+            </button>
+          )}
 
           {/* Edit quote */}
           {entry.calculatorId === 'photoquote' && typeof entry.outputs.quoteStateJson === 'string' && (

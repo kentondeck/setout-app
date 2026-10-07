@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { NotToScale } from './NotToScale';
 import { FONT, MONO } from '../lib/fonts';
 
 export type BalusterDiagramProps = {
@@ -230,6 +231,7 @@ export const BalusterDiagram = memo(function BalusterDiagram({
       <DimLabel caption="Total span" value={totalLength} cx={190} cy={260} />
 
       {label && <text x={368} y={18} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={BLACK} opacity={0.5}>{label}</text>}
+      <NotToScale w={380} h={320} />
     </svg>
   );
 });

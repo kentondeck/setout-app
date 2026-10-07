@@ -156,6 +156,18 @@ export function NumberInput({ label, value, onChange, unit, units, placeholder, 
           value={local}
           placeholder={placeholders?.[activeUnit] ?? placeholder}
           onChange={e => handleChange(e.target.value)}
+          onFocus={e => {
+            // Keep the field above the on-screen keyboard. Only scroll when it
+            // sits in the lower half of the screen (where the keyboard would
+            // cover it), so fields already up top don't jump. Delay lets the
+            // keyboard finish animating in.
+            const el = e.currentTarget;
+            setTimeout(() => {
+              if (el.getBoundingClientRect().bottom > window.innerHeight * 0.5) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 300);
+          }}
           style={{
             flex: 1,
             padding: '13px 12px',

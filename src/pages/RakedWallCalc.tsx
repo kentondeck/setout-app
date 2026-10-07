@@ -13,6 +13,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -46,6 +47,7 @@ export function RakedWallCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [mode, setMode] = useState<InputMode>('heights');
   const [includeNoggins, setIncludeNoggins] = useState(true);
   const [doubleTopPlate, setDoubleTopPlate] = useState(false);

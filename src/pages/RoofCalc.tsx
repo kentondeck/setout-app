@@ -13,33 +13,36 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { RoofDiagram } from '../components/RoofDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
 type PairKey = 'span' | 'rise' | 'rafterLength' | 'pitchDegrees';
-type Mode = 'span-pitch' | 'span-rise' | 'rise-pitch' | 'rafter-pitch';
+type Mode = 'span-pitch' | 'span-rise' | 'rise-pitch';
 type RoofType = 'gabled' | 'skillion';
 
+// Rafter length is only ever an OUTPUT — you enter the building geometry and the
+// calc hands back the rafter. There's no "rafter length" input mode on purpose:
+// a typed rafter length is ambiguous (to ridge? incl. overhang?) and confused
+// users. Every mode below is unambiguous building geometry.
 const MODES: { id: Mode; fields: [PairKey, PairKey] }[] = [
   { id: 'span-pitch',   fields: ['span', 'pitchDegrees'] },
   { id: 'span-rise',    fields: ['span', 'rise'] },
   { id: 'rise-pitch',   fields: ['rise', 'pitchDegrees'] },
-  { id: 'rafter-pitch', fields: ['rafterLength', 'pitchDegrees'] },
 ];
 
 function getModeLabel(id: Mode, roofType: RoofType): string {
   if (id === 'span-pitch')   return roofType === 'skillion' ? 'Run + Pitch'   : 'Span + Pitch';
   if (id === 'span-rise')    return roofType === 'skillion' ? 'Run + Rise'    : 'Span + Rise';
-  if (id === 'rise-pitch')   return 'Rise + Pitch';
-  return 'Rafter + Pitch';
+  return 'Rise + Pitch';
 }
 
 const FIELD_META: Record<PairKey, { label: string; units: ['m', 'mm'] | ['mm', 'm'] | null; unit?: string; placeholder?: string; placeholders?: Record<string, string>; hintNoRidge: string; hintWithRidge?: string }> = {
   span:         { label: 'Span',          units: ['m', 'mm'], placeholders: { m: 'e.g. 7', mm: 'e.g. 7000' },      hintNoRidge: 'full width' },
   rise:         { label: 'Rise',          units: ['m', 'mm'], placeholders: { m: 'e.g. 1.5', mm: 'e.g. 1500' },    hintNoRidge: 'ridge height' },
-  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], placeholders: { m: 'e.g. 4.2', mm: 'e.g. 4200' },    hintNoRidge: 'to ridge centreline', hintWithRidge: 'cut length, to ridge face' },
+  rafterLength: { label: 'Rafter length', units: ['m', 'mm'], placeholders: { m: 'e.g. 4.2', mm: 'e.g. 4200' },    hintNoRidge: 'total on the rake (incl. overhang)', hintWithRidge: 'total on the rake, to ridge face' },
   pitchDegrees: { label: 'Pitch',         units: null, unit: '°', placeholder: 'e.g. 22.5',                         hintNoRidge: 'degrees' },
 };
 
@@ -72,6 +75,7 @@ export function RoofCalc() {
   const [roofType, setRoofType] = useState<RoofType>('gabled');
   const [mode, setMode] = useState<Mode>('span-pitch');
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [result, setResult] = useState<{ outputs: RoofOutputs; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');
@@ -256,6 +260,10 @@ export function RoofCalc() {
             </div>
           </div>
 
+          <p style={{ margin: '-4px 0 0', fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+            Overhang is measured <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>on the flat</span> (horizontal), not along the rake — the calc adds the slope length for you.
+          </p>
+
           <div style={{ height: 0.5, background: 'var(--color-border)', margin: '4px -16px' }} />
 
           <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', fontWeight: 500, letterSpacing: '0.5px' }}>
@@ -354,8 +362,8 @@ export function RoofCalc() {
                     </div>
                     {out.remainingDepth > 0 && (
                       <div style={{
-                        background: out.remainingDepth < out.birdsmouthPlumbDepth * 0.5 ? '#fff7ed' : 'var(--color-bg)',
-                        border: `0.5px solid ${out.remainingDepth < out.birdsmouthPlumbDepth * 0.5 ? '#fbbf24' : 'var(--color-border)'}`,
+                        background: out.remainingDepth < (parseOpt(inputs.rafterDepth) ?? 0) * (2 / 3) ? '#fff7ed' : 'var(--color-bg)',
+                        border: `0.5px solid ${out.remainingDepth < (parseOpt(inputs.rafterDepth) ?? 0) * (2 / 3) ? '#fbbf24' : 'var(--color-border)'}`,
                         borderRadius: 8,
                         padding: '7px 12px',
                         display: 'flex',
@@ -363,7 +371,7 @@ export function RoofCalc() {
                         alignItems: 'center',
                       }}>
                         <span style={{ fontSize: 13, color: 'var(--color-muted)' }}>Remaining depth</span>
-                        <span style={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: out.remainingDepth < out.birdsmouthPlumbDepth * 0.5 ? '#92400e' : 'var(--color-text)' }}>
+                        <span style={{ fontSize: 14, fontWeight: 500, fontVariantNumeric: 'tabular-nums', color: out.remainingDepth < (parseOpt(inputs.rafterDepth) ?? 0) * (2 / 3) ? '#92400e' : 'var(--color-text)' }}>
                           {out.remainingDepth}mm
                         </span>
                       </div>
@@ -400,6 +408,9 @@ export function RoofCalc() {
             />
 
             <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {roofType === 'skillion'
+                ? 'Figures are for a single-slope skillion / lean-to roof. '
+                : 'Figures are for a symmetrical gable roof (common rafters both sides). '}
               {COMPLIANCE_NOTES.roof[settings.region]}
             </p>
 

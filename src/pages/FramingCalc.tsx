@@ -14,6 +14,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 import { DownloadCutlistButton } from '../components/DownloadCutlistButton';
@@ -40,6 +41,7 @@ export function FramingCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [includeNoggins, setIncludeNoggins] = useState(true);
   const [doubleStuds, setDoubleStuds] = useState(false);
   const [doubleTopPlate, setDoubleTopPlate] = useState(true);

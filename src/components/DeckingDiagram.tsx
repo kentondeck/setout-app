@@ -1,4 +1,5 @@
 import { memo, useRef } from 'react';
+import { NotToScale } from './NotToScale';
 import { shareOrPreviewImage } from '../lib/saveImage';
 import { FONT, MONO } from '../lib/fonts';
 import { embedSvgFonts } from '../lib/embedSvgFonts';
@@ -181,6 +182,7 @@ export const DeckingDiagram = memo(function DeckingDiagram({
           </>
         )}
         {label && <text x={368} y={18} textAnchor="end" fontFamily={FONT} fontSize="15" fontWeight="600" fill={BLACK} opacity={0.5}>{label}</text>}
+        <NotToScale w={VB_W} h={VB_H} />
       </svg>
 
       {isValid && (

@@ -14,8 +14,8 @@ export const COMPLIANCE_NOTES: Record<string, Record<Region, string>> = {
     NZ: 'Riser and tread limits per NZS 3604. Verify against your specific application — residential, public access, or external.',
   },
   roof: {
-    AU: 'Assumes a symmetrical gable roof. Verify rafter sizing against AS 1684 span tables for your timber species and wind/snow region.',
-    NZ: 'Assumes a symmetrical gable roof. Verify rafter sizing against NZS 3604 span tables for your timber species and wind/snow zone.',
+    AU: 'Verify rafter sizing against AS 1684 span tables for your timber species and wind/snow region.',
+    NZ: 'Verify rafter sizing against NZS 3604 span tables for your timber species and wind/snow zone.',
   },
   baluster: {
     AU: '125mm max gap per AS 1657. Some councils and body corporates require tighter gaps for pool fencing or commercial use.',

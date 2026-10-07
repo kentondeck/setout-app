@@ -55,6 +55,7 @@ export function ConcreteCalc() {
   const [postFields, setPostFields] = useState<PostFields>(POST_DEFAULTS);
   const [postDeductEnabled, setPostDeductEnabled] = useState(false);
   const [postDeductShape, setPostDeductShape] = useState<'round' | 'square'>('round');
+  const [postBaseGap, setPostBaseGap] = useState('50'); // mm the post stands off the hole bottom
   const [postResult, setPostResult] = useState<{ outputs: PostHoleOutputs; steps: WorkingStep[] } | null>(null);
   const [lastPostId, setLastPostId] = useState('');
 
@@ -145,7 +146,7 @@ export function ConcreteCalc() {
 
       const calc = calculatePostHoles({
         holeType, diameter, sideWidth, depth, numHoles, wastage,
-        ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize }),
+        ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize, baseGapMm: postBaseGap.trim() ? Math.max(0, parseFloat(postBaseGap) || 0) : 50 }),
       });
       setPostResult(calc);
       const id = uuid();
@@ -431,6 +432,14 @@ export function ConcreteCalc() {
                     units={['mm', 'm']}
                     placeholders={{ mm: 'e.g. 100', m: 'e.g. 0.1' }}
                   />
+                  <NumberInput
+                    label="Post off bottom"
+                    value={postBaseGap}
+                    onChange={setPostBaseGap}
+                    units={['mm', 'm']}
+                    placeholders={{ mm: 'e.g. 50', m: 'e.g. 0.05' }}
+                    hint="pad under the post · default 50mm"
+                  />
                 </div>
               )}
             </>
@@ -509,9 +518,9 @@ export function ConcreteCalc() {
                 </div>
                 {mixPreset === 'custom' && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                    <NumberInput label="Cement" value={customCement} onChange={setCustomCement} unit="" placeholder="1" />
-                    <NumberInput label="Sand" value={customSand} onChange={setCustomSand} unit="" placeholder="2" />
-                    <NumberInput label="Aggregate" value={customAggregate} onChange={setCustomAggregate} unit="" placeholder="4" />
+                    <div style={{ flex: 1, minWidth: 0 }}><NumberInput label="Cement" value={customCement} onChange={setCustomCement} unit="" placeholder="1" /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}><NumberInput label="Sand" value={customSand} onChange={setCustomSand} unit="" placeholder="2" /></div>
+                    <div style={{ flex: 1, minWidth: 0 }}><NumberInput label="Aggregate" value={customAggregate} onChange={setCustomAggregate} unit="" placeholder="4" /></div>
                   </div>
                 )}
               </div>

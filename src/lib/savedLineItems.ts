@@ -63,6 +63,24 @@ export function useSavedLineItems() {
     });
   }, []);
 
+  // Remember a material by name + unit without touching its saved price — used
+  // by the job materials form (which has no price), so hooking it to the shared
+  // library doesn't wipe a price previously saved from a quote.
+  const rememberMaterial = useCallback((item: string, unit: string) => {
+    const name = item.trim();
+    if (!name) return;
+    setStore(prev => {
+      const existing = prev.materials.find(x => x.item.toLowerCase() === name.toLowerCase());
+      const materials = [
+        { item: name, unit: unit.trim() || existing?.unit || 'each', unitPrice: existing?.unitPrice ?? '' },
+        ...prev.materials.filter(x => x.item.toLowerCase() !== name.toLowerCase()),
+      ].slice(0, MAX);
+      const next = { ...prev, materials };
+      write(next);
+      return next;
+    });
+  }, []);
+
   const removeMaterial = useCallback((item: string) => {
     setStore(prev => {
       const next = { ...prev, materials: prev.materials.filter(x => x.item !== item) };
@@ -97,6 +115,7 @@ export function useSavedLineItems() {
     savedMaterials: store.materials,
     savedLabour: store.labour,
     saveMaterial,
+    rememberMaterial,
     removeMaterial,
     saveLabour,
     removeLabour,

@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import type { PurchasesOffering, PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
 import { PRO_ENTITLEMENT_ID, WEEKLY_PRODUCT_ID, getApiKey, isSubscriptionRuntime } from './subscription';
 
 // Everything the app UI needs about the subscription. Kept small on purpose —
@@ -35,6 +36,9 @@ interface SubscriptionState {
   // action. Paywall surfaces this in a small footer if set.
   lastError: string | null;
   clearError: () => void;
+  // True while a purchase is in flight — the paywall CTA reflects this so a tap
+  // always gives feedback and can't be double-fired.
+  purchasing: boolean;
 }
 
 const SubscriptionContext = createContext<SubscriptionState>({
@@ -50,6 +54,7 @@ const SubscriptionContext = createContext<SubscriptionState>({
   hidePaywall: () => {},
   lastError: null,
   clearError: () => {},
+  purchasing: false,
 });
 
 export function useSubscription() {
@@ -79,6 +84,41 @@ interface CustomerInfo {
   };
 }
 
+// Resolve the weekly Pro package from RevenueCat offerings as robustly as
+// possible. RC only returns a package when the product is in a purchasable
+// state in App Store Connect AND attached to an offering — and historically our
+// lookup only checked the *current* offering for an exact id match, so a
+// product attached to a non-current offering (or under an unexpected package
+// slot) produced a "not available" error even though everything was configured.
+// Search the current offering first, then every other offering, matching by our
+// product id, the standard "$rc_weekly" slot, or anything that looks weekly —
+// then fall back to the first available package so a single-product offering
+// always resolves.
+function findWeeklyPackage(offerings: PurchasesOfferings): PurchasesPackage | null {
+  const seen = new Set<PurchasesOffering>();
+  const list: PurchasesOffering[] = [];
+  if (offerings.current) { list.push(offerings.current); seen.add(offerings.current); }
+  for (const o of Object.values(offerings.all ?? {})) {
+    if (o && !seen.has(o)) { list.push(o); seen.add(o); }
+  }
+  const looksWeekly = (s: string | undefined) => !!s && s.toLowerCase().includes('week');
+  for (const off of list) {
+    const pkgs = off.availablePackages ?? [];
+    const match =
+      pkgs.find(p => p.product?.identifier === WEEKLY_PRODUCT_ID) ??
+      pkgs.find(p => p.identifier === '$rc_weekly') ??
+      pkgs.find(p => looksWeekly(p.identifier) || looksWeekly(p.product?.identifier));
+    if (match) return match;
+  }
+  // Fallback: first available package anywhere — covers a single-product
+  // offering whose identifiers don't match any of the heuristics above.
+  for (const off of list) {
+    const pkgs = off.availablePackages ?? [];
+    if (pkgs.length > 0) return pkgs[0];
+  }
+  return null;
+}
+
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   // On web / dev, isPro is always true so the paywall is a no-op.
   const enforced = isSubscriptionRuntime();
@@ -87,6 +127,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [weeklyPriceString, setWeeklyPriceString] = useState<string | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [purchasing, setPurchasing] = useState(false);
   const initialised = useRef(false);
 
   // On mount (native only), configure RC + fetch offerings + customer info.
@@ -94,6 +135,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (!enforced || initialised.current) return;
     initialised.current = true;
     let cancelled = false;
+
+    // Watchdog: if a native RC call (configure / getCustomerInfo) ever stalls,
+    // `isReady` would otherwise stay false forever and the paywall CTA would be
+    // permanently disabled — a dead button that does nothing on tap. Guarantee
+    // readiness flips within a few seconds no matter what the SDK does. The
+    // purchase handler re-fetches offerings on its own, so it's safe to let the
+    // user tap even if init never completed.
+    const readyWatchdog = window.setTimeout(() => {
+      if (!cancelled) setIsReady(true);
+    }, 6000);
 
     (async () => {
       const rc = await getRc();
@@ -120,16 +171,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         // Fetch offerings so the paywall has a localised price to show.
         try {
           const offerings = await rc.Purchases.getOfferings();
-          const current = offerings.current;
-          if (current) {
-            // Grab the weekly package — either the standard "$rc_weekly" slot
-            // or whichever available package has our product ID.
-            const packages = current.availablePackages ?? [];
-            const weekly = packages.find(p => p.product?.identifier === WEEKLY_PRODUCT_ID)
-              ?? packages.find(p => p.identifier === '$rc_weekly');
-            if (weekly && !cancelled) {
-              setWeeklyPriceString(weekly.product?.priceString ?? null);
-            }
+          const weekly = findWeeklyPackage(offerings);
+          if (weekly && !cancelled) {
+            setWeeklyPriceString(weekly.product?.priceString ?? null);
           }
         } catch (e) {
           console.warn('[Subscription] getOfferings failed', e);
@@ -147,6 +191,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
     return () => {
       cancelled = true;
+      window.clearTimeout(readyWatchdog);
     };
   }, [enforced]);
 
@@ -165,19 +210,21 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   const purchaseWeekly = useCallback(async () => {
     setLastError(null);
-    const rc = await getRc();
-    if (!rc) {
-      setLastError('Subscriptions are only available in the Setout iOS / Android app.');
-      return;
-    }
+    setPurchasing(true);
     try {
+      const rc = await getRc();
+      if (!rc) {
+        setLastError('Subscriptions are only available in the Setout iOS / Android app.');
+        return;
+      }
       const offerings = await rc.Purchases.getOfferings();
-      const current = offerings.current;
-      const packages = current?.availablePackages ?? [];
-      const weekly = packages.find(p => p.product?.identifier === WEEKLY_PRODUCT_ID)
-        ?? packages.find(p => p.identifier === '$rc_weekly');
+      const weekly = findWeeklyPackage(offerings);
       if (!weekly) {
-        setLastError('Weekly plan is not available right now. Try again in a moment.');
+        console.warn('[Subscription] no weekly package found', {
+          current: offerings.current?.identifier ?? null,
+          offeringCount: Object.keys(offerings.all ?? {}).length,
+        });
+        setLastError('Subscriptions aren’t available right now. Please try again in a moment.');
         return;
       }
       await rc.Purchases.purchasePackage({ aPackage: weekly });
@@ -187,6 +234,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       // User-cancelled is a normal flow, not an error — just silently no-op.
       if (err.userCancelled) return;
       setLastError(err.message ?? 'Purchase failed. Please try again.');
+    } finally {
+      setPurchasing(false);
     }
   }, [refreshCustomerInfo]);
 
@@ -260,7 +309,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     hidePaywall,
     lastError,
     clearError,
-  }), [isPro, isReady, weeklyPriceString, purchaseWeekly, restorePurchases, presentCodeRedemption, openManageSubscription, paywallOpen, showPaywall, hidePaywall, lastError, clearError]);
+    purchasing,
+  }), [isPro, isReady, weeklyPriceString, purchaseWeekly, restorePurchases, presentCodeRedemption, openManageSubscription, paywallOpen, showPaywall, hidePaywall, lastError, clearError, purchasing]);
 
   return (
     <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>

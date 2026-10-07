@@ -6,20 +6,22 @@ import { ApprenticeWorking } from '../components/ApprenticeWorking';
 import { AddToJobPrompt } from '../components/AddToJobPrompt';
 import { ShareCalcButton } from '../components/ShareCalcButton';
 import { ResultHero } from '../components/CalcResult';
+import { NotToScale } from '../components/NotToScale';
 import { calculateExcavation } from '../calculators/excavation';
 import type { ExcavationResult } from '../calculators/excavation';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { JobNameInput } from '../components/JobNameInput';
 import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
 const SWELL_PRESETS = [
-  { label: 'None', sublabel: 'Rock / fill', value: 0 },
   { label: 'Sandy', sublabel: '~15% swell', value: 0.15 },
   { label: 'General', sublabel: '~25% swell', value: 0.25 },
   { label: 'Clay', sublabel: '~35% swell', value: 0.35 },
+  { label: 'Rock', sublabel: '~50% swell', value: 0.50 },
 ] as const;
 
 const TRUCK_SIZES = [6, 8, 10] as const;
@@ -137,6 +139,7 @@ function ExcavationDiagram({ length, width, depthNear, depthFar, sloped, slopeAx
       <text x={btr.x + 14} y={(btr.y + ftr.y) / 2 + 3} fontFamily={FONT} fontSize="9" fill={ORANGE}>L {length}m</text>
 
       {label && <text x={274} y={13} textAnchor="end" fontFamily={FONT} fontSize="11" fontWeight="600" fill={ORANGE} opacity={0.7}>{label}</text>}
+      <NotToScale w={280} h={160} />
     </svg>
   );
 }
@@ -147,6 +150,7 @@ export function ExcavationCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [sloped, setSloped] = useState(false);
   const [slopeAxis, setSlopeAxis] = useState<'length' | 'width'>('length');
   const [swellFactor, setSwellFactor] = useState(0.25);
@@ -375,6 +379,7 @@ export function ExcavationCalc() {
                 inputMode="decimal"
                 value={customTruck}
                 onChange={e => { setCustomTruck(e.target.value); setResult(null); }}
+                onFocus={e => { const el = e.currentTarget; setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300); }}
                 placeholder="—"
                 style={{
                   width: 0,

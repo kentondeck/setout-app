@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, STAIR_LIMITS } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { StairDiagram } from '../components/StairDiagram';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { JobNameInput } from '../components/JobNameInput';
@@ -41,6 +42,7 @@ export function StairsCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [result, setResult] = useState<{ outputs: StairsOutputs; steps: WorkingStep[]; warnings: StairsWarnings } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');

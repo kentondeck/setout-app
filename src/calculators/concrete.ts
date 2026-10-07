@@ -32,6 +32,7 @@ export interface PostHoleInputs {
   wastage: number;    // fraction e.g. 0.10
   postShape?: 'round' | 'square';  // optional post deduction
   postSize?: number;               // mm — diameter (round) or side (square)
+  baseGapMm?: number;              // mm the post stands off the hole bottom (default 50)
 }
 
 // Round up to nearest 0.1 m³ without floating-point drift
@@ -287,7 +288,7 @@ export function calculateSlabReo(inputs: SlabReoInputs): { outputs: SlabReoOutpu
 }
 
 export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleOutputs; steps: WorkingStep[] } {
-  const { holeType, diameter, sideWidth, depth, numHoles, wastage, postShape, postSize } = inputs;
+  const { holeType, diameter, sideWidth, depth, numHoles, wastage, postShape, postSize, baseGapMm } = inputs;
 
   let grossVolumePerHoleM3: number;
   let shapeFormula: string;
@@ -305,24 +306,25 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
     shapeResult = `${s}mm × ${s}mm × ${depth}mm ÷ 1,000,000,000`;
   }
 
-  // Post deduction. The post is stood ~50mm off the bottom of the hole on a pad
-  // of concrete, so it only displaces concrete over (hole depth − 50mm) — the
-  // bottom 50mm stays solid concrete under the post.
-  const POST_BASE_GAP_MM = 50;
+  // Post deduction. The post is stood off the bottom of the hole on a pad of
+  // concrete, so it only displaces concrete over (hole depth − base gap) — the
+  // bottom stays solid concrete under the post. The gap is adjustable (default
+  // 50mm); 0 means the post sits on the very bottom.
+  const baseGap = baseGapMm !== undefined && baseGapMm >= 0 ? baseGapMm : 50;
   let postVolumeM3 = 0;
   let postFormula = '';
   let postResult = '';
   if (postShape && postSize && postSize > 0) {
-    const postEmbedMm = Math.max(0, depth - POST_BASE_GAP_MM);
+    const postEmbedMm = Math.max(0, depth - baseGap);
     if (postShape === 'round') {
       const pr = postSize / 2;
       postVolumeM3 = (Math.PI * pr * pr * postEmbedMm) / 1_000_000_000;
-      postFormula = 'π × (post radius)² × (depth − 50mm base) ÷ 1,000,000,000';
-      postResult = `π × (${pr}mm)² × (${depth} − 50)mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+      postFormula = `π × (post radius)² × (depth − ${baseGap}mm base) ÷ 1,000,000,000`;
+      postResult = `π × (${pr}mm)² × (${depth} − ${baseGap})mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
     } else {
       postVolumeM3 = (postSize * postSize * postEmbedMm) / 1_000_000_000;
-      postFormula = 'post side² × (depth − 50mm base) ÷ 1,000,000,000';
-      postResult = `${postSize}mm × ${postSize}mm × (${depth} − 50)mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
+      postFormula = `post side² × (depth − ${baseGap}mm base) ÷ 1,000,000,000`;
+      postResult = `${postSize}mm × ${postSize}mm × (${depth} − ${baseGap})mm = ${parseFloat(postVolumeM3.toFixed(4))} m³ per post`;
     }
   }
 

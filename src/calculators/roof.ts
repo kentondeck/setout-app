@@ -112,20 +112,36 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   const initiallyFilled = (['span', 'rise', 'rafterLength', 'pitchDegrees'] as const)
     .filter(k => filled(inputs[k]));
 
-  // When ridge thickness is provided, the user's `rafterLength` input is the CUT length
-  // (rafter to ridge face). The geometry solver works in LINE length (to centreline).
-  // Iterate to back-compute: line = cut + (ridge/2) / cos(pitch).
-  // Converges in 2–4 iterations because cos is smooth.
+  // The `rafterLength` INPUT is the TOTAL length on the rake — eave tip to the
+  // ridge (to the ridge FACE when a ridge thickness is given). It's the whole
+  // stick you'd cut. The geometry solver works in LINE length (birdsmouth to
+  // ridge centreline — the structural triangle), so back the overhang tail and
+  // the ridge shortening out of the input before solving:
+  //   line = total + (ridge/2 − overhang) / cos(pitch)
+  // Both adjustments need the pitch; when pitch isn't entered we iterate (cos is
+  // smooth, converges in a few passes). This keeps the input and the headline
+  // "rafter length" (which is the total) the SAME number — the overhang marks
+  // where the wall plate sits, it no longer inflates the result.
   let solverInputs = inputs;
   const ridgeHalfM = filled(ridgeThickness) ? (ridgeThickness / 1000) / 2 : 0;
-  if (ridgeHalfM > 0 && filled(inputs.rafterLength)) {
-    let lineGuess = inputs.rafterLength + ridgeHalfM;
-    for (let i = 0; i < 12; i++) {
-      const trial = solveTriangle({ ...inputs, rafterLength: lineGuess, skillion });
-      const cosP = Math.cos(trial.pitchDegrees * Math.PI / 180);
-      const next = inputs.rafterLength + ridgeHalfM / cosP;
-      if (Math.abs(next - lineGuess) < 1e-6) { lineGuess = next; break; }
-      lineGuess = next;
+  const overhangM = overhang > 0 ? overhang : 0;
+  if (filled(inputs.rafterLength) && (ridgeHalfM > 0 || overhangM > 0)) {
+    const totalInput = inputs.rafterLength;
+    const toLine = (cosP: number) => totalInput + (ridgeHalfM - overhangM) / cosP;
+    let lineGuess: number;
+    if (filled(inputs.pitchDegrees)) {
+      lineGuess = toLine(Math.cos(inputs.pitchDegrees * Math.PI / 180));
+    } else {
+      lineGuess = totalInput;
+      for (let i = 0; i < 12; i++) {
+        const trial = solveTriangle({ ...inputs, rafterLength: lineGuess, skillion });
+        const next = toLine(Math.cos(trial.pitchDegrees * Math.PI / 180));
+        if (Math.abs(next - lineGuess) < 1e-6) { lineGuess = next; break; }
+        lineGuess = next;
+      }
+    }
+    if (lineGuess <= 0) {
+      throw new RoofInputError('Overhang is longer than the rafter — check the rafter length and overhang.');
     }
     solverInputs = { ...inputs, rafterLength: lineGuess };
   }
@@ -161,9 +177,14 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
   let remainingDepth = 0;
 
   if (plateWidth && plateWidth > 0) {
+    // Plumb (vertical) depth of the seat cut — what you mark on the plumb line.
     birdsmouthPlumbDepth = parseFloat((plateWidth * Math.tan(pitchRad)).toFixed(1));
     if (rafterDepth && rafterDepth > 0) {
-      remainingDepth = rafterDepth - birdsmouthPlumbDepth;
+      // Material left above the seat, measured PERPENDICULAR to the rafter (same
+      // axis as rafterDepth). The seat removes plateWidth × sin(pitch) of
+      // perpendicular depth — not the plumb figure, which is on a different axis.
+      const notchPerpDepth = plateWidth * Math.sin(pitchRad);
+      remainingDepth = parseFloat((rafterDepth - notchPerpDepth).toFixed(1));
     }
   }
   const ridgeShortening = ridgeHalfM > 0 ? Math.round(ridgeShorteningM * 1000) : 0;
@@ -217,6 +238,11 @@ export function calculateRoof(inputs: RoofInputs): RoofResult {
       label: 'Birdsmouth plumb depth',
       formula: 'plate width × tan( pitch )',
       result: `${plateWidth}mm × tan(${pitchDegrees}°) = ${birdsmouthPlumbDepth}mm`,
+    }] : []),
+    ...(plateWidth && plateWidth > 0 && rafterDepth && rafterDepth > 0 ? [{
+      label: 'Remaining rafter depth',
+      formula: 'rafter depth − plate width × sin( pitch )  (perpendicular to the rafter)',
+      result: `${rafterDepth}mm − ${plateWidth}mm × sin(${pitchDegrees}°) = ${remainingDepth}mm (keep ≥ ⅔ of ${rafterDepth}mm)`,
     }] : []),
     ...(ridgeHalfM > 0 ? [{
       label: 'Ridge shortening',

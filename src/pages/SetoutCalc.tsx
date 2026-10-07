@@ -14,6 +14,7 @@ import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { useScrollToResult } from '../lib/useScrollToResult';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { uuid } from '../lib/uuid';
 
 type InputMode = 'find' | 'check';
@@ -32,6 +33,7 @@ export function SetoutCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [mode, setMode] = useState<InputMode>('find');
   const [result, setResult] = useState<{ outputs: SetoutOutputs; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);

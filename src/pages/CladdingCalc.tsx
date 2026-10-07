@@ -13,6 +13,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { uuid } from '../lib/uuid';
 
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -40,6 +41,7 @@ export function CladdingCalc() {
   const gate = useCalcGate();
 
   const [inputs, setInputs] = useState<Inputs>(DEFAULTS);
+  useCalcPrefill(setInputs);
   const [result, setResult] = useState<{ outputs: CladdingOutputs; rodMarks: number[]; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');

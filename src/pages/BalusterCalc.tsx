@@ -12,6 +12,7 @@ import type { WorkingStep } from '../components/ApprenticeWorking';
 import { COMPLIANCE_NOTES, BALUSTER_MAX_GAP } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useCalcPrefill } from '../lib/useCalcPrefill';
 import { BalusterDiagram } from '../components/BalusterDiagram';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -34,6 +35,7 @@ export function BalusterCalc() {
     balusterWidth: '',
     maxGap: '',
   }));
+  useCalcPrefill(setInputs);
   const [result, setResult] = useState<{ outputs: BalusterOutputs; steps: WorkingStep[] } | null>(null);
   const resultRef = useScrollToResult(result);
   const [lastEntryId, setLastEntryId] = useState('');

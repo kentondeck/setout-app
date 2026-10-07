@@ -283,7 +283,7 @@ export function GradientCalc() {
               label={!reverse ? 'Fall required' : 'Gradient'}
               value={!reverse ? o.rise : (o.gradientRatio > 0 ? `1:${o.gradientRatio}` : 'Flat')}
               unit={!reverse ? 'mm' : ''}
-              spec={`${distance} distance${reverse ? ` · ${fall}mm fall` : ` · 1:${activeRatio}`}`}
+              spec={`${distance}m distance${reverse ? ` · ${fall}mm fall` : ` · 1:${activeRatio}`}`}
               stats={[
                 { label: `${o.percentage}% grade` },
                 { label: `${o.angle}° angle` },

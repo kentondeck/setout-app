@@ -296,6 +296,13 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const hidePaywall = useCallback(() => setPaywallOpen(false), []);
   const clearError = useCallback(() => setLastError(null), []);
 
+  // The moment Pro is granted (a purchase or restore flips the entitlement),
+  // drop the paywall automatically — the user shouldn't have to tap it away
+  // after a successful purchase.
+  useEffect(() => {
+    if (isPro) setPaywallOpen(false);
+  }, [isPro]);
+
   const value = useMemo<SubscriptionState>(() => ({
     isPro,
     isReady,

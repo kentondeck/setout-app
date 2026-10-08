@@ -97,6 +97,7 @@ export function ReceiptsPage() {
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSend() {
@@ -150,16 +151,25 @@ export function ReceiptsPage() {
   }
 
   async function handleSave() {
+    if (saving) return; // guard against a double-tap firing two saves
     if (!form.supplier?.trim()) { setError('Enter a supplier.'); return; }
-    await add(pendingPhoto, {
-      supplier: form.supplier?.trim() || undefined,
-      amount: form.amount,
-      date: form.date || undefined,
-      category: form.category || undefined,
-      notes: form.notes?.trim() || undefined,
-    });
-    closeForm();
-    hapticMedium();
+    setSaving(true);
+    setError('');
+    try {
+      await add(pendingPhoto, {
+        supplier: form.supplier?.trim() || undefined,
+        amount: form.amount,
+        date: form.date || undefined,
+        category: form.category || undefined,
+        notes: form.notes?.trim() || undefined,
+      });
+      closeForm();
+      hapticMedium();
+    } catch {
+      setError('Could not save the receipt — check your device storage and try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   // Edit reopens the same full form (photo + all fields, including the date)
@@ -380,13 +390,14 @@ export function ReceiptsPage() {
               </button>
               <button
                 onClick={editingId ? saveEdit : handleSave}
+                disabled={saving}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 10, border: 'none',
                   background: 'var(--color-orange)', color: '#fff', fontSize: 14, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
+                  fontFamily: 'inherit', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
                 }}
               >
-                {editingId ? 'Save changes' : 'Save'}
+                {saving ? 'Saving…' : editingId ? 'Save changes' : 'Save'}
               </button>
             </div>
           </div>

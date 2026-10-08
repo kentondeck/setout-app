@@ -205,18 +205,16 @@ function useRecords<T extends { id: string; filename: string; timestamp: number 
     })();
   }, [kind]);
 
+  // Throws on photo write failure (storage pressure, permission hiccup, etc.)
+  // instead of silently dropping the whole record — the caller must catch
+  // this and tell the user, rather than closing the form as if it saved.
   const add = useCallback(async (photoDataUrl: string | null, fields: Omit<T, 'id' | 'filename' | 'timestamp'>) => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     // Photo is optional — a tool (or receipt) can be logged by its details alone.
     // No photo ⇒ empty filename, and we skip the file write entirely.
     const filename = photoDataUrl ? `${id}.jpg` : '';
     if (photoDataUrl) {
-      try {
-        await writePhoto(kind, filename, photoDataUrl);
-      } catch (err) {
-        console.warn('[records] write failed', err);
-        return;
-      }
+      await writePhoto(kind, filename, photoDataUrl);
     }
     const record = { id, filename, timestamp: Date.now(), ...fields } as unknown as T;
     const next = [record, ...loadList<T>(kind)];

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { SavedJob, HistoryEntry } from '../types';
 import { uuid } from '../lib/uuid';
+import { deleteJobPhotos } from '../lib/useJobPhotos';
 
 const KEY = 'setout_jobs';
 
@@ -61,6 +62,9 @@ export function useJobs(
       persist(next);
       return next;
     });
+    // Best-effort cleanup — a deleted job's photos shouldn't linger on disk
+    // forever, invisible to the UI but still bloating backup exports.
+    deleteJobPhotos(id).catch(() => { /* best effort */ });
   }, [jobs, updateEntry]);
 
   const addCalculationToJob = useCallback((jobId: string, calculationId: string): void => {

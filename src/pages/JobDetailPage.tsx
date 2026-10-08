@@ -1523,6 +1523,7 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [pendingComment, setPendingComment] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [savingPhoto, setSavingPhoto] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -1563,19 +1564,22 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
     }
   }
 
-  function handleSaveNewPhoto() {
-    if (!pendingPhoto) return;
+  async function handleSaveNewPhoto() {
+    if (!pendingPhoto || savingPhoto) return;
+    setSavingPhoto(true);
+    setError('');
     try {
-      addPhoto(pendingPhoto, pendingComment.trim());
+      await addPhoto(pendingPhoto, pendingComment.trim());
       setPendingPhoto(null);
       setPendingComment('');
-      setError('');
     } catch (err) {
       setError(
         err instanceof Error && err.name === 'QuotaExceededError'
           ? 'Storage is full — delete some older photos to add more.'
           : 'Could not save the photo — try again.'
       );
+    } finally {
+      setSavingPhoto(false);
     }
   }
 
@@ -1731,12 +1735,14 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
                   />
                   <button
                     onClick={handleSaveNewPhoto}
+                    disabled={savingPhoto}
                     style={{
                       padding: '10px 12px', borderRadius: 10,
                       background: 'var(--color-orange)', color: '#fff', border: 'none',
-                      fontSize: 13, fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer',
+                      fontSize: 13, fontFamily: 'inherit', fontWeight: 600,
+                      cursor: savingPhoto ? 'default' : 'pointer', opacity: savingPhoto ? 0.6 : 1,
                     }}
-                  >Save photo</button>
+                  >{savingPhoto ? 'Saving…' : 'Save photo'}</button>
                 </div>
               )}
 

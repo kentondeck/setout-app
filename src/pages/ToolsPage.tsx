@@ -34,6 +34,7 @@ export function ToolsPage() {
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSend() {
@@ -90,22 +91,30 @@ export function ToolsPage() {
   }
 
   async function handleSave() {
+    if (saving) return; // guard against a double-tap firing two saves
     if (!form.name?.trim()) { setError('Enter a name.'); return; }
-    await add(pendingPhoto, {
-      name: form.name?.trim() || undefined,
-      brand: form.brand?.trim() || undefined,
-      model: form.model?.trim() || undefined,
-      serial: form.serial?.trim() || undefined,
-      purchaseDate: form.purchaseDate || undefined,
-      replacementValue: form.replacementValue,
-      category: form.category || undefined,
-      notes: form.notes?.trim() || undefined,
-    });
-    setPendingPhoto(null);
-    setForm({});
-    setAdding(false);
+    setSaving(true);
     setError('');
-    hapticMedium();
+    try {
+      await add(pendingPhoto, {
+        name: form.name?.trim() || undefined,
+        brand: form.brand?.trim() || undefined,
+        model: form.model?.trim() || undefined,
+        serial: form.serial?.trim() || undefined,
+        purchaseDate: form.purchaseDate || undefined,
+        replacementValue: form.replacementValue,
+        category: form.category || undefined,
+        notes: form.notes?.trim() || undefined,
+      });
+      setPendingPhoto(null);
+      setForm({});
+      setAdding(false);
+      hapticMedium();
+    } catch {
+      setError('Could not save the tool — check your device storage and try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   function beginEdit(t: Tool) {
@@ -307,12 +316,13 @@ export function ToolsPage() {
               >Cancel</button>
               <button
                 onClick={handleSave}
+                disabled={saving}
                 style={{
                   flex: 1, padding: '12px 0', borderRadius: 10, border: 'none',
                   background: 'var(--color-orange)', color: '#fff', fontSize: 14, fontWeight: 500,
-                  fontFamily: 'inherit', cursor: 'pointer',
+                  fontFamily: 'inherit', cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1,
                 }}
-              >Save</button>
+              >{saving ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         )}

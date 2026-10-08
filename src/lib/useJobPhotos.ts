@@ -235,16 +235,14 @@ export function useJobPhotos(jobId: string | null | undefined) {
     return () => { cancelled = true; };
   }, [jobId]);
 
+  // Throws on write failure (storage pressure, permission hiccup, etc.) instead
+  // of swallowing it — the caller must await this and catch, or a failed save
+  // is indistinguishable from a successful one.
   const addPhoto = useCallback(async (dataUrl: string, comment: string) => {
     if (!jobId) return;
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     const filename = `${id}.jpg`;
-    try {
-      await writePhotoFile(jobId, filename, dataUrl);
-    } catch (err) {
-      console.warn('[jobphotos] write failed', err);
-      return;
-    }
+    await writePhotoFile(jobId, filename, dataUrl);
     const record: PhotoRecord = { id, timestamp: Date.now(), filename, comment };
     const nextRecords = [record, ...loadManifest(jobId)];
     saveManifest(jobId, nextRecords);
@@ -274,6 +272,25 @@ export function useJobPhotos(jobId: string | null | undefined) {
 // Helpers for backup / restore — read every stored photo out to a plain
 // {jobId, photoId, base64} record set so the backup file can carry them,
 // and write them back on restore.
+
+// Called when a job is deleted, so its photos don't linger as orphaned data
+// forever — unreachable from any UI, but still enumerated (and bloating)
+// every future backup export. Best-effort: a photo save that was still in
+// flight when the job was deleted can still recreate its manifest entry
+// after this runs, but that's an unlikely race, not something this needs to
+// solve — this closes the common case (deleting a job that already has photos).
+export async function deleteJobPhotos(jobId: string): Promise<void> {
+  localStorage.removeItem(manifestKey(jobId));
+  try {
+    await Filesystem.rmdir({
+      path: `${PHOTO_DIR}/${jobId}`,
+      directory: Directory.Data,
+      recursive: true,
+    });
+  } catch {
+    // Nothing to delete, or no photos were ever saved for this job.
+  }
+}
 
 export function listPhotoManifests(): { jobId: string; records: PhotoRecord[] }[] {
   const results: { jobId: string; records: PhotoRecord[] }[] = [];

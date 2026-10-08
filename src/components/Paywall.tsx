@@ -22,7 +22,6 @@ export function Paywall() {
   const {
     paywallOpen,
     hidePaywall,
-    weeklyPriceString,
     purchaseWeekly,
     restorePurchases,
     presentCodeRedemption,
@@ -48,7 +47,10 @@ export function Paywall() {
   if (!paywallOpen) return null;
 
   const isNative = Capacitor.isNativePlatform();
-  const displayPrice = weeklyPriceString ?? '$1.99 / week';
+  // Fixed price label — the app only ships to AU + NZ, both $1.99 (AUD/NZD),
+  // so we show a stable string rather than StoreKit's (sometimes stale) price.
+  // Keep this in sync with the App Store Connect price if it ever changes.
+  const displayPrice = '$1.99 / week';
   const platform = Capacitor.getPlatform();
 
   return (

@@ -8,6 +8,7 @@ import { useJobs } from './hooks/useJobs';
 import { useKeyboardInset } from './lib/useKeyboardInset';
 import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from './contexts';
 import { SubscriptionProvider } from './lib/SubscriptionContext';
+import { CloudProvider } from './lib/CloudContext';
 import { Paywall } from './components/Paywall';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingSetup } from './pages/OnboardingSetup';
@@ -160,10 +161,12 @@ export function App() {
             <JobsContext.Provider value={jobsApi}>
               <KeyboardContext.Provider value={{ inset: keyboardInset }}>
                 <SubscriptionProvider>
-                  <HashRouter>
-                    <AppShell />
-                  </HashRouter>
-                  <Paywall />
+                  <CloudProvider>
+                    <HashRouter>
+                      <AppShell />
+                    </HashRouter>
+                    <Paywall />
+                  </CloudProvider>
                 </SubscriptionProvider>
               </KeyboardContext.Provider>
             </JobsContext.Provider>

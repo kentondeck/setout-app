@@ -28,6 +28,7 @@
     "@revenuecat/purchases-capacitor": "^13.5.1",
     "@sentry/capacitor": "^4.4.0",
     "@sentry/react": "10.69.0",
+    "@supabase/supabase-js": "^2.117.3",
     "@vercel/blob": "^2.6.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.14.0",

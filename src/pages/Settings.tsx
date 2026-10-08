@@ -6,6 +6,7 @@ import type { Employee } from '../types';
 import { uuid } from '../lib/uuid';
 import { useSubscription } from '../lib/SubscriptionContext';
 import { exportBackup, parseBackup, applyBackup } from '../lib/backup';
+import { CloudBackupSection } from '../components/CloudBackupSection';
 
 const textInputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10,
@@ -659,10 +660,12 @@ export function Settings() {
         )}
       </div>
 
+      <CloudBackupSection />
+
       <div>
-        <SectionLabel>Backup</SectionLabel>
+        <SectionLabel>Manual backup file</SectionLabel>
         <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-          Save your history, jobs, photos, and price memory to a single file — keep a copy in Files, iCloud, or emailed to yourself. Restore it any time on this device or a new phone.
+          Prefer a file? Save your history, jobs, photos, and price memory to a single file — keep a copy in Files, iCloud, or emailed to yourself. Restore it any time on this device or a new phone.
         </p>
         <div style={{
           padding: 14, borderRadius: 'var(--radius-card)',

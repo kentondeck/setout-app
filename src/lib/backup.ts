@@ -32,6 +32,9 @@ const EXCLUDED_KEYS = new Set<string>([
   'setout_thankyou_seen',
   'setout_email_done',
   'sitehand_calc_gate',
+  // Cloud-sync bookkeeping — device-local, must never ride in a backup/sync.
+  'setout_cloud_uploaded',
+  'setout_cloud_last_sync',
 ]);
 
 export interface Backup {
@@ -50,7 +53,7 @@ function isBackupKey(key: string): boolean {
   return KEY_PREFIXES.some(p => key.startsWith(p));
 }
 
-function collectStorage(): Record<string, string> {
+export function collectStorage(): Record<string, string> {
   const storage: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -204,10 +207,10 @@ export function parseBackup(text: string): Backup {
   };
 }
 
-// Write everything back. Existing localStorage user data + Filesystem photos
-// are cleared for keys present in the backup, then repopulated. Onboarding
-// flags and other non-backup keys are left alone.
-export async function applyBackup(backup: Backup): Promise<{ restored: number; photosRestored: number }> {
+// Replace the localStorage portion only — wipe existing backup-keyed entries,
+// then write the provided map. Shared by file-restore (applyBackup below) and
+// cloud restore (cloudSync.pullCloud). Returns how many keys were written.
+export function applyStorageOnly(storage: Record<string, string>): number {
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -216,7 +219,8 @@ export async function applyBackup(backup: Backup): Promise<{ restored: number; p
   for (const key of keysToRemove) localStorage.removeItem(key);
 
   let restored = 0;
-  for (const [key, value] of Object.entries(backup.storage)) {
+  for (const [key, value] of Object.entries(storage)) {
+    if (!isBackupKey(key) || typeof value !== 'string') continue;
     try {
       localStorage.setItem(key, value);
       restored++;
@@ -224,6 +228,14 @@ export async function applyBackup(backup: Backup): Promise<{ restored: number; p
       console.warn('[backup] failed to restore key', key, err);
     }
   }
+  return restored;
+}
+
+// Write everything back. Existing localStorage user data + Filesystem photos
+// are cleared for keys present in the backup, then repopulated. Onboarding
+// flags and other non-backup keys are left alone.
+export async function applyBackup(backup: Backup): Promise<{ restored: number; photosRestored: number }> {
+  const restored = applyStorageOnly(backup.storage);
 
   // Wipe the on-disk photo directories that we're about to overwrite, so
   // stale files from before the restore don't linger. Fire and forget — the

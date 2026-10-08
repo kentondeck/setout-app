@@ -1,5 +1,6 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
+import { BackupHint } from '../components/BackupHint';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext } from '../contexts';
 import { useTools, TOOL_CATEGORIES, compressImageFile, type Tool } from '../lib/useRecords';
@@ -150,6 +151,7 @@ export function ToolsPage() {
         <p style={{ margin: '0 4px 4px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
           Log each tool with its serial + replacement value — add a photo if you can. If your tools get stolen, the insurer wants this list.
         </p>
+        <BackupHint />
 
         {items.length > 0 && (
           <div style={{

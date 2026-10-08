@@ -1,5 +1,6 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
+import { BackupHint } from '../components/BackupHint';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext } from '../contexts';
 import { useReceipts, RECEIPT_CATEGORIES, compressImageFile, type Receipt } from '../lib/useRecords';
@@ -208,8 +209,9 @@ export function ReceiptsPage() {
 
       <div style={{ padding: '4px 20px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <p style={{ margin: '0 4px 4px', fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          Add a receipt's details — snap a photo if you want. Everything stays on your phone — back up regularly.
+          Add a receipt's details — snap a photo if you want.
         </p>
+        <BackupHint />
 
         {/* Tax-year filter chips */}
         {!formOpen && items.length > 0 && (

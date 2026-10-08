@@ -1,72 +1,64 @@
 // Supabase Edge Function: delete-account
 //
 // Permanently deletes the signed-in user's account — required by Apple
-// guideline 5.1.1(v) for any app that lets users create an account.
+// guideline 5.1.1(v) for any app that lets users create an account. Runs with
+// the service-role key (auto-injected by Supabase); identifies the caller from
+// their JWT and deletes ONLY that user, plus their media folder.
 //
-// The client (anon key) can't delete an auth user, so this runs with the
-// service-role key. It identifies the caller from their JWT and deletes ONLY
-// that user, plus their media folder. The `backups` row is removed by the
-// foreign-key cascade when the auth user is deleted, but we also clear it
-// explicitly, and we clean Storage (which does not cascade).
-//
-// Deploy:  supabase functions deploy delete-account --project-ref vjkeabnlgjbqaqrcsheg
-// Invoked from the app via supabase.functions.invoke('delete-account').
+// Deploy via dashboard (Edge Functions -> Deploy a new function, name it
+// `delete-account`) or: supabase functions deploy delete-account
 
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const json = (body: unknown, status: number) =>
-  new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
-
-// Recursively list every object under a prefix. In Supabase Storage listings,
-// folders come back with `id === null`; files have an id.
-async function listAllFiles(admin: SupabaseClient, bucket: string, prefix: string): Promise<string[]> {
-  const out: string[] = [];
-  const stack = [prefix];
-  while (stack.length) {
-    const dir = stack.pop()!;
-    const { data } = await admin.storage.from(bucket).list(dir, { limit: 1000 });
-    for (const item of data ?? []) {
-      const path = dir ? `${dir}/${item.name}` : item.name;
-      if ((item as { id: string | null }).id === null) stack.push(path);
-      else out.push(path);
-    }
-  }
-  return out;
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors, "Content-Type": "application/json" },
+  });
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const ANON = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const SERVICE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Identify the caller from their JWT — a user can only ever delete themselves.
-    const asUser = createClient(SUPABASE_URL, ANON, {
-      global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
+    // Identify the caller from their JWT — a user can only delete themselves.
+    const asUser = createClient(url, anon, {
+      global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
     });
-    const { data: { user }, error: uErr } = await asUser.auth.getUser();
-    if (uErr || !user) return json({ error: 'Not authenticated' }, 401);
+    const { data: { user } } = await asUser.auth.getUser();
+    if (!user) return json({ error: "Not authenticated" }, 401);
 
-    const admin = createClient(SUPABASE_URL, SERVICE);
+    const admin = createClient(url, service);
 
     // Best-effort: clear the user's media folder (Storage doesn't cascade).
     try {
-      const files = await listAllFiles(admin, 'user-media', user.id);
-      if (files.length) await admin.storage.from('user-media').remove(files);
-    } catch (_) { /* best effort */ }
+      const toRemove: string[] = [];
+      for (const prefix of [`${user.id}/jobphotos`, `${user.id}/records`]) {
+        const { data: subs } = await admin.storage.from("user-media").list(prefix, { limit: 1000 });
+        for (const sub of subs ?? []) {
+          const { data: files } = await admin.storage.from("user-media").list(`${prefix}/${sub.name}`, { limit: 1000 });
+          for (const f of files ?? []) toRemove.push(`${prefix}/${sub.name}/${f.name}`);
+        }
+      }
+      if (toRemove.length) await admin.storage.from("user-media").remove(toRemove);
+    } catch (_e) {
+      // ignore — storage cleanup is best-effort
+    }
 
-    await admin.from('backups').delete().eq('user_id', user.id);
+    await admin.from("backups").delete().eq("user_id", user.id);
 
-    const { error: dErr } = await admin.auth.admin.deleteUser(user.id);
-    if (dErr) return json({ error: dErr.message }, 500);
+    const { error } = await admin.auth.admin.deleteUser(user.id);
+    if (error) return json({ error: error.message }, 500);
 
     return json({ ok: true }, 200);
   } catch (e) {

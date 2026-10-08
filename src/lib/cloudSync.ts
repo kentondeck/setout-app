@@ -46,6 +46,35 @@ export function getLocalLastSync(): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// A cheap content fingerprint of the structured (localStorage) data — lets the
+// auto-sync loop detect "something changed, push it" without diffing. Photo
+// changes show up here too, since their manifests live in localStorage.
+export function localSignature(): string {
+  return JSON.stringify(collectStorage());
+}
+
+// Does this device actually hold user content yet? Guards the auto-pull on
+// sign-in: an empty install should load the account, but a device with real
+// work on it should never get silently overwritten.
+export function localHasData(): boolean {
+  const listKeys = ['setout_history', 'setout_jobs', 'setout_receipts_v1', 'setout_tools_v1'];
+  for (const k of listKeys) {
+    try {
+      const raw = localStorage.getItem(k);
+      if (raw) { const v = JSON.parse(raw) as unknown; if (Array.isArray(v) && v.length > 0) return true; }
+    } catch { /* ignore */ }
+  }
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('sitehand_jobphotos_')) continue;
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) { const v = JSON.parse(raw) as unknown; if (Array.isArray(v) && v.length > 0) return true; }
+    } catch { /* ignore */ }
+  }
+  return false;
+}
+
 // ── base64 <-> bytes / blob ──────────────────────────────────────────────────
 
 function base64ToBytes(b64: string): Uint8Array {

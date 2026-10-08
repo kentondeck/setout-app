@@ -65,7 +65,7 @@ export function CloudBackupSection() {
             <span style={{ fontSize: 13, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cloud.email}</span>
           </div>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-            {cloud.lastSyncAt ? `Backed up ${ago(cloud.lastSyncAt)}` : 'Not backed up from this device yet'}
+            {cloud.lastSyncAt ? `Synced automatically · ${ago(cloud.lastSyncAt)}` : 'Setting up…'}
           </p>
 
           {needsRestore && (
@@ -76,7 +76,7 @@ export function CloudBackupSection() {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={cloud.backupNow} disabled={cloud.busy} style={{ ...primaryBtn, opacity: cloud.busy ? 0.7 : 1 }}>
-              {cloud.busy && cloud.status?.startsWith('Backing') ? 'Backing up…' : 'Back up now'}
+              {cloud.busy && cloud.status?.startsWith('Backing') ? 'Syncing…' : 'Sync now'}
             </button>
             <button
               onClick={() => { if (window.confirm('Restore your cloud backup to this device? This replaces the jobs, photos and receipts currently on this phone.')) cloud.restore(); }}
@@ -144,7 +144,7 @@ export function CloudBackupSection() {
     <div>
       {label}
       <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-        Right now your jobs, photos and receipts live only on this phone. Sign in to back them up safely and restore them on a new device. Optional — the app works fine without it.
+        Right now your jobs, photos and receipts live only on this phone. Sign in and they back up automatically and sync to your other devices — just sign in there and pick up where you left off. Optional — the app works fine without it.
       </p>
       <div style={{ padding: 14, borderRadius: 'var(--radius-card)', background: 'var(--color-card)', border: '0.5px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input
@@ -162,7 +162,7 @@ export function CloudBackupSection() {
         </button>
         {message}
         <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-          We’ll email you a 6-digit code — no password to remember.
+          We’ll email you a sign-in code — no password to remember.
         </p>
       </div>
     </div>

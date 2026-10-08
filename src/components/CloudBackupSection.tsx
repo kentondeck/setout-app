@@ -94,11 +94,11 @@ export function CloudBackupSection() {
               Sign out
             </button>
             <button
-              onClick={() => { if (window.confirm('Delete your cloud backup? Your data stays on this phone but is removed from the cloud, and you’ll be signed out.')) cloud.deleteData(); }}
+              onClick={() => { if (window.confirm('Permanently delete your account and everything stored in the cloud? Your data on this phone stays, but your account and cloud backup are erased and can’t be recovered.')) cloud.deleteAccount(); }}
               disabled={cloud.busy}
               style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, color: '#dc2626', fontFamily: 'inherit', cursor: 'pointer' }}
             >
-              Delete cloud data
+              Delete account
             </button>
           </div>
         </div>

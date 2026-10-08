@@ -28,7 +28,7 @@ interface CloudState {
   signOut: () => Promise<void>;
   backupNow: () => Promise<void>;
   restore: () => Promise<void>;
-  deleteData: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -51,7 +51,7 @@ const CloudContext = createContext<CloudState>({
   signOut: noop,
   backupNow: noop,
   restore: noop,
-  deleteData: noop,
+  deleteAccount: noop,
   clearError: () => {},
 });
 
@@ -245,12 +245,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const deleteData = useCallback(async () => {
+  const deleteAccount = useCallback(async () => {
     const sb = getSupabase();
     if (!sb) return;
-    setBusy(true); setError(null); setStatus('Deleting…');
+    setBusy(true); setError(null); setStatus('Deleting account…');
     try {
+      // Clear the user's cloud data (Storage + backup row) via RLS first…
       await deleteCloudData();
+      // …then delete the auth account itself (service-role Edge Function).
+      const { error: fnErr } = await sb.functions.invoke('delete-account', { method: 'POST' });
+      if (fnErr) throw fnErr;
       await sb.auth.signOut();
       setStatus(null); setLastSyncAt(null); setRemoteBackupAt(null);
     } catch (e) {
@@ -279,9 +283,9 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     signOut,
     backupNow,
     restore,
-    deleteData,
+    deleteAccount,
     clearError,
-  }), [configured, session, phase, pendingEmail, busy, error, status, lastSyncAt, remoteBackupAt, sendCode, verifyCode, cancelCode, signOut, backupNow, restore, deleteData, clearError]);
+  }), [configured, session, phase, pendingEmail, busy, error, status, lastSyncAt, remoteBackupAt, sendCode, verifyCode, cancelCode, signOut, backupNow, restore, deleteAccount, clearError]);
 
   return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>;
 }

@@ -114,14 +114,14 @@ export function CloudBackupSection() {
         {label}
         <div style={{ padding: 14, borderRadius: 'var(--radius-card)', background: 'var(--color-card)', border: '0.5px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p style={{ margin: 0, fontSize: 12.5, color: 'var(--color-text)', lineHeight: 1.4 }}>
-            Enter the 6-digit code we emailed to <strong>{cloud.pendingEmail}</strong>.
+            Enter the code we emailed to <strong>{cloud.pendingEmail}</strong>.
           </p>
           <input
             value={code}
-            onChange={e => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+            onChange={e => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
             inputMode="numeric"
             autoComplete="one-time-code"
-            placeholder="123456"
+            placeholder="Code"
             style={{ ...inputStyle, letterSpacing: '4px', textAlign: 'center', fontSize: 18 }}
           />
           <div style={{ display: 'flex', gap: 8 }}>

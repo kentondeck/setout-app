@@ -11,6 +11,7 @@ export interface StairDiagramProps {
   stringerLength: number;
   totalRise: number;
   totalRun: number;
+  pitch?: number;  // degrees — the calc's stringer/pitch angle; labelled on the slope when > 0
   nosing?: number; // mm — draws a small overhang lip on each tread when > 0; omitted/0 leaves the profile flush
   label?: string;
 }
@@ -38,6 +39,7 @@ export const StairDiagram = memo(function StairDiagram({
   stringerLength,
   totalRise,
   totalRun,
+  pitch,
   nosing,
   label,
 }: StairDiagramProps) {
@@ -195,6 +197,10 @@ export const StairDiagram = memo(function StairDiagram({
           <line x1={0} y1={0} x2={stringerPx} y2={0} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
           <line x1={0}          y1={-9} x2={0}          y2={9} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
           <line x1={stringerPx} y1={-9} x2={stringerPx} y2={9} stroke={ORANGE} strokeWidth={1.5} strokeLinecap="round" />
+          {/* Pitch — rides just below the stringer line (the pitch line), parallel to the slope */}
+          {pitch !== undefined && pitch > 0 && (
+            <text x={stringerPx * 0.46} y={26} textAnchor="middle" fontFamily={FONT} fontSize={19} fontWeight={600} fill={ORANGE} stroke="white" strokeWidth={5} paintOrder="stroke" letterSpacing="-0.3">{fmt(pitch)}° pitch</text>
+          )}
         </g>
 
         {/* ── STRINGER — upper-left open space ── */}

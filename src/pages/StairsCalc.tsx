@@ -306,6 +306,7 @@ export function StairsCalc() {
               stringerLength={result.outputs.stringerLength}
               totalRise={result.outputs.totalRise}
               totalRun={result.outputs.totalRun}
+              pitch={result.outputs.stringerAngle}
               nosing={result.outputs.treadBoardDepth - result.outputs.treadDepth}
               label={jobName}
             />

@@ -21,6 +21,7 @@ import { lookupCachedPrices, normalizeItemKey, isCheapFixing } from '../lib/pric
 import { getLearnedPreferences, recordMaterialRemoved, recordMaterialAdded } from '../lib/buildHabits';
 import type { Employee } from '../types';
 import { uuid } from '../lib/uuid';
+import { API_BASE } from '../lib/apiBase';
 
 const GST_RATE: Record<'AU' | 'NZ', number> = { AU: 10, NZ: 15 };
 const MARGIN_PRESETS = [10, 20, 30, 50];
@@ -183,7 +184,7 @@ const MAX_PLANS_FILE_BYTES = 25 * 1024 * 1024;
 // api/quote.ts reads the PDF straight from this URL server-side and deletes the blob once it has —
 // nothing is retained beyond that single request.
 function uploadPlansFile(file: File): Promise<string> {
-  return upload(file.name, file, { access: 'public', handleUploadUrl: '/api/plans-upload' })
+  return upload(file.name, file, { access: 'public', handleUploadUrl: `${API_BASE}/api/plans-upload` })
     .then(blob => blob.url);
 }
 
@@ -668,7 +669,7 @@ function PhotoQuoteCalcInner() {
 
     try {
       const imageBase64 = photo ? await fileToJpegBase64(photo) : null;
-      const res = await fetch('/api/quote', {
+      const res = await fetch(`${API_BASE}/api/quote`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'authorization': `Bearer ${getPhotoQuoteToken()}` },
         body: JSON.stringify({

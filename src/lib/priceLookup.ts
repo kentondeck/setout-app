@@ -5,6 +5,7 @@
 // Anything not in the cache is left for the tradie to type in manually.
 import type { Region } from '../types';
 import { rememberMaterialPrice, fuzzyMaterialKey } from './priceMemory';
+import { API_BASE } from './apiBase';
 
 export interface PriceLookupItem {
   item: string;
@@ -44,7 +45,7 @@ interface SharedCacheEntry {
 async function checkSharedCache(keys: string[], region: Region): Promise<Record<string, SharedCacheEntry>> {
   if (keys.length === 0) return {};
   try {
-    const res = await fetch(`/api/price-cache?region=${region}&keys=${encodeURIComponent(keys.join(','))}`);
+    const res = await fetch(`${API_BASE}/api/price-cache?region=${region}&keys=${encodeURIComponent(keys.join(','))}`);
     if (!res.ok) return {};
     const { results } = (await res.json()) as { results: Record<string, SharedCacheEntry> };
     return results;

@@ -44,20 +44,24 @@ const config: CapacitorConfig = {
       style: 'LIGHT',
     },
   },
-  server: {
-    // `npm run ios:live` sets CAP_SERVER_URL to http://<mac-lan-ip>:5173, so the
-    // native app on the phone loads live from Vite and hot-reloads on save.
-    // `npm run ios:release` leaves it unset and falls back to the production URL
-    // below — that's what TestFlight / App Store builds always ship with.
-    //
-    // setoutapp.com.au is the actual production domain for the "setout" Vercel
-    // project — every push to main deploys here. setout-app.vercel.app was
-    // used previously but is not a known alias under this Vercel account/project;
-    // it was stuck serving a stale, disconnected build.
-    url: process.env.CAP_SERVER_URL || 'https://setoutapp.com.au',
-    cleartext: !!process.env.CAP_SERVER_URL,
-    allowNavigation: ['setoutapp.com.au'],
-  },
+  // `npm run ios:live` sets CAP_SERVER_URL to http://<mac-lan-ip>:5173, so the
+  // native app on the phone loads live from Vite and hot-reloads on save.
+  // `npm run ios:release` (and any plain `npm run build` + `cap sync`) leaves
+  // this unset, so `server` is omitted entirely and Capacitor falls back to
+  // its default: load the bundled `webDir` (dist/) straight from disk. That's
+  // what TestFlight / App Store builds ship with — the app works fully
+  // offline, isn't dependent on setoutapp.com.au staying up or unchanged at
+  // runtime, and doesn't risk an App Store Guideline 4.7 "repackaged website"
+  // rejection. A handful of calls still reach the live site deliberately —
+  // Vercel serverless functions (src/lib/apiBase.ts's API_BASE) and the PWA
+  // service worker for the *web* (non-native) build — those are unaffected.
+  server: process.env.CAP_SERVER_URL
+    ? {
+        url: process.env.CAP_SERVER_URL,
+        cleartext: true,
+        allowNavigation: ['setoutapp.com.au'],
+      }
+    : undefined,
 };
 
 export default config;

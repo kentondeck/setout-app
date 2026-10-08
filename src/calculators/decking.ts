@@ -52,6 +52,15 @@ export function calculateDecking(inputs: DeckingInputs): DeckingResult {
   if (boardGap >= boardWidth * 2) {
     throw new CalcInputError('Board gap is larger than the board — check the values.');
   }
+  if (boardWidth + boardGap <= 0) {
+    throw new CalcInputError('Board width must be greater than 0.');
+  }
+  if (joistSpacing <= 0) {
+    throw new CalcInputError('Joist spacing must be greater than 0.');
+  }
+  if (bearerSpacing <= 0) {
+    throw new CalcInputError('Bearer spacing must be greater than 0.');
+  }
 
   // Which way the boards run. Running the LENGTH (parallel to the house, fewer
   // joins) is the common look; running the WIDTH is also valid. Everything

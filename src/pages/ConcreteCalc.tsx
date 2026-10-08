@@ -171,7 +171,13 @@ export function ConcreteCalc() {
 
       gate.gateCalc('concrete', () => { setMixResult(null); setPostResult(null); setSlabReoResult(null); setSlabResult(null); });
 
-      const calc = calculateConcreteMix({ volumeM3: volume, ratio: resolvedMixRatio });
+      let calc: ReturnType<typeof calculateConcreteMix>;
+      try {
+        calc = calculateConcreteMix({ volumeM3: volume, ratio: resolvedMixRatio });
+      } catch (err) {
+        setError((err as Error).message);
+        return;
+      }
       setMixResult(calc);
       const id = uuid();
       setLastMixId(id);

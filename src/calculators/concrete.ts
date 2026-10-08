@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface SlabOutputs extends Record<string, number> {
   exactVolume: number;   // m³ to 2 dp
@@ -78,6 +79,9 @@ const WATER_CEMENT_RATIO = 0.5; // litres of water per kg of cement — general-
 export function calculateConcreteMix(inputs: MixInputs): { outputs: MixOutputs; steps: WorkingStep[] } {
   const { volumeM3, ratio } = inputs;
   const totalParts = ratio.cement + ratio.sand + ratio.aggregate;
+  if (totalParts <= 0) {
+    throw new CalcInputError('Mix ratio must add up to more than 0.');
+  }
 
   const dryVolume = parseFloat((volumeM3 * DRY_VOLUME_FACTOR).toFixed(3));
 
@@ -294,13 +298,19 @@ export function calculatePostHoles(inputs: PostHoleInputs): { outputs: PostHoleO
   let shapeFormula: string;
   let shapeResult: string;
 
-  if (holeType === 'round' && diameter !== undefined) {
+  if (holeType === 'round') {
+    if (diameter === undefined) {
+      throw new CalcInputError('Hole diameter is required for a round hole.');
+    }
     const r = diameter / 2;
     grossVolumePerHoleM3 = (Math.PI * r * r * depth) / 1_000_000_000;
     shapeFormula = 'π × radius² × depth ÷ 1,000,000,000';
     shapeResult = `π × (${r}mm)² × ${depth}mm ÷ 1,000,000,000`;
   } else {
-    const s = sideWidth ?? 0;
+    if (sideWidth === undefined) {
+      throw new CalcInputError('Side width is required for a square hole.');
+    }
+    const s = sideWidth;
     grossVolumePerHoleM3 = (s * s * depth) / 1_000_000_000;
     shapeFormula = 'side² × depth ÷ 1,000,000,000';
     shapeResult = `${s}mm × ${s}mm × ${depth}mm ÷ 1,000,000,000`;

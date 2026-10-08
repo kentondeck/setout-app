@@ -97,19 +97,25 @@ export function FencingCalc() {
 
     setError('');
 
-    const calc = calculateFencing({
-      runLength: run,
-      height: resolvedHeight,
-      postSpacing: resolvedSpacing,
-      fenceType,
-      railCount: resolvedRailCount,
-      palingWidthMm: resolvedPalingWidth,
-      palingStyle,
-      palingOverlapMm: parseFloat(customOverlap) || 15,
-      palingGapMm: parseFloat(customGap) || 10,
-      postHoleDiameterMm: resolvedHoleDiameter,
-      postWidthMm: resolvedPostWidth,
-    });
+    let calc: ReturnType<typeof calculateFencing>;
+    try {
+      calc = calculateFencing({
+        runLength: run,
+        height: resolvedHeight,
+        postSpacing: resolvedSpacing,
+        fenceType,
+        railCount: resolvedRailCount,
+        palingWidthMm: resolvedPalingWidth,
+        palingStyle,
+        palingOverlapMm: parseFloat(customOverlap) || 15,
+        palingGapMm: parseFloat(customGap) || 10,
+        postHoleDiameterMm: resolvedHoleDiameter,
+        postWidthMm: resolvedPostWidth,
+      });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
 
     setResult(calc);
 

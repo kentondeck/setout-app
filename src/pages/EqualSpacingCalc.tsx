@@ -69,7 +69,13 @@ export function EqualSpacingCalc() {
 
     setError('');
 
-    const calc = calculateEqualSpacing({ totalSpan, itemWidth, itemCount, preferredSpacing });
+    let calc: ReturnType<typeof calculateEqualSpacing>;
+    try {
+      calc = calculateEqualSpacing({ totalSpan, itemWidth, itemCount, preferredSpacing });
+    } catch (err) {
+      setError((err as Error).message);
+      return;
+    }
     setResult(calc);
 
     const id = uuid();

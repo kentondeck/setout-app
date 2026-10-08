@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export type GradientMode = 'findGradient' | 'findRise' | 'findRun';
 
@@ -36,6 +37,9 @@ export function calculateGradient(inputs: GradientInputs): GradientResult {
   if (mode === 'findGradient') {
     run = inputs.run;
     rise = inputs.rise;
+    if (run === 0) {
+      throw new CalcInputError('Run must be greater than 0.');
+    }
     const runMm = run * 1000;
     // A level/flat run (rise=0) is a legitimate real input — runMm/0 would be
     // Infinity, which JSON.stringify silently turns into null when this result
@@ -53,6 +57,9 @@ export function calculateGradient(inputs: GradientInputs): GradientResult {
   } else if (mode === 'findRise') {
     run = inputs.run;
     gradientRatio = inputs.gradientRatio;
+    if (gradientRatio === 0) {
+      throw new CalcInputError('Gradient ratio must be greater than 0.');
+    }
     const runMm = run * 1000;
     rise = parseFloat((runMm / gradientRatio).toFixed(1));
     percentage = parseFloat((100 / gradientRatio).toFixed(3));
@@ -66,6 +73,9 @@ export function calculateGradient(inputs: GradientInputs): GradientResult {
   } else {
     rise = inputs.rise;
     gradientRatio = inputs.gradientRatio;
+    if (gradientRatio === 0) {
+      throw new CalcInputError('Gradient ratio must be greater than 0.');
+    }
     const runMm = rise * gradientRatio;
     run = parseFloat((runMm / 1000).toFixed(3));
     percentage = parseFloat((100 / gradientRatio).toFixed(3));

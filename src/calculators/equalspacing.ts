@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface EqualSpacingInputs {
   totalSpan: number;          // mm
@@ -27,6 +28,9 @@ export function calculateEqualSpacing(inputs: EqualSpacingInputs): EqualSpacingR
   let countDerived = false;
 
   if (inputCount != null && inputCount > 0) {
+    if (inputCount * itemWidth >= totalSpan) {
+      throw new CalcInputError('Item width is too large to fit that many items in the span — nothing to fit.');
+    }
     itemCount = inputCount;
   } else if (preferredSpacing != null && preferredSpacing > 0) {
     // N(gap + width) = span − gap  →  N = (span − gap) / (gap + width)

@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export interface StairLimitsInput {
   riserMin: number;
@@ -61,6 +62,14 @@ const AU_LIMITS: StairLimitsInput = { riserMin: 115, riserMax: 225, treadMin: 24
 
 export function calculateStairs(inputs: StairsInputs): StairsResult {
   const { totalRise, totalRun: inputRun, preferredGoing, limits = AU_LIMITS } = inputs;
+
+  if (!(totalRise > 0)) {
+    throw new CalcInputError('Total rise must be greater than 0.');
+  }
+  if (inputs.preferredRiser != null && !(inputs.preferredRiser > 0)) {
+    throw new CalcInputError('Preferred riser height must be greater than 0.');
+  }
+
   const preferredRiser = inputs.preferredRiser ?? (limits.riserMin + limits.riserMax) / 2;
   const riserAutoSelected = inputs.preferredRiser == null;
 

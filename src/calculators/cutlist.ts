@@ -149,6 +149,9 @@ export function calculateCutlist(inputs: CutlistInputs): CutlistResult {
   for (const { length, qty } of cuts) {
     for (let i = 0; i < qty; i++) allCuts.push(length);
   }
+  if (allCuts.length === 0) {
+    throw new Error('Add at least one cut length.');
+  }
   allCuts.sort((a, b) => b - a);
 
   // A cut longer than the largest available stock can never be packed. Without

@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export type FenceType = 'paling' | 'rail';
 export type PalingStyle = 'lapped' | 'tight' | 'open';
@@ -52,6 +53,10 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
   const { runLength, height, postSpacing, fenceType, railCount, palingWidthMm, palingStyle, palingOverlapMm, palingGapMm, postHoleDiameterMm, postWidthMm } = inputs;
   const steps: WorkingStep[] = [];
 
+  if (postSpacing <= 0) {
+    throw new CalcInputError('Post spacing must be greater than 0.');
+  }
+
   // Posts. ceil(L/s) + 1 gives the right count regardless of whether the run
   // length is an exact multiple of spacing — one at each end plus intermediates.
   const postCount = Math.ceil(runLength / postSpacing) + 1;
@@ -86,10 +91,16 @@ export function calculateFencing(inputs: FencingInputs): FencingResult {
   // Palings
   let palingCount = 0;
   if (fenceType === 'paling') {
+    if (palingStyle === 'lapped' && palingOverlapMm >= palingWidthMm) {
+      throw new CalcInputError('Overlap must be less than the paling width.');
+    }
     const effectiveCoverMm =
       palingStyle === 'lapped' ? palingWidthMm - palingOverlapMm :
       palingStyle === 'open'   ? palingWidthMm + palingGapMm :
       palingWidthMm;
+    if (effectiveCoverMm <= 0) {
+      throw new CalcInputError('Paling width must be greater than 0.');
+    }
     palingCount = Math.ceil((runLength * 1000) / effectiveCoverMm);
     const styleNote =
       palingStyle === 'lapped' ? `${palingWidthMm} − ${palingOverlapMm} mm overlap` :

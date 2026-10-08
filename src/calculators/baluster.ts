@@ -32,6 +32,9 @@ export function calculateBaluster(inputs: BalusterInputs): BalusterResult {
   if (totalLength <= maxGap) {
     throw new CalcInputError(`Span is smaller than the max gap (${maxGap} mm) — no balusters needed.`);
   }
+  if (balusterWidth + maxGap <= 0) {
+    throw new CalcInputError('Baluster width or max gap must be greater than 0.');
+  }
 
   // n balusters create (n+1) gaps
   // Minimum n such that each gap ≤ maxGap:

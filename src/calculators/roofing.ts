@@ -1,4 +1,5 @@
 import type { WorkingStep } from '../components/ApprenticeWorking';
+import { CalcInputError } from './errors';
 
 export type RoofType = 'gable' | 'hip' | 'skillion';
 // Three profile families that cover the vast majority of NZ + AU residential
@@ -65,6 +66,10 @@ const r2 = (n: number) => parseFloat(n.toFixed(2));
 
 export function calculateRoofing(inputs: RoofingInputs): RoofingResult {
   const { roofType, planLength, planWidth, pitchDegrees, profile, eaveOverhangMm, purlinSpacingMm } = inputs;
+
+  if (purlinSpacingMm <= 0) {
+    throw new CalcInputError('Purlin spacing must be greater than 0.');
+  }
 
   const pitchRad = pitchDegrees * Math.PI / 180;
   const { coverMm, lapScrews, fieldScrews } = ROOFING_PROFILES[profile];

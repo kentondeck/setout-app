@@ -32,7 +32,6 @@ export function BackupPrompt() {
       }}>
         <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(0,0,0,0.12)', alignSelf: 'center', marginBottom: 18 }} />
 
-        <div style={{ fontSize: 34, marginBottom: 6 }}>☁️</div>
         <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 700, letterSpacing: '-0.4px', color: 'var(--color-text)' }}>
           Keep your work safe
         </h2>

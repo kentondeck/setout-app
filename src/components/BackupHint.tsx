@@ -18,9 +18,9 @@ export function BackupHint() {
   if (cloud.configured && cloud.signedIn) {
     body = <>Backing up automatically to your account.</>;
   } else if (cloud.configured) {
-    body = <><a href="#/settings" style={linkStyle}>Sign in from Settings</a> to back up &amp; sync your data across devices.</>;
+    body = <>Saved only on this phone — <a href="#/settings" style={linkStyle}>sign in from Settings</a> to back it up, or you’ll lose it if your phone is lost or replaced.</>;
   } else {
-    body = <>This stays on your phone — <a href="#/settings" style={linkStyle}>back up in Settings</a> so you don’t lose it.</>;
+    body = <>This is saved only on this phone.</>;
   }
 
   return (

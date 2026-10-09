@@ -144,7 +144,7 @@ export function CloudBackupSection() {
     <div>
       {label}
       <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-        Right now your jobs, photos and receipts live only on this phone. Sign in and they back up automatically and sync to your other devices — just sign in there and pick up where you left off. Optional — the app works fine without it.
+        Right now your jobs, photos and receipts are saved <strong>only on this phone</strong> — if it’s lost, broken or replaced, they’re gone. Sign in and everything backs up automatically and syncs across your devices. It’s the only way to keep your data safe.
       </p>
       <div style={{ padding: 14, borderRadius: 'var(--radius-card)', background: 'var(--color-card)', border: '0.5px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <input

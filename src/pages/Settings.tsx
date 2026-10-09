@@ -1,11 +1,10 @@
-import { useContext, useRef, useState } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SettingsContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 import type { Employee } from '../types';
 import { uuid } from '../lib/uuid';
 import { useSubscription } from '../lib/SubscriptionContext';
-import { exportBackup, parseBackup, applyBackup } from '../lib/backup';
 import { CloudBackupSection } from '../components/CloudBackupSection';
 
 const textInputStyle: React.CSSProperties = {
@@ -191,50 +190,6 @@ export function Settings() {
   }
 
   const [nextQuoteNumberInput, setNextQuoteNumberInput] = useState(String(settings.nextQuoteNumber));
-
-  const importFileRef = useRef<HTMLInputElement | null>(null);
-  const [backupBusy, setBackupBusy] = useState<'export' | 'import' | null>(null);
-  const [backupMessage, setBackupMessage] = useState<{ text: string; tone: 'success' | 'error' } | null>(null);
-
-  async function handleExport() {
-    setBackupBusy('export');
-    setBackupMessage(null);
-    try {
-      await exportBackup();
-      setBackupMessage({ text: 'Backup saved. Keep a copy in Files, iCloud, or emailed to yourself.', tone: 'success' });
-    } catch (err) {
-      setBackupMessage({ text: (err as Error)?.message || 'Backup failed.', tone: 'error' });
-    } finally {
-      setBackupBusy(null);
-    }
-  }
-
-  function triggerImport() {
-    importFileRef.current?.click();
-  }
-
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    const confirmed = window.confirm(
-      'Restoring will replace your history, jobs, photos and price memory with the backup file. Continue?',
-    );
-    if (!confirmed) return;
-    setBackupBusy('import');
-    setBackupMessage(null);
-    try {
-      const text = await file.text();
-      const backup = parseBackup(text);
-      const { restored, photosRestored } = await applyBackup(backup);
-      const photoBit = photosRestored > 0 ? ` and ${photosRestored} photo${photosRestored === 1 ? '' : 's'}` : '';
-      setBackupMessage({ text: `Restored ${restored} item${restored === 1 ? '' : 's'}${photoBit}. Reloading…`, tone: 'success' });
-      setTimeout(() => window.location.reload(), 900);
-    } catch (err) {
-      setBackupMessage({ text: (err as Error)?.message || 'Restore failed.', tone: 'error' });
-      setBackupBusy(null);
-    }
-  }
 
   return (
     <div
@@ -661,67 +616,6 @@ export function Settings() {
       </div>
 
       <CloudBackupSection />
-
-      <div>
-        <SectionLabel>Manual backup file</SectionLabel>
-        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-          Prefer a file? Save your history, jobs, photos, and price memory to a single file — keep a copy in Files, iCloud, or emailed to yourself. Restore it any time on this device or a new phone.
-        </p>
-        <div style={{
-          padding: 14, borderRadius: 'var(--radius-card)',
-          background: 'var(--color-card)', border: '0.5px solid var(--color-border)',
-          display: 'flex', flexDirection: 'column', gap: 10,
-        }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={handleExport}
-              disabled={backupBusy !== null}
-              style={{
-                flex: 1, padding: '12px 14px',
-                background: 'var(--color-orange)', color: '#fff',
-                border: 'none', borderRadius: 'var(--radius-tile)',
-                fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
-                cursor: backupBusy ? 'default' : 'pointer',
-                opacity: backupBusy === 'export' ? 0.7 : 1,
-              }}
-            >
-              {backupBusy === 'export' ? 'Saving…' : 'Save backup'}
-            </button>
-            <button
-              onClick={triggerImport}
-              disabled={backupBusy !== null}
-              style={{
-                flex: 1, padding: '12px 14px',
-                background: 'transparent', color: 'var(--color-text)',
-                border: '0.5px solid var(--color-border)', borderRadius: 'var(--radius-tile)',
-                fontSize: 14, fontWeight: 500, fontFamily: 'inherit',
-                cursor: backupBusy ? 'default' : 'pointer',
-                opacity: backupBusy === 'import' ? 0.7 : 1,
-              }}
-            >
-              {backupBusy === 'import' ? 'Restoring…' : 'Restore backup'}
-            </button>
-          </div>
-          <input
-            ref={importFileRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={handleImportFile}
-            style={{ display: 'none' }}
-          />
-          {backupMessage && (
-            <p style={{
-              margin: 0, fontSize: 12, lineHeight: 1.4,
-              color: backupMessage.tone === 'success' ? '#16a34a' : '#dc2626',
-            }}>
-              {backupMessage.text}
-            </p>
-          )}
-          <p style={{ margin: 0, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-            Backing up before uninstalling — or every few weeks as insurance — means nothing gets lost.
-          </p>
-        </div>
-      </div>
 
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
         {subscription.isPro ? (

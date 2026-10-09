@@ -4,7 +4,7 @@ import { useCloud } from '../lib/CloudContext';
 // hate to lose (receipts, tools, …). It adapts to the cloud-backup state:
 //   • signed in            → reassure it's syncing
 //   • cloud on, signed out → nudge sign-in for automatic sync
-//   • cloud off            → point at the manual backup in Settings
+//   • cloud off            → just note it's stored on this phone (no cloud configured)
 // Routes are hash-based, so a plain #/settings anchor navigates correctly.
 
 const linkStyle: React.CSSProperties = {

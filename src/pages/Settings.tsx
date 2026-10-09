@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SettingsContext } from '../contexts';
+import { SettingsContext, KeyboardContext } from '../contexts';
 import { ApprenticeToggle } from '../components/ApprenticeToggle';
 import type { Employee } from '../types';
 import { uuid } from '../lib/uuid';
@@ -100,6 +100,7 @@ function Collapsible({
 export function Settings() {
   const navigate = useNavigate();
   const { settings, updateSettings } = useContext(SettingsContext);
+  const { inset: keyboardInset } = useContext(KeyboardContext);
   const subscription = useSubscription();
   const [nameInput, setNameInput] = useState(settings.userName);
   const [nameSaved, setNameSaved] = useState(false);
@@ -197,7 +198,7 @@ export function Settings() {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        padding: 'calc(env(safe-area-inset-top) + 20px) 20px 24px',
+        padding: `calc(env(safe-area-inset-top) + 20px) 20px ${24 + keyboardInset}px`,
         gap: 28,
       }}
     >

@@ -23,6 +23,19 @@ const secondaryBtn: React.CSSProperties = {
   fontWeight: 500, fontFamily: 'inherit', cursor: 'pointer',
 };
 
+// Keep a focused field above the on-screen keyboard. The keyboard is
+// resize:'none' (it overlays rather than shrinking the webview), and this
+// Cloud backup section sits low in Settings, so without this the email/code
+// fields get hidden behind it. Mirrors NumberInput's handler.
+function keepAboveKeyboard(e: React.FocusEvent<HTMLInputElement>) {
+  const el = e.currentTarget;
+  setTimeout(() => {
+    if (el.getBoundingClientRect().bottom > window.innerHeight * 0.5) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 300);
+}
+
 function ago(ts: number | null): string {
   if (!ts) return 'never';
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -119,6 +132,7 @@ export function CloudBackupSection() {
           <input
             value={code}
             onChange={e => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
+            onFocus={keepAboveKeyboard}
             inputMode="numeric"
             autoComplete="one-time-code"
             placeholder="Code"
@@ -150,6 +164,7 @@ export function CloudBackupSection() {
         <input
           value={email}
           onChange={e => setEmail(e.target.value)}
+          onFocus={keepAboveKeyboard}
           type="email"
           inputMode="email"
           autoComplete="email"

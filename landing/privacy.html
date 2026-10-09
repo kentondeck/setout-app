@@ -24,10 +24,17 @@
   .logo span { color:var(--orange); }
   h1 { font-size:36px; letter-spacing:-0.03em; color:var(--ink); margin:40px 0 4px; }
   h2 { font-size:20px; color:var(--ink); margin:36px 0 8px; }
+  h3 { font-size:17px; color:var(--ink); margin:24px 0 6px; }
   p, li { font-size:16px; }
   a { color:var(--orange); }
   .updated { color:#595959; font-size:14px; margin:0 0 24px; }
   mark { background:#ffe3d6; padding:1px 4px; border-radius:3px; }
+  hr { border:0; border-top:1px solid #ddd; margin:32px 0 0; }
+  .tablewrap { overflow-x:auto; margin:12px 0; }
+  table { border-collapse:collapse; width:100%; font-size:15px; background:#fff; }
+  th, td { text-align:left; vertical-align:top; padding:10px 12px; border:1px solid #e2e2de; }
+  th { color:var(--ink); background:#fafaf8; }
+  ul ul { margin-top:4px; }
   footer { padding-top:40px; padding-bottom:48px; font-size:14px; color:#595959; }
 </style>
 </head>
@@ -35,38 +42,155 @@
 <header><a class="logo" href="/">set<span>out</span></a></header>
 <main>
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: 3 October 2026</p>
+<p class="updated">Effective date: 17 September 2026<br>Last updated: 9 October 2026</p>
 
-<p>This policy explains what information Setout collects and how we handle it, both in the Setout app and on this website (setoutapp.co.nz). We built Setout to work on your phone without an account, so we collect very little.</p>
+<p>This is the privacy policy for <strong>Setout</strong>, the construction calculator app for tradies in New Zealand and Australia. This document explains what data Setout collects, why, and what your rights are.</p>
+<p>Setout is operated by <strong>Setout Holdings Limited</strong> (referred to as "we", "us", or "our" throughout). Contact: <strong><a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a></strong>.</p>
 
-<h2>Who we are</h2>
-<p>Setout is operated by Setout Holdings Limited. You can contact us at <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
+<hr>
 
-<h2>The app</h2>
-<p>You don't need an account to use Setout. Your calculations, saved jobs, receipts and tool log are stored on your own device. We do not receive or store this content on our servers.</p>
-<p><strong>Camera, photos and files.</strong> Setout may ask for access to your camera, photo library or files when you use a feature that needs it. Anything you add stays on your device, and it is only shared if you choose to share it, for example by sending a PDF to your team.</p>
-<p><strong>Analytics and crash reports.</strong> The web version of Setout uses Umami, a privacy-focused analytics service, to count visits. The iPhone app does not use analytics. We may use Sentry to receive crash and error reports from the app; these reports do not include your name or email and are used only to fix bugs. Setout does not use advertising trackers.</p>
+<h2>The short version (plain English)</h2>
+<ul>
+  <li>Your <strong>calculations, jobs, notes, and photos stay on your phone by default</strong>. We don't have a copy, unless you choose to sign in.</li>
+  <li><strong>Cloud backup is optional.</strong> If you sign in with your email to back up and sync your data, we store your jobs, photos, receipts and tools securely in the cloud so you don't lose them if your phone is lost or replaced. You can delete your account and everything in it at any time, right in the app.</li>
+  <li>We collect <strong>basic analytics</strong> (which pages you use, roughly where in the world you're using it from) via a privacy-friendly analytics tool. No personal information.</li>
+  <li>If you <strong>submit feedback</strong>, we get your feedback text plus the name you set during onboarding, so we can reply.</li>
+  <li>We <strong>do not sell your data</strong>, ever. We don't run ads.</li>
+  <li>You can <strong>delete everything</strong> at any time: clear the app's data, delete your account in Settings, or contact us.</li>
+</ul>
 
-<h2>Subscriptions and payments</h2>
-<p>Subscriptions are handled by the Apple App Store or Google Play, and we never see or store your card details. We use RevenueCat (revenuecat.com) to manage subscriptions and unlock features. RevenueCat receives purchase information from the store, such as your subscription status and an anonymous identifier, and handles it under its own privacy policy. RevenueCat is a US-based service, so this information may be processed in the United States.</p>
+<hr>
 
-<h2>This website</h2>
-<p>Our website is hosted by Vercel, which keeps standard server logs (such as IP address and browser type) for security and performance. The site loads the Inter font from Google Fonts, which means your IP address is sent to Google when the page loads.</p>
+<h2>1. Who this policy covers</h2>
+<p>This policy applies to everyone who uses Setout, through the website (<a href="https://www.setoutapp.co.nz">www.setoutapp.co.nz</a>), the installed PWA on your phone, or the native iOS app on TestFlight or the App Store.</p>
 
-<h2>Sharing your information</h2>
-<p>We don't sell your personal information. We share it only with the service providers named above, where needed to run the website, or where the law requires it.</p>
+<h2>2. What we collect and why</h2>
 
-<h2>Your rights</h2>
-<p>You can ask us to access, correct or delete personal information we hold about you by writing to <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>. We handle requests in line with the Privacy Act 1988 (Australia) and the Privacy Act 2020 (New Zealand). If you're unhappy with how we respond, you can contact the Office of the Australian Information Commissioner or the NZ Office of the Privacy Commissioner.</p>
+<h3>2.1 Information you give us directly</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>What</th><th>When</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Your first name</td><td>During onboarding</td><td>So we can greet you personally and label your feedback</td></tr>
+<tr><td>Your region (AU or NZ)</td><td>During onboarding</td><td>So we show the right building codes and units</td></tr>
+<tr><td>Feedback text</td><td>When you tap the Feedback tile and submit</td><td>So we can read and respond to your suggestions and bug reports</td></tr>
+<tr><td>Your email address</td><td>Only if you sign in to turn on cloud backup</td><td>To create and secure your account, and email you a sign-in code (no password)</td></tr>
+</tbody></table></div>
 
-<h2>Children</h2>
-<p>Setout is a tool for people working in construction and is not aimed at children under 13. We don't knowingly collect information from children.</p>
+<h3>2.2 Information collected automatically</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>What</th><th>How</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Anonymous usage stats (page views, calc opens)</td><td>Umami Analytics (privacy-friendly, no cookies, no personal info)</td><td>To understand which calcs are used most so we know where to focus</td></tr>
+<tr><td>Rough location (country/region only)</td><td>From your IP address, then discarded</td><td>To distinguish NZ vs AU usage</td></tr>
+<tr><td>Browser and device type</td><td>Via Umami</td><td>To make sure the app works on the phones people use</td></tr>
+</tbody></table></div>
 
-<h2>Changes</h2>
-<p>If we change this policy, we'll update the date at the top of this page.</p>
+<h3>2.3 Cloud backup: only if you sign in</h3>
+<p>Cloud backup is <strong>optional and off by default</strong>. The app works fully without ever signing in, and if you don't, nothing in this section applies: your data stays on your device. If you choose to sign in from Settings &rarr; Cloud backup, we store the following in the cloud so it's backed up and syncs across your devices:</p>
+<div class="tablewrap"><table>
+<thead><tr><th>What</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td>Your email address</td><td>To identify and secure your account and email you a sign-in code</td></tr>
+<tr><td>Your jobs, saved calculations, notes, receipts, tool records, and business details</td><td>So they're backed up and available on your other devices</td></tr>
+<tr><td>The photos you attach to jobs and receipts</td><td>So they're backed up with the rest of your work</td></tr>
+</tbody></table></div>
+<p>This is only ever accessible to your own account (see section 8). You can permanently delete it all, and your account, at any time from Settings &rarr; Cloud backup &rarr; <strong>Delete account</strong>.</p>
 
-<h2>Contact</h2>
-<p>Questions? Email <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a>.</p>
+<h3>2.4 What we don't collect</h3>
+<ul>
+  <li>Your last name, address, or phone number.</li>
+  <li>Your GPS location.</li>
+  <li>Your contact list, full camera roll, microphone, or files. We only ever receive a photo you deliberately attach to a job or receipt, and only if you've signed in for cloud backup. If you haven't signed in, nothing is uploaded.</li>
+  <li>Data about other apps on your phone.</li>
+</ul>
+
+<hr>
+
+<h2>3. Where your data lives</h2>
+<ul>
+  <li><strong>On your device (always):</strong> every calculation, saved job, note, and job photo is stored in your browser's local storage or the app's local storage. If you don't sign in for cloud backup, this never leaves your device.</li>
+  <li><strong>On our cloud (only if you sign in):</strong> your account email and the data you back up (jobs, calculations, receipts, tool records, business details, and photos) are stored with <strong>Supabase</strong>, which hosts them on secure cloud infrastructure (Amazon Web Services). Your data is walled off to your own account by row-level security, so no other user can reach it. See <a href="https://supabase.com/privacy">Supabase's privacy policy</a>.</li>
+  <li><strong>On our hosting (Vercel):</strong> the app itself, plus static images and files. Vercel's servers are in Sydney (Australia). See <a href="https://vercel.com/legal/privacy-policy">Vercel's privacy policy</a>.</li>
+  <li><strong>With third-party services</strong> (only when the relevant feature is used):
+    <ul>
+      <li><strong>Supabase</strong>: stores your account and backed-up data and handles sign-in, when you use cloud backup (<a href="https://supabase.com/privacy">privacy policy</a>)</li>
+      <li><strong>Resend</strong>: delivers your sign-in code email when you sign in (<a href="https://resend.com/legal/privacy-policy">privacy policy</a>)</li>
+      <li><strong>Umami</strong>: receives anonymous analytics events (<a href="https://umami.is/privacy">privacy policy</a>)</li>
+      <li><strong>Apple</strong> (App Store / TestFlight): receives standard app store analytics if you install via TestFlight or App Store (<a href="https://www.apple.com/legal/privacy/">privacy policy</a>)</li>
+      <li><strong>Google Play</strong>: receives standard Play Store analytics if you install via Google Play (<a href="https://policies.google.com/privacy">privacy policy</a>)</li>
+      <li><strong>RevenueCat</strong>: if you take up a Setout Pro subscription, RevenueCat handles subscription state and receipt validation on our behalf (<a href="https://www.revenuecat.com/privacy">privacy policy</a>)</li>
+      <li><strong>Sentry</strong>: may receive crash and error reports from the app. These do not include your name or email and are used only to fix bugs (<a href="https://sentry.io/privacy/">privacy policy</a>)</li>
+      <li><strong>Google Fonts</strong>: this website loads the Inter font from Google, which means your IP address is sent to Google when a page loads (<a href="https://policies.google.com/privacy">privacy policy</a>)</li>
+    </ul>
+  </li>
+</ul>
+<p>We don't share data with anyone else. We don't sell any of it. We don't share it with advertisers.</p>
+
+<hr>
+
+<h2>4. How long we keep it</h2>
+<ul>
+  <li><strong>On-device data (calculations, jobs, photos, name, region)</strong> stays until you clear the app's data or uninstall.</li>
+  <li><strong>Cloud backup data (your account email and anything you've synced)</strong> is kept for as long as your account exists. When you delete your account in the app, your account and everything we hold for you in the cloud are permanently deleted.</li>
+  <li><strong>Feedback submissions</strong> are kept in our email inbox indefinitely so we can go back and see patterns, unless you ask us to delete a specific one.</li>
+  <li><strong>Analytics data</strong> is aggregated and kept for up to 12 months.</li>
+  <li><strong>Subscription records</strong> (via RevenueCat and the app store providers) are kept for as long as required by tax and consumer law, typically at least 7 years.</li>
+</ul>
+
+<hr>
+
+<h2>5. Your rights</h2>
+<p>Under the New Zealand Privacy Act 2020 and Australian Privacy Principles, you can:</p>
+<ul>
+  <li><strong>See</strong> what personal information we have about you</li>
+  <li><strong>Correct</strong> anything that's wrong</li>
+  <li><strong>Delete</strong> your personal information. On-device data: clear your app data. Cloud account: go to Settings &rarr; Cloud backup &rarr; <strong>Delete account</strong>, which permanently erases your account and everything we store for it. We'll also delete any feedback submissions on request.</li>
+  <li><strong>Withdraw consent</strong> to us processing your data, usually by uninstalling the app or deleting your name in Settings</li>
+  <li><strong>Complain</strong> to the New Zealand Privacy Commissioner (<a href="https://privacy.org.nz">privacy.org.nz</a>) or the Office of the Australian Information Commissioner (<a href="https://oaic.gov.au">oaic.gov.au</a>) if you think we've mishandled your data</li>
+</ul>
+<p>To exercise any of these rights, email us at <strong><a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a></strong>. We'll respond within 20 working days.</p>
+
+<hr>
+
+<h2>6. Cookies and local storage</h2>
+<p>Setout does <strong>not</strong> use tracking cookies.</p>
+<p>It does use your browser's <strong>local storage</strong> (and, on the native app, the app's own storage) to save your name, region, settings, calculation history, saved jobs, and photos attached to jobs. This is essential for the app to work: without it every calc would be lost when you close the tab. Nothing in local storage is sent to us <strong>unless you sign in for cloud backup</strong> (see section 2.3).</p>
+<p>Umami analytics runs without cookies. It uses only anonymous, aggregated data.</p>
+
+<hr>
+
+<h2>7. Children</h2>
+<p>Setout is designed for tradies working professionally. It is not directed at children under 13 and we do not knowingly collect data from anyone under 13. If you believe a child has provided us with data, contact us and we'll delete it.</p>
+
+<hr>
+
+<h2>8. Security</h2>
+<p>We take reasonable steps to protect the data we hold:</p>
+<ul>
+  <li>All data in transit is encrypted (HTTPS), and cloud backup data is encrypted at rest by our cloud provider</li>
+  <li>Cloud backup data is protected by per-user row-level security, so your account's data is only ever accessible to you</li>
+  <li>Sign-in uses a one-time emailed code. There's no password to be stolen or reused</li>
+  <li>Access to our hosting and email is protected by two-factor authentication</li>
+  <li>We keep the amount of personal data we collect to the absolute minimum</li>
+</ul>
+<p>No system is 100% secure, but we work to make a breach as unlikely and as small in impact as possible.</p>
+
+<hr>
+
+<h2>9. International users</h2>
+<p>Setout is designed for New Zealand and Australia. If you use it from elsewhere, your data may be transferred to and processed in NZ or Australia. By using Setout you consent to this transfer.</p>
+
+<hr>
+
+<h2>10. Changes to this policy</h2>
+<p>If we change this policy in a way that affects how your data is used, we'll bump the "Last updated" date at the top and, for material changes, show a notice in the app the next time you open it.</p>
+
+<hr>
+
+<h2>11. Contact us</h2>
+<p>Questions, concerns, or requests about your data:</p>
+<p><strong>Email:</strong> <a href="mailto:info@setoutapp.co.nz">info@setoutapp.co.nz</a><br>
+<strong>Website:</strong> <a href="https://www.setoutapp.co.nz">www.setoutapp.co.nz</a></p>
 </main>
 <footer>
   <a href="/">Home</a> &middot; <a href="/terms">Terms of Use</a> &middot; &copy; 2026 Setout

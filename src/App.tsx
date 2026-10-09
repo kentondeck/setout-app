@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, useContext, Suspense } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
@@ -58,6 +58,7 @@ const ToolsPage = lazyPage(() => import('./pages/ToolsPage'), 'ToolsPage');
 function AppShell() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
+  const { inset: keyboardInset } = useContext(KeyboardContext);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
@@ -87,7 +88,7 @@ function AppShell() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-      <div ref={scrollRef} className="route-scroller" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+      <div ref={scrollRef} className="route-scroller" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', width: '100%', WebkitOverflowScrolling: 'touch', paddingBottom: keyboardInset } as React.CSSProperties}>
         <Suspense fallback={<div style={{ background: 'var(--color-bg)', minHeight: '100%' }} />}>
         <Routes>
           <Route path="/" element={<Home />} />

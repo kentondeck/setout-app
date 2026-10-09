@@ -1,6 +1,7 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { BackupHint } from '../components/BackupHint';
+import { useCloud } from '../lib/CloudContext';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext } from '../contexts';
 import { useTools, TOOL_CATEGORIES, compressImageFile, type Tool } from '../lib/useRecords';
@@ -25,6 +26,7 @@ const UNCATEGORISED = 'Other';
 export function ToolsPage() {
   const { settings } = useContext(SettingsContext);
   const { items, add, update, remove } = useTools();
+  const cloud = useCloud();
 
   const [adding, setAdding] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
@@ -107,6 +109,7 @@ export function ToolsPage() {
         category: form.category || undefined,
         notes: form.notes?.trim() || undefined,
       });
+      cloud.promptBackupIfNeeded();
       setPendingPhoto(null);
       setForm({});
       setAdding(false);

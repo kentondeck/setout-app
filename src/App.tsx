@@ -10,6 +10,7 @@ import { SettingsContext, HistoryContext, JobsContext, KeyboardContext } from '.
 import { SubscriptionProvider } from './lib/SubscriptionContext';
 import { CloudProvider } from './lib/CloudContext';
 import { Paywall } from './components/Paywall';
+import { BackupPrompt } from './components/BackupPrompt';
 import { SplashScreen } from './components/SplashScreen';
 import { OnboardingSetup } from './pages/OnboardingSetup';
 import { TermsGate } from './components/TermsGate';
@@ -166,6 +167,7 @@ export function App() {
                       <AppShell />
                     </HashRouter>
                     <Paywall />
+                    <BackupPrompt />
                   </CloudProvider>
                 </SubscriptionProvider>
               </KeyboardContext.Provider>

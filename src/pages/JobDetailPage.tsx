@@ -7,6 +7,7 @@ import { buildJobOrder, applyBuffer, formatOrderText } from '../lib/jobOrder';
 import type { OrderLine, JobOrder } from '../lib/jobOrder';
 import type { HistoryEntry, CalculatorId, SavedJob } from '../types';
 import { useJobPhotos, compressImageFile } from '../lib/useJobPhotos';
+import { useCloud } from '../lib/CloudContext';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { useSavedLineItems } from '../lib/savedLineItems';
 import { DeckingDiagram } from '../components/DeckingDiagram';
@@ -1519,6 +1520,7 @@ export function JobDetailPage() {
 // stays tidy.
 function JobPhotosSection({ jobId }: { jobId: string }) {
   const { photos, addPhoto, updateComment, removePhoto } = useJobPhotos(jobId);
+  const cloud = useCloud();
   const [showSheet, setShowSheet] = useState(false);
   const [pendingPhoto, setPendingPhoto] = useState<string | null>(null);
   const [pendingComment, setPendingComment] = useState('');
@@ -1570,6 +1572,7 @@ function JobPhotosSection({ jobId }: { jobId: string }) {
     setError('');
     try {
       await addPhoto(pendingPhoto, pendingComment.trim());
+      cloud.promptBackupIfNeeded();
       setPendingPhoto(null);
       setPendingComment('');
     } catch (err) {

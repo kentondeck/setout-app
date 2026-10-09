@@ -35,6 +35,7 @@ const EXCLUDED_KEYS = new Set<string>([
   // Cloud-sync bookkeeping — device-local, must never ride in a backup/sync.
   'setout_cloud_uploaded',
   'setout_cloud_last_sync',
+  'setout_backup_prompt_seen',
 ]);
 
 export interface Backup {

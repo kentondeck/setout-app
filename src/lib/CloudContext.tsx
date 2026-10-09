@@ -30,6 +30,11 @@ interface CloudState {
   restore: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   clearError: () => void;
+  // One-time "back up your work" nudge, shown the first time a signed-out user
+  // saves something they'd hate to lose (a receipt, tool, or job photo).
+  backupPromptOpen: boolean;
+  promptBackupIfNeeded: () => void;
+  dismissBackupPrompt: () => void;
 }
 
 const noop = async () => {};
@@ -53,7 +58,13 @@ const CloudContext = createContext<CloudState>({
   restore: noop,
   deleteAccount: noop,
   clearError: () => {},
+  backupPromptOpen: false,
+  promptBackupIfNeeded: () => {},
+  dismissBackupPrompt: () => {},
 });
+
+// Shown once per device — set the moment the nudge first appears.
+const PROMPT_SEEN_KEY = 'setout_backup_prompt_seen';
 
 export function useCloud() {
   return useContext(CloudContext);
@@ -78,6 +89,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
   // when this changes, so idle sessions never re-upload.
   const lastSigRef = useRef<string | null>(null);
   const signedIn = !!session?.user;
+  const [backupPromptOpen, setBackupPromptOpen] = useState(false);
 
   // Subscribe to auth state (native WebView keeps the session in localStorage).
   useEffect(() => {
@@ -266,6 +278,22 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), []);
 
+  // Fire the one-time nudge: only when cloud is available, the user isn't signed
+  // in, and we haven't shown it before. Sets the "seen" flag immediately so it
+  // never reappears, even if they dismiss it.
+  const promptBackupIfNeeded = useCallback(() => {
+    if (!configured || signedIn) return;
+    try {
+      if (localStorage.getItem(PROMPT_SEEN_KEY)) return;
+      localStorage.setItem(PROMPT_SEEN_KEY, '1');
+    } catch {
+      return; // storage disabled — skip rather than risk re-prompting
+    }
+    setBackupPromptOpen(true);
+  }, [configured, signedIn]);
+
+  const dismissBackupPrompt = useCallback(() => setBackupPromptOpen(false), []);
+
   const value = useMemo<CloudState>(() => ({
     configured,
     email: session?.user?.email ?? null,
@@ -285,7 +313,10 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     restore,
     deleteAccount,
     clearError,
-  }), [configured, session, phase, pendingEmail, busy, error, status, lastSyncAt, remoteBackupAt, sendCode, verifyCode, cancelCode, signOut, backupNow, restore, deleteAccount, clearError]);
+    backupPromptOpen,
+    promptBackupIfNeeded,
+    dismissBackupPrompt,
+  }), [configured, session, phase, pendingEmail, busy, error, status, lastSyncAt, remoteBackupAt, sendCode, verifyCode, cancelCode, signOut, backupNow, restore, deleteAccount, clearError, backupPromptOpen, promptBackupIfNeeded, dismissBackupPrompt]);
 
   return <CloudContext.Provider value={value}>{children}</CloudContext.Provider>;
 }

@@ -1,6 +1,7 @@
 import { useContext, useMemo, useRef, useState } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { BackupHint } from '../components/BackupHint';
+import { useCloud } from '../lib/CloudContext';
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext } from '../contexts';
 import { useReceipts, RECEIPT_CATEGORIES, compressImageFile, type Receipt } from '../lib/useRecords';
@@ -68,6 +69,7 @@ function inRange(ts: number, range: TaxYearRange): boolean {
 export function ReceiptsPage() {
   const { settings } = useContext(SettingsContext);
   const { items, add, update, remove } = useReceipts();
+  const cloud = useCloud();
 
   const current = useMemo(() => currentTaxYear(settings.region), [settings.region]);
   const previous = useMemo(() => previousTaxYear(settings.region), [settings.region]);
@@ -164,6 +166,7 @@ export function ReceiptsPage() {
         category: form.category || undefined,
         notes: form.notes?.trim() || undefined,
       });
+      cloud.promptBackupIfNeeded();
       closeForm();
       hapticMedium();
     } catch {

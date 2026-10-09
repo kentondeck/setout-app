@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useSettings } from './lib/useSettings';
 import { lazyPage, prefetchPages } from './lib/lazyPage';
@@ -61,6 +62,28 @@ function AppShell() {
   useEffect(() => {
     scrollRef.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  // Keep ANY focused input/textarea above the on-screen keyboard. The keyboard
+  // is resize:'none' (it overlays the webview rather than shrinking it), so
+  // fields low on a page would otherwise sit hidden behind it. One global
+  // focusin handler covers every input in the app — including the many plain
+  // text fields that don't go through NumberInput — and any added later. Only
+  // scrolls when the field is in the lower half of the screen, so fields up top
+  // don't jump. Native only; browsers handle this themselves.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    function onFocusIn(e: FocusEvent) {
+      const el = e.target as HTMLElement | null;
+      if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA' && !el.isContentEditable)) return;
+      window.setTimeout(() => {
+        if (el.isConnected && el.getBoundingClientRect().bottom > window.innerHeight * 0.5) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    }
+    document.addEventListener('focusin', onFocusIn);
+    return () => document.removeEventListener('focusin', onFocusIn);
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>

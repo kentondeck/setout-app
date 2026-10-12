@@ -228,8 +228,9 @@
     /* STATS BAR */
     .proof { background: var(--bg); padding: 28px 24px 36px; text-align: center; }
     .proof p { font-size: 13px; color: var(--muted); margin: 0 0 14px; letter-spacing: 0.01em; }
+    .proof-logos { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
     .proof img { height: 64px; width: auto; display: inline-block; }
-    @media (max-width: 640px) { .proof img { height: 52px; } }
+    @media (max-width: 640px) { .proof img { height: 52px; } .proof-logos { gap: 28px; } }
     .stats-bar {
       background: white;
       border-top: 1px solid var(--border);
@@ -480,7 +481,10 @@
 <!-- SOCIAL PROOF -->
 <div class="proof">
   <p>Used on site by</p>
-  <img src="images/modern-structure-logo.png" alt="Modern Structure Building Company logo" width="180" height="63">
+  <div class="proof-logos">
+    <img src="images/modern-structure-logo.png" alt="Modern Structure Building Company logo" width="180" height="63">
+    <img src="images/carpentry-collective-logo.png" alt="Carpentry Collective logo" width="221" height="64">
+  </div>
 </div>
 
 <!-- STATS BAR -->

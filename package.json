@@ -9,13 +9,16 @@
     "dev:phone": "vite --host",
     "build": "tsc -b && vite build",
     "build:ios": "tsc -b && VITE_API_BASE=https://setoutapp.com.au vite build && npx cap sync ios",
+    "build:android": "tsc -b && VITE_API_BASE=https://setoutapp.com.au vite build && npx cap sync android",
     "ios:live": "CAP_SERVER_URL=http://$(ipconfig getifaddr en0):5173 npx cap sync ios && npx cap open ios",
     "ios:release": "npx cap sync ios && npx cap open ios",
+    "android:release": "npx cap sync android && npx cap open android",
     "lint": "eslint .",
     "preview": "vite preview",
     "seed-prices": "tsx scripts/seed-common-prices.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.3",
     "@capacitor/cli": "^8.4.1",
     "@capacitor/core": "^8.4.1",
     "@capacitor/filesystem": "^8.1.3",

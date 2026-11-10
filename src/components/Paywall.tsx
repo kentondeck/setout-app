@@ -28,6 +28,7 @@ export function Paywall() {
     lastError,
     clearError,
     purchasing,
+    weeklyPriceString,
   } = useSubscription();
 
   // Prevent body scroll while the sheet is open. Mirrors the pattern used by
@@ -47,10 +48,10 @@ export function Paywall() {
   if (!paywallOpen) return null;
 
   const isNative = Capacitor.isNativePlatform();
-  // Fixed price label — the app only ships to AU + NZ, both $1.99 (AUD/NZD),
-  // so we show a stable string rather than StoreKit's (sometimes stale) price.
-  // Keep this in sync with the App Store Connect price if it ever changes.
-  const displayPrice = '$1.99 / week';
+  // Show StoreKit's own localised price so the amount we display always matches
+  // what the user is actually billed (App Store guideline 2.1(b)). Never hardcode
+  // a price — a mismatch with the store is an automatic rejection. Null only
+  // during the brief window before RevenueCat's offerings finish loading.
   const platform = Capacitor.getPlatform();
 
   return (
@@ -95,7 +96,7 @@ export function Paywall() {
               Every tool, every day.
             </h2>
             <p style={{ margin: 0, fontSize: 15, color: 'var(--color-muted)', lineHeight: 1.4 }}>
-              Free for 14 days, then {displayPrice}. Cancel anytime.
+              Unlimited access to every calculator and tool.
             </p>
           </div>
 
@@ -113,20 +114,34 @@ export function Paywall() {
             ))}
           </ul>
 
-          {/* Plan card */}
+          {/* Plan card — the billed amount is the largest, most prominent pricing
+              element on the screen; the free trial is intentionally subordinate in
+              size and position beneath it (App Store guideline 3.1.2(c)). */}
           <div style={{
             background: 'var(--color-card)',
             border: '2px solid var(--color-orange)',
             borderRadius: 'var(--radius-card)',
-            padding: '16px 18px',
+            padding: '18px',
             marginBottom: 14,
+            textAlign: 'center',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text)' }}>14 days free</span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-muted)' }}>then {displayPrice}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: 5, minHeight: 36 }}>
+              {weeklyPriceString ? (
+                <>
+                  <span style={{ fontSize: 34, fontWeight: 800, letterSpacing: '-1px', color: 'var(--color-text)', lineHeight: 1 }}>
+                    {weeklyPriceString}
+                  </span>
+                  <span style={{ fontSize: 17, fontWeight: 600, color: 'var(--color-text)' }}>/ week</span>
+                </>
+              ) : (
+                <span style={{ fontSize: 16, color: 'var(--color-muted)' }}>Loading price…</span>
+              )}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
-              You won't be charged until the trial ends. Auto-renews weekly until cancelled.
+            <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500, color: 'var(--color-muted)' }}>
+              After your 14-day free trial
+            </div>
+            <div style={{ marginTop: 2, fontSize: 12, color: 'var(--color-muted)' }}>
+              Auto-renews weekly until cancelled · cancel anytime
             </div>
           </div>
 
@@ -147,8 +162,8 @@ export function Paywall() {
             {!isNative
               ? 'Available in the Setout app'
               : purchasing
-                ? 'Opening App Store…'
-                : 'Start 14-day free trial'}
+                ? 'Processing…'
+                : 'Subscribe'}
           </button>
 
           {/* Secondary actions */}

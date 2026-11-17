@@ -1,9 +1,17 @@
 import { useState } from 'react';
 import { useCloud } from '../lib/CloudContext';
+import { useSubscription } from '../lib/SubscriptionContext';
 
 // Optional cloud backup card for the Settings page. Renders nothing unless the
 // Supabase keys are configured, so the app stays login-free by default — this is
 // purely opt-in "sign in to store my data safely off this phone".
+//
+// Hosted backup is the Pro entitlement: it's storage and bandwidth we pay for
+// every month for as long as the account exists, which is what makes the
+// subscription a service rather than a one-off unlock. One deliberate
+// exception — Restore stays available to a lapsed subscriber, because data a
+// user already put in the cloud is theirs and holding it hostage behind an
+// active subscription would be indefensible.
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '12px 14px', borderRadius: 10,
@@ -49,6 +57,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function CloudBackupSection() {
   const cloud = useCloud();
+  const { isPro, showPaywall } = useSubscription();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
 
@@ -78,7 +87,9 @@ export function CloudBackupSection() {
             <span style={{ fontSize: 13, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cloud.email}</span>
           </div>
           <p style={{ margin: 0, fontSize: 12, color: 'var(--color-muted)' }}>
-            {cloud.lastSyncAt ? `Synced automatically · ${ago(cloud.lastSyncAt)}` : 'Setting up…'}
+            {!isPro
+              ? `Last backed up ${ago(cloud.lastSyncAt)}`
+              : cloud.lastSyncAt ? `Synced automatically · ${ago(cloud.lastSyncAt)}` : 'Setting up…'}
           </p>
 
           {needsRestore && (
@@ -87,9 +98,21 @@ export function CloudBackupSection() {
             </p>
           )}
 
+          {!isPro && (
+            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--color-text)' }}>
+              Syncing is paused — Setout Pro keeps your jobs backed up. You can still restore what’s already in the cloud.
+            </p>
+          )}
+
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={cloud.backupNow} disabled={cloud.busy} style={{ ...primaryBtn, opacity: cloud.busy ? 0.7 : 1 }}>
-              {cloud.busy && cloud.status?.startsWith('Backing') ? 'Syncing…' : 'Sync now'}
+            <button
+              onClick={isPro ? cloud.backupNow : showPaywall}
+              disabled={cloud.busy}
+              style={{ ...primaryBtn, opacity: cloud.busy ? 0.7 : 1 }}
+            >
+              {!isPro
+                ? 'Resume syncing'
+                : cloud.busy && cloud.status?.startsWith('Backing') ? 'Syncing…' : 'Sync now'}
             </button>
             <button
               onClick={() => { if (window.confirm('Restore your cloud backup to this device? This replaces the jobs, photos and receipts currently on this phone.')) cloud.restore(); }}
@@ -147,6 +170,26 @@ export function CloudBackupSection() {
             </button>
           </div>
           {message}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Signed out, no subscription — Pro is what pays for the hosting ──────────
+  if (!isPro) {
+    return (
+      <div>
+        {label}
+        <p style={{ margin: '-4px 0 10px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
+          Your jobs, photos and receipts are saved <strong>only on this phone</strong> — if it’s lost, broken or replaced, they’re gone.
+        </p>
+        <div style={{ padding: 14, borderRadius: 'var(--radius-card)', background: 'var(--color-card)', border: '0.5px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--color-text)', lineHeight: 1.4 }}>
+            Setout Pro backs everything up off your phone automatically and syncs it across your devices, so a new phone picks up exactly where the old one left off.
+          </p>
+          <button onClick={showPaywall} style={primaryBtn}>
+            See Setout Pro
+          </button>
         </div>
       </div>
     );

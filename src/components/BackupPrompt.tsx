@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useCloud } from '../lib/CloudContext';
+import { useSubscription } from '../lib/SubscriptionContext';
 
 // One-time bottom sheet nudging a signed-out user to back up, shown the first
 // time they save something they'd hate to lose. Mounted globally (next to the
@@ -8,6 +9,7 @@ import { useCloud } from '../lib/CloudContext';
 
 export function BackupPrompt() {
   const { backupPromptOpen, dismissBackupPrompt } = useCloud();
+  const { isPro } = useSubscription();
 
   useEffect(() => {
     if (!backupPromptOpen) return;
@@ -36,7 +38,9 @@ export function BackupPrompt() {
           Keep your work safe
         </h2>
         <p style={{ margin: '0 0 20px', fontSize: 15, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-          That's saved <strong style={{ color: 'var(--color-text)' }}>only on this phone</strong> right now. Sign in and your jobs, photos and receipts back up automatically — so you won't lose them if your phone's lost or replaced.
+          That's saved <strong style={{ color: 'var(--color-text)' }}>only on this phone</strong> right now. {isPro
+            ? 'Sign in and your jobs, photos and receipts back up automatically — so you won\'t lose them if your phone\'s lost or replaced.'
+            : 'Setout Pro backs your jobs, photos and receipts up automatically — so you won\'t lose them if your phone\'s lost or replaced.'}
         </p>
 
         <button
@@ -48,7 +52,7 @@ export function BackupPrompt() {
             fontSize: 16, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer',
           }}
         >
-          Sign in to back up
+          {isPro ? 'Sign in to back up' : 'See Setout Pro'}
         </button>
         <button
           onClick={dismissBackupPrompt}

@@ -1,7 +1,42 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import type { PurchasesOffering, PurchasesOfferings, PurchasesPackage } from '@revenuecat/purchases-capacitor';
-import { PRO_ENTITLEMENT_ID, WEEKLY_PRODUCT_ID, getApiKey, isSubscriptionRuntime } from './subscription';
+import type { PlanId } from './subscription';
+import {
+  PLAN_PERIOD_NOUN,
+  PRO_ENTITLEMENT_ID,
+  comparePlans,
+  formatTrial,
+  getApiKey,
+  isSubscriptionRuntime,
+  planFromPeriod,
+  planFromProductId,
+} from './subscription';
+
+// One purchasable plan, resolved from a RevenueCat offering. Everything the
+// paywall renders comes from the store — we never hardcode a price, a period,
+// or a trial length, because any drift from what the user is actually billed is
+// an automatic App Store rejection under 2.1(b).
+export interface PlanOption {
+  id: PlanId;
+  pkg: PurchasesPackage;
+  // The amount actually charged, e.g. "$39.99". Always the most prominent
+  // figure on the paywall (guideline 3.1.2(c)).
+  priceString: string;
+  // Period noun for the price line: "year", "month", "week".
+  periodNoun: string;
+  // Store-computed weekly equivalent, e.g. "$0.77". Secondary copy only —
+  // never the headline figure.
+  perWeekString: string | null;
+  // Annualised cost, used to work out the saving against the shortest plan
+  // without hardcoding either price. Compared on a yearly basis rather than a
+  // weekly one because the store derives a weekly figure for monthly plans by
+  // dividing by 4, and a month is 4.35 weeks — close enough for "about $x a
+  // week" display copy, but it inflates a headline saving by three points.
+  pricePerYear: number | null;
+  // "14-day free trial", or null when this plan has no intro offer.
+  trialLabel: string | null;
+}
 
 // Everything the app UI needs about the subscription. Kept small on purpose —
 // the paywall reads price + purchase actions, the calc gate just reads isPro.
@@ -13,13 +48,14 @@ interface SubscriptionState {
   // False during first RC fetch — used by the paywall to show a spinner
   // instead of an empty price. Also true on web (nothing to load).
   isReady: boolean;
-  // Localised price string from RevenueCat (e.g. "$1.99 / week"). Null until
-  // the first fetch resolves or if we're not in a subscription runtime.
-  weeklyPriceString: string | null;
-  // Kick off the platform purchase flow for the weekly plan (with free trial
-  // if the user hasn't used one). Resolves when the sheet closes — check
-  // isPro afterwards to see if the purchase went through.
-  purchaseWeekly: () => Promise<void>;
+  // Every plan the store currently offers, longest commitment first. Empty
+  // until the first fetch resolves, or when we're not in a subscription
+  // runtime. The paywall renders exactly what's in here.
+  plans: PlanOption[];
+  // Kick off the platform purchase flow for a plan (with free trial if the
+  // user is eligible). Resolves when the sheet closes — check isPro
+  // afterwards to see if the purchase went through.
+  purchase: (planId: PlanId) => Promise<void>;
   // Restore purchases from the user's App Store / Play Store account.
   // Apple guideline requires this button on every paywall.
   restorePurchases: () => Promise<void>;
@@ -44,8 +80,8 @@ interface SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionState>({
   isPro: true, // default to Pro on web / dev — nothing paywalled
   isReady: true,
-  weeklyPriceString: null,
-  purchaseWeekly: async () => {},
+  plans: [],
+  purchase: async () => {},
   restorePurchases: async () => {},
   presentCodeRedemption: async () => {},
   openManageSubscription: async () => {},
@@ -84,39 +120,90 @@ interface CustomerInfo {
   };
 }
 
-// Resolve the weekly Pro package from RevenueCat offerings as robustly as
-// possible. RC only returns a package when the product is in a purchasable
-// state in App Store Connect AND attached to an offering — and historically our
-// lookup only checked the *current* offering for an exact id match, so a
-// product attached to a non-current offering (or under an unexpected package
-// slot) produced a "not available" error even though everything was configured.
-// Search the current offering first, then every other offering, matching by our
-// product id, the standard "$rc_weekly" slot, or anything that looks weekly —
-// then fall back to the first available package so a single-product offering
-// always resolves.
-function findWeeklyPackage(offerings: PurchasesOfferings): PurchasesPackage | null {
+// Flatten every offering into one list, current first. RC only returns a
+// package when the product is purchasable in App Store Connect AND attached to
+// an offering — and a product attached to a non-current offering used to read
+// as "not available" even though everything was configured, so we look past
+// `current` deliberately.
+function allOfferings(offerings: PurchasesOfferings): PurchasesOffering[] {
   const seen = new Set<PurchasesOffering>();
   const list: PurchasesOffering[] = [];
   if (offerings.current) { list.push(offerings.current); seen.add(offerings.current); }
   for (const o of Object.values(offerings.all ?? {})) {
     if (o && !seen.has(o)) { list.push(o); seen.add(o); }
   }
-  const looksWeekly = (s: string | undefined) => !!s && s.toLowerCase().includes('week');
-  for (const off of list) {
-    const pkgs = off.availablePackages ?? [];
-    const match =
-      pkgs.find(p => p.product?.identifier === WEEKLY_PRODUCT_ID) ??
-      pkgs.find(p => p.identifier === '$rc_weekly') ??
-      pkgs.find(p => looksWeekly(p.identifier) || looksWeekly(p.product?.identifier));
-    if (match) return match;
+  return list;
+}
+
+// Build the paywall's plan list from whatever the store returns, classifying
+// each package by its own billing period. Driving this off the store rather
+// than a hardcoded product list means adding or retiring a plan is an App Store
+// Connect change with no app release.
+function collectPlans(offerings: PurchasesOfferings): PlanOption[] {
+  const byPlan = new Map<PlanId, PlanOption>();
+
+  for (const off of allOfferings(offerings)) {
+    for (const pkg of off.availablePackages ?? []) {
+      const product = pkg.product;
+      if (!product?.priceString) continue;
+
+      const id = planFromPeriod(product.subscriptionPeriod) ?? planFromProductId(product.identifier);
+      if (!id || byPlan.has(id)) continue;
+
+      byPlan.set(id, {
+        id,
+        pkg,
+        priceString: product.priceString,
+        periodNoun: PLAN_PERIOD_NOUN[id],
+        // Only worth showing when it differs from the billed amount — on the
+        // weekly plan they're the same number.
+        perWeekString: id === 'weekly' ? null : product.pricePerWeekString ?? null,
+        pricePerYear: product.pricePerYear ?? null,
+        trialLabel: formatTrial(product.introPrice),
+      });
+    }
   }
-  // Fallback: first available package anywhere — covers a single-product
-  // offering whose identifiers don't match any of the heuristics above.
-  for (const off of list) {
-    const pkgs = off.availablePackages ?? [];
-    if (pkgs.length > 0) return pkgs[0];
+
+  return [...byPlan.values()].sort((a, b) => comparePlans(a.id, b.id));
+}
+
+// A product's intro offer says what the plan offers, not what this user can
+// have. Apple grants one intro offer per subscription group per Apple ID, so
+// anyone who already used the trial on the weekly plan gets none on the annual
+// one. Advertising "14-day free trial" and then charging immediately is exactly
+// the price/offer mismatch that gets paywalls rejected under 2.1(b) — so the
+// label only survives when the store confirms this user is eligible.
+async function applyTrialEligibility(rc: RcModule, plans: PlanOption[]): Promise<PlanOption[]> {
+  // iOS only. Android always reports UNKNOWN; Play evaluates trial eligibility
+  // itself and states it on its own purchase sheet.
+  if (Capacitor.getPlatform() !== 'ios') return plans;
+  const offered = plans.filter(p => p.trialLabel);
+  if (offered.length === 0) return plans;
+
+  const withoutTrials = () => plans.map(p => (p.trialLabel ? { ...p, trialLabel: null } : p));
+
+  try {
+    const result = await rc.Purchases.checkTrialOrIntroductoryPriceEligibility({
+      productIdentifiers: offered.map(p => p.pkg.product.identifier),
+    });
+    const eligible = rc.INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE;
+    return plans.map(p => {
+      if (!p.trialLabel) return p;
+      // UNKNOWN counts as ineligible — RevenueCat's own guidance is to show
+      // non-intro pricing rather than risk a misleading offer.
+      return result[p.pkg.product.identifier]?.status === eligible ? p : { ...p, trialLabel: null };
+    });
+  } catch (e) {
+    console.warn('[Subscription] trial eligibility check failed', e);
+    return withoutTrials();
   }
-  return null;
+}
+
+// Offerings plus eligibility — the paywall should never read one without the
+// other, so they're fetched together.
+async function loadPlans(rc: RcModule): Promise<PlanOption[]> {
+  const offerings = await rc.Purchases.getOfferings();
+  return applyTrialEligibility(rc, collectPlans(offerings));
 }
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
@@ -124,7 +211,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const enforced = isSubscriptionRuntime();
   const [isPro, setIsPro] = useState<boolean>(!enforced);
   const [isReady, setIsReady] = useState<boolean>(!enforced);
-  const [weeklyPriceString, setWeeklyPriceString] = useState<string | null>(null);
+  const [plans, setPlans] = useState<PlanOption[]>([]);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
@@ -168,13 +255,10 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         const hasPro = Object.prototype.hasOwnProperty.call(activeEnts, PRO_ENTITLEMENT_ID);
         if (!cancelled) setIsPro(hasPro);
 
-        // Fetch offerings so the paywall has a localised price to show.
+        // Fetch offerings so the paywall has localised prices to show.
         try {
-          const offerings = await rc.Purchases.getOfferings();
-          const weekly = findWeeklyPackage(offerings);
-          if (weekly && !cancelled) {
-            setWeeklyPriceString(weekly.product?.priceString ?? null);
-          }
+          const resolved = await loadPlans(rc);
+          if (!cancelled) setPlans(resolved);
         } catch (e) {
           console.warn('[Subscription] getOfferings failed', e);
         }
@@ -208,7 +292,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const purchaseWeekly = useCallback(async () => {
+  const purchase = useCallback(async (planId: PlanId) => {
     setLastError(null);
     setPurchasing(true);
     try {
@@ -217,17 +301,17 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         setLastError('Subscriptions are only available in the Setout iOS / Android app.');
         return;
       }
-      const offerings = await rc.Purchases.getOfferings();
-      const weekly = findWeeklyPackage(offerings);
-      if (!weekly) {
-        console.warn('[Subscription] no weekly package found', {
-          current: offerings.current?.identifier ?? null,
-          offeringCount: Object.keys(offerings.all ?? {}).length,
-        });
-        setLastError('Subscriptions aren’t available right now. Please try again in a moment.');
+      // Re-fetch rather than trusting the cached plan list — init may never
+      // have completed (the readiness watchdog lets the user tap regardless).
+      const resolved = await loadPlans(rc);
+      setPlans(resolved);
+      const selected = resolved.find(p => p.id === planId);
+      if (!selected) {
+        console.warn('[Subscription] plan not available', { planId, resolved: resolved.map(p => p.id) });
+        setLastError('That plan isn’t available right now. Please try again in a moment.');
         return;
       }
-      await rc.Purchases.purchasePackage({ aPackage: weekly });
+      await rc.Purchases.purchasePackage({ aPackage: selected.pkg });
       await refreshCustomerInfo();
     } catch (e) {
       const err = e as { userCancelled?: boolean; message?: string };
@@ -306,8 +390,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const value = useMemo<SubscriptionState>(() => ({
     isPro,
     isReady,
-    weeklyPriceString,
-    purchaseWeekly,
+    plans,
+    purchase,
     restorePurchases,
     presentCodeRedemption,
     openManageSubscription,
@@ -317,7 +401,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     lastError,
     clearError,
     purchasing,
-  }), [isPro, isReady, weeklyPriceString, purchaseWeekly, restorePurchases, presentCodeRedemption, openManageSubscription, paywallOpen, showPaywall, hidePaywall, lastError, clearError, purchasing]);
+  }), [isPro, isReady, plans, purchase, restorePurchases, presentCodeRedemption, openManageSubscription, paywallOpen, showPaywall, hidePaywall, lastError, clearError, purchasing]);
 
   return (
     <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>

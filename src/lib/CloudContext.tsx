@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { getSupabase, isCloudConfigured } from './supabase';
+import { useSubscription } from './SubscriptionContext';
 import { pushCloud, pullCloud, getRemoteBackupInfo, getLocalLastSync, deleteCloudData, localSignature, localHasData } from './cloudSync';
 
 // Optional cloud backup — the whole feature is opt-in from Settings. The app
@@ -76,6 +77,10 @@ function errMsg(e: unknown): string {
 
 export function CloudProvider({ children }: { children: ReactNode }) {
   const configured = isCloudConfigured();
+  // Hosted backup is the Pro entitlement — see CloudBackupSection for the
+  // boundary (new uploads need a subscription, restoring existing data never
+  // does). CloudProvider is mounted inside SubscriptionProvider in App.tsx.
+  const { isPro } = useSubscription();
   const [session, setSession] = useState<Session | null>(null);
   const [phase, setPhase] = useState<OtpPhase>('idle');
   const [pendingEmail, setPendingEmail] = useState('');
@@ -124,6 +129,12 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         setLastSyncAt(localSynced);
 
         if (!info) {
+          // Nothing in the cloud yet, so linking this device means a first
+          // upload — which needs Pro. Clear the handled marker so this runs
+          // again the moment a subscription activates; otherwise the account
+          // would never link and the auto-push loop (which requires a linked
+          // device) would stay dormant forever.
+          if (!isPro) { handledUidRef.current = null; return; }
           setBusy(true); setStatus('Backing up…');
           await pushCloud();
           lastSigRef.current = localSignature();
@@ -154,13 +165,16 @@ export function CloudProvider({ children }: { children: ReactNode }) {
         setBusy(false);
       }
     })();
-  }, [session]);
+  }, [session, isPro]);
 
-  // Auto-push loop: while signed in and linked, push whenever the data changes
-  // (checked on a short interval, plus immediately when the app is backgrounded).
-  // No-ops when nothing changed, so an idle app never re-uploads.
+  // Auto-push loop: while signed in, subscribed and linked, push whenever the
+  // data changes (checked on a short interval, plus immediately when the app is
+  // backgrounded). No-ops when nothing changed, so an idle app never re-uploads.
+  // Gated on Pro because the ongoing upload and storage is the service the
+  // subscription pays for — a lapsed subscriber keeps their existing cloud copy
+  // and can still restore it, it just stops taking on new data.
   useEffect(() => {
-    if (!configured || !signedIn) return;
+    if (!configured || !signedIn || !isPro) return;
     let stopped = false;
     const maybePush = async () => {
       if (stopped || getLocalLastSync() == null) return; // not linked yet
@@ -177,7 +191,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     const onVis = () => { if (document.visibilityState === 'hidden') void maybePush(); };
     document.addEventListener('visibilitychange', onVis);
     return () => { stopped = true; window.clearInterval(interval); document.removeEventListener('visibilitychange', onVis); };
-  }, [configured, signedIn]);
+  }, [configured, signedIn, isPro]);
 
   const sendCode = useCallback(async (email: string) => {
     const sb = getSupabase();

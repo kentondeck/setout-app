@@ -7,11 +7,20 @@ export interface CalcMeta {
   number: string;
   svgPath: string;
   svgPathAccent?: string;
+  // Usable without a subscription, forever and without limit. The free tier
+  // has to be a real tier rather than a trial — an app that can only be used
+  // by subscribing is what gets rejected under guideline 3.1.2, and it's also
+  // a bad first impression. The everyday calculators and the job-record tools
+  // are free; the heavier takeoff and setout work is what Pro adds, alongside
+  // cloud backup. useCalcGate reads this, so changing the split is a one-line
+  // change here and nothing else.
+  free?: boolean;
 }
 
 export const CALCULATORS: CalcMeta[] = [
   {
     id: 'decking',
+    free: true,
     label: 'Decking',
     subtitle: 'Boards, joists, bearers',
     number: '01',
@@ -26,6 +35,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'equalspacing',
+    free: true,
     label: 'Equal Spacing',
     subtitle: 'Divide any span evenly',
     number: '03',
@@ -54,6 +64,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'baluster',
+    free: true,
     label: 'Balusters',
     subtitle: 'Spacing, quantity',
     number: '07',
@@ -61,6 +72,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'concrete',
+    free: true,
     label: 'Concrete',
     subtitle: 'Volume, materials',
     number: '08',
@@ -103,6 +115,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'gradient',
+    free: true,
     label: 'Gradient',
     subtitle: 'Fall, ratio, grade',
     number: '15',
@@ -117,6 +130,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'sequencer',
+    free: true,
     label: 'Sequencer',
     subtitle: 'Step-by-step job guides',
     number: '17',
@@ -132,6 +146,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'receipts',
+    free: true,
     label: 'Receipts',
     subtitle: 'Log for accountant',
     number: '19',
@@ -140,6 +155,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'tools',
+    free: true,
     label: 'Tools',
     subtitle: 'Inventory for insurance',
     number: '20',

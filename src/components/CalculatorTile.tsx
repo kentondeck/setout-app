@@ -6,11 +6,15 @@ interface CalculatorTileProps {
   pinned?: boolean;
   onPinToggle?: (id: string) => void;
   dragging?: boolean;
+  // Needs Setout Pro, and the viewer doesn't have it. Marked up front rather
+  // than sprung at the paywall — a tile that silently stops working is worse
+  // for the user than one that says what it costs.
+  locked?: boolean;
 }
 
 // Purely presentational — tap/hold/drag handling lives in the wrapper (ReorderableCalcGrid)
 // so this component has no opinion on navigation vs. drag-to-reorder.
-export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle, dragging = false }: CalculatorTileProps) {
+export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle, dragging = false, locked = false }: CalculatorTileProps) {
   const bg = highlighted ? 'var(--color-orange)' : 'var(--color-card)';
   const iconBg = highlighted ? 'rgba(255,255,255,0.2)' : '#f5f5f3';
   const iconStroke = highlighted ? '#ffffff' : 'var(--color-text)';
@@ -88,13 +92,25 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
         </button>
       )}
 
-      <div>
-        <p style={{ margin: 0, fontSize: 18, fontWeight: 500, color: labelColor, letterSpacing: '-0.5px', lineHeight: 1 }}>
-          {calc.label}
-        </p>
-        <p style={{ margin: '4px 0 0', fontSize: 11, color: subtitleColor }}>
-          {calc.subtitle}
-        </p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 18, fontWeight: 500, color: labelColor, letterSpacing: '-0.5px', lineHeight: 1 }}>
+            {calc.label}
+          </p>
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: subtitleColor }}>
+            {calc.subtitle}
+          </p>
+        </div>
+        {locked && (
+          <span style={{
+            flexShrink: 0, padding: '2px 6px', borderRadius: 5,
+            fontSize: 9, fontWeight: 700, letterSpacing: '0.6px',
+            background: highlighted ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)',
+            color: highlighted ? '#ffffff' : 'var(--color-muted)',
+          }}>
+            PRO
+          </span>
+        )}
       </div>
     </div>
   );

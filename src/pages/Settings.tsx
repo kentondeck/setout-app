@@ -650,7 +650,7 @@ export function Settings() {
                 fontFamily: 'inherit', cursor: 'pointer',
               }}
             >
-              Start free trial
+              See Setout Pro
             </button>
             <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>·</span>
             <button

@@ -21,6 +21,66 @@ export const PRO_ENTITLEMENT_ID = 'pro';
 // AND Google Play Console (identical strings on both stores so a single
 // RevenueCat product maps to both).
 export const WEEKLY_PRODUCT_ID = 'setout_pro_weekly';
+export const ANNUAL_PRODUCT_ID = 'setout_pro_annual';
+
+// Billing periods we present on the paywall. Offering a longer commitment
+// alongside the weekly plan matters for App Store review: a weekly-only
+// subscription on a utility app is the pattern reviewers flag under 3.1.2,
+// because it reads as recurring billing for one-off use rather than access to
+// an ongoing service.
+export type PlanId = 'weekly' | 'monthly' | 'annual';
+
+// ISO 8601 subscription periods as returned by StoreKit / Play, mapped to the
+// plan we show. The store is the source of truth for which plans exist — we
+// render whatever the offering returns rather than assuming a fixed set.
+const PERIOD_TO_PLAN: Record<string, PlanId> = {
+  P1W: 'weekly',
+  P7D: 'weekly',
+  P1M: 'monthly',
+  P1Y: 'annual',
+  P12M: 'annual',
+};
+
+export function planFromPeriod(subscriptionPeriod: string | null | undefined): PlanId | null {
+  if (!subscriptionPeriod) return null;
+  return PERIOD_TO_PLAN[subscriptionPeriod.toUpperCase()] ?? null;
+}
+
+// Fallback for stores that don't report a period (StoreKit 1 on older iOS, and
+// Amazon). Our own product ids match exactly; the substring checks cover any
+// plan added in App Store Connect that follows the same naming.
+export function planFromProductId(productId: string | null | undefined): PlanId | null {
+  if (!productId) return null;
+  if (productId === WEEKLY_PRODUCT_ID) return 'weekly';
+  if (productId === ANNUAL_PRODUCT_ID) return 'annual';
+  const id = productId.toLowerCase();
+  if (id.includes('annual') || id.includes('year')) return 'annual';
+  if (id.includes('month')) return 'monthly';
+  if (id.includes('week')) return 'weekly';
+  return null;
+}
+
+// Noun used after the price ("$39.99 / year") and in the auto-renewal small
+// print ("renews yearly").
+export const PLAN_PERIOD_NOUN: Record<PlanId, string> = {
+  weekly: 'week',
+  monthly: 'month',
+  annual: 'year',
+};
+
+export const PLAN_RENEWAL_ADVERB: Record<PlanId, string> = {
+  weekly: 'weekly',
+  monthly: 'monthly',
+  annual: 'yearly',
+};
+
+// Longest commitment first — the annual plan is the one we present as the
+// default, so it leads.
+const PLAN_ORDER: PlanId[] = ['annual', 'monthly', 'weekly'];
+
+export function comparePlans(a: PlanId, b: PlanId): number {
+  return PLAN_ORDER.indexOf(a) - PLAN_ORDER.indexOf(b);
+}
 
 // Public RevenueCat API keys, injected via Vite env vars at build time. These
 // are PUBLIC (safe to ship) — they only grant read-only entitlement checks
@@ -46,10 +106,13 @@ export function getApiKey(): string | null {
   return null;
 }
 
-// One-liner formatter so paywall + settings both show the same string when
-// showing the localised RC price (Purchases already returns the locale-aware
-// formatted price, so we just return what it gives us).
-export function formatPrice(priceString: string | null | undefined): string {
-  if (!priceString) return '';
-  return priceString;
+// Free-trial copy, built from the store's own intro offer rather than a
+// hardcoded string. If the offer is changed in App Store Connect the paywall
+// follows automatically — a mismatch between the stated trial and the real one
+// is a 2.1(b) rejection.
+export function formatTrial(intro: { price: number; periodUnit: string; periodNumberOfUnits: number } | null): string | null {
+  if (!intro || intro.price > 0) return null;
+  const unit = intro.periodUnit.toLowerCase().replace(/s$/, '');
+  if (!unit || intro.periodNumberOfUnits <= 0) return null;
+  return `${intro.periodNumberOfUnits}-${unit} free trial`;
 }

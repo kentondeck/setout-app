@@ -1,20 +1,26 @@
 import { useCallback } from 'react';
 import { useSubscription } from './SubscriptionContext';
+import { CALCULATORS } from './calculators';
 
-// Free-tier gate: the whole app shares FREE_RUNS free calculator runs, total,
-// across every calculator — not per calculator. After those are spent, a
-// gated calc still computes and shows the answer for a beat — then the
-// result is cleared and the paywall opens (the "so close" tease). Pro users
-// always pass, and never see either the flash or the paywall.
+// Free-tier gate. Two kinds of calculator:
+//   • free (CalcMeta.free) — never gated, unlimited, forever. These are what
+//     make the app usable without paying at all.
+//   • Pro — shares FREE_RUNS sample runs across all of them, total. After
+//     those are spent a Pro calc still computes and shows the answer for a
+//     beat, then the result is cleared and the paywall opens (the "so close"
+//     tease).
+// Pro subscribers always pass, and never see either the flash or the paywall.
 //
-// Storage: { total: number } under GATE_KEY — how many free runs have been
-// spent across all calculators combined. Device-local (localStorage), so a
-// savvy user can clear it to reset; for a $1.99/wk builder tool that's an
+// Storage: { total: number } under GATE_KEY — how many sample runs have been
+// spent across the Pro calculators combined. Device-local (localStorage), so a
+// savvy user can clear it to reset; for a builder tool at this price that's an
 // acceptable trade.
 
 const GATE_KEY = 'sitehand_calc_gate';
-// Free runs allowed in total (across every calculator) before the paywall kicks in.
+// Sample runs allowed across the Pro calculators before the paywall kicks in.
 const FREE_RUNS = 3;
+
+const FREE_CALC_IDS = new Set<string>(CALCULATORS.filter(c => c.free).map(c => c.id));
 // How long the answer stays on screen before it's cleared + the paywall opens.
 const TEASE_MS = 700;
 
@@ -57,22 +63,21 @@ function writeGate(state: GateState): void {
 
 export interface CalcGate {
   // Call this at the point a calc runs, right before setting the result.
-  //   - Pro users: no-op.
-  //   - Within the app-wide free-run allowance: records the run, no-op
+  //   - Pro users, and every free-tier calculator: no-op.
+  //   - Within the sample allowance on a Pro calc: records the run, no-op
   //     (they keep the answer).
   //   - After the allowance is spent: after a short beat, `onGated` fires
   //     (clear the just-shown result) and the paywall opens.
   // The caller still computes + shows the result as normal; the flash-then-hide
-  // is what sells the upgrade. `calcId` is kept in the signature for future use
-  // (e.g. per-calc analytics) even though the gate itself is no longer per-calc.
+  // is what sells the upgrade.
   gateCalc: (calcId: string, onGated?: () => void) => void;
 }
 
 export function useCalcGate(): CalcGate {
   const { isPro, showPaywall } = useSubscription();
 
-  const gateCalc = useCallback((_calcId: string, onGated?: () => void): void => {
-    if (isPro) return;
+  const gateCalc = useCallback((calcId: string, onGated?: () => void): void => {
+    if (isPro || FREE_CALC_IDS.has(calcId)) return;
     const state = readGate();
     if (state.total < FREE_RUNS) {
       writeGate({ total: state.total + 1 });

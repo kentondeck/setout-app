@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { hapticLight } from '../lib/haptics';
 import { useNavigate } from 'react-router-dom';
 import { CalculatorTile } from './CalculatorTile';
+import { useSubscription } from '../lib/SubscriptionContext';
 import type { CalcMeta } from '../lib/calculators';
 import type { CalculatorId } from '../types';
 
@@ -20,6 +21,7 @@ interface ReorderableCalcGridProps {
 // Tap (no hold, no movement) still navigates to the calculator as normal.
 export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedIds, onReorder }: ReorderableCalcGridProps) {
   const navigate = useNavigate();
+  const { isPro } = useSubscription();
   const [order, setOrder] = useState<CalculatorId[]>(calcs.map(c => c.id));
   const [dragId, setDragId] = useState<CalculatorId | null>(null);
   const [dragSize, setDragSize] = useState({ w: 0, h: 0 });
@@ -224,6 +226,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
               highlighted={calc.id === highlightedId}
               pinned={pinnedIds.has(calc.id)}
               onPinToggle={onPinToggle}
+              locked={!isPro && !calc.free}
             />
           </div>
         ))}
@@ -247,6 +250,7 @@ export function ReorderableCalcGrid({ calcs, highlightedId, onPinToggle, pinnedI
             calc={draggedCalc}
             highlighted={draggedCalc.id === highlightedId}
             pinned={pinnedIds.has(draggedCalc.id)}
+            locked={!isPro && !draggedCalc.free}
             dragging
           />
         </div>

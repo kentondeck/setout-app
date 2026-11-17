@@ -25,51 +25,22 @@ Utilities
 
 ## Description (paste into App Store Connect)
 
-Setout is the on-site toolkit for tradies — the numbers, the sequence and the paperwork, in the one app.
+The construction tool for tradies who need fast, accurate numbers on site.
 
-Pricing a deck, cutting stairs, working out roof pitch, planning a concrete pour, logging receipts, sending the quote. Setout handles it on site, in seconds, and keeps working when there's no signal.
+Decking, framing, stairs, roof pitch, concrete, cladding, fencing, cut lists, baluster gaps, gradients, excavation and more — 15 calculators that give you the answer in seconds and work with no signal.
 
-**FREE, UNLIMITED, FOREVER**
-• Decking — board count, lineal metres, waste factor
-• Concrete — slab volume, footings, number of bags
-• Equal Spacing — any object, any gap, always even
-• Baluster Spacing — equal gaps with rail lengths
-• Gradient — fall over run for drains and slabs
+• Step-by-step Build Sequencer — 80+ job guides for NZ & AU
+• Save calculations to a job and export a client-ready quote PDF
+• Apprentice mode shows the working behind every result
+• Log receipts and keep a tool inventory for the accountant
 
-Plus the full Build Sequencer, the receipts log and the tool inventory — no subscription, no limits.
+FREE, FOREVER
+Decking, Concrete, Equal Spacing, Balusters and Gradient — unlimited, no subscription. The Build Sequencer, receipts log and tool list are free too.
 
-**WITH SETOUT PRO**
-• Wall Framing — studs, plates, noggins, full cut list
-• Stairs — rise, run, string length, code check
-• Roof Pitch — rafter length, ridge height, hips and valleys
-• Roofing — sheet count and lap allowances
-• Cladding — sheet count and waste
-• Cut List — optimise timber cuts to cut waste
-• Raked Wall — variable stud heights for sloping plates
-• Square Check — square up with diagonals and offsets
-• Excavation — volume and truck loads
-• Fencing — posts, rails, palings
+SETOUT PRO
+Cloud backup for every job, photo, quote and receipt. Lose your phone, break it or upgrade it — sign in on the new one and your whole history comes back. Pro also opens the other ten calculators, unlimited.
 
-**CLOUD BACKUP — THE REASON PRO EXISTS**
-Your jobs, site photos, quotes and receipts are saved off your phone and kept safe. Lose your phone, break it, upgrade it — sign in on the new one and everything comes back exactly as you left it. Setout Pro keeps that storage running for as long as your account does.
-
-**BUILD SEQUENCER**
-Step-by-step guides for 80+ common builds — foundations, framing, weathertightness, wet areas, decks and more — written for NZ and AU practice. Know what comes next, and what to watch for on every step. Free for everyone.
-
-**JOBS & QUOTES**
-Save calculations to a job, add labour and materials, and export a clean, client-ready quote PDF with your business details.
-
-**BUILT FOR NEW ZEALAND & AUSTRALIA**
-Covers NZ and AU building codes and trade practice — pick your region on setup.
-
-**WORKS OFFLINE**
-Run the numbers on site with no signal. Everything works on the device; with Pro, your work also syncs to the cloud whenever you're back in range.
-
-**APPRENTICE MODE**
-Show the step-by-step working behind every result — handy for teaching an apprentice.
-
-**SUBSCRIPTION DETAILS**
-Setout Pro is an auto-renewing subscription, available annually or weekly, each with a 2-week free trial for new subscribers. Prices are shown in the app in your local currency before you buy (for example, NZ$29.99 per year or NZ$1.99 per week). Payment is charged to your Apple ID at confirmation of purchase. The subscription renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings. If your subscription lapses, you can still restore anything you previously backed up.
+Annual or weekly, each with a 2-week free trial for new subscribers. Prices are shown in the app in your local currency before you buy. Payment is charged to your Apple ID at confirmation and renews unless cancelled at least 24 hours before the period ends — manage or cancel anytime in your App Store settings. If your subscription lapses you can still restore anything you backed up.
 
 Terms of Use: https://www.setoutapp.co.nz/terms
 Privacy Policy: https://www.setoutapp.co.nz/privacy

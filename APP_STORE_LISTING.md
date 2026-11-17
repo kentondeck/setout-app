@@ -1,5 +1,11 @@
 # Setout — App Store Listing
 
+> Updated for the resubmission after the Guideline 3.1.2 rejection of build
+> 23. Version stays 1.0.1 — it was never released, so build 24 goes up under
+> the existing rejected version record rather than a new one. Every claim here must match what the app actually does: metadata
+> that oversells is Guideline 2.3, a separate rejection reason from the one we
+> are already answering.
+
 ## App Name (30 chars max)
 Setout
 
@@ -7,7 +13,7 @@ Setout
 Construction Calculator
 
 ## Promotional Text (170 chars max — editable anytime without resubmitting)
-Try every calculator free. Fast, on-site numbers for stairs, decking, framing, roofs and concrete — then save to jobs and quote in seconds.
+Five calculators free forever. Go Pro for cloud backup that keeps every job, photo and quote safe — and unlimited use of all 15.
 
 ## Primary Category
 Business
@@ -23,25 +29,32 @@ Setout is the construction calculator built for tradies who need fast, accurate 
 
 Pricing a deck, cutting stairs, working out roof pitch, planning a concrete pour — Setout gives you the answer in seconds, and keeps working when there's no signal.
 
-**15 CALCULATORS**
+**FREE, UNLIMITED, FOREVER**
 • Decking — board count, lineal metres, waste factor
+• Concrete — slab volume, footings, number of bags
+• Equal Spacing — any object, any gap, always even
+• Baluster Spacing — equal gaps with rail lengths
+• Gradient — fall over run for drains and slabs
+
+Plus the full Build Sequencer, the receipts log and the tool inventory — no subscription, no limits.
+
+**WITH SETOUT PRO**
 • Wall Framing — studs, plates, noggins, full cut list
 • Stairs — rise, run, string length, code check
 • Roof Pitch — rafter length, ridge height, hips and valleys
 • Roofing — sheet count and lap allowances
-• Concrete — slab volume, footings, number of bags
-• Baluster Spacing — equal gaps with rail lengths
 • Cladding — sheet count and waste
 • Cut List — optimise timber cuts to cut waste
-• Fencing — posts, rails, palings
-• Excavation — volume and truck loads
-• Equal Spacing — any object, any gap, always even
-• Gradient — fall over run for drains and slabs
 • Raked Wall — variable stud heights for sloping plates
-• Setout — square up with diagonals and offsets
+• Square Check — square up with diagonals and offsets
+• Excavation — volume and truck loads
+• Fencing — posts, rails, palings
+
+**CLOUD BACKUP — THE REASON PRO EXISTS**
+Your jobs, site photos, quotes and receipts are saved off your phone and kept safe. Lose your phone, break it, upgrade it — sign in on the new one and everything comes back exactly as you left it. Setout Pro keeps that storage running for as long as your account does.
 
 **BUILD SEQUENCER**
-Step-by-step guides for 80+ common builds — foundations, framing, weathertightness, wet areas, decks and more — written for NZ and AU practice. Know what comes next, and what to watch for on every step.
+Step-by-step guides for 80+ common builds — foundations, framing, weathertightness, wet areas, decks and more — written for NZ and AU practice. Know what comes next, and what to watch for on every step. Free for everyone.
 
 **JOBS & QUOTES**
 Save calculations to a job, add labour and materials, and export a clean, client-ready quote PDF with your business details.
@@ -50,18 +63,13 @@ Save calculations to a job, add labour and materials, and export a clean, client
 Covers NZ and AU building codes and trade practice — pick your region on setup.
 
 **WORKS OFFLINE**
-Run the numbers on site with no signal. Your jobs, notes and photos stay on your device.
+Run the numbers on site with no signal. Everything works on the device; with Pro, your work also syncs to the cloud whenever you're back in range.
 
 **APPRENTICE MODE**
 Show the step-by-step working behind every result — handy for teaching an apprentice.
 
-**SETOUT PRO**
-Try every calculator free. Upgrade to Setout Pro for:
-• Every calculator, unlimited use
-• The full Build Sequencer library (NZ + AU)
-• Save jobs, photos and quotes
-
-Setout Pro is a weekly auto-renewing subscription with a 14-day free trial. The price is shown in the app in your local currency. Payment is charged to your Apple ID at confirmation of purchase, and the subscription renews automatically unless cancelled at least 24 hours before the end of the current period. You can manage or cancel anytime in your App Store account settings.
+**SUBSCRIPTION DETAILS**
+Setout Pro is an auto-renewing subscription, available annually or weekly, each with a 2-week free trial for new subscribers. Prices are shown in the app in your local currency before you buy (for example, NZ$29.99 per year or NZ$1.99 per week). Payment is charged to your Apple ID at confirmation of purchase. The subscription renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your App Store account settings. If your subscription lapses, you can still restore anything you previously backed up.
 
 Terms of Use: https://www.setoutapp.co.nz/terms
 Privacy Policy: https://www.setoutapp.co.nz/privacy
@@ -80,24 +88,34 @@ https://www.setoutapp.co.nz/privacy
 
 ---
 
-## Version Release Notes (What's New — for 1.0)
-First release. 15 construction calculators for tradies on site — stairs, decking, framing, roof pitch, concrete and more — plus a step-by-step build sequencer for NZ and AU. Save jobs, build quotes, export PDFs. Works offline.
+## Version Release Notes (What's New — 1.0.1, build 24)
+Five calculators are now free and unlimited, forever — along with the Build Sequencer, receipts and tool list. Setout Pro adds cloud backup for every job, photo and quote, so a new phone picks up exactly where the old one left off. New annual plan alongside the weekly one.
 
 ---
 
 ## App Store Privacy Questionnaire Answers
 
-**Data linked to you:**
-- None
+> **This needs re-answering before submitting.** The previous answers said all
+> data stays on the device and nothing is linked to the user. That stopped
+> being true when cloud backup shipped: signing in stores an email address, and
+> backup uploads jobs, quotes, receipts and site photos to hosted storage keyed
+> to that account. A privacy label that understates what leaves the device is
+> its own compliance problem, independent of 3.1.2.
+
+**Data linked to you** (only when the user opts into cloud backup):
+- Contact Info — email address, used solely to identify the account for backup and restore
+- User Content — photos, job records, quotes and receipts the user chooses to back up
 
 **Data not linked to you:**
 - Usage Data (product interaction) — via privacy-friendly, cookieless analytics (Umami), used for app functionality/analytics, NOT for tracking
-- Contact Info (name) — only if the user submits feedback, used to reply
 
 **Data used to track you:**
 - None
 
-> Calculations, jobs, settings and photos are stored locally on the device. Subscription status is handled by Apple / RevenueCat. The app is not used to track users across other companies' apps or websites.
+> Cloud backup is opt-in and off by default. Without it, calculations, jobs,
+> settings and photos stay on the device. Subscription status is handled by
+> Apple / RevenueCat. The app is not used to track users across other
+> companies' apps or websites.
 
 ---
 
@@ -105,46 +123,67 @@ First release. 15 construction calculators for tradies on site — stairs, decki
 4+ (no objectionable content)
 
 ## Pricing
-Free to download. **Setout Pro** is a weekly auto-renewing subscription (14-day free trial) offered as an in-app purchase, priced per local storefront (e.g. AUD/NZD 1.99/week).
+Free to download. **Setout Pro** is an auto-renewing subscription offered as an in-app purchase, with a 2-week free trial for new subscribers:
+- Annual — NZ$29.99 / AUD equivalent per storefront
+- Weekly — NZ$1.99 / AUD equivalent per storefront
 
 ---
 
 ## App Review Notes (App Store Connect → App Review Information → Notes)
 
 ```
-Setout is a construction calculator for tradies (New Zealand + Australia).
+This version responds to the Guideline 3.1.2 rejection of build 23
+(submission ID 97d65c19).
 
-FREEMIUM MODEL — how to reach the paywall:
-- Every calculator is free for its first TWO runs.
-- On the THIRD run of the same calculator, the answer shows briefly, then
-  the Setout Pro paywall is presented.
-- The paywall is also reachable any time from Settings → Setout Pro.
+Setout Pro is no longer an unlock for offline calculators. It now provides
+a server-hosted service: a subscriber's jobs, site photos, quotes and
+receipts are backed up to our hosted database and file storage, and can be
+restored onto a replacement device. That storage is provisioned and
+maintained for the life of the account. Subscribers whose subscription
+lapses can still restore data they previously stored.
 
-TESTING THE SUBSCRIPTION:
-- No account or login is required.
-- Tap "Start 14-day free trial" and complete the purchase with a Sandbox
-  Apple ID — this unlocks Pro and all calculators become unlimited.
-- "Restore Purchases" and "Redeem Code" are both on the paywall.
+The app is fully usable without a subscription. Five calculators (Decking,
+Concrete, Equal Spacing, Balusters, Gradient), the Build Sequencer job
+library, the receipts log and the tool inventory are free and unlimited.
 
-Setout Pro is an auto-renewable subscription (1 week, 14-day free trial),
-managed via RevenueCat. All user data (calculations, jobs, photos) is
-stored locally on the device.
+An annual plan has been added alongside the weekly plan. On each option the
+billed amount is the most prominent pricing element, and free-trial
+eligibility is verified with StoreKit before any trial is advertised, so a
+customer who has already used their introductory offer is shown the standard
+price rather than a trial.
+
+TO REACH THE SUBSCRIPTION SCREEN:
+- Settings -> Cloud backup -> "See Setout Pro", or
+- open a Pro calculator such as Stairs and run it three times.
+
+No account or login is required to use the app. Sandbox purchases, Restore
+Purchases and Redeem Code are all available on the paywall.
 ```
 
-**Review screenshot for the subscription:** attach a screenshot of the paywall (trigger it via a calculator's 3rd run, or Settings → Setout Pro).
+**Review screenshot for the subscription:** `setout-paywall-screenshot.png` — shows both plans, the billed amounts, the trial, the renewal disclosure and the restore control.
 
 ---
 
-## Subscription Metadata (App Store Connect → Subscriptions → `setout_pro_weekly`)
+## Subscription Metadata (App Store Connect → Subscriptions)
 
-- **Subscription Group — Display Name:** Setout Pro
+**Group:** Setout Pro (ID 22439571) — check the group display name reads "Setout Pro", not "Setout aPro".
+
+Both products sit at the same level, because they offer identical access and differ only in billing period.
+
+### `setout_pro_annual`
+- **Reference Name (internal):** Setout Pro Annual
+- **Duration:** 1 year, 1 Year Upfront · **Intro offer:** Free, 2 weeks, new subscribers, no end date
+- **Price:** NZ$29.99
+- **Display Name (≤30 chars):** Setout Pro Annual
+- **Description (≤45 chars):** Cloud backup and every calculator.
+
+### `setout_pro_weekly`
 - **Reference Name (internal):** Setout Pro Weekly
-- **Duration:** 1 week · **Intro offer:** Free, 2 weeks (14-day trial), new subscribers
-- **Display Name (shown to users, ≤30 chars):** Setout Pro
-- **Description (shown at purchase):**
+- **Duration:** 1 week · **Intro offer:** Free, 2 weeks, new subscribers, no end date
+- **Price:** NZ$1.99
+- **Display Name (≤30 chars):** Setout Pro
+- **Description (≤45 chars):** Cloud backup and every calculator.
 
-```
-Unlock every calculator with unlimited use, the full NZ + AU build
-sequencer, and unlimited saved jobs, photos and quotes. Weekly plan
-with a 14-day free trial.
-```
+> Introductory offers are one per subscription group per Apple ID. A customer
+> who takes the trial on either plan gets no trial on the other, which is why
+> the app checks eligibility with StoreKit before showing trial copy.

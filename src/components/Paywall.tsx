@@ -122,7 +122,7 @@ export function Paywall() {
               Setout Pro
             </div>
             <h2 style={{ margin: '6px 0 6px', fontSize: 26, fontWeight: 700, letterSpacing: '-0.6px', color: 'var(--color-text)' }}>
-              Never lose a job again.
+              Your whole toolkit, unlocked
             </h2>
             <p style={{ margin: 0, fontSize: 15, color: 'var(--color-muted)', lineHeight: 1.4 }}>
               Cloud backup for every job, photo and quote — plus unlimited use of every calculator.

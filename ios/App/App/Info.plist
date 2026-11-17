@@ -50,9 +50,9 @@
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Setout uses your camera in Smart Quote so you can photograph a job site to generate an estimate.</string>
+	<string>Setout uses your camera so you can photograph a job site and attach the photos to a job.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Setout uses your photo library in Smart Quote so you can attach a photo of the job site to generate an estimate.</string>
+	<string>Setout uses your photo library so you can attach existing site photos to a job.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Setout saves job photos to your photo library when you choose Save Image.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

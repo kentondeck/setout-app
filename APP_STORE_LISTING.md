@@ -95,16 +95,15 @@ Five calculators are now free and unlimited, forever — along with the Build Se
 
 ## App Store Privacy Questionnaire Answers
 
-> **This needs re-answering before submitting.** The previous answers said all
-> data stays on the device and nothing is linked to the user. That stopped
-> being true when cloud backup shipped: signing in stores an email address, and
-> backup uploads jobs, quotes, receipts and site photos to hosted storage keyed
-> to that account. A privacy label that understates what leaves the device is
-> its own compliance problem, independent of 3.1.2.
+> Already answered correctly in App Store Connect and published. Recorded here
+> so this file matches the live state — an earlier version of this doc claimed
+> nothing was linked to the user, which cloud backup contradicted. If the two
+> ever disagree again, App Store Connect is the truth, not this file.
 
-**Data linked to you** (only when the user opts into cloud backup):
-- Contact Info — email address, used solely to identify the account for backup and restore
-- User Content — photos, job records, quotes and receipts the user chooses to back up
+**Data linked to you** (as published):
+- Purchases — purchase history, via Apple / RevenueCat
+- Contact Info — email address, stored only when the user opts into cloud backup, used to identify the account for backup and restore
+- User Content — photos or videos, and job records, quotes and receipts the user chooses to back up
 
 **Data not linked to you:**
 - Usage Data (product interaction) — via privacy-friendly, cookieless analytics (Umami), used for app functionality/analytics, NOT for tracking

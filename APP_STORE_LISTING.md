@@ -10,10 +10,10 @@
 Setout
 
 ## Subtitle (30 chars max)
-Construction Calculator
+On-site toolkit for tradies
 
 ## Promotional Text (170 chars max — editable anytime without resubmitting)
-Five calculators free forever. Go Pro for cloud backup that keeps every job, photo and quote safe — and unlimited use of all 15.
+Five tools free forever. Go Pro for cloud backup that keeps every job, photo and quote safe — plus the full kit of 15.
 
 ## Primary Category
 Business
@@ -25,9 +25,9 @@ Utilities
 
 ## Description (paste into App Store Connect)
 
-Setout is the construction calculator built for tradies who need fast, accurate numbers on site — not back at the office.
+Setout is the on-site toolkit for tradies — the numbers, the sequence and the paperwork, in the one app.
 
-Pricing a deck, cutting stairs, working out roof pitch, planning a concrete pour — Setout gives you the answer in seconds, and keeps working when there's no signal.
+Pricing a deck, cutting stairs, working out roof pitch, planning a concrete pour, logging receipts, sending the quote. Setout handles it on site, in seconds, and keeps working when there's no signal.
 
 **FREE, UNLIMITED, FOREVER**
 • Decking — board count, lineal metres, waste factor
@@ -77,8 +77,9 @@ Privacy Policy: https://www.setoutapp.co.nz/privacy
 ---
 
 ## Keywords (100 chars max — separate with commas, no spaces after commas)
-## Note: "Setout" (name) + "Construction Calculator" (subtitle) are indexed separately — don't repeat them here.
-builder,carpenter,chippie,tradie,decking,framing,stairs,roof,pitch,concrete,cladding,fencing,quote
+## Note: "Setout" (name) + the subtitle are indexed separately — don't repeat them here.
+## "calculator" moved into keywords when it came out of the subtitle, so the search term is kept.
+calculator,builder,carpenter,chippie,tradie,decking,framing,stairs,roof,concrete,cladding,fencing
 
 ## Support URL
 https://www.setoutapp.co.nz

@@ -5,7 +5,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const isLiveDev = !!process.env.CAP_SERVER_URL;
 
 const config: CapacitorConfig = {
-  appId: 'com.setout.app',
+  appId: 'au.com.setoutapp.setout',
   appName: 'Setout',
   webDir: 'dist',
   ios: {

@@ -87,8 +87,8 @@ The app runs unchanged on the web (www.setoutapp.co.nz in a browser) — subscri
 1. Sign up at [revenuecat.com](https://www.revenuecat.com/) (free up to $2.5k MRR)
 2. Create a new project called "Setout"
 3. Under **Apps**, add:
-   - iOS app: bundle ID `com.setout.app` — upload App Store Connect shared secret (Users and Access → Keys → App-Specific Shared Secret)
-   - Android app: package name matching Play → upload Play Console service account JSON
+   - iOS app: bundle ID `au.com.setoutapp.setout` — must match the App Store Connect record (App Information → Bundle ID) and the Xcode target. A mismatch here is silent and nasty: the purchase sheet succeeds, the customer is charged, and the entitlement never activates.
+   - Android app: package name `com.setout.app` (Play uses its own namespace and has not been renamed) → upload Play Console service account JSON
 
 ### Wire products to an entitlement
 1. **Products** → **+ New** — import `setout_pro_weekly` from both stores

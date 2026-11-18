@@ -120,6 +120,14 @@ interface CustomerInfo {
   };
 }
 
+// The single test for "is this customer entitled". The entitlement identifier
+// is matched exactly and case-sensitively, so it must match the identifier
+// configured in the RevenueCat dashboard.
+function hasProEntitlement(info: CustomerInfo | null | undefined): boolean {
+  const active = info?.entitlements?.active ?? {};
+  return Object.prototype.hasOwnProperty.call(active, PRO_ENTITLEMENT_ID);
+}
+
 // Flatten every offering into one list, current first. RC only returns a
 // package when the product is purchasable in App Store Connect AND attached to
 // an offering — and a product attached to a non-current offering used to read
@@ -222,6 +230,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (!enforced || initialised.current) return;
     initialised.current = true;
     let cancelled = false;
+    let listenerId: string | null = null;
 
     // Watchdog: if a native RC call (configure / getCustomerInfo) ever stalls,
     // `isReady` would otherwise stay false forever and the paywall CTA would be
@@ -251,9 +260,16 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         await rc.Purchases.configure({ apiKey });
         // Pull current entitlement state so the first render is correct.
         const info = (await rc.Purchases.getCustomerInfo()) as unknown as { customerInfo: CustomerInfo };
-        const activeEnts = info.customerInfo?.entitlements?.active ?? {};
-        const hasPro = Object.prototype.hasOwnProperty.call(activeEnts, PRO_ENTITLEMENT_ID);
-        if (!cancelled) setIsPro(hasPro);
+        if (!cancelled) setIsPro(hasProEntitlement(info.customerInfo));
+
+        // Entitlements can activate after the purchase call returns — a
+        // deferred "Ask to Buy" approval, a renewal, a restore on another
+        // device, or simply the receipt finishing server-side. Without this
+        // listener none of that reaches the UI until the next cold start,
+        // which looks exactly like "I paid and nothing unlocked".
+        listenerId = await rc.Purchases.addCustomerInfoUpdateListener(received => {
+          if (!cancelled) setIsPro(hasProEntitlement(received as unknown as CustomerInfo));
+        });
 
         // Fetch offerings so the paywall has localised prices to show.
         try {
@@ -276,6 +292,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelled = true;
       window.clearTimeout(readyWatchdog);
+      if (listenerId) {
+        void getRc().then(rc => rc?.Purchases.removeCustomerInfoUpdateListener({ listenerToRemove: listenerId! }));
+      }
     };
   }, [enforced]);
 
@@ -285,8 +304,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     if (!rc) return;
     try {
       const info = (await rc.Purchases.getCustomerInfo()) as unknown as { customerInfo: CustomerInfo };
-      const activeEnts = info.customerInfo?.entitlements?.active ?? {};
-      setIsPro(Object.prototype.hasOwnProperty.call(activeEnts, PRO_ENTITLEMENT_ID));
+      setIsPro(hasProEntitlement(info.customerInfo));
     } catch (e) {
       console.warn('[Subscription] refreshCustomerInfo failed', e);
     }
@@ -311,8 +329,12 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         setLastError('That plan isn’t available right now. Please try again in a moment.');
         return;
       }
-      await rc.Purchases.purchasePackage({ aPackage: selected.pkg });
-      await refreshCustomerInfo();
+      // The purchase result carries the authoritative customer info for this
+      // transaction. The previous code discarded it and issued a second
+      // getCustomerInfo(), which can race the server and return state that
+      // predates the purchase — leaving isPro false after a successful charge.
+      const result = await rc.Purchases.purchasePackage({ aPackage: selected.pkg });
+      setIsPro(hasProEntitlement((result as unknown as { customerInfo: CustomerInfo }).customerInfo));
     } catch (e) {
       const err = e as { userCancelled?: boolean; message?: string };
       // User-cancelled is a normal flow, not an error — just silently no-op.
@@ -321,7 +343,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
     } finally {
       setPurchasing(false);
     }
-  }, [refreshCustomerInfo]);
+  }, []);
 
   const restorePurchases = useCallback(async () => {
     setLastError(null);

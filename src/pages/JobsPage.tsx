@@ -1,11 +1,13 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { JobsContext, KeyboardContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
 import { JobCard } from '../components/JobCard';
 import { DONE_BAR_HEIGHT } from '../components/KeyboardDoneBar';
 
 export function JobsPage() {
   const { jobs, createJob, updateJob, deleteJob, getJobCalculations } = useContext(JobsContext);
+  const { isPro, showPaywall } = useSubscription();
   const { inset: keyboardInset } = useContext(KeyboardContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
@@ -13,6 +15,8 @@ export function JobsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   function openNewJob() {
+    // Saving jobs is a Pro feature — a non-subscriber gets the paywall instead.
+    if (!isPro) { showPaywall(); return; }
     // flushSync + immediate focus keeps this inside the click's trusted
     // gesture — a focus() reached via setTimeout instead opens the iOS
     // keyboard without binding it, so nothing typed ever registers.
@@ -22,6 +26,7 @@ export function JobsPage() {
 
   function handleCreate() {
     if (!newJobName.trim()) return;
+    if (!isPro) { showPaywall(); return; }
     createJob(newJobName.trim());
     setNewJobName('');
     setShowNewJob(false);

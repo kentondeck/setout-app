@@ -92,25 +92,24 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
         </button>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
-        <div>
-          <p style={{ margin: 0, fontSize: 18, fontWeight: 500, color: labelColor, letterSpacing: '-0.5px', lineHeight: 1 }}>
-            {calc.label}
-          </p>
-          <p style={{ margin: '4px 0 0', fontSize: 11, color: subtitleColor }}>
-            {calc.subtitle}
-          </p>
-        </div>
+      <div>
         {locked && (
           <span style={{
-            flexShrink: 0, padding: '2px 6px', borderRadius: 5,
-            fontSize: 9, fontWeight: 700, letterSpacing: '0.6px',
+            display: 'inline-block', marginBottom: 6,
+            padding: '2px 6px', borderRadius: 5,
+            fontSize: 9, fontWeight: 700, letterSpacing: '0.6px', lineHeight: 1,
             background: highlighted ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)',
             color: highlighted ? '#ffffff' : 'var(--color-muted)',
           }}>
             PRO
           </span>
         )}
+        <p style={{ margin: 0, fontSize: 18, fontWeight: 500, color: labelColor, letterSpacing: '-0.5px', lineHeight: 1 }}>
+          {calc.label}
+        </p>
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: subtitleColor }}>
+          {calc.subtitle}
+        </p>
       </div>
     </div>
   );

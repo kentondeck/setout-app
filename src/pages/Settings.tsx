@@ -214,6 +214,35 @@ export function Settings() {
         Settings
       </h1>
 
+      {!subscription.isPro && (
+        <button
+          onClick={subscription.showPaywall}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            width: '100%', textAlign: 'left',
+            padding: '16px 18px', borderRadius: 'var(--radius-card)',
+            background: 'var(--color-orange)', border: 'none',
+            cursor: 'pointer', fontFamily: 'inherit',
+            boxShadow: '0 8px 20px -6px rgba(255,90,31,0.45)',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px' }}>
+              Unlock Setout Pro
+            </div>
+            <div style={{ marginTop: 3, fontSize: 13, color: 'rgba(255,255,255,0.9)', lineHeight: 1.35 }}>
+              Cloud backup, saved jobs, and every calculator — unlocked.
+            </div>
+          </div>
+          <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#fff' }}>
+            See plans
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </span>
+        </button>
+      )}
+
       <div>
         <SectionLabel>Units</SectionLabel>
         <div

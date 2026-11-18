@@ -98,8 +98,10 @@ export function CalculatorTile({ calc, highlighted, pinned = false, onPinToggle,
             display: 'inline-block', marginBottom: 6,
             padding: '2px 6px', borderRadius: 5,
             fontSize: 9, fontWeight: 700, letterSpacing: '0.6px', lineHeight: 1,
-            background: highlighted ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)',
-            color: highlighted ? '#ffffff' : 'var(--color-muted)',
+            // Orange on normal tiles to read as an upgrade prompt; stays white
+            // on a highlighted (orange) tile where orange-on-orange would vanish.
+            background: highlighted ? 'rgba(255,255,255,0.22)' : 'rgba(255,90,31,0.12)',
+            color: highlighted ? '#ffffff' : 'var(--color-orange)',
           }}>
             PRO
           </span>

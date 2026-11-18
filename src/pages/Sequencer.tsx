@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
 import { CalcHeader } from '../components/CalcHeader';
 import { SettingsContext } from '../contexts';
+import { useSubscription } from '../lib/SubscriptionContext';
 import { FONT } from '../lib/fonts';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -2708,6 +2709,7 @@ const JOBS: Job[] = [
 
 export function Sequencer() {
   const { settings } = useContext(SettingsContext);
+  const { isPro, showPaywall } = useSubscription();
   const regionKey: 'au' | 'nz' = settings.region === 'NZ' ? 'nz' : 'au';
 
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -2727,6 +2729,13 @@ export function Sequencer() {
 
   // ── Job-detail view ────────────────────────────────────────────────────────
   if (activeJob && activeDetail) {
+    // Freemium tease: a non-Pro user sees the first half of the steps; the rest
+    // are shown blurred behind a Setout Pro prompt.
+    const allSteps = activeDetail.steps;
+    const half = Math.ceil(allSteps.length / 2);
+    const locked = !isPro && allSteps.length > half;
+    const visibleSteps = locked ? allSteps.slice(0, half) : allSteps;
+    const lockedSteps = locked ? allSteps.slice(half) : [];
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <JobHeader label={activeJob.label} onBack={() => setActiveJobId(null)} />
@@ -2769,7 +2778,7 @@ export function Sequencer() {
           </details>
 
           <div style={{ ...cardStyle, overflow: 'hidden' }}>
-            {activeDetail.steps.map((step, i) => {
+            {visibleSteps.map((step, i) => {
               const isOpen = expandedSteps.has(i);
               return (
                 <div key={i} style={{ borderTop: i === 0 ? 'none' : '0.5px solid var(--color-border)' }}>
@@ -2823,6 +2832,58 @@ export function Sequencer() {
                 </div>
               );
             })}
+
+            {locked && lockedSteps.length > 0 && (
+              <div style={{ position: 'relative' }}>
+                {/* Blurred preview of the remaining steps — structure visible, text unreadable. */}
+                <div aria-hidden="true" style={{ filter: 'blur(3.5px)', pointerEvents: 'none', userSelect: 'none', opacity: 0.7 }}>
+                  {lockedSteps.map((step, j) => (
+                    <div key={j} style={{ borderTop: '0.5px solid var(--color-border)' }}>
+                      <div style={{
+                        width: '100%', padding: '12px 14px',
+                        display: 'grid', gridTemplateColumns: '28px 1fr 16px',
+                        alignItems: 'center', gap: 12,
+                      }}>
+                        <div style={{
+                          width: 26, height: 26, borderRadius: 8,
+                          background: 'var(--color-orange)', color: '#fff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontFamily: FONT, fontVariantNumeric: 'tabular-nums',
+                          fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.4px',
+                        }}>{half + j + 1}</div>
+                        <div style={{
+                          fontSize: 14, fontWeight: 500, color: 'var(--color-text)',
+                          letterSpacing: '-0.15px', lineHeight: 1.3,
+                        }}>{step.title}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Upgrade prompt overlaid on the blur */}
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center', gap: 10,
+                  textAlign: 'center', padding: '0 24px',
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, var(--color-card) 58%)',
+                }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--color-text)', letterSpacing: '-0.2px' }}>
+                    {lockedSteps.length} more {lockedSteps.length === 1 ? 'step' : 'steps'} with Setout Pro
+                  </div>
+                  <button
+                    onClick={showPaywall}
+                    style={{
+                      padding: '9px 18px', borderRadius: 999,
+                      background: 'var(--color-orange)', color: '#fff',
+                      border: 'none', fontSize: 13, fontWeight: 600,
+                      fontFamily: 'inherit', cursor: 'pointer',
+                    }}
+                  >
+                    See Setout Pro
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <SequencerDisclaimer />

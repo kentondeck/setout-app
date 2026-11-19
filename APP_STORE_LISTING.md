@@ -1,8 +1,10 @@
 # Setout — App Store Listing
 
 > Updated for the resubmission after the Guideline 3.1.2 rejection of build
-> 23. Version stays 1.0.1 — it was never released, so build 24 goes up under
-> the existing rejected version record rather than a new one. Every claim here must match what the app actually does: metadata
+> 23. Version stays 1.0.1 — it was never released, so the new build goes up
+> under the existing rejected version record rather than a new one. Build 24
+> was consumed by a TestFlight upload during testing, so the submission build
+> is 25. Every claim here must match what the app actually does: metadata
 > that oversells is Guideline 2.3, a separate rejection reason from the one we
 > are already answering.
 
@@ -60,7 +62,7 @@ https://www.setoutapp.co.nz/privacy
 
 ---
 
-## Version Release Notes (What's New — 1.0.1, build 24)
+## Version Release Notes (What's New — 1.0.1, build 25)
 Five calculators are now free and unlimited, forever — along with the Build Sequencer, receipts and tool list. Setout Pro adds cloud backup for every job, photo and quote, so a new phone picks up exactly where the old one left off. New annual plan alongside the weekly one.
 
 ---

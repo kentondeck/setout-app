@@ -138,6 +138,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'photoquote',
+    free: true,
     label: 'Quotes',
     subtitle: 'Estimates, quotes & invoices',
     number: '18',

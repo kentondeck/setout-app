@@ -163,3 +163,22 @@ export const CALCULATORS: CalcMeta[] = [
     svgPath: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.9 2.9-2-2 2.9-2.9z',
   },
 ];
+
+// Entries that live in the grid but aren't calculators — they're features, and
+// the paywall talks about them in its own words rather than listing them with
+// the maths tools.
+const NON_CALCULATORS = new Set<string>(['sequencer', 'photoquote', 'receipts', 'tools']);
+
+// Calculators whose `free` flag only means "useCalcGate lets them through" —
+// the page itself paywalls some of what's inside. Concrete runs slabs free but
+// gates post holes and mix. They can't be listed as free without qualification,
+// so the paywall names what's actually free about them in its own words.
+const PARTIALLY_FREE = new Set<string>(['concrete']);
+
+// The calculators a non-subscriber can use without limit, by display name.
+// The paywall builds its free-tier line from this rather than restating it in
+// prose, so moving a calculator between tiers can't leave the purchase screen
+// claiming something untrue.
+export const FREE_CALCULATOR_LABELS: string[] = CALCULATORS
+  .filter(c => c.free && !NON_CALCULATORS.has(c.id) && !PARTIALLY_FREE.has(c.id))
+  .map(c => c.label);

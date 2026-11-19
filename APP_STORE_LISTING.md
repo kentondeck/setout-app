@@ -13,7 +13,7 @@ Setout
 On-site toolkit for tradies
 
 ## Promotional Text (170 chars max — editable anytime without resubmitting)
-Five tools free forever. Go Pro for cloud backup that keeps every job, photo and quote safe — plus the full kit of 15.
+Equal spacing, balusters, gradients and concrete slabs — free, unlimited. Go Pro for cloud backup that keeps every job, photo and quote safe.
 
 ## Primary Category
 Business
@@ -35,10 +35,10 @@ Decking, framing, stairs, roof pitch, concrete, cladding, fencing, cut lists, ba
 • Log receipts and keep a tool inventory for the accountant
 
 FREE, FOREVER
-Decking, Concrete, Equal Spacing, Balusters and Gradient — unlimited, no subscription. Every Build Sequencer guide opens free, showing the first half of its steps.
+Equal Spacing, Balusters and Gradient — unlimited, no subscription. Concrete slabs too, along with saved jobs, the receipts log and your tool list. Every Build Sequencer guide opens free and shows the first half of its steps.
 
 SETOUT PRO
-Cloud backup for every job, photo, quote and receipt. Lose your phone, break it or upgrade it — sign in on the new one and your whole history comes back. Pro also opens the other ten calculators, the rest of every Sequencer guide, saved jobs, the receipts log and your tool list.
+Cloud backup for every job, photo, quote and receipt. Lose your phone, break it or upgrade it — sign in on the new one and your whole history comes back. Pro also opens Decking, Wall Framing, Stairs, Roof Pitch, Roofing, Cladding, Cut List, Raked Wall, Square Check, Excavation and Fencing, the concrete post hole and mix tools, and the rest of every Sequencer guide.
 
 Annual or weekly, each with a 2-week free trial for new subscribers. Prices are shown in the app in your local currency before you buy. Payment is charged to your Apple ID at confirmation and renews unless cancelled at least 24 hours before the period ends — manage or cancel anytime in your App Store settings. If your subscription lapses you can still restore anything you backed up.
 
@@ -113,10 +113,10 @@ restored onto a replacement device. That storage is provisioned and
 maintained for the life of the account. Subscribers whose subscription
 lapses can still restore data they previously stored.
 
-The app is usable without a subscription. Five calculators — Decking,
-Concrete, Equal Spacing, Balusters and Gradient — are free and unlimited,
-and every Build Sequencer guide opens free, showing the first half of its
-steps.
+The app is usable without a subscription. Equal Spacing, Balusters and
+Gradient are free and unlimited, as are concrete slab calculations, saved
+jobs, the receipts log and the tool inventory. Every Build Sequencer guide
+opens free and shows the first half of its steps.
 
 An annual plan has been added alongside the weekly plan. On each option the
 billed amount is the most prominent pricing element, and free-trial
@@ -126,7 +126,7 @@ price rather than a trial.
 
 TO REACH THE SUBSCRIPTION SCREEN:
 - Settings -> Cloud backup -> "See Setout Pro", or
-- open a Pro calculator such as Stairs and run it once.
+- open a Pro calculator such as Stairs or Decking and run it once.
 
 No account or login is required to use the app. Sandbox purchases, Restore
 Purchases and Redeem Code are all available on the paywall.

@@ -4,6 +4,7 @@ import { useSubscription } from '../lib/SubscriptionContext';
 import type { PlanOption } from '../lib/SubscriptionContext';
 import type { PlanId } from '../lib/subscription';
 import { PLAN_RENEWAL_ADVERB } from '../lib/subscription';
+import { FREE_CALCULATOR_LABELS } from '../lib/calculators';
 
 // Setout Pro paywall bottom sheet.
 // Presented by SubscriptionContext.showPaywall() — either directly (from
@@ -30,8 +31,15 @@ const FEATURES = [
   'Cloud backup for every job, photo and quote',
   'Restore your whole history on a new phone',
   'All 15 calculators, unlimited use',
-  'Saved jobs, receipts and your tool list',
 ];
+
+// Built from the calculator metadata so the purchase screen can't keep
+// promising a calculator that has since moved behind Pro. The partial cases —
+// concrete slabs, the first half of each Sequencer guide — aren't expressible
+// as flags, so they stay as words below.
+const freeCalculatorList = FREE_CALCULATOR_LABELS.length > 1
+  ? `${FREE_CALCULATOR_LABELS.slice(0, -1).join(', ')} and ${FREE_CALCULATOR_LABELS[FREE_CALCULATOR_LABELS.length - 1]}`
+  : FREE_CALCULATOR_LABELS[0] ?? '';
 
 // Saving against the costliest plan on offer, worked out from the store's own
 // annualised prices so it can never drift from what the user is billed. The
@@ -148,7 +156,7 @@ export function Paywall() {
               lowers the pressure, and it makes clear to anyone reviewing the
               app that Setout is usable without subscribing at all. */}
           <p style={{ margin: '-10px 0 18px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.45, textAlign: 'center' }}>
-            Decking, Concrete, Equal Spacing, Balusters and Gradient stay free and unlimited, along with the first half of every Sequencer guide.
+            {freeCalculatorList} stay free and unlimited — plus concrete slabs, saved jobs, receipts and your tool list, and the first half of every Sequencer guide.
           </p>
 
           {/* Plan picker. The billed amount is the largest, most prominent

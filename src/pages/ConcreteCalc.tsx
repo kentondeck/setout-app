@@ -9,6 +9,7 @@ import { ResultHero, ShoppingList, AddToQuoteCTA, buildShoppingListShareBody } f
 import { COMPLIANCE_NOTES } from '../lib/compliance';
 import { SettingsContext, HistoryContext } from '../contexts';
 import { useCalcGate } from '../lib/useCalcGate';
+import { useSubscription } from '../lib/SubscriptionContext';
 import { calculateSlab, calculatePostHoles, calculateConcreteMix, calculateSlabReo } from '../calculators/concrete';
 import { JobNameInput } from '../components/JobNameInput';
 import { useScrollToResult } from '../lib/useScrollToResult';
@@ -22,7 +23,7 @@ type HoleType = 'round' | 'square';
 interface SlabFields { length: string; width: string; thickness: string; }
 interface PostFields { diameter: string; sideWidth: string; depth: string; numHoles: string; postSize: string; }
 
-const WASTAGE_OPTIONS = [0.05, 0.10, 0.15];
+const WASTAGE_OPTIONS = [0, 0.05, 0.10, 0.15];
 
 const SLAB_DEFAULTS: SlabFields = { length: '', width: '', thickness: '' };
 const POST_DEFAULTS: PostFields = { diameter: '', sideWidth: '', depth: '', numHoles: '', postSize: '' };
@@ -37,6 +38,9 @@ export function ConcreteCalc() {
   const { settings } = useContext(SettingsContext);
   const { addEntry, updateEntry } = useContext(HistoryContext);
   const gate = useCalcGate();
+  // Slab stays free; Post holes and Mix are Pro — a non-subscriber sees the
+  // answer briefly then the paywall.
+  const { isPro, showPaywall } = useSubscription();
 
   const [tab, setTab] = useState<Tab>('slab');
   const [wastageMode, setWastageMode] = useState<number | 'custom'>(0.10);
@@ -149,6 +153,7 @@ export function ConcreteCalc() {
         ...(postDeductEnabled && postSize && { postShape: postDeductShape, postSize, baseGapMm: postBaseGap.trim() ? Math.max(0, parseFloat(postBaseGap) || 0) : 50 }),
       });
       setPostResult(calc);
+      if (!isPro) window.setTimeout(() => { setPostResult(null); showPaywall(); }, 1500);
       const id = uuid();
       setLastPostId(id);
       addEntry({
@@ -179,6 +184,7 @@ export function ConcreteCalc() {
         return;
       }
       setMixResult(calc);
+      if (!isPro) window.setTimeout(() => { setMixResult(null); showPaywall(); }, 1500);
       const id = uuid();
       setLastMixId(id);
       addEntry({
@@ -307,9 +313,16 @@ export function ConcreteCalc() {
                 fontFamily: 'inherit',
                 cursor: 'pointer',
                 transition: 'background 0.15s',
+                whiteSpace: 'nowrap',
               }}
             >
               {t === 'slab' ? 'Slab' : t === 'postholes' ? 'Post holes' : 'Mix'}
+              {!isPro && t !== 'slab' && (
+                <span style={{
+                  marginLeft: 4, fontSize: 8, fontWeight: 700, letterSpacing: '0.4px', verticalAlign: 'top',
+                  color: tab === t ? 'rgba(255,255,255,0.9)' : 'var(--color-orange)',
+                }}>PRO</span>
+              )}
             </button>
           ))}
         </div>

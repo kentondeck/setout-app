@@ -20,7 +20,6 @@ export interface CalcMeta {
 export const CALCULATORS: CalcMeta[] = [
   {
     id: 'decking',
-    free: true,
     label: 'Decking',
     subtitle: 'Boards, joists, bearers',
     number: '01',

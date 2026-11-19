@@ -35,10 +35,10 @@ Decking, framing, stairs, roof pitch, concrete, cladding, fencing, cut lists, ba
 • Log receipts and keep a tool inventory for the accountant
 
 FREE, FOREVER
-Decking, Concrete, Equal Spacing, Balusters and Gradient — unlimited, no subscription. The Build Sequencer, receipts log and tool list are free too.
+Decking, Concrete, Equal Spacing, Balusters and Gradient — unlimited, no subscription. Every Build Sequencer guide opens free, showing the first half of its steps.
 
 SETOUT PRO
-Cloud backup for every job, photo, quote and receipt. Lose your phone, break it or upgrade it — sign in on the new one and your whole history comes back. Pro also opens the other ten calculators, unlimited.
+Cloud backup for every job, photo, quote and receipt. Lose your phone, break it or upgrade it — sign in on the new one and your whole history comes back. Pro also opens the other ten calculators, the rest of every Sequencer guide, saved jobs, the receipts log and your tool list.
 
 Annual or weekly, each with a 2-week free trial for new subscribers. Prices are shown in the app in your local currency before you buy. Payment is charged to your Apple ID at confirmation and renews unless cancelled at least 24 hours before the period ends — manage or cancel anytime in your App Store settings. If your subscription lapses you can still restore anything you backed up.
 
@@ -113,9 +113,10 @@ restored onto a replacement device. That storage is provisioned and
 maintained for the life of the account. Subscribers whose subscription
 lapses can still restore data they previously stored.
 
-The app is fully usable without a subscription. Five calculators (Decking,
-Concrete, Equal Spacing, Balusters, Gradient), the Build Sequencer job
-library, the receipts log and the tool inventory are free and unlimited.
+The app is usable without a subscription. Five calculators — Decking,
+Concrete, Equal Spacing, Balusters and Gradient — are free and unlimited,
+and every Build Sequencer guide opens free, showing the first half of its
+steps.
 
 An annual plan has been added alongside the weekly plan. On each option the
 billed amount is the most prominent pricing element, and free-trial
@@ -125,7 +126,7 @@ price rather than a trial.
 
 TO REACH THE SUBSCRIPTION SCREEN:
 - Settings -> Cloud backup -> "See Setout Pro", or
-- open a Pro calculator such as Stairs and run it three times.
+- open a Pro calculator such as Stairs and run it once.
 
 No account or login is required to use the app. Sandbox purchases, Restore
 Purchases and Redeem Code are all available on the paywall.

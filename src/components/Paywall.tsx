@@ -22,14 +22,15 @@ import { PLAN_RENEWAL_ADVERB } from '../lib/subscription';
 // backup of jobs, photos and quotes, and restore onto a new phone) are the
 // ongoing service the subscription actually pays for, so they lead.
 
-// Every line here has to be something Pro actually unlocks. The Sequencer job
-// library, the five free calculators and offline use are available to
-// everyone, so they don't belong on this list — claiming them would be both
-// untrue and a metadata rejection waiting to happen.
+// Every line here has to be something Pro actually unlocks, and the free-tier
+// line below has to match what genuinely stays free. Offline use belongs to
+// everyone, so it is deliberately absent — claiming it would be untrue and a
+// metadata rejection waiting to happen.
 const FEATURES = [
   'Cloud backup for every job, photo and quote',
   'Restore your whole history on a new phone',
   'All 15 calculators, unlimited use',
+  'Saved jobs, receipts and your tool list',
 ];
 
 // Saving against the costliest plan on offer, worked out from the store's own
@@ -147,7 +148,7 @@ export function Paywall() {
               lowers the pressure, and it makes clear to anyone reviewing the
               app that Setout is usable without subscribing at all. */}
           <p style={{ margin: '-10px 0 18px', fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.45, textAlign: 'center' }}>
-            Decking, Concrete, Equal Spacing, Gradient and Balusters stay free — along with the Sequencer, receipts and tool list.
+            Decking, Concrete, Equal Spacing, Balusters and Gradient stay free and unlimited, along with the first half of every Sequencer guide.
           </p>
 
           {/* Plan picker. The billed amount is the largest, most prominent

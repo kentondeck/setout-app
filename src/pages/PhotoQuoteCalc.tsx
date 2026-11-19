@@ -252,8 +252,14 @@ export function PhotoQuoteCalc() {
   return <PhotoQuoteCalcInner />;
 }
 
+// 1 free quote PDF for non-subscribers, then Pro. Keyed by the quote's number so
+// re-downloading or sharing the SAME quote doesn't burn the freebie — only
+// producing a NEW quote PDF does.
+const PDF_FREE_QUOTE_KEY = 'setout_pdf_free_quote';
+
 function PhotoQuoteCalcInner() {
   const { settings, updateSettings } = useContext(SettingsContext);
+  const { isPro, showPaywall } = useSubscription();
   const { history, addEntry, updateEntry } = useContext(HistoryContext);
   const location = useLocation();
   const navigate = useNavigate();
@@ -912,6 +918,13 @@ function PhotoQuoteCalcInner() {
   function buildPdfDoc() {
     const totals = computeTotals();
     if (!result || !totals) return null;
+    // 1 free quote PDF for non-subscribers; producing any further NEW quote needs Pro.
+    if (!isPro) {
+      const freeQuote = localStorage.getItem(PDF_FREE_QUOTE_KEY);
+      const thisQuote = quoteNumber.trim() || result.scopeSummary || 'quote';
+      if (freeQuote && freeQuote !== thisQuote) { showPaywall(); return null; }
+      if (!freeQuote) { try { localStorage.setItem(PDF_FREE_QUOTE_KEY, thisQuote); } catch { /* storage disabled */ } }
+    }
     return buildQuotePdf({
       docType,
       quoteNumber: quoteNumber.trim(),

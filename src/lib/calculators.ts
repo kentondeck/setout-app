@@ -145,6 +145,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'receipts',
+    free: true,
     label: 'Receipts',
     subtitle: 'Log for accountant',
     number: '19',
@@ -153,6 +154,7 @@ export const CALCULATORS: CalcMeta[] = [
   },
   {
     id: 'tools',
+    free: true,
     label: 'Tools',
     subtitle: 'Inventory for insurance',
     number: '20',

@@ -1,7 +1,6 @@
 import { useState, useContext, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { JobsContext, KeyboardContext } from '../contexts';
-import { useSubscription } from '../lib/SubscriptionContext';
 import { DONE_BAR_HEIGHT } from './KeyboardDoneBar';
 import type { SavedJob } from '../types';
 
@@ -20,7 +19,6 @@ export function AddToJobSheet({
   onAdded,
 }: AddToJobSheetProps) {
   const { jobs, createJob, addCalculationToJob } = useContext(JobsContext);
-  const { isPro, showPaywall } = useSubscription();
   const { inset: keyboardInset } = useContext(KeyboardContext);
   const [showNewJob, setShowNewJob] = useState(false);
   const [newJobName, setNewJobName] = useState('');
@@ -36,8 +34,6 @@ export function AddToJobSheet({
   }
 
   function handleSelectJob(job: SavedJob) {
-    // Saving to jobs is a Pro feature — a non-subscriber gets the paywall.
-    if (!isPro) { onClose(); showPaywall(); return; }
     addCalculationToJob(job.id, calculationId);
     onAdded(job.name);
     onClose();
@@ -45,7 +41,6 @@ export function AddToJobSheet({
 
   function handleCreateAndAdd() {
     if (!newJobName.trim()) return;
-    if (!isPro) { onClose(); showPaywall(); return; }
     const job = createJob(newJobName.trim());
     // addCalculationToJob batches after createJob via React's functional setState queue
     addCalculationToJob(job.id, calculationId);

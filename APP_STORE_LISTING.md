@@ -105,33 +105,94 @@ Free to download. **Setout Pro** is an auto-renewing subscription offered as an 
 ## App Review Notes (App Store Connect → App Review Information → Notes)
 
 ```
-This version responds to the Guideline 3.1.2 rejection of build 23
+Hello App Review team,
+
+This build responds to the Guideline 3.1.2 rejection of build 23
 (submission ID 97d65c19).
+
+1. WHAT CHANGED
 
 Setout Pro is no longer an unlock for offline calculators. It now provides
 a server-hosted service: a subscriber's jobs, site photos, quotes and
 receipts are backed up to our hosted database and file storage, and can be
 restored onto a replacement device. That storage is provisioned and
-maintained for the life of the account. Subscribers whose subscription
+maintained for the life of the account. A subscriber whose subscription
 lapses can still restore data they previously stored.
-
-The app is usable without a subscription. Equal Spacing, Balusters and
-Gradient are free and unlimited, as are concrete slab calculations, saved
-jobs, the receipts log and the tool inventory. Every Build Sequencer guide
-opens free and shows the first half of its steps.
 
 An annual plan has been added alongside the weekly plan. On each option the
 billed amount is the most prominent pricing element, and free-trial
 eligibility is verified with StoreKit before any trial is advertised, so a
-customer who has already used their introductory offer is shown the standard
-price rather than a trial.
+customer who has already used their introductory offer is shown the
+standard price rather than a trial.
 
-TO REACH THE SUBSCRIPTION SCREEN:
-- Settings -> Cloud backup -> "See Setout Pro", or
+2. WHAT IS FREE
+
+No login or account is required to use the app.
+
+Free and unlimited: the Equal Spacing, Balusters and Gradient calculators;
+concrete slab calculations; saved jobs; the receipts log; the tool
+inventory. Every Build Sequencer guide opens free and shows the first half
+of its steps.
+
+Setout Pro adds: cloud backup and restore; the Decking, Wall Framing,
+Stairs, Roof Pitch, Roofing, Cladding, Cut List, Raked Wall, Square Check,
+Excavation and Fencing calculators; the concrete post hole and mix tools;
+and the remaining steps of each Sequencer guide.
+
+3. HOW TO REACH THE SUBSCRIPTION SCREEN
+
+- Settings > Cloud backup > "See Setout Pro", or
 - open a Pro calculator such as Stairs or Decking and run it once.
 
-No account or login is required to use the app. Sandbox purchases, Restore
-Purchases and Redeem Code are all available on the paywall.
+Sandbox purchases, Restore Purchases and Redeem Code are all on that
+screen. Plans are NZ$29.99 per year or NZ$1.99 per week, each with a
+2-week free trial for new subscribers.
+
+4. PURPOSE AND AUDIENCE
+
+Setout is an on-site tool for builders, carpenters and apprentices in
+Australia and New Zealand. Stud and plate counts, decking, stair rise and
+going, roofing, concrete, cladding, fencing and cut lists are normally
+worked out by hand on site, which is slow and error-prone, and one mistake
+wastes expensive material. Setout calculates instantly, shows the
+step-by-step working (useful for apprentices), and keeps jobs, quotes and
+receipts organised. Calculators work offline.
+
+5. SETUP AND ACCESS
+
+On first launch the user selects a region (Australia or New Zealand) and
+accepts the terms, then everything is available. The optional cloud backup
+account (Settings > Cloud backup) only stores the user's own data, is
+created with an email address and a one-time code, and is not required for
+any calculator. Account deletion is at Settings > Cloud backup > Delete
+account.
+
+6. EXTERNAL SERVICES
+
+Apple StoreKit (payments); RevenueCat (subscription entitlement); Supabase
+(email one-time-code sign-in and hosted storage for the optional backup);
+Sentry (crash reporting); Umami (cookieless, privacy-friendly analytics, not
+used for tracking).
+
+7. REGIONAL DIFFERENCES
+
+Calculators work identically in every region. Only the compliance notes,
+which reference local standards by name (Australia: NCC / AS; New Zealand:
+NZBC / NZS), and a few trade defaults and terms adapt by region. Nothing is
+region-locked.
+
+8. REGULATED INDUSTRY AND USER CONTENT
+
+Setout is a productivity tool and does not operate in a highly regulated
+industry or include protected third-party material. The compliance notes
+are our own general guidance and name standards without reproducing their
+text; the app and its Terms state that outputs are estimates and must be
+verified against official standards and consents. There is no
+user-generated content visible to other users — jobs, quotes, receipts and
+photos are private to each account.
+
+Kind regards,
+Setout Holdings Limited
 ```
 
 **Review screenshot for the subscription:** `setout-paywall-screenshot.png` — shows both plans, the billed amounts, the trial, the renewal disclosure and the restore control.
